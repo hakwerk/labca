@@ -1,0 +1,27 @@
+diff --git a/test/config/expiration-mailer.json b/test/config/expiration-mailer.json
+index 86e8a43..7988b1b 100644
+--- a/test/config/expiration-mailer.json
++++ b/test/config/expiration-mailer.json
+@@ -12,6 +12,11 @@
+     "nagCheckInterval": "24h",
+     "emailTemplate": "labca/example-expiration-template",
+     "debugAddr": ":8008",
++    "dnsTries": 3,
++    "dnsResolvers": [
++      "127.0.0.1:8053",
++      "127.0.0.1:8054"
++    ],
+     "tls": {
+       "caCertFile": "labca/grpc-creds/minica.pem",
+       "certFile": "labca/grpc-creds/expiration-mailer.boulder/cert.pem",
+@@ -28,5 +33,10 @@
+   "syslog": {
+     "stdoutlevel": 6,
+     "sysloglevel": 4
++  },
++
++  "common": {
++    "dnsTimeout": "3s",
++    "dnsAllowLoopbackAddresses": true
+   }
+ }

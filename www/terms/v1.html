@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="LabCA is a private Certificate Authority for internal (intranet) use, based on the open source ACME Automated Certificate Management Environment implementation from Let's Encrypt (tm).">
+  <meta name="keywords" content="LabCA PKI CA Certificate Authority ACME Boulder">
+  <meta name="author" content="Arjan Hakkesteegt">
+
+  <title>Terms | LabCA</title>
+
+  <link href="../css/bootstrap.min.css" rel="stylesheet">
+  <link href="../css/sb-admin-2.min.css" rel="stylesheet">
+  <link href="../css/font-awesome.min.css" rel="stylesheet" type="text/css">
+  <link href="../css/labca.css" rel="stylesheet">
+  <link rel="icon" type="image/png" href="../img/fav-public.png">
+</head>
+
+<body>
+  <div id="wrapper">
+    <nav class="navbar navbar-default navbar-static-top" role="navigation" style="margin-bottom: 0">
+      <div class="navbar-header">
+        <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+          <span class="sr-only">Toggle navigation</span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+        </button>
+        <a class="navbar-brand" href="/">LabCA</a>
+      </div>
+
+      <ul class="nav navbar-top-links navbar-right">
+        <li title="Login to Admin Area"><a href="/admin/"><i class="fa fa-user fa-fw admin-login"></i></a>
+        </li>
+      </ul>
+
+      <div class="navbar-default sidebar" role="navigation">
+        <div class="sidebar-nav navbar-collapse">
+          <ul class="nav" id="side-menu">
+            <li><a class="public" href="/"><i class="fa fa-home fa-fw"></i> Home</a>
+            </li>
+            <li><a class="public" href="/certs/index.html"><i class="fa fa-download fa-fw"></i> Certificates</a>
+            </li>
+            <li><a class="public" href="/cps/index.html" title="Certification Practice Statement"><i class="fa fa-book fa-fw"></i> CPS</a>
+            </li>
+            <li><a class="public" href="/terms/v1" title="Usage Terms"><i class="fa fa-edit fa-fw"></i> Terms</a>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </nav>
+
+    <div id="page-wrapper">
+      <div class="row">
+        <div class="col-lg-12">
+          <h1 class="page-header">User Agreement</h1>
+
+
+        <p>Once you request a certificate from this PKI (Private Key Infrastructure) you are bound to this agreement.</p>
+        <p>Each of your certificates will be valid for the validity period indicated in such certificate unless revoked
+        earlier. This agreement will remain in force during the entire period during which any of your certificates are
+        valid, continuously so as to include any renewal periods (including automatic renewals). Once you no longer
+        possess any valid certificate from this PKI, this agreement will terminate.</p>
+
+        By requesting, accepting, or using a certificate from this PKI you warrant to this PKI and the public-at-large that:
+        <ul>
+            <li>you are the duly authorized agent of the legitimate registrant of the domain name that is, or is going to
+                be, the subject of your certificate;</li>
+            <li>all information in your certificate regarding you or your domain name is accurate, current, reliable,
+                complete, and not misleading;</li>
+            <li>your certificate is only used inside [PKI_COMPANY_NAME] and according to any and all policies of
+                [PKI_COMPANY_NAME];</li>
+            <li>your certificate is not used in any way to deceive.</li>
+        </ul>
+        <p>The contents of your certificates will be based on the information you or your ACME client software sends to this
+        PKI. You will immediately inspect the contents of your certificate and by using the certificate you will have
+        accepted it and all its contents.</p>
+        <p>You warrant and agree that you will install your certificate only on servers that are accessible at the
+        subjectAltName(s) listed in it, and that you will use your certificate solely in compliance with all applicable
+        laws, regulations, policies and guidelines and solely in accordance with this Agreement.</p>
+        <p>The purpose of your certificate is to authenticate and encrypt intranet communications and you agree that you
+        will not use it for any purpose requiring fail-safe performance.</p>
+        <p>You warrant and agree that you will immediately request that your certificate be revoked if there is any actual
+        or suspected misuse or key compromise, or if any information in your certificate is, or becomes, misleading,
+        incorrect or inaccurate. You may make a revocation request to this PKI using ACME client software. You should also
+        notify anyone who may have relied upon your use of your certificate that your encrypted communications may have
+        been subject to compromise.</p>
+        <p>You warrant and agree that you will promptly cease using your certificate if any information in it is, or
+        becomes, misleading, incorrect or inaccurate, or upon its revocation or expiration.</p>
+
+        <p>You understand and accept that the certificates are provided as a free-of-charge service and on a best-effort
+        basis only.</p>
+        <p>YOU AGREE TO INDEMNIFY AND HOLD HARMLESS LabCA, THE OPERATOR OF THIS PKI INSTANCE AND ALL THEIR REPRESENTATIVES
+        FROM ANY AND ALL LIABILITIES, CLAIMS, DEMANDS, DAMAGES, LOSSES, COSTS AND EXPENSES.</p>
+
+          <p>&nbsp;</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="../js/jquery.min.js"></script>
+  <script src="../js/bootstrap.min.js"></script>
+  <script src="../js/metisMenu.min.js"></script>
+  <script src="../js/sb-admin-2.min.js"></script>
+  <script src="../js/labca.js"></script>
+</body>
+</html>

@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="LabCA is a private Certificate Authority for internal (intranet) use, based on the open source ACME Automated Certificate Management Environment implementation from Let's Encrypt (tm).">
+    <meta name="keywords" content="LabCA PKI CA Certificate Authority ACME Boulder">
+    <meta name="author" content="Arjan Hakkesteegt | Hakwerk IT B.V.">
+    <title>{{ block "title" . }}{{ if .Title }}{{ .Title }} | {{ end }}LabCA{{ end }}</title>
+    {{ block "css" . }}{{ template "partials/css.tmpl" . }}{{ end }}
+    <link rel="icon" type="image/png" href="static/img/fav-admin.png">
+    {{ block "head" . }}{{ .Head }}{{ end }}
+  </head>
+
+  <body>
+    <div id="wrapper">
+      {{ block "nav" . }}{{ template "partials/nav.tmpl" . }}{{ end }}
+
+        <div id="page-wrapper">
+            <div class="container-fluid">
+                <div class="row">
+                    <div class="col-lg-12">
+          {{ block "body" . }}{{ .Body }}{{ end }}
+                    </div>
+                </div>
+            </div>
+
+            <div class="container-fluid">
+                <div class="row">
+                    <div class="col-sm-6 footer text-muted">
+                        <small>{{ if .Version }}Version {{ .Version }}{{ end }}</small>
+                    </div>
+                    <div class="col-sm-6 footer text-muted text-right" id="footer">
+                        <small>Copyright &copy; 2018 LabCA</small>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    {{ block "js" . }}{{ template "partials/js.tmpl" . }}{{ end }}
+    {{ block "tail" . }}{{ .Tail }}{{ end }}
+  </body>
+</html>

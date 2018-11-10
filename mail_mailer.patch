@@ -1,0 +1,85 @@
+diff --git a/mail/mailer.go b/mail/mailer.go
+index 6dac0ab5..dfab66f4 100644
+--- a/mail/mailer.go
++++ b/mail/mailer.go
+@@ -20,10 +20,13 @@ import (
+ 	"time"
+ 
+ 	"github.com/jmhodges/clock"
++	"golang.org/x/net/context"
+ 
+ 	"github.com/letsencrypt/boulder/core"
++	"github.com/letsencrypt/boulder/bdns"
+ 	blog "github.com/letsencrypt/boulder/log"
+ 	"github.com/letsencrypt/boulder/metrics"
++	"github.com/letsencrypt/boulder/probs"
+ )
+ 
+ type idGenerator interface {
+@@ -113,6 +116,7 @@ func New(
+ 	username,
+ 	password string,
+ 	rootCAs *x509.CertPool,
++	resolver bdns.DNSClient,
+ 	from mail.Address,
+ 	logger blog.Logger,
+ 	stats metrics.Scope,
+@@ -125,6 +129,7 @@ func New(
+ 			server:   server,
+ 			port:     port,
+ 			rootCAs:  rootCAs,
++			dnsClient: resolver,
+ 		},
+ 		log:           logger,
+ 		from:          from,
+@@ -163,7 +168,7 @@ func (m *MailerImpl) generateMessage(to []string, subject, body string) ([]byte,
+ 		fmt.Sprintf("To: %s", strings.Join(addrs, ", ")),
+ 		fmt.Sprintf("From: %s", m.from.String()),
+ 		fmt.Sprintf("Subject: %s", subject),
+-		fmt.Sprintf("Date: %s", now.Format(time.RFC822)),
++		fmt.Sprintf("Date: %s", now.Format(time.RFC1123Z)),
+ 		fmt.Sprintf("Message-Id: <%s.%s.%s>", now.Format("20060102T150405"), mid.String(), m.from.Address),
+ 		"MIME-Version: 1.0",
+ 		"Content-Type: text/plain; charset=UTF-8",
+@@ -220,23 +225,32 @@ func (m *MailerImpl) Connect() error {
+ type dialerImpl struct {
+ 	username, password, server, port string
+ 	rootCAs                          *x509.CertPool
++	dnsClient                        bdns.DNSClient
+ }
+ 
+ func (di *dialerImpl) Dial() (smtpClient, error) {
+-	hostport := net.JoinHostPort(di.server, di.port)
+-	var conn net.Conn
+-	var err error
+-	conn, err = tls.Dial("tcp", hostport, &tls.Config{
+-		RootCAs: di.rootCAs,
+-	})
++	deadline := time.Now().Add(30 * time.Second)
++	ctx, cancel := context.WithDeadline(context.Background(), deadline)
++	defer cancel()
++
++	addrs, err := di.dnsClient.LookupHost(ctx, di.server)
+ 	if err != nil {
+-		return nil, err
++		problem := probs.DNS("%v", err)
++		return nil, problem
+ 	}
+-	client, err := smtp.NewClient(conn, di.server)
++	if len(addrs) == 0 {
++		return nil, probs.UnknownHost("No valid IP addresses found for %s", di.server)
++	}
++
++	hostport := net.JoinHostPort(addrs[0].String(), di.port)
++	client, err := smtp.Dial(hostport)
+ 	if err != nil {
+ 		return nil, err
+ 	}
+-	auth := smtp.PlainAuth("", di.username, di.password, di.server)
++	client.StartTLS( &tls.Config{
++		ServerName: di.server,
++	})
++	auth := smtp.PlainAuth("", di.username, di.password, addrs[0].String())
+ 	if err = client.Auth(auth); err != nil {
+ 		return nil, err
+ 	}

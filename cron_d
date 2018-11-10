@@ -1,0 +1,7 @@
+# /etc/cron.d/labca: crontab entries for the LabCA application
+SHELL=/bin/bash
+PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
+
+1 6 * * Mon root /home/labca/labca/backup cron
+1 7 * * * root /home/labca/labca/mailer
+5 7 * * * root /home/labca/labca/smartrenew

@@ -1,0 +1,174 @@
+{{ define "body" }}
+            <h3>LabCA</h3>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-3 col-md-6">
+            <div class="panel panel-primary">
+               <div class="panel-heading">
+                   <div class="row">
+                      <div class="col-xs-3">
+                          <i class="fa fa-list-alt fa-5x"></i>
+                      </div>
+                      <div class="col-xs-9 text-right">
+                          <div class="huge">{{ .NumAccounts }}</div>
+                          <div>Accounts</div>
+                      </div>
+                   </div>
+               </div>
+               <a href="{{ .RequestBase }}/accounts">
+                   <div class="panel-footer">
+                       <span class="pull-left">View Details</span>
+                       <span class="pull-right"><i class="fa fa-arrow-circle-right"></i></span>
+                       <div class="clearfix"></div>
+                   </div>
+                </a>
+            </div>
+        </div>
+
+
+        <div class="col-lg-3 col-md-6">
+            <div class="panel panel-green">
+                <div class="panel-heading">
+                    <div class="row">
+                        <div class="col-xs-3">
+                            <i class="fa fa-lock fa-5x"></i>
+                        </div>
+                        <div class="col-xs-9 text-right">
+                            <div class="huge">{{ .NumCerts }}</div>
+                            <div>Certificates</div>
+                        </div>
+                    </div>
+                </div>
+                <a href="{{ .RequestBase }}/certificates?active=1">
+                    <div class="panel-footer">
+                        <span class="pull-left">View Details</span>
+                        <span class="pull-right"><i class="fa fa-arrow-circle-right"></i></span>
+                        <div class="clearfix"></div>
+                    </div>
+                </a>
+            </div>
+        </div>
+
+        <div class="col-lg-3 col-md-6">
+            <div class="panel panel-yellow">
+                <div class="panel-heading">
+                    <div class="row">
+                        <div class="col-xs-3">
+                            <i class="fa fa-clock-o fa-5x"></i>
+                        </div>
+                        <div class="col-xs-9 text-right">
+                            <div class="huge">{{ .NumExpired }}</div>
+                            <div>Expired Certs</div>
+                        </div>
+                    </div>
+                </div>
+                <a href="{{ .RequestBase }}/certificates?expired=1">
+                    <div class="panel-footer">
+                        <span class="pull-left">View Details</span>
+                        <span class="pull-right"><i class="fa fa-arrow-circle-right"></i></span>
+                        <div class="clearfix"></div>
+                    </div>
+                </a>
+            </div>
+        </div>
+
+        <div class="col-lg-3 col-md-6">
+            <div class="panel panel-red">
+                <div class="panel-heading">
+                    <div class="row">
+                        <div class="col-xs-3">
+                            <i class="fa fa-times fa-5x"></i>
+                        </div>
+                        <div class="col-xs-9 text-right">
+                            <div class="huge">{{ .NumRevoked }}</div>
+                            <div>Revoked Certs</div>
+                        </div>
+                    </div>
+                </div>
+                <a href="{{ .RequestBase }}/certificates?revoked=1">
+                    <div class="panel-footer">
+                        <span class="pull-left">View Details</span>
+                        <span class="pull-right"><i class="fa fa-arrow-circle-right"></i></span>
+                        <div class="clearfix"></div>
+                    </div>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <i class="fa fa-fw fa-tasks"></i> Boulder (ACME) Activity
+                </div>
+                <div class="panel-body">
+                    <div class="list-group mb0">
+                    {{ range $item := .Activity }}
+                        <div class="list-group-item{{ if $item.Class }} {{ $item.Class }}{{ end }}" title="{{ $item.Title }}">
+                            {{ $item.Message }}
+                            <span class="pull-right text-muted small" title="{{ $item.Timestamp }}"><em>{{ $item.TimestampRel }}</em></span>
+                        </div>
+                    {{ end }}
+                    </div>
+                </div>
+                <a href="{{ .RequestBase }}/logs/audit">
+                    <div class="panel-footer">
+                        <span class="pull-left">View Details</span>
+                        <span class="pull-right"><i class="fa fa-arrow-circle-right"></i></span>
+                        <div class="clearfix"></div>
+                    </div>
+                </a>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <i class="fa fa-fw fa-desktop"></i> System Overview
+                </div>
+                <div class="panel-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered mb15">
+                            <tbody>
+                            {{ range $item := .Components }}
+                                <tr>
+                                    <td>{{ $item.Name }}</td>
+                                    <td title="{{ $item.Timestamp }}">
+                                        <span class="pull-right{{ if $item.Class }} {{ $item.Class }}{{ end }}">{{ $item.TimestampRel }}
+                                            {{ if $item.Class }}<i class="fa fa-fw fa-warning"></i>{{ end }}
+                                        </span>
+                                    </td>
+                                </tr>
+                            {{ end }}
+                            </tbody>
+                        </table>
+
+                        <table class="table table-bordered mb0">
+                            <tbody>
+                            {{ range $item := .Stats }}
+                                <tr>
+                                    <td>{{ $item.Name }}</td>
+                                    <td{{ if $item.Hint }} title="{{ $item.Hint }}"{{ end }}>
+                                        <span class="pull-right{{ if $item.Class }} {{ $item.Class }}{{ end }}">{{ $item.Value }}
+                                            {{ if $item.Class }}<i class="fa fa-fw fa-warning"></i>{{ end }}
+                                        </span>
+                                    </td>
+                                </tr>
+                            {{ end }}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <a href="{{ .RequestBase }}/manage">
+                    <div class="panel-footer">
+                        <span class="pull-left">Manage</span>
+                        <span class="pull-right"><i class="fa fa-arrow-circle-right"></i></span>
+                        <div class="clearfix"></div>
+                    </div>
+                </a>
+            </div>
+
+{{ end }}

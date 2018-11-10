@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="LabCA is a private Certificate Authority for internal (intranet) use, based on the open source ACME Automated Certificate Management Environment implementation from Let's Encrypt (tm).">
+  <meta name="keywords" content="LabCA PKI CA Certificate Authority ACME Boulder">
+  <meta name="author" content="Arjan Hakkesteegt">
+
+  <title>LabCA</title>
+
+  <link href="css/bootstrap.min.css" rel="stylesheet">
+  <link href="css/sb-admin-2.min.css" rel="stylesheet">
+  <link href="css/font-awesome.min.css" rel="stylesheet" type="text/css">
+  <link href="css/labca.css" rel="stylesheet">
+  <link rel="icon" type="image/png" href="img/fav-public.png">
+</head>
+
+<body>
+  <div id="wrapper">
+    <nav class="navbar navbar-default navbar-static-top" role="navigation" style="margin-bottom: 0">
+      <div class="navbar-header">
+        <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+          <span class="sr-only">Toggle navigation</span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+        </button>
+        <a class="navbar-brand" href="/">LabCA</a>
+      </div>
+
+      <ul class="nav navbar-top-links navbar-right">
+        <li title="Login to Admin Area"><a href="/admin/"><i class="fa fa-user fa-fw admin-login"></i></a>
+        </li>
+      </ul>
+
+      <div class="navbar-default sidebar" role="navigation">
+        <div class="sidebar-nav navbar-collapse">
+          <ul class="nav" id="side-menu">
+            <li><a class="public" href="/"><i class="fa fa-home fa-fw"></i> Home</a>
+            </li>
+            <li><a class="public" href="/certs/index.html"><i class="fa fa-download fa-fw"></i> Certificates</a>
+            </li>
+            <li><a class="public" href="/cps/index.html" title="Certification Practice Statement"><i class="fa fa-book fa-fw"></i> CPS</a>
+            </li>
+            <li><a class="public" href="/terms/v1" title="Usage Terms"><i class="fa fa-edit fa-fw"></i> Terms</a>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </nav>
+
+    <div id="page-wrapper">
+      <div class="row">
+        <div class="col-lg-12">
+          <h1 class="page-header">LabCA</h1>
+
+          <p>
+            LabCA is a private CA (Certificate Authority) for use inside an organization, i.e. for creating HTTPS/SSL certificates
+            for machines that cannot be reached via the open internet. It is based on Let's Encrypt&trade; code for ACMEv2
+            (Automated Certificate Management Environment) so all modern
+            LE clients should work. LabCA should <b>not</b> be used on the open internet, please use the official
+            <a class="public" href="https://letsencrypt.org/">Let's Encrypt&trade; <i class="fa fa-external-link fa-fw ext-link"></i>
+            </a> instance for that.
+          </p>
+          <p>
+            To trust the certificates provided by LabCA, all your client devices should install the root certificate in their
+            <b>Trusted Root Certification Authorities</b> store. You may choose to download the format best suited for your
+            Operating System: DER format for Windows machines or PEM format for Linux/unix machines and Android phones:<br/>
+            <a class="public" href="certs/root-ca.der">Windows (.der) format</a>&nbsp;|&nbsp;
+            <a class="public" href="certs/root-ca.pem">Linux (.pem) format</a>
+          </p>
+          <br/>
+          <h4>More information</h4>
+          <p>Additional information about this LabCA instance can be found on these pages:<br/>
+            <a class="public" href="terms/v1">Terms</a> - the Usage Terms<br/>
+            <a class="public" href="cps/">CPS</a> - the Certification Practice Statement
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/jquery.min.js"></script>
+  <script src="js/bootstrap.min.js"></script>
+  <script src="js/metisMenu.min.js"></script>
+  <script src="js/sb-admin-2.min.js"></script>
+  <script src="js/labca.js"></script>
+</body>
+</html>

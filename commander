@@ -1,0 +1,213 @@
+#!/usr/bin/env bash
+
+set -e
+
+LOGFILE=/home/labca/logs/commander.log
+
+err_report() {
+    echo "ERROR! On line $1 in commander script"
+}
+
+trap 'err_report $LINENO' INT TERM ERR
+
+dn=$(dirname $0)
+source "$dn/utils.sh"
+
+function wait_server() {
+    local url="$1"
+
+    local status=0
+    local cnt=0
+    while [ $cnt -lt 20 ] && [ "$status" != "200" ]; do
+        status=$(curl -o /dev/null -sSL --head --write-out '%{http_code}\n' $url)
+        let cnt=$cnt+1
+        if [ $cnt -lt 10 ] && [ "$status" != "200" ]; then
+            sleep 3
+        fi
+    done
+}
+
+
+read txt
+case $txt in
+"trust-store")
+    cp /etc/nginx/ssl/labca_cert.pem /usr/local/share/ca-certificates/labca_cert.crt
+    cp ~labca/admin/data/root-ca.pem /usr/local/share/ca-certificates/root-ca.crt
+    update-ca-certificates &>>$LOGFILE
+    ;;
+"docker-restart")
+    cd /home/labca/boulder
+    docker-compose stop &>>$LOGFILE
+    wait_down $PS_MYSQL &>>$LOGFILE
+    wait_down $PS_BHSM &>>$LOGFILE
+    wait_down $PS_LABCA &>>$LOGFILE
+    wait_down $PS_BOULDER &>>$LOGFILE
+    docker-compose rm -f bhsm &>>$LOGFILE
+    docker-compose up -d &>>$LOGFILE
+    wait_up $PS_MYSQL &>>$LOGFILE
+    wait_up $PS_BHSM &>>$LOGFILE
+    wait_up $PS_LABCA &>>$LOGFILE
+    wait_up $PS_BOULDER $PS_BOULDER_COUNT &>>$LOGFILE
+    ;;
+"acme-request")
+    cd /etc/nginx/ssl
+    [ -e account.key ] || openssl genrsa 4096 > account.key
+    [ -e labca_key.pem ] || openssl genrsa 4096 > labca_key.pem
+    san=$(openssl x509 -noout -text -in labca_cert.pem | grep DNS:)
+    openssl req -new -sha256 -key labca_key.pem -subj "/" -reqexts SAN -config <(cat /etc/ssl/openssl.cnf <(printf "[SAN]\nsubjectAltName=$san")) > domain.csr
+    chown -R www-data:www-data *
+    url=$(grep 'DEFAULT_DIRECTORY_URL =' /home/labca/acme_tiny.py | sed -e 's/.*=[ ]*//' | sed -e 's/\"//g')
+    wait_server $url
+    /home/labca/labca/renew
+    ln -sf /home/labca/labca/cron_d /etc/cron.d/labca
+    ln -sf /home/labca/labca/logrotate_d /etc/logrotate.d/labca
+    ;;
+"nginx-remove-redirect")
+    perl -i -p0e 's/\n    # BEGIN temporary redirect\n    location = \/ \{\n        return 302 \/admin\/;\n    }\n    # END temporary redirect\n//igs' /etc/nginx/sites-available/labca
+    ;;
+"nginx-reload")
+    service nginx reload
+    ;;
+"nginx-restart")
+    service nginx restart
+    ;;
+"log-cert")
+    tail -200 /etc/nginx/ssl/acme_tiny.log
+    exit 0
+    ;;
+"log-boulder")
+    cd /home/labca/boulder
+    docker-compose logs -f --no-color --tail=50 boulder
+    ;;
+"log-audit")
+    cd /home/labca/boulder
+    docker-compose logs --no-color boulder | grep "\[AUDIT\]" | grep -v "grpc: parseServiceConfig error unmarshaling  due to unexpected end of JSON input" | tail -50
+    docker-compose logs -f --no-color --tail=0 boulder
+    ;;
+"log-activity")
+    cd /home/labca/boulder
+    echo "GMT"
+    docker-compose logs --no-color boulder | grep "\[AUDIT\]" | grep -v "grpc: parseServiceConfig error unmarshaling  due to unexpected end of JSON input" | tail -15
+    exit 0
+    ;;
+"log-labca")
+    cd /home/labca/boulder
+    docker-compose logs -f --no-color --tail=50 labca
+    ;;
+"log-web")
+    tail -f -n 50 /var/log/nginx/access.log
+    ;;
+"log-weberr")
+    tail -200 /var/log/nginx/error.log
+    exit 0
+    ;;
+"log-components")
+    timezone=$(cat /etc/timezone)
+    nginx=$(ps -eo lstart,args | grep nginx | grep master | grep -v grep | cut -c 5-24)
+    svc=$(ps -eo lstart,args | grep tcpserver | grep sudo | grep -v grep | cut -c 5-24)
+    boulder=$(ps -eo lstart,args | grep bin/boulder-wfe2 | grep -v grep | cut -c 5-24)
+    labca=$(ps -eo lstart,args | grep -- "-host-port 3000" | grep -v grep | cut -c 5-24)
+    echo "$timezone|$nginx|$svc|$boulder|$labca"
+    exit 0
+    ;;
+"log-stats")
+    timezone=$(cat /etc/timezone)
+    uptime=$(uptime -s)
+    procs=$(ps -ef --no-headers | wc -l)
+    total=$(free -b --si | grep 'Mem:' | perl -p0e 's/.*?\s+(\d+)\s+.*/$1/')
+    avail=$(free -b --si | grep 'Mem:' | perl -p0e 's/.*\s+(\d+)$/$1/')
+    let used=$total-$avail
+    echo "$timezone|$uptime|$procs|$used|$avail"
+    exit 0
+    ;;
+"revoke-cert")
+    read serial
+    read reasonCode
+    cd /home/labca/boulder
+    docker-compose exec -T boulder bin/admin-revoker serial-revoke --config labca/config/admin-revoker.json $serial $reasonCode 2>&1
+    ;;
+"test-email")
+    read recipient
+    cd /home/labca/boulder
+    docker-compose exec -T boulder bin/mail-tester --config labca/config/expiration-mailer.json $recipient 2>&1
+    ;;
+"boulder-start")
+    cd /home/labca/boulder
+    docker-compose up -d bmysql
+    docker-compose up -d bhsm
+    docker-compose up -d boulder
+    wait_up $PS_MYSQL &>>$LOGFILE
+    wait_up $PS_BHSM &>>$LOGFILE
+    wait_up $PS_BOULDER $PS_BOULDER_COUNT &>>$LOGFILE
+    ;;
+"boulder-stop")
+    cd /home/labca/boulder
+    docker-compose stop boulder
+    docker-compose stop bhsm
+    docker-compose stop bmysql
+    wait_down $PS_MYSQL &>>$LOGFILE
+    wait_down $PS_BHSM &>>$LOGFILE
+    wait_down $PS_BOULDER &>>$LOGFILE
+    ;;
+"boulder-restart")
+    cd /home/labca/boulder
+    docker-compose stop boulder
+    docker-compose stop bhsm
+    docker-compose stop bmysql
+    wait_down $PS_MYSQL &>>$LOGFILE
+    wait_down $PS_BHSM &>>$LOGFILE
+    wait_down $PS_BOULDER &>>$LOGFILE
+    docker-compose up -d bmysql
+    docker-compose up -d bhsm
+    docker-compose up -d boulder
+    wait_up $PS_MYSQL &>>$LOGFILE
+    wait_up $PS_BHSM &>>$LOGFILE
+    wait_up $PS_BOULDER $PS_BOULDER_COUNT &>>$LOGFILE
+    ;;
+"labca-restart")
+    cd /home/labca/boulder
+    docker-compose stop labca
+    wait_down $PS_LABCA &>>$LOGFILE
+    docker-compose up -d labca
+    wait_up $PS_LABCA &>>$LOGFILE
+    ;;
+"svc-restart")
+    service labca stop
+    wait_down $PS_SERVICE &>>$LOGFILE
+    service labca start
+    wait_up $PS_SERVICE &>>$LOGFILE
+    ;;
+"log-backups")
+    ls -1tr /home/labca/backup
+    exit 0
+    ;;
+"log-server-backup")
+    /home/labca/labca/backup
+    exit 0
+    ;;
+"backup-delete")
+    read backup
+    rm -f /home/labca/backup/$backup
+    ;;
+"backup-restore")
+    read backup
+    /home/labca/labca/restore $backup
+    ;;
+"server-restart")
+    reboot
+    ;;
+"server-shutdown")
+    halt
+    ;;
+*)
+    echo "Unknown command '$txt'. ERROR!"
+    exit 1
+    ;;
+esac
+
+echo "ok"
+
+
+# TODO:
+# upgrade the labca stuff
+

@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+
+set -e
+
+PKI_ROOT_DN=$(openssl x509 -noout -in $PKI_ROOT_CERT_BASE.pem -subject | sed -e "s/subject= //")
+sed -i -e "s|\[PKI_ROOT_DN\]|$PKI_ROOT_DN|g" certs/index.html
+PKI_ROOT_VALIDITY="$(openssl x509 -noout -in $PKI_ROOT_CERT_BASE.pem -startdate | sed -e "s/.*=/Not Before: /")<br/> $(openssl x509 -noout -in $PKI_ROOT_CERT_BASE.pem -enddate | sed -e "s/.*=/Not After: /")"
+sed -i -e "s|\[PKI_ROOT_VALIDITY\]|$PKI_ROOT_VALIDITY|g" certs/index.html
+PKI_INT_DN=$(openssl x509 -noout -in $PKI_INT_CERT_BASE.pem -subject | sed -e "s/subject= //")
+sed -i -e "s|\[PKI_INT_DN\]|$PKI_INT_DN|g" certs/index.html
+PKI_INT_VALIDITY="$(openssl x509 -noout -in $PKI_INT_CERT_BASE.pem -startdate | sed -e "s/.*=/Not Before: /")<br/> $(openssl x509 -noout -in $PKI_INT_CERT_BASE.pem -enddate | sed -e "s/.*=/Not After: /")"
+sed -i -e "s|\[PKI_INT_VALIDITY\]|$PKI_INT_VALIDITY|g" certs/index.html
+
+sed -i -e "s|\[PKI_COMPANY_NAME\]|$PKI_DEFAULT_O|g" cps/index.html
+sed -i -e "s|\[PKI_ROOT_DN\]|$PKI_ROOT_DN|g" cps/index.html
+PKI_ROOT_FINGERPRINT="$(openssl x509 -noout -in $PKI_ROOT_CERT_BASE.pem -fingerprint | sed -e "s/.*=//" | sed -e "s/.\{21\}/&\\\n/g")"
+sed -i -e "s|\[PKI_ROOT_FINGERPRINT\]|$PKI_ROOT_FINGERPRINT|g" cps/index.html
+sed -i -e "s|\[PKI_ROOT_VALIDITY\]|$PKI_ROOT_VALIDITY|g" cps/index.html
+
+sed -i -e "s|\[PKI_COMPANY_NAME\]|$PKI_DEFAULT_O|g" terms/v1.html
+
+chown -R www-data:www-data .

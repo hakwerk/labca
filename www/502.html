@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="LabCA is a private Certificate Authority for internal (intranet) use, based on the open source ACME Automated Certificate Management Environment implementation from Let's Encrypt (tm).">
+    <meta name="keywords" content="LabCA PKI CA Certificate Authority ACME Boulder">
+    <meta name="author" content="Arjan Hakkesteegt | Hakwerk IT B.V.">
+    <title>LabCA</title>
+
+    <link rel="stylesheet" href="static/css/bootstrap.min.css">
+    <link rel="stylesheet" href="static/css/metisMenu.min.css">
+    <link rel="stylesheet" href="static/css/sb-admin-2.min.css">
+    <link rel="stylesheet" href="static/css/font-awesome.min.css">
+    <link rel="stylesheet" href="static/css/labca.css">
+    <link rel="icon" type="image/png" href="static/img/fav-admin.png">
+    <link rel="stylesheet" href="static/css/dataTables.responsive.css">
+  </head>
+
+  <body>
+    <div id="wrapper">
+
+    <nav class="navbar navbar-default navbar-static-top" role="navigation" style="margin-bottom: 0">
+      <div class="navbar-header">
+        <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+          <span class="sr-only">Toggle navigation</span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+        </button>
+        <a class="navbar-brand" href="/">LabCA</a>
+      </div>
+
+            <ul class="nav navbar-top-links navbar-right">
+                <li class="dropdown">
+                    <a class="dropdown-toggle " data-toggle="dropdown" href="#">
+                        <i class="fa fa-user fa-fw"></i> <i class="fa fa-caret-down"></i>
+                    </a>
+                    <ul class="dropdown-menu dropdown-user">
+                        <li><a href="logout"><i class="fa fa-sign-out fa-fw"></i> Logout</a></li>
+                    </ul>
+                </li>
+            </ul>
+
+            <div class="navbar-default sidebar" role="navigation">
+                <div class="sidebar-nav navbar-collapse">
+                    <ul class="nav" id="side-menu">
+                        <li>
+                            <a href="/" title="Main page with the status of the system">
+                              <i class="fa fa-fw fa-dashboard"></i> Dashboard
+                              </a>
+                        </li>
+                        <li>
+                            <a href="#" title="Automated Certificate Management Environment">
+                              <i class="fa fa-fw fa-sitemap"></i> ACME
+                              <span class="fa arrow"></span>
+                              </a>
+                            <ul class="nav nav-second-level">
+                                <li>
+                                    <a href="/accounts" title="ACME Accounts">
+                                    <i class="fa fa-fw fa-list-alt"></i> Accounts</a>
+                                </li>
+                                <li>
+                                    <a href="/certificates" title="ACME Certificates">
+                                    <i class="fa fa-fw fa-lock"></i> Certificates</a>
+                                </li>
+                                <li>
+                                    <a href="/orders" title="ACME Orders">
+                                    <i class="fa fa-fw fa-tags"></i> Orders</a>
+                                </li>
+                                <li>
+                                    <a href="/authz" title="ACME Authorizations">
+                                    <i class="fa fa-fw fa-chain"></i> Authorizations</a>
+                                </li>
+                                <li>
+                                    <a href="/challenges" title="ACME Challenges">
+                                    <i class="fa fa-fw fa-exchange"></i> Challenges</a>
+                                </li>
+                            </ul>
+                        </li>
+                        <li>
+                            <a href="/logs" title="Log Files">
+                              <i class="fa fa-fw fa-file"></i> Logs
+                              </a>
+                        </li>
+                        <li>
+                            <a href="/manage" title="Manage the system">
+                              <i class="fa fa-fw fa-wrench"></i> Manage
+                              </a>
+                        </li>
+                        <li>
+                            <a href="/about" title="About Page">
+                              <i class="fa fa-fw fa-comments"></i> About
+                              </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </nav>
+
+        <div id="page-wrapper">
+            <div class="container-fluid">
+                <div class="row">
+                    <div class="col-lg-12">
+
+                        <h3>Please wait...</h3>
+                        <p id="retry_msg">Trying to get to the page you requested...<br/>
+                        <img id="retry-spinner" src="static/img/spinner.gif" height="36"></p>
+
+                    </div>
+                </div>
+            </div>
+
+            <div class="container-fluid">
+                <div class="row">
+                    <div class="col-sm-6 footer text-muted">
+                        <small></small>
+                    </div>
+                    <div class="col-sm-6 footer text-muted text-right" id="footer">
+                        <small>Copyright &copy; 2018 LabCA</small>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script src="static/js/jquery.min.js"></script>
+    <script src="static/js/bootstrap.min.js"></script>
+    <script src="static/js/metisMenu.min.js"></script>
+    <script src="static/js/sb-admin-2.min.js"></script>
+    <script src="static/js/labca.js"></script>
+    <script src="static/js/jquery.dataTables.min.js"></script>
+    <script src="static/js/dataTables.bootstrap.min.js"></script>
+    <script src="static/js/dataTables.responsive.js"></script>
+    <script>
+        $(function() {
+            var targetUrl = window.location.href;
+            var ctr = 0;
+            var pollTimer = setInterval(pollServer, 3000);
+            pollServer();
+
+            function pollServer() {
+                if (ctr > 100) {
+                    clearInterval(pollTimer);
+                    $("img#retry-spinner").parent().text("timeout").addClass("error");
+                } else {
+                    $.ajax(targetUrl, {
+                        timeout: 2500
+                    })
+                    .done(function(data) {
+                        clearInterval(pollTimer);
+                        window.location.href = targetUrl;
+                    })
+                    .fail(function(xhr, status, err) {
+                        ctr++;
+                    });
+                }
+            }
+        });
+    </script>
+  </body>
+</html>

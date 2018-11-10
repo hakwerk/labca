@@ -1,0 +1,82 @@
+{{ define "body" }}
+{{ with .Details }}
+        <h3>LabCA {{ .Title }}</h3>
+
+        <table class="table table-striped table-bordered {{ .TableClass }}" id="details_table">
+            <tbody>
+                {{ range .Rows }}
+                <tr>
+                    <th>{{ .Name }}</th>
+                    <td>{{ .Value }}</td>
+                </tr>
+                {{ end }}
+                {{ range .Links }}
+                <tr>
+                    <th>{{ .Name }}</th>
+                    <td>{{ .Value }}</td>
+                </tr>
+                {{ end }}
+            </tbody>
+        </table>
+        {{ if .Extra }}{{ range $extra := .Extra }}
+        {{ $extra }}
+        {{ end }}{{ end }}
+        <br>
+
+        {{ range .Related }}
+        <h4>{{ .Title }}</h4>
+        <table class="table table-striped table-bordered table-hover datatable {{ .TableClass }}" id="related_table">
+            <thead>
+                <tr>
+                    {{ range .Header }}
+                    <th>{{ . }}</th>
+                    {{ end }}
+                </tr>
+            </thead>
+            <tbody>
+                {{ range .Rows }}
+                <tr>
+                {{ range rangeStruct . }}
+                    <td>{{ . }}</td>
+                {{ end }}
+                </tr>
+                {{ end }}
+            </tbody>
+        </table>
+        {{ end }}
+
+        {{ if .Related2 }}
+            {{ range .Related2 }}
+            <h4>{{ .Title }}</h4>
+            <table class="table table-striped table-bordered table-hover datatable {{ .TableClass }}" id="related_table_2">
+                <thead>
+                    <tr>
+                        {{ range .Header }}
+                        <th>{{ . }}</th>
+                        {{ end }}
+                    </tr>
+                </thead>
+                <tbody>
+                    {{ range .Rows }}
+                    <tr>
+                    {{ range rangeStruct . }}
+                        <td>{{ . }}</td>
+                    {{ end }}
+                    </tr>
+                    {{ end }}
+                </tbody>
+            </table>
+            {{ end }}
+        {{ end }}
+{{end}}
+{{end}}
+
+{{ define "head" }}
+    <link rel="stylesheet" href="static/css/dataTables.responsive.css">
+{{ end }}
+
+{{ define "tail" }}
+    <script src="static/js/jquery.dataTables.min.js"></script>
+    <script src="static/js/dataTables.bootstrap.min.js"></script>
+    <script src="static/js/dataTables.responsive.js"></script>
+{{ end }}

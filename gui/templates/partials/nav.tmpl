@@ -1,0 +1,52 @@
+{{ if .Menu }}
+    <nav class="navbar navbar-default navbar-static-top" role="navigation" style="margin-bottom: 0">
+      <div class="navbar-header">
+        <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+          <span class="sr-only">Toggle navigation</span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+        </button>
+        <a class="navbar-brand" href="/">LabCA</a>
+      </div>
+
+            <ul class="nav navbar-top-links navbar-right">
+                <li class="{{ if .IsLogin }}disabled{{ else }}dropdown{{ end }}">
+                    <a class="dropdown-toggle{{ if .IsLogin }} disabled{{ end }}" data-toggle="dropdown" href="#">
+                        <i class="fa fa-user fa-fw"></i> <i class="fa fa-caret-down"></i>
+                    </a>
+                    <ul class="dropdown-menu dropdown-user">
+                        <li><a href="logout"><i class="fa fa-sign-out fa-fw"></i> Logout</a></li>
+                    </ul>
+                </li>
+            </ul>
+
+            <div class="navbar-default sidebar" role="navigation">
+                <div class="sidebar-nav navbar-collapse">
+                    <ul class="nav" id="side-menu">
+        {{ range $item := .Menu }}
+                        <li{{ if $item.IsActive }} class="active"{{ end }}>
+                            <a{{range $key, $value := $item.Attrs }} {{$key}}="{{$value}}"{{end}}>
+                              <i class="fa fa-fw {{$item.Icon}}"></i> {{$item.Name}}
+                              {{ if $item.SubMenu }}
+                              <span class="fa arrow"></span>
+                              {{ end }}
+                              </a>
+        {{ if $item.SubMenu }}
+                            <ul class="nav nav-second-level{{ if $item.IsActive }} in{{ end }}">
+        {{ range $subitem := $item.SubMenu }}
+                                <li>
+                                    <a{{range $key, $value := $subitem.Attrs }} {{$key}}="{{$value}}"{{end}}>
+                                    <i class="fa fa-fw {{$subitem.Icon}}"></i> {{$subitem.Name}}</a>
+                                </li>
+        {{ end }}
+                            </ul>
+        {{ end }}
+                        </li>
+        {{ end }}
+                    </ul>
+                </div>
+            </div>
+        </nav>
+
+{{ end }}

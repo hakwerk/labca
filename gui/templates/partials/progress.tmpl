@@ -1,0 +1,12 @@
+</div>
+<div class="col-md-6 col-sm-12">
+  <div>
+    <div class="progress mt20" style="height: 12px" title="Progress: {{ .Progress }}%">
+      <div class="progress-bar" role="progressbar" style="width: {{ .Progress }}%" aria-valuenow="{{ .Progress }}" aria-valuemin="0" aria-valuemax="100"></div>
+    </div>
+  </div>
+  {{ if .HelpText }}
+  <div class="well">
+    {{ .HelpText }}
+  </div>
+  {{ end }}

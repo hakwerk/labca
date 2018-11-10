@@ -1,0 +1,58 @@
+{{ define "body" }}
+</div>
+<div class="col-md-6 col-sm-12">
+    <h3>Create admin account</h3>
+
+{{with .User}}
+<form role="form" action="{{ .RequestBase }}/setup" method="POST">
+  <div class="form-group">
+    <label>User name:</label>
+    <input class="form-control non-fluid" type="text" name="username" id="username" value="{{ .Name }}" required>
+    {{ with .Errors.Name }}
+    <span class="error">{{ . }}</span>
+    {{ end }}
+  </div>
+  <div class="form-group">
+    <label>Email address:</label>
+    <input class="form-control non-fluid" type="email" name="email" id="email" value="{{ .Email }}" required>
+    {{ with .Errors.Email }}
+    <span class="error">{{ . }}</span>
+    {{ end }}
+  </div>
+  <div class="form-group">
+    <label>Password:</label>
+    <input class="form-control non-fluid" type="password" name="password" id="password" required>
+    <span class="fa fa-eye vizpwd"></span>
+    <div class="progress mb5" style="height: 3px" id="password-strength">
+      <div class="progress-bar strength-none" role="progressbar" style="width: 0px" aria-valuenow="1" aria-valuemin="0" aria-valuemax="4"></div>
+    </div>
+    {{ with .Errors.Password }}
+    <span class="error">{{ . }}</span>
+    {{ end }}
+  </div>
+  <div class="form-group">
+    <label>Confirm password:</label>
+    <input class="form-control non-fluid" type="password" name="confirm" required>
+    <span class="fa fa-eye vizpwd"></span>
+    {{ with .Errors.Confirm }}
+    <span class="error">{{ . }}</span>
+    {{ end }}
+  </div>
+  <div class="form-group">
+    <input class="btn btn-default" type="submit" value="Create">
+  </div>
+</form>
+{{end}}
+{{ template "partials/progress.tmpl" . }}
+{{end}}
+
+{{ define "tail" }}
+    <script type="text/javascript" src="static/js/zxcvbn.js"></script>
+    <script type="text/javascript" src="static/js/pwdux.js"></script>
+    <script>
+        $(function() {
+            pwduxInit('#password-strength', '#password');
+            pwduxHandlers('#password-strength', '#password', ['#username', '#email']);
+        });
+    </script>
+{{ end }}

@@ -1,0 +1,9 @@
+{{ define "body" }}
+</div>
+<div class="col-md-6 col-sm-12">
+    <h3>LabCA</h3>
+    <p>Congratulations! You are now done setting up LabCA!</p>
+    <p>You probably need to restart this browser to pickup the new certificate, it is not sufficient to just refresh the page.</p>
+    <p>Then go to the <a href="{{ .RequestBase }}/">admin/</a> page or to the <a href="/">public</a> homepage.</p>
+{{ template "partials/progress.tmpl" . }}
+{{end}}

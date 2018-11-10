@@ -1,0 +1,10 @@
+{{ if .Js }}
+    {{ range .Js }}<script src="{{.}}"></script>
+    {{ end }}
+{{ else }}
+    <script src="static/js/jquery.min.js"></script>
+    <script src="static/js/bootstrap.min.js"></script>
+    <script src="static/js/metisMenu.min.js"></script>
+    <script src="static/js/sb-admin-2.min.js"></script>
+    <script src="static/js/labca.js"></script>
+{{ end }}

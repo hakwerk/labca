@@ -16,7 +16,19 @@ Also if you are developing your own client application or integrating one into y
 
 Getting Boulder up and running has quite a learning curve though and that is where **LabCA** comes in. It is a self-contained installation with a nice web GUI built on top of Boulder so you can quickly start using it. All regular management tasks can be done from the web interface. It is best installed in a Virtual Machine and uses Debian Linux as a base.
 
-### NOTE
+## Installation
+
+```sh
+curl -sSL https://raw.githubusercontent.com/hakwerk/labca/master/install | bash
+```
+
+## Updating
+
+```sh
+~labca/labca/install
+```
+
+## NOTE
 Although LabCA tries to be as robust as possible, use it at your own risk. If you depend on it, make sure that you know what you are doing!
 
 # License

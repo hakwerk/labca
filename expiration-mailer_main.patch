@@ -1,0 +1,82 @@
+diff --git a/cmd/expiration-mailer/main.go b/cmd/expiration-mailer/main.go
+index de4af4a0..b58405ef 100644
+--- a/cmd/expiration-mailer/main.go
++++ b/cmd/expiration-mailer/main.go
+@@ -21,6 +21,7 @@ import (
+ 	"github.com/jmhodges/clock"
+ 	"gopkg.in/go-gorp/gorp.v2"
+ 
++	"github.com/letsencrypt/boulder/bdns"
+ 	"github.com/letsencrypt/boulder/cmd"
+ 	"github.com/letsencrypt/boulder/core"
+ 	"github.com/letsencrypt/boulder/features"
+@@ -35,7 +36,7 @@ import (
+ 
+ const (
+ 	defaultNagCheckInterval  = 24 * time.Hour
+-	defaultExpirationSubject = "Let's Encrypt certificate expiration notice for domain {{.ExpirationSubject}}"
++	defaultExpirationSubject = "LabCA certificate expiration notice for domain {{.ExpirationSubject}}"
+ )
+ 
+ type regStore interface {
+@@ -376,6 +377,9 @@ type config struct {
+ 		TLS       cmd.TLSConfig
+ 		SAService *cmd.GRPCClientConfig
+ 
++		DNSTries     int
++		DNSResolvers []string
++
+ 		// Path to a file containing a list of trusted root certificates for use
+ 		// during the SMTP connection (as opposed to the gRPC connections).
+ 		SMTPTrustedRootFile string
+@@ -384,6 +388,12 @@ type config struct {
+ 	}
+ 
+ 	Syslog cmd.SyslogConfig
++
++	Common struct {
++		DNSResolver               string
++		DNSTimeout                string
++		DNSAllowLoopbackAddresses bool
++	}
+ }
+ 
+ func initStats(scope metrics.Scope) mailerStats {
+@@ -485,6 +495,29 @@ func main() {
+ 	cmd.FailOnError(err, "Failed to load credentials and create gRPC connection to SA")
+ 	sac := bgrpc.NewStorageAuthorityClient(sapb.NewStorageAuthorityClient(conn))
+ 
++	dnsTimeout, err := time.ParseDuration(c.Common.DNSTimeout)
++	cmd.FailOnError(err, "Couldn't parse DNS timeout")
++	dnsTries := c.Mailer.DNSTries
++	if dnsTries < 1 {
++		dnsTries = 1
++	}
++	var resolver bdns.DNSClient
++	if len(c.Common.DNSResolver) != 0 {
++		c.Mailer.DNSResolvers = append(c.Mailer.DNSResolvers, c.Common.DNSResolver)
++	}
++	if !c.Common.DNSAllowLoopbackAddresses {
++		r := bdns.NewDNSClientImpl(
++			dnsTimeout,
++			c.Mailer.DNSResolvers,
++			scope,
++			clk,
++			dnsTries)
++		resolver = r
++	} else {
++		r := bdns.NewTestDNSClientImpl(dnsTimeout, c.Mailer.DNSResolvers, scope, clk, dnsTries)
++		resolver = r
++	}
++
+ 	var smtpRoots *x509.CertPool
+ 	if c.Mailer.SMTPTrustedRootFile != "" {
+ 		pem, err := ioutil.ReadFile(c.Mailer.SMTPTrustedRootFile)
+@@ -520,6 +553,7 @@ func main() {
+ 		c.Mailer.Username,
+ 		smtpPassword,
+ 		smtpRoots,
++		resolver,
+ 		*fromAddress,
+ 		logger,
+ 		scope,

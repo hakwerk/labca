@@ -1,0 +1,128 @@
+.error {
+    color: #d9534f;
+}
+
+.warning {
+    color: #f0ad4e;
+}
+
+.success {
+    color: #5cb85c;
+}
+
+.strength-none {
+    background-color: #bbb;
+}
+
+.strength-bad {
+    background-color: #d9534f;
+}
+
+.strength-med {
+    background-color: #f0ad4e;
+}
+
+.strength-good {
+    background-color: #5cb85c;
+}
+
+.footer {
+    padding-top: 20px;
+}
+
+.hidden {
+    display: none;
+}
+
+.dataTables_filter, .dataTables_paginate {
+    float: right;
+}
+
+.pagination {
+    margin: 0;
+}
+
+.fixed-corner {
+    position: fixed;
+    bottom: 0;
+    right: 2px;
+    padding: 0 7px;
+    font-style: italic;
+    font-size: small;
+}
+
+#fileData {
+    margin-top: 1em;
+}
+
+.admin-login {
+    color: #555;
+}
+
+a.public {
+    color: forestgreen;
+}
+
+i.ext-link {
+    font-size: smaller;
+}
+
+p.caption {
+    padding-top: 0.8em;
+}
+
+.mb0 {
+    margin-bottom: 0px;
+}
+
+.mb5 {
+    margin-bottom: 5px;
+}
+
+.mb15 {
+    margin-bottom: 15px;
+}
+
+.mt20 {
+    margin-top: 20px;
+}
+
+.p48>tbody>tr>td {
+    padding: 4px 8px;
+}
+
+.btn-reg {
+    width: 5em;
+}
+
+.btn-wide {
+    width: 10em;
+}
+
+.vmiddle {
+    vertical-align: middle !important;
+}
+
+.bd-modal-lg .modal-dialog {
+    display: table;
+    position: relative;
+    margin: 0 auto;
+    top: calc(40% - 24px);
+}
+
+.bd-modal-lg .modal-dialog .modal-content {
+    text-align: center;
+    border: none;
+}
+
+.non-fluid {
+    width: auto !important;
+}
+
+.vizpwd {
+    float: left;
+    margin-left: 180px;
+    margin-top: -23px;
+    position: relative;
+    z-index: 2;
+}

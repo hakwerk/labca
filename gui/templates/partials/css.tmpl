@@ -1,0 +1,10 @@
+{{ if .Css }}
+    {{ range .Css }}<link rel="stylesheet" href="{{.}}" type="text/css" \>
+    {{ end }}
+{{ else }}
+    <link rel="stylesheet" href="static/css/bootstrap.min.css">
+    <link rel="stylesheet" href="static/css/metisMenu.min.css">
+    <link rel="stylesheet" href="static/css/sb-admin-2.min.css">
+    <link rel="stylesheet" href="static/css/font-awesome.min.css">
+    <link rel="stylesheet" href="static/css/labca.css">
+{{ end }}

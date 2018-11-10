@@ -1,0 +1,39 @@
+{{ define "body" }}
+    <h3>{{ .Name }}</h3>
+    {{ .Message }}
+    <pre id="fileData">{{.Data}}</pre>
+    {{ if .WsUrl }}
+    <div class="well well-sm fixed-corner text-muted">
+        Autoscroll: <input type="checkbox" id="autoscroll" checked>
+    </div>
+    {{ end }}
+{{ end }}
+
+{{ define "tail" }}
+    <script>
+    {{ if .WsUrl }}
+        function appendMessage(elm, msg) {
+            if (msg.indexOf("Attaching to boulder_") < 0) {
+                elm.textContent += msg + "\n";
+                $(window).resize();
+                if ( $("#autoscroll").prop('checked') ) {
+                    window.scrollTo(0,document.body.scrollHeight);
+                }
+            }
+        }
+
+        (function() {
+            var data = document.getElementById("fileData");
+            var conn = new WebSocket("{{ .WsUrl }}");
+            conn.onclose = function(evt) {
+                appendMessage(data, 'Connection closed');
+            }
+            conn.onmessage = function(evt) {
+                appendMessage(data, evt.data);
+            }
+        })();
+    {{ else }}
+        window.scrollTo(0,document.body.scrollHeight);
+    {{ end }}
+    </script>
+{{ end }}

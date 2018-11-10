@@ -1,0 +1,9 @@
+/etc/nginx/ssl/*.log
+/home/labca/logs/cron-*.log
+{
+    rotate 4
+    monthly
+    compress
+    missingok
+    notifempty
+}
