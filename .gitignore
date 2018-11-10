@@ -1,3 +1,8 @@
+# GitHub Pages
+_site
+.sass-cache
+.jekyll-metadata
+
 # Binaries for programs and plugins
 *.exe
 *.exe~
@@ -10,3 +15,7 @@
 
 # Output of the go coverage tool, specifically when used with LiteIDE
 *.out
+
+# Project specific
+gui/data/
+gui/bin/

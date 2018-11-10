@@ -1,0 +1,23 @@
+{{ define "body" }}
+    <h3>Login</h3>
+
+{{with .User}}
+<form role="form" action="{{ .RequestBase }}/login" method="POST">
+  <div class="form-group">
+    <label>User name:</label>
+    <input class="form-control non-fluid" type="text" name="username" value="{{ .Name }}" required>
+    {{ with .Errors.Name }}
+    <span class="error">{{ . }}</span>
+    {{ end }}
+  </div>
+  <div class="form-group">
+    <label>Password:</label>
+    <input class="form-control non-fluid" type="password" name="password" required>
+    {{ with .Errors.Password }}
+    <span class="error">{{ . }}</span>
+    {{ end }}
+  </div>
+  <input class="btn btn-default" type="submit" value="Login">
+</form>
+{{end}}
+{{end}}

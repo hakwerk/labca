@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+
+set -e
+
+FILE=/home/labca/backup/$1
+
+[ "$1" != "" ] || (echo "You must provide a backup file name to restore"; exit 1)
+[ -f $FILE ] || (echo "Backup file '$FILE' not found"; exit 1)
+
+BASE=$(echo "$FILE" | perl -p0e "s/.*\/(.*).tgz/\1/")
+TMPDIR=/tmp/$BASE
+
+cd /tmp
+tar xzf $FILE
+
+cd /home/labca/boulder
+docker-compose exec bmysql mysql boulder_sa_integration <$TMPDIR/boulder_sa_integration.sql
+
+mv -f $TMPDIR/*key* $TMPDIR/*cert.pem $TMPDIR/*.csr /etc/nginx/ssl/
+
+rm -rf /home/labca/admin/data && mv $TMPDIR/data /home/labca/admin/
+
+rm -rf $TMPDIR

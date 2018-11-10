@@ -1,0 +1,727 @@
+{{ define "body" }}
+    <h3>Manage LabCA</h3>
+    <p>Here you can manage your LabCA instance. Be careful!</p>
+
+<ul class="nav nav-tabs nav-tabs-sticky">
+  <li class="active">
+    <a data-toggle="tab" href="#system">System</a>
+  </li>
+  <li class="">
+    <a data-toggle="tab" href="#backup">Backup</a>
+  </li>
+  <li class="">
+    <a data-toggle="tab" href="#certs">Certificates</a>
+  </li>
+  <li class="">
+    <a data-toggle="tab" href="#config">Config</a>
+  </li>
+  <li class="">
+    <a data-toggle="tab" href="#email">Email</a>
+  </li>
+  <li class="">
+    <a data-toggle="tab" href="#account">Account</a>
+  </li>
+</ul>
+
+<div class="tab-content">
+  <div class="tab-pane fade active in" id="system">
+    <br/>
+    <div class="row">
+      <div class="col-lg-6 col-md-9 col-sm-12">
+        <table class="table table-bordered mb15 p48">
+          <tbody>
+            {{ range $item := .Components }}
+            <tr>
+              <td class="vmiddle">{{ $item.Name }}</td>
+              <td class="vmiddle"{{ if ne $item.TimestampRel "stopped" }} title="{{ $item.Timestamp }}"{{ end }}>
+                <span{{ if $item.Class }} class="{{ $item.Class }}"{{ end }}>
+                  {{ if ne $item.TimestampRel "stopped" }}Up {{ end }}{{ $item.TimestampRel }}
+                </span>
+              </td>
+              <td class="vmiddle">{{ if or $item.LogUrl $item.LogTitle}}<a href="{{ $item.LogUrl }}" title="{{ $item.LogTitle }}"><i class="fa fa-fw fa-file"></i></a>{{ end }}</td>
+              <td class="vmiddle">
+                {{ range $btn := $item.Buttons }}
+                <button class="btn btn-outline btn-reg {{ $btn.Class }}" type="button" id="{{ $btn.Id }}" title="{{ $btn.Title }}">{{ $btn.Label }}</button>
+                {{ end }}
+              </td>
+            </tr>
+            {{ end }}
+            <tr>
+              <td class="vmiddle">Server</td>
+              <td class="vmiddle" title="{{ .ServerTimestamp }}">Up {{ .ServerTimestampRel }}</td>
+              <td class="vmiddle"></td>
+              <td class="vmiddle">
+                <button class="btn btn-outline btn-wide btn-warning mb5" type="button" id="server-restart" title="Restart the whole server">Restart Server</button>
+                <br/>
+                <button class="btn btn-outline btn-wide btn-danger" type="button" id="server-shutdown" title="Shutdown the whole server">Shutdown Server</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="tab-pane fade" id="backup">
+    <br/>
+    <div class="row">
+      <div class="col-lg-6 col-md-9 col-sm-12">
+        <table class="table table-bordered mb15 p48">
+          <tbody id="backups-tbody">
+            {{ range .BackupFiles }}
+            <tr>
+              <td class="vmiddle">{{ . }}</td>
+              <td class="vmiddle">
+                <button class="btn btn-outline btn-warning backup-restore" type="button" title="Restore this backup">Restore</button>
+                <button class="btn btn-outline btn-danger backup-delete" type="button" title="Delete this backup">Delete</button>
+              </td>
+            </tr>
+            {{ end }}
+          </tbody>
+        </table>
+        <button class="btn btn-default" type="button" id="backup-now" title="Create system backup now">Backup Now</button>
+        <span class="hidden" id="backup-result"></span>
+      </div>
+      <div class="col-lg-6 col-md-9 col-sm-12">
+        <div class="well">
+          Backups are automatically created once a week. Here you can manually create extra backups, delete
+          backups or restore a selected backup. After restoring the server will be automatically restarted.<br/>
+          Automatic backups are removed after one month, manual backups are kept until manually deleted.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="tab-pane fade" id="certs">
+    <br/>
+    <form role="form">
+      <div class="form-group">
+        <label for="root-cb">Export content:</label><br/>
+          <input type="checkbox" class="export-cb" id="root-cb" value="root"></input>
+          Root Certificate (<a href="#" data-toggle="collapse" data-target="#root-details" title="View Root Certificate details"><small>Details </small><i class="fa fa-fw fa-eye" id="root-show"></i><i class="fa fa-fw fa-eye-slash hidden" id="root-hide"></i></a>)
+          <pre id="root-details" class="collapse">{{ .RootDetails }}</pre>
+          <br id="root-br"/>
+          <input type="checkbox" class="export-cb" id="issuer-cb" value="issuer"></input>
+          Issuer Certificate (<a href="#" data-toggle="collapse" data-target="#issuer-details" title="View Issuer Certificate details"><small>Details </small><i class="fa fa-fw fa-eye" id="issuer-show"></i><i class="fa fa-fw fa-eye-slash hidden" id="issuer-hide"></i></a>)
+          <pre id="issuer-details" class="collapse">{{ .IssuerDetails }}</pre>
+      </div>
+
+      <div class="form-group">
+        <label for="export-pfx">Export format:</label><br/>
+        <input type="radio" class="export-rd" id="export-pfx" name="export-type" value="pfx" checked/> .pfx (PKCS#12) file<br/>
+        <input type="radio" class="export-rd" id="export-zip" name="export-type" value="zip"/> .zip archive (less secure)<br/>
+      </div>
+
+      <div class="form-group">
+        <label for="export-pwd">Export file password (twice):</label>
+        <input class="form-control non-fluid" type="password" id="export-pwd" name="export-pwd" required/>
+        <span class="fa fa-eye vizpwd"></span>
+        <span class="error hidden" id="export-pwd-err"></span>
+        <input class="form-control non-fluid" type="password" id="export-pwd2" name="export-pwd2" required/>
+        <span class="fa fa-eye vizpwd"></span>
+        <span class="error hidden" id="export-pwd2-err"></span>
+      </div>
+
+      <button class="btn btn-default" type="button" id="cert-export" title="Download selected certificate(s) and their keys" disabled>Export Certificate</button>
+      <span class="error hidden" id="cert-export-err"></span>
+      <a id="export-target" style="display: none"></a>
+    </form>
+  </div>
+
+  <div class="tab-pane fade" id="config">
+    <br/>
+    <form role="form">
+      <div class="form-group">
+        <label for="fqdn">FQDN for the PKI host:</label>
+        <input class="form-control non-fluid" type="text" id="fqdn" name="fqdn" value="{{ .Fqdn }}" required>
+        <span class="hidden" id="fqdn_warning">&nbsp;<img src="static/img/warning.png"> Are you sure? This differs from the address you are using right now!<br/></span>
+        <span class="error config-error hidden" id="fqdn-error"></span>
+      </div>
+      <div class="form-group">
+        <label for="fqdn">Organization name:</label>
+        <input class="form-control non-fluid" type="text" id="organization" name="organization" value="{{ .Organization }}" required>
+        <span class="error config-error hidden" id="organization-error"></span>
+      </div>
+      <div class="form-group">
+        <label for="dns">Internal DNS server to use:</label>
+        <input class="form-control non-fluid" type="text" id="dns" name="dns" value="{{ .Dns }}" required>
+        <span class="error config-error hidden" id="dns-error"></span>
+      </div>
+
+      <div class="form-group">
+        <label>Domain mode:</label><br/>
+        <span class="error config-error hidden" id="domainmode-error"></span>
+        <input type="radio" id="lockdown" name="domain_mode" value="lockdown" {{ if eq .DomainMode "lockdown"}}checked{{ end }}/> Lockdown to only this domain:<br/>
+        <input class="form-control non-fluid" type="text" id="lockdown_domains" name="lockdown_domains" value="{{ .LockdownDomains }}"/>
+        <span class="error config-error hidden" id="lockdowndomains-error"></span>
+        <br/>
+
+        <input type="radio" id="whitelist" name="domain_mode" value="whitelist" {{ if eq .DomainMode "whitelist"}}checked{{ end }}/> Next to all official domains, also allow this domain:<br/>
+        <input class="form-control non-fluid" type="text" id="whitelist_domains" name="whitelist_domains" value="{{ .WhitelistDomains }}"/>
+        <span class="error config-error hidden" id="whitelistdomains-error"></span>
+        <br/>
+
+        <input type="radio" id="standard" name="domain_mode" value="standard" {{ if eq .DomainMode "standard"}}checked{{ end }}/> Standard - any official domains<br/>
+      </div>
+      <div class="form-group">
+        <span class="hidden" id="update-config-result"></span>
+        <button class="btn btn-default" type="button" id="update-config" title="Update the system configuration">Update</button>
+        <span id="domain_mode_warning">&nbsp;<img src="static/img/warning.png"> Are you sure? This facilitates man-in-the-middle attacks!<br/></span>
+      </div>
+    </form>
+  </div>
+
+  <div class="tab-pane fade" id="email">
+    <br/>
+    <form role="form">
+      <div class="form-group">
+        <input type="checkbox" class="email-cb" id="email-cb" value="enable" {{ if .DoEmail }}checked{{ end }}></input>
+          Send emails about upcoming certificate expiration
+      </div>
+      <div class="form-group">
+        <label for="server">Server:</label>
+        <input class="form-control non-fluid" type="text" id="server" name="server" value="{{ .Server }}">
+        <span class="error email-error hidden" id="server-error"></span>
+      </div>
+      <div class="form-group">
+        <label for="port">Port:</label>
+        <input class="form-control non-fluid" type="text" id="port" name="port" value="{{ .Port }}">
+        <span class="error email-error hidden" id="port-error"></span>
+      </div>
+      <div class="form-group">
+        <label for="emailuser">Username:</label>
+        <input class="form-control non-fluid" type="text" id="emailuser" name="emailuser" value="{{ .EmailUser }}">
+        <span class="error email-error hidden" id="emailuser-error"></span>
+      </div>
+      <div class="form-group">
+        <label for="emailpwd">Password:</label>
+        <input class="form-control non-fluid" type="password" name="emailpwd" id="emailpwd" value="{{ .EmailPwd }}">
+        <span class="error email-error hidden" id="emailpwd-error"></span>
+      </div>
+      <div class="form-group">
+        <label for="from">From address:</label>
+        <input class="form-control non-fluid" type="text" id="from" name="from" value="{{ .From }}">
+        <span class="error email-error hidden" id="from-error"></span>
+      </div>
+      <div class="form-group">
+        <span class="hidden" id="update-email-result"></span>
+        <button class="btn btn-default" type="button" id="update-email" title="Update the email configuration">Update</button>
+      </div>
+      <div class="form-group">
+        <span class="hidden" id="send-email-result"></span>
+        <button class="btn btn-default" type="button" id="send-email" title="Send a test email to the administrator">Send Test Email</button>
+      </div>
+    </form>
+  </div>
+
+  <div class="tab-pane fade" id="account">
+  <br/>
+    <form role="form">
+      <div class="form-group">
+        <label>User name:</label>
+        <input class="form-control non-fluid account-input" type="text" name="username" id="username" value="{{ .Name }}" required>
+        <span class="error account-error hidden" id="username-error"></span>
+      </div>
+      <div class="form-group">
+        <label>Email address:</label>
+        <input class="form-control non-fluid account-input" type="email" name="accemail" id="accemail" value="{{ .Email }}" required>
+        <span class="error account-error hidden" id="email-error"></span>
+      </div>
+      <div class="form-group">
+        <label>Change password:</label>
+        <input class="form-control non-fluid" type="password" name="new-password" id="new-password">
+        <span class="fa fa-eye vizpwd"></span>
+        <div class="progress mb5" style="height: 3px" id="password-strength">
+          <div class="progress-bar strength-none" role="progressbar" style="width: 0px" aria-valuenow="1" aria-valuemin="0" aria-valuemax="4"></div>
+        </div>
+        <span class="error account-error hidden" id="newpassword-error"></span>
+      </div>
+      <div class="form-group">
+        <label>Confirm new password:</label>
+        <input class="form-control non-fluid" type="password" name="confirm" id="confirm">
+        <span class="fa fa-eye vizpwd"></span>
+        <span class="error account-error hidden" id="confirm-error"></span>
+      </div>
+      <div class="form-group">
+        <label>Current password (required):</label>
+        <input class="form-control non-fluid account-input" type="password" name="password" id="password" required>
+        <span class="error account-error hidden" id="password-error"></span>
+      </div>
+      <div class="form-group">
+        <span class="hidden" id="update-account-result"></span>
+        <button class="btn btn-default" type="button" id="update-account" title="Update the admin account" disabled>Update</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<span class="hidden" id="request-base">{{ .RequestBase }}</span>
+
+<div class="modal fade bd-modal-lg" data-backdrop="static" data-keyboard="false" tabindex="-1">
+  <div class="modal-dialog modal-sm">
+    <div class="modal-content" style="width: 48px">
+      <img id="manage-spinner" src="static/img/spinner.gif" height="36">
+    </div>
+  </div>
+</div>
+{{end}}
+
+{{ define "tail" }}
+    <script type="text/javascript" src="static/js/zxcvbn.js"></script>
+    <script type="text/javascript" src="static/js/pwdux.js"></script>
+    <script type="text/javascript" src="static/js/jquery.stickytabs.js"></script>
+    <script>
+        $(function() {
+            $('.nav-tabs-sticky').stickyTabs();
+
+            $('a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
+                positionFooter();
+            });
+
+            $("ul.nav").click(function() {
+                setTimeout(function() {
+                    $(window).resize();
+
+                    pwduxInit('#password-strength', '#new-password');
+                }, 250);
+            });
+
+            $(".btn").click(function(evt) {
+                $('.modal').modal('show');
+                $(evt.target).blur();
+                $("#backup-result").hide();
+                $("#export-pwd-err").hide();
+                $("#export-pwd2-err").hide();
+                $("#cert-export-err").hide();
+                $(".account-error").hide();
+                $("#update-account-result").hide();
+                $(".config-error").hide();
+                $("#update-config-result").hide();
+                $(".email-error").hide();
+                $("#update-email-result").hide();
+                $("#send-email-result").hide();
+
+                if ( $(evt.target).attr("id") == "backup-now") {
+                    $.ajax(window.location.href, {
+                        method: "POST",
+                        data: {
+                            action: $(evt.target).attr("id"),
+                        },
+                    })
+                    .done(function(data) {
+                        $('.modal').modal('hide');
+
+                        if (data.Success) {
+                            var msg = "Successfully created backup";
+                            $("#backup-result").removeClass("hidden").removeClass("error").show().text(msg).addClass("success");
+
+                            $("#backups-tbody").append('<tr><td class="vmiddle">' + data.Message + '</td><td class="vmiddle"></td></tr>');
+
+                        } else {
+                            $("#backup-result").removeClass("hidden").removeClass("success").show().text(data.Message).addClass("error");
+                        }
+                    })
+                    .fail(function(xhr, status, err) {
+                        $('.modal').modal('hide');
+                        $("#backup-result").removeClass("hidden").removeClass("success").show().text(err).addClass("error");
+                    });
+
+                } else if ( $(evt.target).hasClass("backup-restore") ) {
+                    var name = $(this).parent().parent().children().first().text();
+
+                    $.ajax(window.location.href, {
+                        method: "POST",
+                        data: {
+                            action: "backup-restore",
+                            backup: name,
+                        },
+                    })
+                    .done(function(data) {
+                        $('.modal').modal('hide');
+
+                        if (data.Success) {
+                            var msg = "Successfully restored backup, restarting server now...";
+                            setTimeout(function() {
+                                window.location.reload();
+                            }, 5000);
+                            $("#backup-result").removeClass("hidden").removeClass("error").show().text(msg).addClass("success");
+
+                        } else {
+                            $("#backup-result").removeClass("hidden").removeClass("success").show().text(data.Message).addClass("error");
+                        }
+                    })
+                    .fail(function(xhr, status, err) {
+                        $('.modal').modal('hide');
+                        $("#backup-result").removeClass("hidden").removeClass("success").show().text(err).addClass("error");
+                    });
+
+                } else if ( $(evt.target).hasClass("backup-delete") ) {
+                    var row = $(this).parent().parent();
+                    var name = row.children().first().text();
+
+                    $.ajax(window.location.href, {
+                        method: "POST",
+                        data: {
+                            action: "backup-delete",
+                            backup: name,
+                        },
+                    })
+                    .done(function(data) {
+                        $('.modal').modal('hide');
+
+                        if (data.Success) {
+                            var msg = "Successfully removed backup file";
+                            $("#backup-result").removeClass("hidden").removeClass("error").show().text(msg).addClass("success");
+                            row.hide();
+
+                        } else {
+                            $("#backup-result").removeClass("hidden").removeClass("success").show().text(data.Message).addClass("error");
+                        }
+                    })
+                    .fail(function(xhr, status, err) {
+                        $('.modal').modal('hide');
+                        $("#backup-result").removeClass("hidden").removeClass("success").show().text(err).addClass("error");
+                    });
+
+                } else if ( $(evt.target).attr("id") == "cert-export") {
+                    type = ($("#export-zip").prop('checked') ? "zip" : ($("#export-pfx").prop('checked') ? "pfx" : "none"));
+
+                    if ($("#export-pwd").val().length < 4) {
+                        $('.modal').modal('hide');
+                        $("#export-pwd-err").removeClass("hidden").show().text("Password needs to be at least 4 characters!");
+                    } else if ($("#export-pwd").val() != $("#export-pwd2").val()) {
+                        $('.modal').modal('hide');
+                        $("#export-pwd2-err").removeClass("hidden").show().text("Passwords are not the same!");
+                    } else {
+                        var req = new XMLHttpRequest();
+                        req.open("POST", window.location.href, true);
+                        req.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
+                        req.responseType = "blob";
+
+                        req.onload = function (event) {
+                            $('.modal').modal('hide');
+
+                            var blob = req.response;
+                            var fileName = null;
+                            var contentType = req.getResponseHeader("content-type");
+
+                            // IE/EDGE seems not returning some response header
+                            if (req.getResponseHeader("content-disposition")) {
+                                var contentDisposition = req.getResponseHeader("content-disposition");
+                                fileName = contentDisposition.substring(contentDisposition.indexOf("=")+1);
+                            } else {
+                                fileName = "unnamed." + contentType.substring(contentType.indexOf("/")+1);
+                            }
+
+                            if (window.navigator.msSaveOrOpenBlob) {
+                                // Internet Explorer
+                                window.navigator.msSaveOrOpenBlob(new Blob([blob], {type: contentType}), fileName);
+                            } else {
+                                var el = document.getElementById("export-target");
+                                el.href = window.URL.createObjectURL(blob);
+                                el.download = fileName;
+                                el.click();
+                            }
+                        };
+
+                        req.onerror = function (event) {
+                            $('.modal').modal('hide');
+                            $("#cert-export-err").removeClass("hidden").show().text("Oops, something went wrong...");
+                        };
+
+                        req.send("action=" + $(evt.target).attr("id") + "&root=" + $("#root-cb").prop('checked') +
+                            "&issuer=" + $("#issuer-cb").prop('checked') + "&type=" + type + "&export-pwd=" + $("#export-pwd").val());
+                    }
+
+                } else if ( $(evt.target).attr("id") == "update-account") {
+                    $.ajax(window.location.href, {
+                        method: "POST",
+                        data: {
+                            action: $(evt.target).attr("id"),
+                            username: $("#username").val(),
+                            email: $("#accemail").val(),
+                            password: $("#password").val(),
+                            confirm: $("#confirm").val(),
+                            "new-password": $("#new-password").val(),
+                        },
+                    })
+                    .done(function(data) {
+                        $('.modal').modal('hide');
+
+                        if (data.Success) {
+                            var msg = "Successfully updated account.";
+                            if ($("#new-password").val()) {
+                                msg += " Please <a href=\"" + $("#request-base").text() + "/login\">login</a> again with your new password.";
+
+                                setTimeout(function() {
+                                    window.location.reload();
+                                }, 5000);
+                            }
+                            msg += "<br/>";
+                            $("#update-account-result").removeClass("hidden").removeClass("error").show().html(msg).addClass("success");
+
+                        } else {
+                            jQuery.each(data.Errors, function(nm, val) {
+                                $("#" + nm.toLowerCase() + "-error").removeClass("hidden").show().text(val);
+                            });
+                        }
+
+                        $("#new-password").val("");
+                        $("#confirm").val("");
+                        $("#password").val("");
+                        $("#update-account").prop('disabled', true);
+                        pwduxReset('#password-strength');
+
+                    })
+                    .fail(function(xhr, status, err) {
+                        $('.modal').modal('hide');
+                        $("#update-account-result").removeClass("hidden").removeClass("success").show().text(err).addClass("error");
+                    });
+
+                } else if ( $(evt.target).attr("id") == "update-config") {
+                    $.ajax(window.location.href, {
+                        method: "POST",
+                        data: {
+                            action: $(evt.target).attr("id"),
+                            fqdn: $("#fqdn").val(),
+                            organization: $("#organization").val(),
+                            dns: $("#dns").val(),
+                            domain_mode: ($("#standard").prop('checked') ? 'standard' : ($("#whitelist").prop('checked') ? 'whitelist' : 'lockdown')),
+                            lockdown_domains: $("#lockdown_domains").val(),
+                            whitelist_domains: $("#whitelist_domains").val(),
+                        },
+                    })
+                    .done(function(data) {
+                        $('.modal').modal('hide');
+
+                        if (data.Success) {
+                            var msg = "Successfully updated configuration.<br/>";
+                            $("#update-config-result").removeClass("hidden").removeClass("error").show().html(msg).addClass("success");
+
+                        } else {
+                            jQuery.each(data.Errors, function(nm, val) {
+                                nm = nm.toLowerCase();
+                                if (nm == "domainmode" || nm == "lockdowndomains" || nm == "whitelistdomains") {
+                                    $("#" + nm + "-error").removeClass("hidden").show().html(val + "<br/>");
+                                } else if (nm == "configupdate") {
+                                    $("#update-config-result").removeClass("hidden").removeClass("success").show().html(val + "<br/>").addClass("error");
+                                } else {
+                                    $("#" + nm + "-error").removeClass("hidden").show().text(val);
+                                }
+                            });
+                        }
+                    })
+                    .fail(function(xhr, status, err) {
+                        $('.modal').modal('hide');
+                        $("#update-config-result").removeClass("hidden").removeClass("success").show().html(err + "<br/>").addClass("error");
+                    });
+
+                } else if ( $(evt.target).attr("id") == "update-email") {
+                    form = $(evt.target).parent().parent()[0]
+                    if (!form.checkValidity()) {
+                        $('.modal').modal('hide');
+                        const tmpSubmit = document.createElement('button')
+                        form.appendChild(tmpSubmit)
+                        tmpSubmit.click()
+                        form.removeChild(tmpSubmit)
+                    } else {
+
+                        $.ajax(window.location.href, {
+                            method: "POST",
+                            data: {
+                                action: $(evt.target).attr("id"),
+                                do_email: $("#email-cb").prop("checked"),
+                                server: $("#server").val(),
+                                port: $("#port").val(),
+                                email_user: $("#emailuser").val(),
+                                email_pwd: $("#emailpwd").val(),
+                                from: $("#from").val(),
+                            },
+                        })
+                        .done(function(data) {
+                            $('.modal').modal('hide');
+
+                            if (data.Success) {
+                                var msg = "Successfully updated configuration.<br/>";
+                                $("#update-email-result").removeClass("hidden").removeClass("error").show().html(msg).addClass("success");
+
+                            } else {
+                                jQuery.each(data.Errors, function(nm, val) {
+                                    nm = nm.toLowerCase();
+                                    if (nm == "emailupdate") {
+                                        $("#update-email-result").removeClass("hidden").removeClass("success").show().html(val + "<br/>").addClass("error");
+                                    } else {
+                                        $("#" + nm + "-error").removeClass("hidden").show().text(val);
+                                    }
+                                });
+                            }
+                        })
+                        .fail(function(xhr, status, err) {
+                            $('.modal').modal('hide');
+                            $("#update-email-result").removeClass("hidden").removeClass("success").show().html(err + "<br/>").addClass("error");
+                        });
+                    }
+
+                } else if ( $(evt.target).attr("id") == "send-email") {
+                    $.ajax(window.location.href, {
+                        method: "POST",
+                        data: {
+                            action: $(evt.target).attr("id"),
+                        },
+                    })
+                    .done(function(data) {
+                        $('.modal').modal('hide');
+
+                        if (data.Success) {
+                            var msg = "Successfully sent test email.<br/>";
+                            $("#send-email-result").removeClass("hidden").removeClass("error").show().html(msg).addClass("success");
+
+                        } else {
+                            jQuery.each(data.Errors, function(nm, val) {
+                                nm = nm.toLowerCase();
+                                if (nm == "emailsend") {
+                                    $("#send-email-result").removeClass("hidden").removeClass("success").show().html(val + "<br/>").addClass("error");
+                                } else {
+                                    $("#" + nm + "-error").removeClass("hidden").show().text(val);
+                                }
+                            });
+                        }
+                    })
+                    .fail(function(xhr, status, err) {
+                        $('.modal').modal('hide');
+                        $("#send-email-result").removeClass("hidden").removeClass("success").show().html(err + "<br/>").addClass("error");
+                    });
+
+                } else {
+                    $.ajax(window.location.href, {
+                        method: "POST",
+                        data: {
+                            action: $(evt.target).attr("id"),
+                        },
+                    })
+                    .done(function(data) {
+                        $('.modal').modal('hide');
+
+                        td = $(evt.target).parent().parent().find("td:eq(1)");
+                        $(td).attr("title", data.Timestamp);
+                        span = $(td).find("span:eq(0)");
+                        $(span).attr("class", data.Class);
+                        $(span).text((data.TimestampRel == "stopped" ? "" : "Up ") + data.TimestampRel);
+
+                        if ( $(evt.target).attr("id") == "boulder-start" ) {
+                            if (data.TimestampRel != "stopped") {
+                                $("#boulder-start").hide();
+                                $("#boulder-stop").removeClass("hidden").show();
+                                $("#boulder-restart").removeClass("hidden").show();
+                            }
+                        }
+                        if ( $(evt.target).attr("id") == "boulder-stop" || $(evt.target).attr("id") == "boulder-restart" ) {
+                            if (data.TimestampRel == "stopped") {
+                                $("#boulder-start").show();
+                                $("#boulder-stop").hide();
+                                $("#boulder-restart").hide();
+                            }
+                        }
+                    })
+                    .fail(function(xhr, status, err) {
+                        $('.modal').modal('hide');
+                        $("#cert-export-err").removeClass("hidden").show().text(err);
+                    });
+                }
+            });
+
+            $("#root-details").on('show.bs.collapse', function() {
+                $("#root-show").hide();
+                $("#root-hide").removeClass("hidden").show();
+                $("#root-br").hide();
+            });
+
+            $("#root-details").on('hidden.bs.collapse', function() {
+                $("#root-show").show();
+                $("#root-hide").hide();
+                $("#root-br").show();
+            });
+
+            $("#issuer-details").on('show.bs.collapse', function() {
+                $("#issuer-show").hide();
+                $("#issuer-hide").removeClass("hidden").show();
+            });
+
+            $("#issuer-details").on('hidden.bs.collapse', function() {
+                $("#issuer-show").show();
+                $("#issuer-hide").hide();
+            });
+
+            function change_export_settings() {
+                checkbox_count = 0;
+                if ($("#root-cb").prop('checked')) {
+                    checkbox_count += 1;
+                }
+                if ($("#issuer-cb").prop('checked')) {
+                    checkbox_count += 1;
+                }
+
+                if ($("input[type=radio]#export-pfx").prop('checked')) {
+                    $("#cert-export").prop('disabled', checkbox_count != 1);
+                } else {
+                    $("#cert-export").prop('disabled', checkbox_count == 0);
+                }
+
+                if ($("input[type=radio]#export-zip").prop('checked')) {
+                    $("#cert-export").text("Export Certificate(s)");
+                } else {
+                    $("#cert-export").text("Export Certificate");
+                }
+            }
+
+            $(".export-cb").change(change_export_settings);
+
+            $(".export-rd").change(change_export_settings);
+
+            function check_fqdn() {
+                if ($("#fqdn").val() == window.location.host) {
+                    $("#fqdn_warning").hide();
+                } else {
+                    $("#fqdn_warning").removeClass('hidden').show();
+                }
+            }
+
+            $("#fqdn").blur(function() {
+                check_fqdn();
+            });
+
+            $("#fqdn").keyup(function() {
+                check_fqdn();
+            });
+
+            check_fqdn();
+
+            $("#email-cb").change(function() {
+                $("#server").prop("required", $(this).prop("checked"));
+                $("#server").prop("disabled", !$(this).prop("checked"));
+                $("#port").prop("required", $(this).prop("checked"));
+                $("#port").prop("disabled", !$(this).prop("checked"));
+                $("#emailuser").prop("required", $(this).prop("checked"));
+                $("#emailuser").prop("disabled", !$(this).prop("checked"));
+                $("#emailpwd").prop("required", $(this).prop("checked"));
+                $("#emailpwd").prop("disabled", !$(this).prop("checked"));
+                $("#from").prop("required", $(this).prop("checked"));
+                $("#from").prop("disabled", !$(this).prop("checked"));
+            });
+
+            $("#email-cb").change();
+
+            $(".account-input").keyup(function() {
+                ok = $("#username").val() && $("#accemail").val() && $("#password").val();
+                $("#update-account").prop('disabled', !ok);
+            });
+
+            $(".account-input").blur(function() {
+                ok = $("#username").val() && $("#accemail").val() && $("#password").val();
+                $("#update-account").prop('disabled', !ok);
+            });
+
+            pwduxHandlers('#password-strength', '#new-password', ['#username', '#accemail']);
+        });
+    </script>
+{{ end }}

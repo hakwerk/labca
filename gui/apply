@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+
+set -e
+
+PKI_PWD=$(pwd)
+export PKI_ROOT_CERT_BASE="$PKI_PWD/$PKI_ROOT_CERT_BASE"
+export PKI_INT_CERT_BASE="$PKI_PWD/$PKI_INT_CERT_BASE"
+
+cd /wwwstatic
+
+$PKI_PWD/apply-nginx
+
+cp $PKI_ROOT_CERT_BASE.crl crl/
+cp $PKI_ROOT_CERT_BASE.pem certs/
+cp $PKI_ROOT_CERT_BASE.der certs/
+cp $PKI_INT_CERT_BASE.pem certs/
+cp $PKI_INT_CERT_BASE.der certs/
+
+chown -R www-data:www-data .
+
+
+cd /boulder/labca
+$PKI_PWD/apply-boulder

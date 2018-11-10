@@ -1,0 +1,32 @@
+#!/usr/bin/env bash
+
+set -e
+
+NOW=$(date +%y%m%d%H%M%S)
+CRON=""
+if [ "$1" == "cron" ]; then
+    CRON="${1}_"
+fi
+BASE=${HOSTNAME}_${CRON}${NOW}
+TMPDIR=/tmp/$BASE
+mkdir -p $TMPDIR
+mkdir -p /home/labca/backup
+
+cd /home/labca/boulder
+docker-compose exec -T bmysql mysqldump boulder_sa_integration >$TMPDIR/boulder_sa_integration.sql
+
+cp -p /etc/nginx/ssl/*key* /etc/nginx/ssl/*cert.pem /etc/nginx/ssl/*.csr $TMPDIR/
+
+cp -rp /home/labca/admin/data $TMPDIR/
+
+
+cd /tmp
+tar czf /home/labca/backup/$BASE.tgz $BASE
+rm -rf $TMPDIR
+
+# housekeeping
+find /home/labca/backup -name "*_cron_*.tgz" -mtime +31 -exec rm -rf {} \;
+
+if [ "$1" != "cron" ]; then
+    echo /home/labca/backup/$BASE.tgz
+fi

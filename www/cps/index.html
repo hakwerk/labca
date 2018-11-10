@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="LabCA is a private Certificate Authority for internal (intranet) use, based on the open source ACME Automated Certificate Management Environment implementation from Let's Encrypt (tm).">
+  <meta name="keywords" content="LabCA PKI CA Certificate Authority ACME Boulder">
+  <meta name="author" content="Arjan Hakkesteegt">
+
+  <title>CPS | LabCA</title>
+
+  <link href="../css/bootstrap.min.css" rel="stylesheet">
+  <link href="../css/sb-admin-2.min.css" rel="stylesheet">
+  <link href="../css/font-awesome.min.css" rel="stylesheet" type="text/css">
+  <link href="../css/labca.css" rel="stylesheet">
+  <link rel="icon" type="image/png" href="../img/fav-public.png">
+</head>
+
+<body>
+  <div id="wrapper">
+    <nav class="navbar navbar-default navbar-static-top" role="navigation" style="margin-bottom: 0">
+      <div class="navbar-header">
+        <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+          <span class="sr-only">Toggle navigation</span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+        </button>
+        <a class="navbar-brand" href="/">LabCA</a>
+      </div>
+
+      <ul class="nav navbar-top-links navbar-right">
+        <li title="Login to Admin Area"><a href="/admin/"><i class="fa fa-user fa-fw admin-login"></i></a>
+        </li>
+      </ul>
+
+      <div class="navbar-default sidebar" role="navigation">
+        <div class="sidebar-nav navbar-collapse">
+          <ul class="nav" id="side-menu">
+            <li><a class="public" href="/"><i class="fa fa-home fa-fw"></i> Home</a>
+            </li>
+            <li><a class="public" href="/certs/index.html"><i class="fa fa-download fa-fw"></i> Certificates</a>
+            </li>
+            <li><a class="public" href="/cps/index.html" title="Certification Practice Statement"><i class="fa fa-book fa-fw"></i> CPS</a>
+            </li>
+            <li><a class="public" href="/terms/v1" title="Usage Terms"><i class="fa fa-edit fa-fw"></i> Terms</a>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </nav>
+
+    <div id="page-wrapper">
+      <div class="row">
+        <div class="col-lg-12">
+          <h1 class="page-header">Certification Practice Statement</h1>
+          <p><strong>1. Introduction</strong></p>
+          <p>
+            This Certification Practice Statement ("CPS") document outlines the certification services practices for this
+            particular instance running the LabCA software. PKI (Public Key Infrastructure) services include, but are not limited to, issuing, managing,
+            validating, revoking, and renewing Certificates. The services are provided for [PKI_COMPANY_NAME] internal use only.
+          </p>
+          <p>The following Certification Authorities are covered under this CPS:</p>
+          <table class="table table-striped table-bordered">
+            <thead><tr>
+              <th>CA Type</th>
+              <th>Distinguished Name</th>
+              <th>SHA-256 Key Fingerprint</th>
+              <th>Validity Period</th>
+            </tr></thead>
+            <tbody><tr>
+              <td>Root CA</td>
+              <td>[PKI_ROOT_DN]</td>
+              <td>[PKI_ROOT_FINGERPRINT]</td>
+              <td>[PKI_ROOT_VALIDITY]</td>
+            </tr></tbody>
+          </table>
+          <p>
+            Certificates issued by this PKI can be used only to establish secure online communication between hosts (as
+            identified by the FQDN provided in the Certificate) and clients using the TLS protocol. A Certificate only represents
+            that the information contained in it was verified as reasonably correct when the Certificate was issued.
+          </p>
+          <p>
+            Certificates may not be used for any application requiring fail-safe performance, providing financial services,
+            facilitating interference with encrypted communications or violating laws or regulations.
+          </p>
+          <p>
+            Relying Parties should verify the validity of certificates via CRL or OCSP prior to relying on certificates. CRL and
+            OCSP location information is provided within certificates.
+          </p>
+
+          <p class="caption"><strong>2. Publication and Repository</strong></p>
+          <p>This CPS is published at <a class="public" href="[LABCA_CPS_LOCATION]">[LABCA_CPS_LOCATION]</a></p>
+          <p>
+            Records of root and intermediate certificates, including those that have been revoked, are available at
+            <a class="public" href="[LABCA_CERTS_LOCATION]">[LABCA_CERTS_LOCATION]</a>
+          </p>
+          <p>
+            LabCA certificates contain URLs to locations where certificate-related information is published, including
+            revocation information via OCSP and/or CRLs.
+          </p>
+
+          <p class="caption"><strong>3. Identification and Authentication</strong></p>
+          <p>
+            LabCA certificates include a "Subject" field which identifies the subject entity (i.e. organization or domain). The
+            subject entity is identified using a distinguished name.
+          </p>
+          <p>
+            LabCA certificates include an "Issuer" field which identifies the issuing entity. The issuing entity is identified
+            using a distinguished name.
+          </p>
+
+          <p class="caption"><strong>4. Certificate Life-Cycle Operational Requirements</strong></p>
+          <p>
+            Anyone associated with [PKI_COMPANY_NAME] may submit an application for a certificate via the ACME protocol. Issuance
+            will depend on proper validation and compliance with this PKI's policies. End-entity certificates are made available
+            to Subscribers via the ACME protocol as soon after issuance as reasonably possible.
+          </p>
+          <p>
+            Subscribers are obligated to generate Key Pairs using reasonably trustworthy systems and to take reasonable measures
+            to protect their Private Keys from unauthorized use or disclosure.
+          </p>
+          <p>
+            Relying Parties must fully evaluate the context in which they are relying on certificates and the information
+            contained in them, and decide to what extent the risk of reliance is acceptable. If the risk of relying on a
+            certificate is determined to be unacceptable, then Relying Parties should not use the certificate or should obtain
+            additional assurances before using the certificate.
+          </p>
+          <p>
+            Relying Parties ignoring certificate expiration, revocation data provided via OCSP or CRL, or other pertinent
+            information do so at their own risk.
+          </p>
+          <p>Certificate revocation permanently ends the certificate's operational period prior to its stated validity period.</p>
+
+          <p class="caption"><strong>5. Facilities, Management, and Operational Controls</strong></p>
+          <p>Operating this PKI is under full responsibility of [PKI_COMPANY_NAME].</p>
+
+          <p class="caption"><strong>6. Technical Security Controls</strong></p>
+          <p>
+            LabCA is <strong>not</strong> using a Hardware Security Module (HSM) for storing CA private keys. LabCA is intended
+            to be used in a lab or intranet environment with sufficient protection against bad actors. It may not be used as
+            publicly accessible PKI instance.
+          </p>
+
+          <p class="caption"><strong>7. Certificate, CRL, and OCSP Profile</strong></p>
+          <p>Any requirements or policies regarding Certificates, CRLs and OCSP are at full discretion of [PKI_COMPANY_NAME].</p>
+
+          <p class="caption"><strong>8. Compliance audit</strong></p>
+          <p>Not applicable.</p>
+
+          <p class="caption"><strong>9. Other Business and Legal Matters</strong></p>
+          <p>
+            LabCA CERTIFICATES AND SERVICES ARE PROVIDED "AS-IS". LabCA DISCLAIMS ANY AND ALL WARRANTIES OF ANY TYPE AND DOES
+            NOT ACCEPT ANY LIABILITY.
+          </p>
+          <p>EACH USER AFFIRMATIVELY AND EXPRESSLY WAIVES THE RIGHT TO HOLD LabCA RESPONSIBLE IN ANY WAY.</p>
+
+          <p>&nbsp;</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="../js/jquery.min.js"></script>
+  <script src="../js/bootstrap.min.js"></script>
+  <script src="../js/metisMenu.min.js"></script>
+  <script src="../js/sb-admin-2.min.js"></script>
+  <script src="../js/labca.js"></script>
+</body>
+</html>

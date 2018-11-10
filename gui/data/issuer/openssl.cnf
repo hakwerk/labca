@@ -1,0 +1,135 @@
+# OpenSSL Intermediary CA configuration file
+
+[ ca ]
+default_ca = CA_default
+
+[ CA_default ]
+# Directory and file locations.
+dir               = data/issuer
+certs             = $dir/certs
+crl_dir           = $dir/crl
+new_certs_dir     = $dir/certs
+database          = $dir/index.txt
+serial            = $dir/serial
+RANDFILE          = $dir/.rand
+
+# The root key and root certificate.
+private_key       = $dir/ca-int.key
+certificate       = $dir/ca-int.pem
+
+# For certificate revocation lists.
+crlnumber         = $dir/crlnumber
+crl               = $dir/crl/ca-int.crl
+crl_extensions    = crl_ext
+default_crl_days  = 180
+
+# SHA-1 is deprecated, so use SHA-2 or SHA-3 instead.
+#default_md        = sha384
+default_md        = sha256
+
+name_opt          = ca_default
+cert_opt          = ca_default
+default_days      = 3000
+preserve          = no
+policy            = policy_loose
+
+[ policy_loose ]
+# Allow the intermediate CA to sign a more diverse range of certificates.
+# See the POLICY FORMAT section of the `ca` man page.
+countryName             = optional
+organizationName        = match
+organizationalUnitName  = optional
+commonName              = supplied
+
+[ req ]
+# Options for the `req` tool (`man req`).
+default_bits        = 2048
+distinguished_name  = req_distinguished_name
+string_mask         = utf8only
+
+# SHA-1 is deprecated, so use SHA-2 or SHA-3 instead.
+default_md          = sha384
+
+# Extension to add when the -x509 option is used.
+x509_extensions     = v3_ca
+
+[ req_distinguished_name ]
+countryName                     = Country Name (2 letter code)
+0.organizationName              = Organization Name
+organizationalUnitName          = Organizational Unit Name
+commonName                      = Common Name
+
+# Optionally, specify some defaults.
+countryName_default             = PKI_DEFAULT_C
+0.organizationName_default      = PKI_DEFAULT_O
+organizationalUnitName_default  = PKI_DEFAULT_I_OU
+commonName_default              = PKI_DEFAULT_I_OU
+
+[ v3_ca ]
+# Extensions for a typical CA (`man x509v3_config`).
+subjectKeyIdentifier = hash
+authorityKeyIdentifier = keyid:always,issuer
+basicConstraints = critical, CA:true
+keyUsage = critical, digitalSignature, cRLSign, keyCertSign
+
+[ v3_intermediate_ca ]
+# Extensions for a typical intermediate CA (`man x509v3_config`).
+subjectKeyIdentifier = hash
+authorityKeyIdentifier = keyid:always
+basicConstraints = critical, CA:true, pathlen:0
+keyUsage = critical, digitalSignature, cRLSign, keyCertSign
+crlDistributionPoints = @crl_info
+authorityInfoAccess = @ocsp_info
+certificatePolicies=2.23.140.1.2.1,@cps
+
+[ usr_cert ]
+# Extensions for client certificates (`man x509v3_config`).
+basicConstraints = CA:FALSE
+nsCertType = client, email
+nsComment = "OpenSSL Generated Client Certificate"
+subjectKeyIdentifier = hash
+authorityKeyIdentifier = keyid,issuer
+keyUsage = critical, nonRepudiation, digitalSignature, keyEncipherment
+extendedKeyUsage = clientAuth, emailProtection
+
+[ codesign_req ]
+keyUsage = critical,digitalSignature
+extendedKeyUsage = critical,codeSigning
+subjectKeyIdentifier = hash
+basicConstraints = CA:FALSE
+authorityInfoAccess = @ocsp_info
+
+[ server_cert ]
+# Extensions for server certificates (`man x509v3_config`).
+basicConstraints = CA:FALSE
+nsCertType = server
+nsComment = "OpenSSL Generated Server Cert"
+subjectKeyIdentifier = hash
+authorityKeyIdentifier = keyid,issuer:always
+keyUsage = critical, digitalSignature, keyEncipherment
+extendedKeyUsage = serverAuth
+crlDistributionPoints = @crl_info
+authorityInfoAccess = @ocsp_info
+
+[ crl_ext ]
+# Extension for CRLs (`man x509v3_config`).
+authorityKeyIdentifier=keyid:always
+
+[ ocsp ]
+# Extension for OCSP signing certificates (`man ocsp`).
+basicConstraints = CA:FALSE
+subjectKeyIdentifier = hash
+authorityKeyIdentifier = keyid,issuer
+keyUsage = critical, digitalSignature
+extendedKeyUsage = critical, OCSPSigning
+
+[crl_info]
+URI.0 = http://LABCA_FQDN/crl/ca-int.crl
+
+[ocsp_info]
+caIssuers;URI.0 = http://LABCA_FQDN/cert/ca-int.pem
+OCSP;URI.0 = http://LABCA_FQDN/ocsp/
+
+[cps]
+policyIdentifier = 1.3.6.1.4.1.44947.1.1.1
+ CPS.1="http://LABCA_FQDN/cps/";

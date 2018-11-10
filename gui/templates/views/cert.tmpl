@@ -1,0 +1,154 @@
+{{ define "body" }}
+</div>
+<div class="col-md-6 col-sm-12">
+{{with .CertificateInfo}}
+    <h3>{{ if .IsRoot }}Root{{ else }}Issuer (2nd level){{ end }} Certificate</h3>
+
+<ul class="nav nav-tabs">
+  <li class="{{ if eq .CreateType "generate" }}active{{ end }}">
+    <a data-toggle="tab" href="#generate">Generate</a>
+  </li>
+  <li class="{{ if eq .CreateType "import" }}active{{ end }}">
+    <a data-toggle="tab" href="#import">Import</a>
+  </li>
+  <li class="{{ if eq .CreateType "upload" }}active{{ end }}">
+    <a data-toggle="tab" href="#upload">Upload</a>
+  </li>
+</ul>
+
+<div class="tab-content">
+  <div class="tab-pane fade {{ if eq .CreateType "generate" }}active in{{ end }}" id="generate">
+  <br/>
+<form role="form" action="{{ .RequestBase }}/setup" enctype="multipart/form-data" method="POST">
+  <input type="hidden" name="cert" value="{{ if .IsRoot }}root{{ else }}issuer{{ end }}">
+  <input type="hidden" name="createtype" value="generate">
+  <div class="form-group">
+    <label for="keytype">Key type and size:</label>
+    <select class="form-control" id="keytype" name="keytype" required autocomplete="off">
+    {{ $selected := .KeyType }}
+    {{ range $key, $value := .KeyTypes }}
+      <option value="{{ $key }}"{{ if eq $key $selected }} selected="selected"{{ end }}>{{ $value }}</option>
+    {{ end }}
+    </select>
+    {{ with .Errors.KeyType }}
+    <span class="error">{{ . }}</span>
+    {{ end }}
+  </div>
+  <div class="form-group">
+    <label for="c">Country (2-Letter code):</label>
+    <input class="form-control" type="text" id="c" name="c" value="{{ .Country }}" maxlength="2" required {{ if ne .Country "" }}readonly{{ end }}>
+    {{ with .Errors.Country }}
+    <span class="error">{{ . }}</span>
+    {{ end }}
+  </div>
+  <div class="form-group">
+    <label for="o">Organization:</label>
+    <input class="form-control" type="text" id="o" name="o" value="{{ .Organization }}" required {{ if ne .Organization "" }}readonly{{ end }}>
+    {{ with .Errors.Organization }}
+    <span class="error">{{ . }}</span>
+    {{ end }}
+  </div>
+  <div class="form-group">
+    <label for="ou">Org. Unit (optional):</label>
+    <input class="form-control" type="text" id="ou" name="ou" value="{{ .OrgUnit }}" {{ if (ne .Organization "") and (not .IsRoot) }}readonly{{ end }}>
+    {{ with .Errors.OrgUnit }}
+    <span class="error">{{ . }}</span>
+    {{ end }}
+  </div>
+  <div class="form-group">
+    <label for="cn">Common Name:</label>
+    <input class="form-control" type="text" id="cn" name="cn" value="{{ .CommonName }}" required>
+    {{ with .Errors.CommonName }}
+    <span class="error">{{ . }}</span>
+    {{ end }}
+  </div>
+  <div>
+    {{ with .Errors.Generate }}
+    <span class="error">{{ . }}</span><br/>
+    {{ end }}
+    <input class="btn btn-default" type="submit" value="Generate">
+  </div>
+</form>
+  </div>
+
+  <div class="tab-pane fade {{ if eq .CreateType "import" }}active in{{ end }}" id="import">
+  <br/>
+<form role="form" action="{{ .RequestBase }}/setup" enctype="multipart/form-data" method="POST">
+  <input type="hidden" name="cert" value="{{ if .IsRoot }}root{{ else }}issuer{{ end }}">
+  <input type="hidden" name="createtype" value="import">
+  <p>
+    Here you can import a certificate that was exported from another LabCA instance, either in the .pfx or in the .zip format.<br/>
+    If you have separate key and certificate files, use the
+    <a href="#upload" onClick='$(".nav-tabs > li:nth-child(3) > a:nth-child(1)").click()'>Upload</a> tab.
+  </p>
+  <div class="form-group">
+    <label for="import">Certificate:
+    {{ with .Errors.Import }}
+    <span class="error"><br/>{{ . }}</span>
+    {{ end }}
+    </label>
+    <input class="form-control non-fluid" type="file" id="import" name="import" required/>
+  </div>
+  <div class="form-group">
+    <label for="import-pwd">File password (optional):
+    <input class="form-control non-fluid" type="password" id="import-pwd" name="import-pwd"/>
+  </div>
+  <div>
+    <input class="btn btn-default" type="submit" value="Import">
+  </div>
+</form>
+  </div>
+
+  <div class="tab-pane fade {{ if eq .CreateType "upload" }}active in{{ end }}" id="upload">
+  <br/>
+<form role="form" action="{{ .RequestBase }}/setup" enctype="multipart/form-data" method="POST">
+  <input type="hidden" name="cert" value="{{ if .IsRoot }}root{{ else }}issuer{{ end }}">
+  <input type="hidden" name="createtype" value="upload">
+  <div class="form-group">
+    <label for="key">Key (in PEM format):
+    {{ with .Errors.Key }}
+    <span class="error"><br/>{{ . }}</span>
+    {{ end }}
+    </label>
+    <textarea class="form-control" id="key" name="key" rows="10" cols="80" required>{{ .Key }}</textarea>
+  </div>
+  <div class="form-group">
+    <label for="passphrase">Passphrase (optional):
+    {{ with .Errors.Passphrase }}
+    <span class="error"><br/>{{ . }}</span>
+    {{ end }}
+    </label>
+    <input class="form-control" type="password" id="passphrase" name="passphrase" value="">
+  </div>
+  <div class="form-group">
+    <label for="certificate">Certificate (in PEM format):
+    {{ with .Errors.Certificate }}
+    <span class="error"><br/>{{ . }}</span>
+    {{ end }}
+    </label>
+    <textarea class="form-control" id="certificate" name="certificate" rows="10" cols="80" required>{{ .Certificate }}</textarea>
+  </div>
+  <div>
+    {{ with .Errors.Upload }}
+    <span class="error">{{ . }}</span><br/>
+    {{ end }}
+    <input class="btn btn-default" type="submit" value="Upload">
+  </div>
+</form>
+  </div>
+</div>
+{{end}}
+{{ template "partials/progress.tmpl" . }}
+{{end}}
+
+{{ define "tail" }}
+    <script>
+        $(function() {
+            $("ul.nav").click(function() {
+                setTimeout(function() {
+                    $(window).resize();
+                }, 250);
+            });
+        });
+    </script>
+{{end}}

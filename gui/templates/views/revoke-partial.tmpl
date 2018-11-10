@@ -1,0 +1,33 @@
+<button type="button" class="btn btn-danger" data-toggle="modal" data-target="#revokeModal">Revoke</button>
+
+<div class="modal fade" id="revokeModal" tabindex="-1" role="dialog" aria-labelledby="revokeModalLabel">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        <h4 class="modal-title" id="revokeModalLabel">Revoke Certificate</h4>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="revoke-serial" name="serial" value="{{ .Serial }}"></input>
+        Pick a reason for revoking this certificate:<br/>
+        <select class="form-control" id="revoke-reason">
+          <option name="" value=""></option>
+          <option name="Unspecified" value="0">Unspecified</option>
+          <option name="Key Compromise" value="1">Key Compromise</option>
+          <option name="CA Compromise" value="2">CA Compromise</option>
+          <option name="Affiliation Changed" value="3">Affiliation Changed</option>
+          <option name="Superseded" value="4">Superseded</option>
+          <option name="Cessation Of Operation" value="5">Cessation Of Operation</option>
+          <option name="Certificate Hold" value="6">Certificate Hold</option>
+          <option name="Privilege Withdrawn" value="9">Privilege Withdrawn</option>
+          <option name="AA Compromise" value="10">AA Compromise</option>
+        </select><br/>
+        NOTE that revoking a certificate can NOT be reversed!
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-danger" id="cert-revoke-btn">Revoke</button>
+      </div>
+    </div>
+  </div>
+</div>
