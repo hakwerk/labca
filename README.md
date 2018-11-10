@@ -18,3 +18,18 @@ Getting Boulder up and running has quite a learning curve though and that is whe
 
 ### NOTE
 Although LabCA tries to be as robust as possible, use it at your own risk. If you depend on it, make sure that you know what you are doing!
+
+# License
+"Commons Clause" License Condition v1.0
+
+The Software is provided to you by the Licensor under the License, as defined below, subject to the following condition.
+
+Without limiting other conditions in the License, the grant of rights under the License will not include, and the License does not grant to you, the right to Sell the Software.
+
+For purposes of the foregoing, "Sell" means practicing any or all of the rights granted to you under the License to provide to third parties, for a fee or other consideration (including without limitation fees for hosting or consulting/ support services related to the Software), a product or service whose value derives, entirely or substantially, from the functionality of the Software. Any license notice or attribution required by the License must also include this Commons Cause License Condition notice.
+
+Software: LabCA
+
+License: [Mozilla Public License 2.0](https://opensource.org/licenses/MPL-2.0)
+
+Licensor: [hakwerk](https://github.com/hakwerk)
