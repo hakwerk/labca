@@ -1,7 +1,9 @@
 # LabCA
+
 A private Certificate Authority for internal (lab) use, based on the open source ACME Automated Certificate Management Environment implementation from Let's Encrypt (tm).
 
 ## About
+
 More and more websites and applications are served over HTTPS, where all traffic between your browser and the web server is encrypted. With standard HTTP the (form) data is unencrypted and open to eavesdroppers and hackers listening to communications between the user and the website. Therefore the Chrome browser now even warns about unsafe plain HTTP sites to nudge users towards HTTPS.
 
 To a lesser extent this also applies to internal applications and sites that are not exposed publicly. Just because the users may have a higher level of trust versus users of a public facing website doesn't mean sensitive content shouldn't be protected as much as possible. Lots of hacking and theft occur from within a company's own walls, virtual or real. Also, no user should get used to ignoring any browser warnings (e.g. about self-signed certificates), even for internal sites.
@@ -18,20 +20,26 @@ Getting Boulder up and running has quite a learning curve though and that is whe
 
 ## Installation
 
+LabCA is best run on its own server / virtual machine to prevent any issues caused by conflicting applications. On a freshly installed Linux machine (currently only tested with Debian 9) run this command as root user:
+
 ```sh
 curl -sSL https://raw.githubusercontent.com/hakwerk/labca/master/install | bash
 ```
 
 ## Updating
 
+On the Linux machine run this command as root user to update the installation:
+
 ```sh
 ~labca/labca/install
 ```
 
 ## NOTE
+
 Although LabCA tries to be as robust as possible, use it at your own risk. If you depend on it, make sure that you know what you are doing!
 
 # License
+
 "Commons Clause" License Condition v1.0
 
 The Software is provided to you by the Licensor under the License, as defined below, subject to the following condition.
