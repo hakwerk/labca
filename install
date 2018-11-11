@@ -38,9 +38,6 @@ INFO="[i]"
 DONE="${COL_LIGHT_GREEN} done!${COL_NC}"
 OVER="\\r\\033[K"
 
-dn=$(dirname $0)
-source "$dn/utils.sh"
-
 #
 # Helper functions for informing the user and logging to file
 #
@@ -569,6 +566,9 @@ startup() {
         msg="Download docker images and build containers"
     fi
     msg_info "$msg (this will take a while!!)"
+
+    dn=$(dirname $0)
+    source "$dn/utils.sh"
 
     docker-compose stop &>>$installLog || true
     wait_down $PS_MYSQL &>>$installLog
