@@ -38,6 +38,17 @@ INFO="[i]"
 DONE="${COL_LIGHT_GREEN} done!${COL_NC}"
 OVER="\\r\\033[K"
 
+# Dummy implementation in case utils.sh is not available (install via curl method)
+wait_down() {
+    sleep 1
+}
+wait_up() {
+    sleep 5
+}
+
+dn=$(dirname $0)
+source "$dn/utils.sh" &>/dev/null || true
+
 #
 # Helper functions for informing the user and logging to file
 #
@@ -274,7 +285,7 @@ copy_admin() {
     replace_all /home/labca/acme_tiny.py LABCA_FQDN
 
     cd "$cloneDir"
-    version=$(git describe --always HEAD^2 2>/dev/null || git describe --always HEAD 2>/dev/null)
+    version=$(git describe --always HEAD 2>/dev/null)
     cd "$adminDir"
     grep \"version\" data/config.json &>/dev/null || sed -i -e 's/^}$/,\n  "version": ""\n}/' data/config.json
     sed -i -e "s/\"version\": \".*\"/\"version\": \"$version\"/" data/config.json
@@ -566,9 +577,6 @@ startup() {
         msg="Download docker images and build containers"
     fi
     msg_info "$msg (this will take a while!!)"
-
-    dn=$(dirname $0)
-    source "$dn/utils.sh"
 
     docker-compose stop &>>$installLog || true
     wait_down $PS_MYSQL &>>$installLog
