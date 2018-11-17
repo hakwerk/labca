@@ -38,7 +38,7 @@ LabCA is best run on its own server / virtual machine to prevent any issues caus
 curl -sSL https://raw.githubusercontent.com/hakwerk/labca/master/install | bash
 ```
 
-It will install the latest versions of some packages, download the relevant programs and configure everything. If all goes well it should look like this:
+The first-time install will take a while, depending on the power of your server and your internet speed. On my machine it takes about 12 minutes. It will install the latest versions of some packages, download the relevant programs and configure everything. If all goes well it should look like this:
 
 <img src="https://user-images.githubusercontent.com/44847421/48658718-dc557b00-ea46-11e8-8596-00709fad9197.jpg" width="300">
 
@@ -47,6 +47,8 @@ It will install the latest versions of some packages, download the relevant prog
 After the base install you must go through the setup in your browser. To give an idea of the setup process, see these screenshots:
 
 <img src="https://user-images.githubusercontent.com/44847421/48658719-df506b80-ea46-11e8-9c51-08157a9a8b49.jpg" width="300"> <img src="https://user-images.githubusercontent.com/44847421/48658720-e0819880-ea46-11e8-9fda-8498ca28177d.jpg" width="300"> <img src="https://user-images.githubusercontent.com/44847421/48658721-e24b5c00-ea46-11e8-99ff-f30e0ba3ffe0.jpg" width="300"> <img src="https://user-images.githubusercontent.com/44847421/48658722-e4151f80-ea46-11e8-8b8b-6a0e57620d8c.jpg" width="300"> <img src="https://user-images.githubusercontent.com/44847421/48658723-e6777980-ea46-11e8-99ac-da046807973f.jpg" width="300"> <img src="https://user-images.githubusercontent.com/44847421/48658725-e9726a00-ea46-11e8-814f-4b25e5fc17aa.jpg" width="300">
+
+Once the setup is completed, please make a backup of your Root and Issuer certificates! They can be exported from the "Certificates" tab of the Manage page. On the "Backup" tab you can also create a backup of the relevant data on the server. The backup files should be synchronized to an external location, but that is out of scope of this document.
 
 ### Update
 
