@@ -20,10 +20,7 @@ type Activity struct {
 	Class        string
 }
 
-func _parseLine(line string, loc *time.Location) Activity {
-	var activity Activity
-
-	// Remove ansi colors
+func _removeAnsiColors(line string) string {
 	b := make([]byte, len(line))
 	var bl int
 	for i := 0; i < len(line); i++ {
@@ -37,6 +34,14 @@ func _parseLine(line string, loc *time.Location) Activity {
 	line = strings.Replace(line, "[31m", "", -1)
 	line = strings.Replace(line, "[1m", "", -1)
 	line = strings.Replace(line, "[0m", "", -1)
+
+	return line
+}
+
+func _parseLine(line string, loc *time.Location) Activity {
+	var activity Activity
+
+	line = _removeAnsiColors(line)
 
 	re := regexp.MustCompile("^.*\\|\\s*(\\S)(\\S+) (\\S+) (\\S+) (.*)$")
 	result := re.FindStringSubmatch(line)

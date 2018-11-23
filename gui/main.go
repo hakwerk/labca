@@ -70,21 +70,7 @@ type User struct {
 	Errors      map[string]string
 }
 
-func (reg *User) Validate(isNew bool, isChange bool) bool {
-	reg.Errors = make(map[string]string)
-
-	if strings.TrimSpace(reg.Name) == "" {
-		reg.Errors["Name"] = "Please enter a user name"
-	}
-
-	if isNew || isChange {
-		re := regexp.MustCompile(".+@.+\\..+")
-		matched := re.Match([]byte(reg.Email))
-		if matched == false {
-			reg.Errors["Email"] = "Please enter a valid email address"
-		}
-	}
-
+func (reg *User) ValidatePassword(isNew bool, isChange bool) {
 	blacklist := []string{"labca", "acme", reg.Name}
 	if x := strings.Index(reg.Email, "@"); x > 0 {
 		blacklist = append(blacklist, reg.Email[:x])
@@ -131,6 +117,24 @@ func (reg *User) Validate(isNew bool, isChange bool) bool {
 			reg.Errors["Password"] = "Current password is not correct!"
 		}
 	}
+}
+
+func (reg *User) Validate(isNew bool, isChange bool) bool {
+	reg.Errors = make(map[string]string)
+
+	if strings.TrimSpace(reg.Name) == "" {
+		reg.Errors["Name"] = "Please enter a user name"
+	}
+
+	if isNew || isChange {
+		re := regexp.MustCompile(".+@.+\\..+")
+		matched := re.Match([]byte(reg.Email))
+		if matched == false {
+			reg.Errors["Email"] = "Please enter a valid email address"
+		}
+	}
+
+	reg.ValidatePassword(isNew, isChange)
 
 	return len(reg.Errors) == 0
 }
@@ -754,6 +758,256 @@ func _decrypt(ciphertext string) ([]byte, error) {
 	return gcm.Open(nil, ct[:gcm.NonceSize()], ct[gcm.NonceSize():], nil)
 }
 
+type Result struct {
+	Success      bool
+	Message      string
+	Timestamp    string
+	TimestampRel string
+	Class        string
+}
+
+func (res *Result) ManageComponents(w http.ResponseWriter, r *http.Request, action string) {
+	components := _parseComponents(getLog(w, r, "components"))
+	for i := 0; i < len(components); i++ {
+		if (components[i].Name == "NGINX Webserver" && (action == "nginx-reload" || action == "nginx-restart")) ||
+			(components[i].Name == "Host Service" && action == "svc-restart") ||
+			(components[i].Name == "Boulder (ACME)" && (action == "boulder-start" || action == "boulder-stop" || action == "boulder-restart")) ||
+			(components[i].Name == "LabCA Application" && action == "labca-restart") {
+			res.Timestamp = components[i].Timestamp
+			res.TimestampRel = components[i].TimestampRel
+			res.Class = components[i].Class
+			break
+		}
+	}
+}
+
+func _managePostDispatch(w http.ResponseWriter, r *http.Request, action string) bool {
+	if action == "backup-restore" || action == "backup-delete" || action == "backup-now" {
+		_backupHandler(w, r)
+		return true
+	}
+
+	if action == "cert-export" {
+		_exportHandler(w, r)
+		return true
+	}
+
+	if action == "update-account" {
+		_accountUpdateHandler(w, r)
+		return true
+	}
+
+	if action == "update-config" {
+		_configUpdateHandler(w, r)
+		return true
+	}
+
+	if action == "update-email" {
+		_emailUpdateHandler(w, r)
+		return true
+	}
+
+	if action == "send-email" {
+		_emailSendHandler(w, r)
+		return true
+	}
+
+	return false
+}
+
+func _managePost(w http.ResponseWriter, r *http.Request) {
+	if err := r.ParseForm(); err != nil {
+		errorHandler(w, r, err, http.StatusInternalServerError)
+		return
+	}
+
+	action := r.Form.Get("action")
+	actionKnown := false
+	for _, a := range []string {
+		"backup-restore",
+		"backup-delete",
+		"backup-now",
+		"cert-export",
+		"nginx-reload",
+		"nginx-restart",
+		"svc-restart",
+		"boulder-start",
+		"boulder-stop",
+		"boulder-restart",
+		"labca-restart",
+		"server-restart",
+		"server-shutdown",
+		"update-account",
+		"update-config",
+		"update-email",
+		"send-email",
+	} {
+		if a == action {
+			actionKnown = true
+		}
+	}
+	if !actionKnown {
+		errorHandler(w, r, errors.New(fmt.Sprintf("Unknown manage action '%s'", action)), http.StatusBadRequest)
+		return
+	}
+
+	if _managePostDispatch(w, r, action) {
+		return
+	}
+
+	res := &Result{ Success: true }
+	if !_hostCommand(w, r, action) {
+		res.Success = false
+		res.Message = "Command failed - see LabCA log for any details"
+	}
+
+	if action != "server-restart" && action != "server-shutdown" {
+		res.ManageComponents(w, r, action)
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(res)
+}
+
+func _manageGet(w http.ResponseWriter, r *http.Request) {
+	manageData := make(map[string]interface{})
+	manageData["RequestBase"] = r.Header.Get("X-Request-Base")
+
+	components := _parseComponents(getLog(w, r, "components"))
+	for i := 0; i < len(components); i++ {
+		if components[i].Name == "NGINX Webserver" {
+			components[i].LogUrl = r.Header.Get("X-Request-Base") + "/logs/weberr"
+			components[i].LogTitle = "Web Error Log"
+
+			btn := make(map[string]interface{})
+			btn["Class"] = "btn-info"
+			btn["Id"] = "nginx-reload"
+			btn["Title"] = "Reload web server configuration with minimal impact to the users"
+			btn["Label"] = "Reload"
+			components[i].Buttons = append(components[i].Buttons, btn)
+
+			btn = make(map[string]interface{})
+			btn["Class"] = "btn-warning"
+			btn["Id"] = "nginx-restart"
+			btn["Title"] = "Restart the web server with some downtime for the users"
+			btn["Label"] = "Restart"
+			components[i].Buttons = append(components[i].Buttons, btn)
+		}
+
+		if components[i].Name == "Host Service" {
+			components[i].LogUrl = ""
+			components[i].LogTitle = ""
+
+			btn := make(map[string]interface{})
+			btn["Class"] = "btn-warning"
+			btn["Id"] = "svc-restart"
+			btn["Title"] = "Restart the host service"
+			btn["Label"] = "Restart"
+			components[i].Buttons = append(components[i].Buttons, btn)
+		}
+
+		if components[i].Name == "Boulder (ACME)" {
+			components[i].LogUrl = r.Header.Get("X-Request-Base") + "/logs/boulder"
+			components[i].LogTitle = "ACME Log"
+
+			btn := make(map[string]interface{})
+			cls := "btn-success"
+			if components[i].TimestampRel != "stopped" {
+				cls = cls + " hidden"
+			}
+			btn["Class"] = cls
+			btn["Id"] = "boulder-start"
+			btn["Title"] = "Start the core ACME application"
+			btn["Label"] = "Start"
+			components[i].Buttons = append(components[i].Buttons, btn)
+
+			btn = make(map[string]interface{})
+			cls = "btn-warning"
+			if components[i].TimestampRel == "stopped" {
+				cls = cls + " hidden"
+			}
+			btn["Class"] = cls
+			btn["Id"] = "boulder-restart"
+			btn["Title"] = "Stop and restart the core ACME application"
+			btn["Label"] = "Restart"
+			components[i].Buttons = append(components[i].Buttons, btn)
+
+			btn = make(map[string]interface{})
+			cls = "btn-danger"
+			if components[i].TimestampRel == "stopped" {
+				cls = cls + " hidden"
+			}
+			btn["Class"] = cls
+			btn["Id"] = "boulder-stop"
+			btn["Title"] = "Stop the core ACME application; users can no longer use ACME clients to interact with this instance"
+			btn["Label"] = "Stop"
+			components[i].Buttons = append(components[i].Buttons, btn)
+		}
+
+		if components[i].Name == "LabCA Application" {
+			components[i].LogUrl = r.Header.Get("X-Request-Base") + "/logs/labca"
+			components[i].LogTitle = "LabCA Log"
+
+			btn := make(map[string]interface{})
+			btn["Class"] = "btn-warning"
+			btn["Id"] = "labca-restart"
+			btn["Title"] = "Stop and restart this LabCA admin application"
+			btn["Label"] = "Restart"
+			components[i].Buttons = append(components[i].Buttons, btn)
+		}
+	}
+	manageData["Components"] = components
+
+	stats := _parseStats(getLog(w, r, "stats"))
+	for _, stat := range stats {
+		if stat.Name == "System Uptime" {
+			manageData["ServerTimestamp"] = stat.Hint
+			manageData["ServerTimestampRel"] = stat.Value
+			break
+		}
+	}
+
+	backupFiles := strings.Split(getLog(w, r, "backups"), "\n")
+	backupFiles = backupFiles[:len(backupFiles)-1]
+	manageData["BackupFiles"] = backupFiles
+
+	manageData["RootDetails"] = _doCmdOutput(w, r, "openssl x509 -noout -text -in data/root-ca.pem")
+	manageData["IssuerDetails"] = _doCmdOutput(w, r, "openssl x509 -noout -text -in data/issuer/ca-int.pem")
+
+	manageData["Fqdn"] = viper.GetString("labca.fqdn")
+	manageData["Organization"] = viper.GetString("labca.organization")
+	manageData["Dns"] = viper.GetString("labca.dns")
+	domain_mode := viper.GetString("labca.domain_mode")
+	manageData["DomainMode"] = domain_mode
+	if domain_mode == "lockdown" {
+		manageData["LockdownDomains"] = viper.GetString("labca.lockdown")
+	}
+	if domain_mode == "whitelist" {
+		manageData["WhitelistDomains"] = viper.GetString("labca.whitelist")
+	}
+
+	manageData["DoEmail"] = viper.GetBool("labca.email.enable")
+	manageData["Server"] = viper.GetString("labca.email.server")
+	manageData["Port"] = viper.GetInt("labca.email.port")
+	manageData["EmailUser"] = viper.GetString("labca.email.user")
+	manageData["EmailPwd"] = ""
+	if viper.Get("labca.email.pass") != nil {
+		pwd := viper.GetString("labca.email.pass")
+		result, err := _decrypt(pwd)
+		if err == nil {
+			manageData["EmailPwd"] = string(result)
+		} else {
+			log.Printf("WARNING: could not decrypt email password: %s!\n", err.Error())
+		}
+	}
+	manageData["From"] = viper.GetString("labca.email.from")
+
+	manageData["Name"] = viper.GetString("user.name")
+	manageData["Email"] = viper.GetString("user.email")
+
+	render(w, r, "manage", manageData)
+}
+
 func manageHandler(w http.ResponseWriter, r *http.Request) {
 	if !viper.GetBool("config.complete") {
 		http.Redirect(w, r, r.Header.Get("X-Request-Base")+"/setup", http.StatusFound)
@@ -761,232 +1015,9 @@ func manageHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if r.Method == "POST" {
-		if err := r.ParseForm(); err != nil {
-			errorHandler(w, r, err, http.StatusInternalServerError)
-			return
-		}
-
-		action := r.Form.Get("action")
-		switch action {
-		case "backup-restore":
-		case "backup-delete":
-		case "backup-now":
-		case "cert-export":
-		case "nginx-reload":
-		case "nginx-restart":
-		case "svc-restart":
-		case "boulder-start":
-		case "boulder-stop":
-		case "boulder-restart":
-		case "labca-restart":
-		case "server-restart":
-		case "server-shutdown":
-		case "update-account":
-		case "update-config":
-		case "update-email":
-		case "send-email":
-		default:
-			errorHandler(w, r, errors.New(fmt.Sprintf("Unknown manage action '%s'", action)), http.StatusBadRequest)
-			return
-		}
-
-		if action == "backup-restore" || action == "backup-delete" || action == "backup-now" {
-			_backupHandler(w, r)
-			return
-		}
-
-		if action == "cert-export" {
-			_exportHandler(w, r)
-			return
-		}
-
-		if action == "update-account" {
-			_accountUpdateHandler(w, r)
-			return
-		}
-
-		if action == "update-config" {
-			_configUpdateHandler(w, r)
-			return
-		}
-
-		if action == "update-email" {
-			_emailUpdateHandler(w, r)
-			return
-		}
-
-		if action == "send-email" {
-			_emailSendHandler(w, r)
-			return
-		}
-
-		res := struct {
-			Success      bool
-			Message      string
-			Timestamp    string
-			TimestampRel string
-			Class        string
-		}{Success: true}
-		if !_hostCommand(w, r, action) {
-			res.Success = false
-			res.Message = "Command failed - see LabCA log for any details"
-		}
-
-		if action != "server-restart" && action != "server-shutdown" {
-			components := _parseComponents(getLog(w, r, "components"))
-			for i := 0; i < len(components); i++ {
-				if (components[i].Name == "NGINX Webserver" && (action == "nginx-reload" || action == "nginx-restart")) ||
-					(components[i].Name == "Host Service" && action == "svc-restart") ||
-					(components[i].Name == "Boulder (ACME)" && (action == "boulder-start" || action == "boulder-stop" || action == "boulder-restart")) ||
-					(components[i].Name == "LabCA Application" && action == "labca-restart") {
-					res.Timestamp = components[i].Timestamp
-					res.TimestampRel = components[i].TimestampRel
-					res.Class = components[i].Class
-					break
-				}
-			}
-		}
-
-		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(res)
-
+		_managePost(w,r)
 	} else {
-		manageData := make(map[string]interface{})
-		manageData["RequestBase"] = r.Header.Get("X-Request-Base")
-
-		components := _parseComponents(getLog(w, r, "components"))
-		for i := 0; i < len(components); i++ {
-			if components[i].Name == "NGINX Webserver" {
-				components[i].LogUrl = r.Header.Get("X-Request-Base") + "/logs/weberr"
-				components[i].LogTitle = "Web Error Log"
-
-				btn := make(map[string]interface{})
-				btn["Class"] = "btn-info"
-				btn["Id"] = "nginx-reload"
-				btn["Title"] = "Reload web server configuration with minimal impact to the users"
-				btn["Label"] = "Reload"
-				components[i].Buttons = append(components[i].Buttons, btn)
-
-				btn = make(map[string]interface{})
-				btn["Class"] = "btn-warning"
-				btn["Id"] = "nginx-restart"
-				btn["Title"] = "Restart the web server with some downtime for the users"
-				btn["Label"] = "Restart"
-				components[i].Buttons = append(components[i].Buttons, btn)
-			}
-
-			if components[i].Name == "Host Service" {
-				components[i].LogUrl = ""
-				components[i].LogTitle = ""
-
-				btn := make(map[string]interface{})
-				btn["Class"] = "btn-warning"
-				btn["Id"] = "svc-restart"
-				btn["Title"] = "Restart the host service"
-				btn["Label"] = "Restart"
-				components[i].Buttons = append(components[i].Buttons, btn)
-			}
-
-			if components[i].Name == "Boulder (ACME)" {
-				components[i].LogUrl = r.Header.Get("X-Request-Base") + "/logs/boulder"
-				components[i].LogTitle = "ACME Log"
-
-				btn := make(map[string]interface{})
-				cls := "btn-success"
-				if components[i].TimestampRel != "stopped" {
-					cls = cls + " hidden"
-				}
-				btn["Class"] = cls
-				btn["Id"] = "boulder-start"
-				btn["Title"] = "Start the core ACME application"
-				btn["Label"] = "Start"
-				components[i].Buttons = append(components[i].Buttons, btn)
-
-				btn = make(map[string]interface{})
-				cls = "btn-warning"
-				if components[i].TimestampRel == "stopped" {
-					cls = cls + " hidden"
-				}
-				btn["Class"] = cls
-				btn["Id"] = "boulder-restart"
-				btn["Title"] = "Stop and restart the core ACME application"
-				btn["Label"] = "Restart"
-				components[i].Buttons = append(components[i].Buttons, btn)
-
-				btn = make(map[string]interface{})
-				cls = "btn-danger"
-				if components[i].TimestampRel == "stopped" {
-					cls = cls + " hidden"
-				}
-				btn["Class"] = cls
-				btn["Id"] = "boulder-stop"
-				btn["Title"] = "Stop the core ACME application; users can no longer use ACME clients to interact with this instance"
-				btn["Label"] = "Stop"
-				components[i].Buttons = append(components[i].Buttons, btn)
-			}
-
-			if components[i].Name == "LabCA Application" {
-				components[i].LogUrl = r.Header.Get("X-Request-Base") + "/logs/labca"
-				components[i].LogTitle = "LabCA Log"
-
-				btn := make(map[string]interface{})
-				btn["Class"] = "btn-warning"
-				btn["Id"] = "labca-restart"
-				btn["Title"] = "Stop and restart this LabCA admin application"
-				btn["Label"] = "Restart"
-				components[i].Buttons = append(components[i].Buttons, btn)
-			}
-		}
-		manageData["Components"] = components
-
-		stats := _parseStats(getLog(w, r, "stats"))
-		for _, stat := range stats {
-			if stat.Name == "System Uptime" {
-				manageData["ServerTimestamp"] = stat.Hint
-				manageData["ServerTimestampRel"] = stat.Value
-				break
-			}
-		}
-
-		backupFiles := strings.Split(getLog(w, r, "backups"), "\n")
-		backupFiles = backupFiles[:len(backupFiles)-1]
-		manageData["BackupFiles"] = backupFiles
-
-		manageData["RootDetails"] = _doCmdOutput(w, r, "openssl x509 -noout -text -in data/root-ca.pem")
-		manageData["IssuerDetails"] = _doCmdOutput(w, r, "openssl x509 -noout -text -in data/issuer/ca-int.pem")
-
-		manageData["Fqdn"] = viper.GetString("labca.fqdn")
-		manageData["Organization"] = viper.GetString("labca.organization")
-		manageData["Dns"] = viper.GetString("labca.dns")
-		domain_mode := viper.GetString("labca.domain_mode")
-		manageData["DomainMode"] = domain_mode
-		if domain_mode == "lockdown" {
-			manageData["LockdownDomains"] = viper.GetString("labca.lockdown")
-		}
-		if domain_mode == "whitelist" {
-			manageData["WhitelistDomains"] = viper.GetString("labca.whitelist")
-		}
-
-		manageData["DoEmail"] = viper.GetBool("labca.email.enable")
-		manageData["Server"] = viper.GetString("labca.email.server")
-		manageData["Port"] = viper.GetInt("labca.email.port")
-		manageData["EmailUser"] = viper.GetString("labca.email.user")
-		manageData["EmailPwd"] = ""
-		if viper.Get("labca.email.pass") != nil {
-			pwd := viper.GetString("labca.email.pass")
-			result, err := _decrypt(pwd)
-			if err == nil {
-				manageData["EmailPwd"] = string(result)
-			} else {
-				log.Printf("WARNING: could not decrypt email password: %s!\n", err.Error())
-			}
-		}
-		manageData["From"] = viper.GetString("labca.email.from")
-
-		manageData["Name"] = viper.GetString("user.name")
-		manageData["Email"] = viper.GetString("user.email")
-
-		render(w, r, "manage", manageData)
+		_manageGet(w,r)
 	}
 }
 
@@ -1173,6 +1204,42 @@ func wsHandler(w http.ResponseWriter, r *http.Request) {
 	reader(ws)
 }
 
+func _buildCI(r *http.Request, session *sessions.Session, isRoot bool) *CertificateInfo {
+	ci := &CertificateInfo{
+		IsRoot:      isRoot,
+		CreateType:  "generate",
+		CommonName:  "Root CA",
+		RequestBase: r.Header.Get("X-Request-Base"),
+	}
+	if !isRoot {
+		ci.CommonName = "CA"
+	}
+	ci.Initialize()
+
+	if session.Values["ct"] != nil {
+		ci.CreateType = session.Values["ct"].(string)
+	}
+	if session.Values["kt"] != nil {
+		ci.KeyType = session.Values["kt"].(string)
+	}
+	if session.Values["c"] != nil {
+		ci.Country = session.Values["c"].(string)
+	}
+	if session.Values["o"] != nil {
+		ci.Organization = session.Values["o"].(string)
+	}
+	if session.Values["ou"] != nil {
+		ci.OrgUnit = session.Values["ou"].(string)
+	}
+	if session.Values["cn"] != nil {
+		ci.CommonName = session.Values["cn"].(string)
+		ci.CommonName = strings.Replace(ci.CommonName, "Root", "", -1)
+		ci.CommonName = strings.Replace(ci.CommonName, "  ", " ", -1)
+	}
+
+	return ci
+}
+
 func _certCreate(w http.ResponseWriter, r *http.Request, certBase string, isRoot bool) bool {
 	path := "data/"
 	if !isRoot {
@@ -1183,37 +1250,7 @@ func _certCreate(w http.ResponseWriter, r *http.Request, certBase string, isRoot
 		session := getSession(w, r)
 
 		if r.Method == "GET" {
-			ci := &CertificateInfo{
-				IsRoot:      isRoot,
-				CreateType:  "generate",
-				CommonName:  "Root CA",
-				RequestBase: r.Header.Get("X-Request-Base"),
-			}
-			if !isRoot {
-				ci.CommonName = "CA"
-			}
-			ci.Initialize()
-
-			if session.Values["ct"] != nil {
-				ci.CreateType = session.Values["ct"].(string)
-			}
-			if session.Values["kt"] != nil {
-				ci.KeyType = session.Values["kt"].(string)
-			}
-			if session.Values["c"] != nil {
-				ci.Country = session.Values["c"].(string)
-			}
-			if session.Values["o"] != nil {
-				ci.Organization = session.Values["o"].(string)
-			}
-			if session.Values["ou"] != nil {
-				ci.OrgUnit = session.Values["ou"].(string)
-			}
-			if session.Values["cn"] != nil {
-				ci.CommonName = session.Values["cn"].(string)
-				ci.CommonName = strings.Replace(ci.CommonName, "Root", "", -1)
-				ci.CommonName = strings.Replace(ci.CommonName, "  ", " ", -1)
-			}
+			ci := _buildCI(r, session, isRoot)
 
 			render(w, r, "cert:manage", map[string]interface{}{"CertificateInfo": ci, "Progress": _progress(certBase), "HelpText": _helptext(certBase)})
 			return false
@@ -1491,11 +1528,126 @@ func _helptext(stage string) template.HTML {
 			"you can either generate a fresh certificate or import an existing one, as long as it is signed by\n",
 			"the Root CA from the previous step.</p>\n",
 			"<p>If you want to generate a certificate, by default the same key type and strength is selected as\n",
-			"was choosen in the previous step when generating the root, but you may choose a different one. By\n",
+			"was chosen in the previous step when generating the root, but you may choose a different one. By\n",
 			"default the common name is the same as the CN for the Root CA, minus the word 'Root'.</p>"))
 	} else {
 		return template.HTML("")
 	}
+}
+
+func _setupAdminUser(w http.ResponseWriter, r *http.Request) bool {
+	if r.Method == "GET" {
+		reg := &User{
+			RequestBase: r.Header.Get("X-Request-Base"),
+		}
+		render(w, r, "register:manage", map[string]interface{}{"User": reg, "IsLogin": true, "Progress": _progress("register"), "HelpText": _helptext("register")})
+		return false
+	} else if r.Method == "POST" {
+		if err := r.ParseForm(); err != nil {
+			errorHandler(w, r, err, http.StatusInternalServerError)
+			return false
+		}
+
+		reg := &User{
+			Name:        r.Form.Get("username"),
+			Email:       r.Form.Get("email"),
+			Password:    r.Form.Get("password"),
+			Confirm:     r.Form.Get("confirm"),
+			RequestBase: r.Header.Get("X-Request-Base"),
+		}
+
+		if reg.Validate(true, false) == false {
+			render(w, r, "register:manage", map[string]interface{}{"User": reg, "IsLogin": true, "Progress": _progress("register"), "HelpText": _helptext("register")})
+			return false
+		}
+
+		hash, err := bcrypt.GenerateFromPassword([]byte(reg.Password), bcrypt.MinCost)
+		if err != nil {
+			errorHandler(w, r, err, http.StatusInternalServerError)
+			return false
+		}
+		viper.Set("user.name", reg.Name)
+		viper.Set("user.email", reg.Email)
+		viper.Set("user.password", string(hash))
+		viper.WriteConfig()
+
+		session := getSession(w, r)
+		session.Values["user"] = reg.Name
+		session.Save(r, w)
+
+		// Fake the method to GET as we need to continue in the setupHandler() function
+		r.Method = "GET"
+	} else {
+		http.Redirect(w, r, r.Header.Get("X-Request-Base")+"/setup", http.StatusSeeOther)
+		return false
+	}
+
+	return true
+}
+
+func _setupBaseConfig(w http.ResponseWriter, r *http.Request) bool {
+	if r.Method == "GET" {
+		domain := viper.GetString("labca.fqdn")
+		pos := strings.Index(domain, ".")
+		if pos > -1 {
+			pos = pos + 1
+			domain = domain[pos:]
+		}
+
+		cfg := &SetupConfig{
+			Fqdn:             viper.GetString("labca.fqdn"),
+			DomainMode:       "lockdown",
+			LockdownDomains:  domain,
+			WhitelistDomains: domain,
+			RequestBase:      r.Header.Get("X-Request-Base"),
+		}
+
+		render(w, r, "setup:manage", map[string]interface{}{"SetupConfig": cfg, "Progress": _progress("setup"), "HelpText": _helptext("setup")})
+		return false
+	} else if r.Method == "POST" {
+		if err := r.ParseForm(); err != nil {
+			errorHandler(w, r, err, http.StatusInternalServerError)
+			return false
+		}
+
+		cfg := &SetupConfig{
+			Fqdn:             r.Form.Get("fqdn"),
+			Dns:              r.Form.Get("dns"),
+			DomainMode:       r.Form.Get("domain_mode"),
+			LockdownDomains:  r.Form.Get("lockdown_domains"),
+			WhitelistDomains: r.Form.Get("whitelist_domains"),
+			RequestBase:      r.Header.Get("X-Request-Base"),
+		}
+
+		if cfg.Validate(false) == false {
+			render(w, r, "setup:manage", map[string]interface{}{"SetupConfig": cfg, "Progress": _progress("setup"), "HelpText": _helptext("setup")})
+			return false
+		}
+
+		matched, err := regexp.MatchString(":\\d+$", cfg.Dns)
+		if err == nil && !matched {
+			cfg.Dns += ":53"
+		}
+
+		viper.Set("labca.fqdn", cfg.Fqdn)
+		viper.Set("labca.dns", cfg.Dns)
+		viper.Set("labca.domain_mode", cfg.DomainMode)
+		if cfg.DomainMode == "lockdown" {
+			viper.Set("labca.lockdown", cfg.LockdownDomains)
+		}
+		if cfg.DomainMode == "whitelist" {
+			viper.Set("labca.whitelist", cfg.WhitelistDomains)
+		}
+		viper.WriteConfig()
+
+		// Fake the method to GET as we need to continue in the setupHandler() function
+		r.Method = "GET"
+	} else {
+		http.Redirect(w, r, r.Header.Get("X-Request-Base")+"/setup", http.StatusSeeOther)
+		return false
+	}
+
+	return true
 }
 
 func setupHandler(w http.ResponseWriter, r *http.Request) {
@@ -1506,113 +1658,14 @@ func setupHandler(w http.ResponseWriter, r *http.Request) {
 
 	// 1. Setup admin user
 	if viper.Get("user.password") == nil {
-		if r.Method == "GET" {
-			reg := &User{
-				RequestBase: r.Header.Get("X-Request-Base"),
-			}
-			render(w, r, "register:manage", map[string]interface{}{"User": reg, "IsLogin": true, "Progress": _progress("register"), "HelpText": _helptext("register")})
-			return
-		} else if r.Method == "POST" {
-			if err := r.ParseForm(); err != nil {
-				errorHandler(w, r, err, http.StatusInternalServerError)
-				return
-			}
-
-			reg := &User{
-				Name:        r.Form.Get("username"),
-				Email:       r.Form.Get("email"),
-				Password:    r.Form.Get("password"),
-				Confirm:     r.Form.Get("confirm"),
-				RequestBase: r.Header.Get("X-Request-Base"),
-			}
-
-			if reg.Validate(true, false) == false {
-				render(w, r, "register:manage", map[string]interface{}{"User": reg, "IsLogin": true, "Progress": _progress("register"), "HelpText": _helptext("register")})
-				return
-			}
-
-			hash, err := bcrypt.GenerateFromPassword([]byte(reg.Password), bcrypt.MinCost)
-			if err != nil {
-				errorHandler(w, r, err, http.StatusInternalServerError)
-				return
-			}
-			viper.Set("user.name", reg.Name)
-			viper.Set("user.email", reg.Email)
-			viper.Set("user.password", string(hash))
-			viper.WriteConfig()
-
-			session := getSession(w, r)
-			session.Values["user"] = reg.Name
-			session.Save(r, w)
-
-			// Fake the method to GET as we need to continue in the setupHandler() function
-			r.Method = "GET"
-		} else {
-			http.Redirect(w, r, r.Header.Get("X-Request-Base")+"/setup", http.StatusSeeOther)
+		if !_setupAdminUser(w, r) {
 			return
 		}
 	}
 
 	// 2. Setup essential configuration
 	if viper.Get("labca.dns") == nil {
-		if r.Method == "GET" {
-			domain := viper.GetString("labca.fqdn")
-			pos := strings.Index(domain, ".")
-			if pos > -1 {
-				pos = pos + 1
-				domain = domain[pos:]
-			}
-
-			cfg := &SetupConfig{
-				Fqdn:             viper.GetString("labca.fqdn"),
-				DomainMode:       "lockdown",
-				LockdownDomains:  domain,
-				WhitelistDomains: domain,
-				RequestBase:      r.Header.Get("X-Request-Base"),
-			}
-
-			render(w, r, "setup:manage", map[string]interface{}{"SetupConfig": cfg, "Progress": _progress("setup"), "HelpText": _helptext("setup")})
-			return
-		} else if r.Method == "POST" {
-			if err := r.ParseForm(); err != nil {
-				errorHandler(w, r, err, http.StatusInternalServerError)
-				return
-			}
-
-			cfg := &SetupConfig{
-				Fqdn:             r.Form.Get("fqdn"),
-				Dns:              r.Form.Get("dns"),
-				DomainMode:       r.Form.Get("domain_mode"),
-				LockdownDomains:  r.Form.Get("lockdown_domains"),
-				WhitelistDomains: r.Form.Get("whitelist_domains"),
-				RequestBase:      r.Header.Get("X-Request-Base"),
-			}
-
-			if cfg.Validate(false) == false {
-				render(w, r, "setup:manage", map[string]interface{}{"SetupConfig": cfg, "Progress": _progress("setup"), "HelpText": _helptext("setup")})
-				return
-			}
-
-			matched, err := regexp.MatchString(":\\d+$", cfg.Dns)
-			if err == nil && !matched {
-				cfg.Dns += ":53"
-			}
-
-			viper.Set("labca.fqdn", cfg.Fqdn)
-			viper.Set("labca.dns", cfg.Dns)
-			viper.Set("labca.domain_mode", cfg.DomainMode)
-			if cfg.DomainMode == "lockdown" {
-				viper.Set("labca.lockdown", cfg.LockdownDomains)
-			}
-			if cfg.DomainMode == "whitelist" {
-				viper.Set("labca.whitelist", cfg.WhitelistDomains)
-			}
-			viper.WriteConfig()
-
-			// Fake the method to GET as we need to continue in the setupHandler() function
-			r.Method = "GET"
-		} else {
-			http.Redirect(w, r, r.Header.Get("X-Request-Base")+"/setup", http.StatusSeeOther)
+		if !_setupBaseConfig(w, r) {
 			return
 		}
 	}
@@ -1935,23 +1988,15 @@ type navItem struct {
 	SubMenu  []navItem
 }
 
-func activeNav(active string, uri string, requestBase string) []navItem {
-	isAcmeActive := (uri == "/accounts" || strings.HasPrefix(uri, "/accounts/") ||
-		uri == "/orders" || strings.HasPrefix(uri, "/orders/") ||
-		uri == "/authz" || strings.HasPrefix(uri, "/authz/") ||
-		uri == "/challenges" || strings.HasPrefix(uri, "/challenges/") ||
-		uri == "/certificates" || strings.HasPrefix(uri, "/certificates/") ||
-		false)
+func _matchPrefix(uri string, prefix string) bool {
+	return (uri == prefix || strings.HasPrefix(uri, prefix + "/"))
+}
 
-	// create menu items
-	home := navItem{
-		Name: "Dashboard",
-		Icon: "fa-dashboard",
-		Attrs: map[template.HTMLAttr]string{
-			"href":  requestBase + "/",
-			"title": "Main page with the status of the system",
-		},
-	}
+func _acmeNav(active string, uri string, requestBase string) navItem {
+	isAcmeActive := _matchPrefix(uri, "/accounts") || _matchPrefix(uri, "/orders") ||
+		_matchPrefix(uri, "/authz") || _matchPrefix(uri, "/challenges" ) ||
+		_matchPrefix(uri, "/certificates") || false
+
 	accounts := navItem{
 		Name: "Accounts",
 		Icon: "fa-list-alt",
@@ -2002,6 +2047,35 @@ func activeNav(active string, uri string, requestBase string) []navItem {
 		IsActive: isAcmeActive,
 		SubMenu:  []navItem{accounts, certificates, orders, authz, challenges},
 	}
+
+	// set active menu class
+	switch active {
+	case "accounts":
+		accounts.Attrs["class"] = "active"
+	case "certificates":
+		certificates.Attrs["class"] = "active"
+	case "orders":
+		orders.Attrs["class"] = "active"
+	case "authz":
+		authz.Attrs["class"] = "active"
+	case "challenges":
+		challenges.Attrs["class"] = "active"
+	}
+
+	return acme
+}
+
+func activeNav(active string, uri string, requestBase string) []navItem {
+	// create menu items
+	home := navItem{
+		Name: "Dashboard",
+		Icon: "fa-dashboard",
+		Attrs: map[template.HTMLAttr]string{
+			"href":  requestBase + "/",
+			"title": "Main page with the status of the system",
+		},
+	}
+	acme := _acmeNav(active, uri, requestBase)
 	cert := navItem{
 		Name: "Web Certificate",
 		Icon: "fa-lock",
@@ -2057,6 +2131,7 @@ func activeNav(active string, uri string, requestBase string) []navItem {
 			"href":  "#",
 			"title": "Log Files",
 		},
+		IsActive: strings.HasPrefix(uri, "/logs/"),
 		SubMenu: []navItem{cert, boulder, audit, labca, web, weberr},
 	}
 	manage := navItem{
@@ -2088,22 +2163,10 @@ func activeNav(active string, uri string, requestBase string) []navItem {
 	switch active {
 	case "about":
 		about.Attrs["class"] = "active"
-	case "accounts":
-		accounts.Attrs["class"] = "active"
-	case "orders":
-		orders.Attrs["class"] = "active"
-	case "authz":
-		authz.Attrs["class"] = "active"
-	case "challenges":
-		challenges.Attrs["class"] = "active"
-	case "certificates":
-		certificates.Attrs["class"] = "active"
 	case "index":
 		home.Attrs["class"] = "active"
 	case "manage":
 		manage.Attrs["class"] = "active"
-	case "logs":
-		logs.Attrs["class"] = "active"
 	}
 
 	return []navItem{home, acme, logs, manage, about, public}

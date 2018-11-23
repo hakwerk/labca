@@ -630,6 +630,36 @@ type CertificateExtra struct {
 	IsExpired          bool
 }
 
+func _getReasonText(RevokedReason int, Revoked string) string {
+	reasonText := ""
+	switch RevokedReason {
+	case 0:
+		if Revoked != "0000-00-00 00:00:00" {
+			reasonText = " - Unspecified"
+		}
+	case 1:
+		reasonText = " - Key Compromise"
+	case 2:
+		reasonText = " - CA Compromise"
+	case 3:
+		reasonText = " - Affiliation Changed"
+	case 4:
+		reasonText = " - Superseded"
+	case 5:
+		reasonText = " - Cessation Of Operation"
+	case 6:
+		reasonText = " - Certificate Hold"
+	case 8:
+		reasonText = " - Remove From CRL"
+	case 9:
+		reasonText = " - Privilege Withdrawn"
+	case 10:
+		reasonText = " - AA Compromise"
+	}
+
+	return reasonText
+}
+
 func GetCertificate(w http.ResponseWriter, r *http.Request, id int, serial string) (CertificateShow, error) {
 	db, err := sql.Open(dbType, dbConn)
 	if err != nil {
@@ -681,31 +711,7 @@ func GetCertificate(w http.ResponseWriter, r *http.Request, id int, serial strin
 		CertificateDetails.Rows = append(CertificateDetails.Rows, NameValue{"Status", row.Status})
 		CertificateDetails.Rows = append(CertificateDetails.Rows, NameValue{"OCSP Last Update", row.OCSPLastUpdate})
 		CertificateDetails.Rows = append(CertificateDetails.Rows, NameValue{"Revoked", row.Revoked})
-		reasonText := ""
-		switch row.RevokedReason {
-		case 0:
-			if row.Revoked != "0000-00-00 00:00:00" {
-				reasonText = " - Unspecified"
-			}
-		case 1:
-			reasonText = " - Key Compromise"
-		case 2:
-			reasonText = " - CA Compromise"
-		case 3:
-			reasonText = " - Affiliation Changed"
-		case 4:
-			reasonText = " - Superseded"
-		case 5:
-			reasonText = " - Cessation Of Operation"
-		case 6:
-			reasonText = " - Certificate Hold"
-		case 8:
-			reasonText = " - Remove From CRL"
-		case 9:
-			reasonText = " - Privilege Withdrawn"
-		case 10:
-			reasonText = " - AA Compromise"
-		}
+		reasonText := _getReasonText(row.RevokedReason, row.Revoked)
 		CertificateDetails.Rows = append(CertificateDetails.Rows, NameValue{"Revoked Reason", strconv.Itoa(row.RevokedReason) + reasonText})
 		CertificateDetails.Rows = append(CertificateDetails.Rows, NameValue{"Last Expiration Nag Sent", row.LastNagSent})
 		CertificateDetails.Rows = append(CertificateDetails.Rows, NameValue{"Not After", row.NotAfter})

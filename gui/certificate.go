@@ -49,22 +49,26 @@ func (ci *CertificateInfo) Initialize() {
 	ci.KeyType = "rsa4096"
 }
 
+func (ci *CertificateInfo) ValidateGenerate() {
+	if strings.TrimSpace(ci.KeyType) == "" || strings.TrimSpace(ci.KeyTypes[ci.KeyType]) == "" {
+		ci.Errors["KeyType"] = "Please select a key type/size"
+	}
+	if strings.TrimSpace(ci.Country) == "" || len(ci.Country) < 2 {
+		ci.Errors["Country"] = "Please enter a valid 2-character country code"
+	}
+	if strings.TrimSpace(ci.Organization) == "" {
+		ci.Errors["Organization"] = "Please enter an organization name"
+	}
+	if strings.TrimSpace(ci.CommonName) == "" {
+		ci.Errors["CommonName"] = "Please enter a common name"
+	}
+}
+
 func (ci *CertificateInfo) Validate() bool {
 	ci.Errors = make(map[string]string)
 
 	if ci.CreateType == "generate" {
-		if strings.TrimSpace(ci.KeyType) == "" || strings.TrimSpace(ci.KeyTypes[ci.KeyType]) == "" {
-			ci.Errors["KeyType"] = "Please select a key type/size"
-		}
-		if strings.TrimSpace(ci.Country) == "" || len(ci.Country) < 2 {
-			ci.Errors["Country"] = "Please enter a valid 2-character country code"
-		}
-		if strings.TrimSpace(ci.Organization) == "" {
-			ci.Errors["Organization"] = "Please enter an organization name"
-		}
-		if strings.TrimSpace(ci.CommonName) == "" {
-			ci.Errors["CommonName"] = "Please enter a common name"
-		}
+		ci.ValidateGenerate()
 	}
 
 	if (ci.CreateType == "import") && (ci.ImportHandler != nil) {
@@ -133,6 +137,337 @@ func preCreateTasks(path string) error {
 	return nil
 }
 
+func (ci *CertificateInfo) Generate(path string, certBase string) error {
+	// 1. Generate key
+	createCmd := "genrsa -aes256 -passout pass:foobar"
+	keySize := " 4096"
+	if strings.HasPrefix(ci.KeyType, "ecdsa") {
+		keySize = ""
+		createCmd = "ecparam -genkey -name "
+		if ci.KeyType == "ecdsa256" {
+			createCmd = createCmd + "prime256v1"
+		}
+		if ci.KeyType == "ecdsa384" {
+			createCmd = createCmd + "secp384r1"
+		}
+	} else {
+		if strings.HasSuffix(ci.KeyType, "3072") {
+			keySize = " 3072"
+		}
+		if strings.HasSuffix(ci.KeyType, "2048") {
+			keySize = " 2048"
+		}
+	}
+
+	if _, err := exe_cmd("openssl " + createCmd + " -out " + path + certBase + ".key" + keySize); err != nil {
+		return reportError(err)
+	}
+	if _, err := exe_cmd("openssl pkey -in " + path + certBase + ".key -passin pass:foobar -out " + path + certBase + ".tmp"); err != nil {
+		return reportError(err)
+	}
+	if _, err := exe_cmd("mv " + path + certBase + ".tmp " + path + certBase + ".key"); err != nil {
+		return reportError(err)
+	}
+
+	_, _ = exe_cmd("sleep 1")
+
+	// 2. Generate certificate
+	subject := "/C=" + ci.Country + "/O=" + ci.Organization
+	if ci.OrgUnit != "" {
+		subject = subject + "/OU=" + ci.OrgUnit
+	}
+	subject = subject + "/CN=" + ci.CommonName
+	subject = strings.Replace(subject, " ", "\\\\", -1)
+
+	if ci.IsRoot {
+		if _, err := exe_cmd("openssl req -config " + path + "openssl.cnf -days 3650 -new -x509 -extensions v3_ca -subj " + subject + " -key " + path + certBase + ".key -out " + path + certBase + ".pem"); err != nil {
+			return reportError(err)
+		}
+	} else {
+		if _, err := exe_cmd("openssl req -config " + path + "openssl.cnf -new -subj " + subject + " -key " + path + certBase + ".key -out " + path + certBase + ".csr"); err != nil {
+			return reportError(err)
+		}
+		if _, err := exe_cmd("openssl ca -config " + path + "../openssl.cnf -extensions v3_intermediate_ca -days 3600 -md sha384 -notext -batch -in " + path + certBase + ".csr -out " + path + certBase + ".pem"); err != nil {
+			return reportError(err)
+		}
+	}
+
+	return nil
+}
+
+func (ci *CertificateInfo) ImportPkcs12(tmpFile string, tmpKey string, tmpCert string) error {
+	if ci.IsRoot {
+		if strings.Index(ci.ImportHandler.Filename, "labca_root") != 0 {
+			fmt.Printf("WARNING: importing root from .pfx file but name is %s\n", ci.ImportHandler.Filename)
+		}
+	} else {
+		if strings.Index(ci.ImportHandler.Filename, "labca_issuer") != 0 {
+			fmt.Printf("WARNING: importing issuer from .pfx file but name is %s\n", ci.ImportHandler.Filename)
+		}
+	}
+
+	pwd := "pass:dummy"
+	if ci.ImportPwd != "" {
+		pwd = "pass:" + strings.Replace(ci.ImportPwd, " ", "\\\\", -1)
+	}
+
+	if out, err := exe_cmd("openssl pkcs12 -in " + strings.Replace(tmpFile, " ", "\\\\", -1) + " -password " + pwd + " -nocerts -nodes -out " + tmpKey); err != nil {
+		if strings.Index(string(out), "invalid password") >= 0 {
+			return errors.New("Incorrect password!")
+		} else {
+			return reportError(err)
+		}
+	}
+	if out, err := exe_cmd("openssl pkcs12 -in " + strings.Replace(tmpFile, " ", "\\\\", -1) + " -password " + pwd + " -nokeys -out " + tmpCert); err != nil {
+		if strings.Index(string(out), "invalid password") >= 0 {
+			return errors.New("Incorrect password!")
+		} else {
+			return reportError(err)
+		}
+	}
+
+	return nil
+}
+
+func (ci *CertificateInfo) ImportZip(tmpFile string, tmpDir string) error {
+	if ci.IsRoot {
+		if (strings.Index(ci.ImportHandler.Filename, "labca_root") != 0) && (strings.Index(ci.ImportHandler.Filename, "labca_certificates") != 0) {
+			fmt.Printf("WARNING: importing root from .zip file but name is %s\n", ci.ImportHandler.Filename)
+		}
+	} else {
+		if strings.Index(ci.ImportHandler.Filename, "labca_issuer") != 0 {
+			fmt.Printf("WARNING: importing issuer from .zip file but name is %s\n", ci.ImportHandler.Filename)
+		}
+	}
+
+	cmd := "unzip -j"
+	if ci.ImportPwd != "" {
+		cmd = cmd + " -P " + strings.Replace(ci.ImportPwd, " ", "\\\\", -1)
+	} else {
+		cmd = cmd + " -P dummy"
+	}
+	cmd = cmd + " " + strings.Replace(tmpFile, " ", "\\\\", -1) + " -d " + tmpDir
+
+	if _, err := exe_cmd(cmd); err != nil {
+		if err.Error() == "exit status 82" {
+			return errors.New("Incorrect password!")
+		} else {
+			return reportError(err)
+		}
+	}
+
+	return nil
+}
+
+func (ci *CertificateInfo) Import(path string, certBase string, tmpDir string, tmpKey string, tmpCert string) error {
+	tmpFile := filepath.Join(tmpDir, ci.ImportHandler.Filename)
+
+	f, err := os.OpenFile(tmpFile, os.O_WRONLY|os.O_CREATE, 0666)
+	if err != nil {
+		return err
+	}
+
+	defer f.Close()
+
+	io.Copy(f, ci.ImportFile)
+
+	contentType := ci.ImportHandler.Header.Get("Content-Type")
+	if contentType == "application/x-pkcs12" {
+		err := ci.ImportPkcs12(tmpFile, tmpKey, tmpCert)
+		if err != nil {
+			return err
+		}
+
+	} else if contentType == "application/zip" {
+		err := ci.ImportZip(tmpFile, tmpDir)
+		if err != nil {
+			return err
+		}
+
+	} else {
+		return errors.New("Content Type '" + contentType + "' not supported!")
+	}
+
+	return nil
+}
+
+func (ci *CertificateInfo) Upload(path string, certBase string, tmpKey string, tmpCert string) error {
+	if err := ioutil.WriteFile(tmpKey, []byte(ci.Key), 0644); err != nil {
+		return err
+	}
+
+	pwd := "pass:dummy"
+	if ci.Passphrase != "" {
+		pwd = "pass:" + strings.Replace(ci.Passphrase, " ", "\\\\", -1)
+	}
+
+	if out, err := exe_cmd("openssl pkey -passin " + pwd + " -in " + tmpKey + " -out " + tmpKey + "-out"); err != nil {
+		if strings.Index(string(out), ":bad decrypt:") >= 0 {
+			return errors.New("Incorrect password!")
+		} else {
+			return reportError(err)
+		}
+	} else {
+		if _, err = exe_cmd("mv " + tmpKey + "-out " + tmpKey); err != nil {
+			return reportError(err)
+		}
+	}
+
+	if err := ioutil.WriteFile(tmpCert, []byte(ci.Certificate), 0644); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (ci *CertificateInfo) ImportCerts(path string, rootCert string, rootKey string, issuerCert string, issuerKey string) error {
+	var rootSubject string
+	if (rootCert != "") && (rootKey != "") {
+		r, err := exe_cmd("openssl x509 -noout -subject -in " + rootCert)
+		if err != nil {
+			return reportError(err)
+		} else {
+			rootSubject = string(r[0 : len(r)-1])
+			fmt.Printf("Import root with subject '%s'\n", rootSubject)
+		}
+
+		r, err = exe_cmd("openssl pkey -noout -in " + rootKey)
+		if err != nil {
+			return reportError(err)
+		} else {
+			fmt.Println("Import root key")
+		}
+	}
+
+	if (issuerCert != "") && (issuerKey != "") {
+		if ci.IsRoot {
+			if err := preCreateTasks(path + "issuer/"); err != nil {
+				return err
+			}
+		}
+
+		r, err := exe_cmd("openssl x509 -noout -subject -in " + issuerCert)
+		if err != nil {
+			return reportError(err)
+		} else {
+			fmt.Printf("Import issuer with subject '%s'\n", string(r[0:len(r)-1]))
+		}
+
+		r, err = exe_cmd("openssl x509 -noout -issuer -in " + issuerCert)
+		if err != nil {
+			return reportError(err)
+		} else {
+			issuerIssuer := string(r[0 : len(r)-1])
+			fmt.Printf("Issuer certificate issued by CA '%s'\n", issuerIssuer)
+
+			if rootSubject == "" {
+				r, err := exe_cmd("openssl x509 -noout -subject -in data/root-ca.pem")
+				if err != nil {
+					return reportError(err)
+				} else {
+					rootSubject = string(r[0 : len(r)-1])
+				}
+			}
+
+			issuerIssuer = strings.Replace(issuerIssuer, "issuer=", "", -1)
+			rootSubject = strings.Replace(rootSubject, "subject=", "", -1)
+			if issuerIssuer != rootSubject {
+				return errors.New("Issuer not issued by our Root CA!")
+			}
+		}
+
+		r, err = exe_cmd("openssl pkey -noout -in " + issuerKey)
+		if err != nil {
+			return reportError(err)
+		} else {
+			fmt.Println("Import issuer key")
+		}
+	}
+
+	return nil
+}
+
+func (ci *CertificateInfo) MoveFiles(path string, rootCert string, rootKey string, issuerCert string, issuerKey string) error {
+	if rootCert != "" {
+		if _, err := exe_cmd("mv " + rootCert + " " + path); err != nil {
+			return reportError(err)
+		}
+	}
+	if rootKey != "" {
+		if _, err := exe_cmd("mv " + rootKey + " " + path); err != nil {
+			return reportError(err)
+		}
+	}
+	if issuerCert != "" {
+		if _, err := exe_cmd("mv " + issuerCert + " data/issuer/"); err != nil {
+			return reportError(err)
+		}
+	}
+	if issuerKey != "" {
+		if _, err := exe_cmd("mv " + issuerKey + " data/issuer/"); err != nil {
+			return reportError(err)
+		}
+	}
+
+	if (issuerCert != "") && (issuerKey != "") && ci.IsRoot {
+		if err := postCreateTasks(path+"issuer/", "ca-int"); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (ci *CertificateInfo) Extract(path string, certBase string, tmpDir string) error {
+	var rootCert string
+	var rootKey string
+	var issuerCert string
+	var issuerKey string
+
+	if ci.IsRoot {
+		rootCert = filepath.Join(tmpDir, "root-ca.pem")
+		rootKey = filepath.Join(tmpDir, "root-ca.key")
+
+		if _, err := os.Stat(rootCert); os.IsNotExist(err) {
+			return errors.New("File does not contain root-ca.pem!")
+		}
+		if _, err := os.Stat(rootKey); os.IsNotExist(err) {
+			return errors.New("File does not contain root-ca.key!")
+		}
+	}
+
+	issuerCert = filepath.Join(tmpDir, "ca-int.pem")
+	issuerKey = filepath.Join(tmpDir, "ca-int.key")
+
+	if _, err := os.Stat(issuerCert); os.IsNotExist(err) {
+		if ci.IsRoot {
+			issuerCert = ""
+		} else {
+			return errors.New("File does not contain ca-int.pem!")
+		}
+	}
+	if _, err := os.Stat(issuerKey); os.IsNotExist(err) {
+		if ci.IsRoot {
+			issuerKey = ""
+		} else {
+			return errors.New("File does not contain ca-int.key!")
+		}
+	}
+
+	err := ci.ImportCerts(path, rootCert, rootKey, issuerCert, issuerKey)
+	if err != nil {
+		return err
+	}
+
+	// All is good now, move files to their permanent location...
+	err = ci.MoveFiles(path, rootCert, rootKey, issuerCert, issuerKey)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (ci *CertificateInfo) Create(path string, certBase string) error {
 	if err := preCreateTasks(path); err != nil {
 		return err
@@ -156,156 +491,20 @@ func (ci *CertificateInfo) Create(path string, certBase string) error {
 	}
 
 	if ci.CreateType == "generate" {
-		// 1. Generate key
-		createCmd := "genrsa -aes256 -passout pass:foobar"
-		keySize := " 4096"
-		if strings.HasPrefix(ci.KeyType, "ecdsa") {
-			keySize = ""
-			createCmd = "ecparam -genkey -name "
-			if ci.KeyType == "ecdsa256" {
-				createCmd = createCmd + "prime256v1"
-			}
-			if ci.KeyType == "ecdsa384" {
-				createCmd = createCmd + "secp384r1"
-			}
-		} else {
-			if strings.HasSuffix(ci.KeyType, "3072") {
-				keySize = " 3072"
-			}
-			if strings.HasSuffix(ci.KeyType, "2048") {
-				keySize = " 2048"
-			}
-		}
-
-		if _, err := exe_cmd("openssl " + createCmd + " -out " + path + certBase + ".key" + keySize); err != nil {
-			return reportError(err)
-		}
-		if _, err := exe_cmd("openssl pkey -in " + path + certBase + ".key -passin pass:foobar -out " + path + certBase + ".tmp"); err != nil {
-			return reportError(err)
-		}
-		if _, err = exe_cmd("mv " + path + certBase + ".tmp " + path + certBase + ".key"); err != nil {
-			return reportError(err)
-		}
-
-		_, _ = exe_cmd("sleep 1")
-
-		// 2. Generate certificate
-		subject := "/C=" + ci.Country + "/O=" + ci.Organization
-		if ci.OrgUnit != "" {
-			subject = subject + "/OU=" + ci.OrgUnit
-		}
-		subject = subject + "/CN=" + ci.CommonName
-		subject = strings.Replace(subject, " ", "\\\\", -1)
-
-		if ci.IsRoot {
-			if _, err := exe_cmd("openssl req -config " + path + "openssl.cnf -days 3650 -new -x509 -extensions v3_ca -subj " + subject + " -key " + path + certBase + ".key -out " + path + certBase + ".pem"); err != nil {
-				return reportError(err)
-			}
-		} else {
-			if _, err := exe_cmd("openssl req -config " + path + "openssl.cnf -new -subj " + subject + " -key " + path + certBase + ".key -out " + path + certBase + ".csr"); err != nil {
-				return reportError(err)
-			}
-			if _, err := exe_cmd("openssl ca -config " + path + "../openssl.cnf -extensions v3_intermediate_ca -days 3600 -md sha384 -notext -batch -in " + path + certBase + ".csr -out " + path + certBase + ".pem"); err != nil {
-				return reportError(err)
-			}
-		}
-
-	} else if ci.CreateType == "import" {
-		tmpFile := filepath.Join(tmpDir, ci.ImportHandler.Filename)
-
-		f, err := os.OpenFile(tmpFile, os.O_WRONLY|os.O_CREATE, 0666)
+		err := ci.Generate(path, certBase)
 		if err != nil {
 			return err
 		}
 
-		defer f.Close()
-
-		io.Copy(f, ci.ImportFile)
-
-		contentType := ci.ImportHandler.Header.Get("Content-Type")
-		if contentType == "application/x-pkcs12" {
-			if ci.IsRoot {
-				if strings.Index(ci.ImportHandler.Filename, "labca_root") != 0 {
-					fmt.Printf("WARNING: importing root from .pfx file but name is %s\n", ci.ImportHandler.Filename)
-				}
-			} else {
-				if strings.Index(ci.ImportHandler.Filename, "labca_issuer") != 0 {
-					fmt.Printf("WARNING: importing issuer from .pfx file but name is %s\n", ci.ImportHandler.Filename)
-				}
-			}
-
-			pwd := "pass:dummy"
-			if ci.ImportPwd != "" {
-				pwd = "pass:" + strings.Replace(ci.ImportPwd, " ", "\\\\", -1)
-			}
-
-			if out, err := exe_cmd("openssl pkcs12 -in " + strings.Replace(tmpFile, " ", "\\\\", -1) + " -password " + pwd + " -nocerts -nodes -out " + tmpKey); err != nil {
-				if strings.Index(string(out), "invalid password") >= 0 {
-					return errors.New("Incorrect password!")
-				} else {
-					return reportError(err)
-				}
-			}
-			if out, err := exe_cmd("openssl pkcs12 -in " + strings.Replace(tmpFile, " ", "\\\\", -1) + " -password " + pwd + " -nokeys -out " + tmpCert); err != nil {
-				if strings.Index(string(out), "invalid password") >= 0 {
-					return errors.New("Incorrect password!")
-				} else {
-					return reportError(err)
-				}
-			}
-		} else if contentType == "application/zip" {
-			if ci.IsRoot {
-				if (strings.Index(ci.ImportHandler.Filename, "labca_root") != 0) && (strings.Index(ci.ImportHandler.Filename, "labca_certificates") != 0) {
-					fmt.Printf("WARNING: importing root from .zip file but name is %s\n", ci.ImportHandler.Filename)
-				}
-			} else {
-				if strings.Index(ci.ImportHandler.Filename, "labca_issuer") != 0 {
-					fmt.Printf("WARNING: importing issuer from .zip file but name is %s\n", ci.ImportHandler.Filename)
-				}
-			}
-
-			cmd := "unzip -j"
-			if ci.ImportPwd != "" {
-				cmd = cmd + " -P " + strings.Replace(ci.ImportPwd, " ", "\\\\", -1)
-			} else {
-				cmd = cmd + " -P dummy"
-			}
-			cmd = cmd + " " + strings.Replace(tmpFile, " ", "\\\\", -1) + " -d " + tmpDir
-
-			if _, err := exe_cmd(cmd); err != nil {
-				if err.Error() == "exit status 82" {
-					return errors.New("Incorrect password!")
-				} else {
-					return reportError(err)
-				}
-			}
-		} else {
-			return errors.New("Content Type '" + contentType + "' not supported!")
-		}
-
-	} else if ci.CreateType == "upload" {
-		if err := ioutil.WriteFile(tmpKey, []byte(ci.Key), 0644); err != nil {
+	} else if ci.CreateType == "import" {
+		err := ci.Import(path, certBase, tmpDir, tmpKey, tmpCert)
+		if err != nil {
 			return err
 		}
 
-		pwd := "pass:dummy"
-		if ci.Passphrase != "" {
-			pwd = "pass:" + strings.Replace(ci.Passphrase, " ", "\\\\", -1)
-		}
-
-		if out, err := exe_cmd("openssl pkey -passin " + pwd + " -in " + tmpKey + " -out " + tmpKey + "-out"); err != nil {
-			if strings.Index(string(out), ":bad decrypt:") >= 0 {
-				return errors.New("Incorrect password!")
-			} else {
-				return reportError(err)
-			}
-		} else {
-			if _, err = exe_cmd("mv " + tmpKey + "-out " + tmpKey); err != nil {
-				return reportError(err)
-			}
-		}
-
-		if err := ioutil.WriteFile(tmpCert, []byte(ci.Certificate), 0644); err != nil {
+	} else if ci.CreateType == "upload" {
+		err := ci.Upload(path, certBase, tmpKey, tmpCert)
+		if err != nil {
 			return err
 		}
 
@@ -315,130 +514,9 @@ func (ci *CertificateInfo) Create(path string, certBase string) error {
 
 	// This is shared between pfx/zip upload and pem text upload
 	if ci.CreateType != "generate" {
-		var rootCert string
-		var rootKey string
-		var issuerCert string
-		var issuerKey string
-
-		if ci.IsRoot {
-			rootCert = filepath.Join(tmpDir, "root-ca.pem")
-			rootKey = filepath.Join(tmpDir, "root-ca.key")
-
-			if _, err := os.Stat(rootCert); os.IsNotExist(err) {
-				return errors.New("File does not contain root-ca.pem!")
-			}
-			if _, err := os.Stat(rootKey); os.IsNotExist(err) {
-				return errors.New("File does not contain root-ca.key!")
-			}
-		}
-
-		issuerCert = filepath.Join(tmpDir, "ca-int.pem")
-		issuerKey = filepath.Join(tmpDir, "ca-int.key")
-
-		if _, err := os.Stat(issuerCert); os.IsNotExist(err) {
-			if ci.IsRoot {
-				issuerCert = ""
-			} else {
-				return errors.New("File does not contain ca-int.pem!")
-			}
-		}
-		if _, err := os.Stat(issuerKey); os.IsNotExist(err) {
-			if ci.IsRoot {
-				issuerKey = ""
-			} else {
-				return errors.New("File does not contain ca-int.key!")
-			}
-		}
-
-		var rootSubject string
-		if (rootCert != "") && (rootKey != "") {
-			r, err := exe_cmd("openssl x509 -noout -subject -in " + rootCert)
-			if err != nil {
-				return reportError(err)
-			} else {
-				rootSubject = string(r[0 : len(r)-1])
-				fmt.Printf("Import root with subject '%s'\n", rootSubject)
-			}
-
-			r, err = exe_cmd("openssl pkey -noout -in " + rootKey)
-			if err != nil {
-				return reportError(err)
-			} else {
-				fmt.Println("Import root key")
-			}
-		}
-
-		if (issuerCert != "") && (issuerKey != "") {
-			if ci.IsRoot {
-				if err := preCreateTasks(path + "issuer/"); err != nil {
-					return err
-				}
-			}
-
-			r, err := exe_cmd("openssl x509 -noout -subject -in " + issuerCert)
-			if err != nil {
-				return reportError(err)
-			} else {
-				fmt.Printf("Import issuer with subject '%s'\n", string(r[0:len(r)-1]))
-			}
-
-			r, err = exe_cmd("openssl x509 -noout -issuer -in " + issuerCert)
-			if err != nil {
-				return reportError(err)
-			} else {
-				issuerIssuer := string(r[0 : len(r)-1])
-				fmt.Printf("Issuer certificate issued by CA '%s'\n", issuerIssuer)
-
-				if rootSubject == "" {
-					r, err := exe_cmd("openssl x509 -noout -subject -in data/root-ca.pem")
-					if err != nil {
-						return reportError(err)
-					} else {
-						rootSubject = string(r[0 : len(r)-1])
-					}
-				}
-
-				issuerIssuer = strings.Replace(issuerIssuer, "issuer=", "", -1)
-				rootSubject = strings.Replace(rootSubject, "subject=", "", -1)
-				if issuerIssuer != rootSubject {
-					return errors.New("Issuer not issued by our Root CA!")
-				}
-			}
-
-			r, err = exe_cmd("openssl pkey -noout -in " + issuerKey)
-			if err != nil {
-				return reportError(err)
-			} else {
-				fmt.Println("Import issuer key")
-			}
-		}
-
-		// All is good now, move files to their permanent location...
-		if rootCert != "" {
-			if _, err = exe_cmd("mv " + rootCert + " " + path); err != nil {
-				return reportError(err)
-			}
-		}
-		if rootKey != "" {
-			if _, err = exe_cmd("mv " + rootKey + " " + path); err != nil {
-				return reportError(err)
-			}
-		}
-		if issuerCert != "" {
-			if _, err = exe_cmd("mv " + issuerCert + " data/issuer/"); err != nil {
-				return reportError(err)
-			}
-		}
-		if issuerKey != "" {
-			if _, err = exe_cmd("mv " + issuerKey + " data/issuer/"); err != nil {
-				return reportError(err)
-			}
-		}
-
-		if (issuerCert != "") && (issuerKey != "") && ci.IsRoot {
-			if err := postCreateTasks(path+"issuer/", "ca-int"); err != nil {
-				return err
-			}
+		err := ci.Extract(path, certBase, tmpDir)
+		if err != nil {
+			return err
 		}
 	}
 
