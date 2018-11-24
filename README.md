@@ -52,7 +52,7 @@ Once the setup is completed, please make a backup of your Root and Issuer certif
 
 ### Update
 
-Until issue #1 is implemented, updates can only be done from the Linux shell. On the server run this command as root to update the installation:
+Until [issue #1](https://github.com/hakwerk/labca/issues/1) is implemented, updates can only be done from the Linux shell. On the server run this command as root to update the installation:
 
 ```sh
 ~labca/labca/install

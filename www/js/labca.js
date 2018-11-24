@@ -9,7 +9,6 @@ function positionFooter() {
     if (offset < 0 ) {
         offset = 0;
     }
-    console.log("applying offset of " + offset);
     $("#footer").parent().css("padding-top", offset + "px");
 }
 
@@ -283,7 +282,9 @@ $(function() {
 
             $('.rel_certificates_list tbody').on('click', 'tr', function () {
                 var data = table.row( this ).data();
-                window.location = window.location + '/../../certificates/' + data[0]
+                if (data) {
+                    window.location = window.location + '/../../certificates/' + data[0]
+                }
             });
 
             $(".datatable").on('draw.dt', positionFooter);
