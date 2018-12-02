@@ -13,6 +13,7 @@ import (
 	"strings"
 )
 
+// CertificateInfo contains all data related to a certificate (file)
 type CertificateInfo struct {
 	IsRoot     bool
 	KeyTypes   map[string]string
@@ -36,6 +37,7 @@ type CertificateInfo struct {
 	Errors      map[string]string
 }
 
+// Initialize the CertificateInfo and set the list of available key types
 func (ci *CertificateInfo) Initialize() {
 	ci.Errors = make(map[string]string)
 
@@ -49,6 +51,7 @@ func (ci *CertificateInfo) Initialize() {
 	ci.KeyType = "rsa4096"
 }
 
+// ValidateGenerate that the CertificateInfo contains valid and all required data for generating a cert
 func (ci *CertificateInfo) ValidateGenerate() {
 	if strings.TrimSpace(ci.KeyType) == "" || strings.TrimSpace(ci.KeyTypes[ci.KeyType]) == "" {
 		ci.Errors["KeyType"] = "Please select a key type/size"
@@ -64,6 +67,7 @@ func (ci *CertificateInfo) ValidateGenerate() {
 	}
 }
 
+// Validate that the CertificateInfo contains valid and all required data
 func (ci *CertificateInfo) Validate() bool {
 	ci.Errors = make(map[string]string)
 
@@ -112,10 +116,10 @@ func reportError(err error) error {
 }
 
 func preCreateTasks(path string) error {
-	if _, err := exe_cmd("touch " + path + "index.txt"); err != nil {
+	if _, err := exeCmd("touch " + path + "index.txt"); err != nil {
 		return reportError(err)
 	}
-	if _, err := exe_cmd("touch " + path + "index.txt.attr"); err != nil {
+	if _, err := exeCmd("touch " + path + "index.txt.attr"); err != nil {
 		return reportError(err)
 	}
 
@@ -130,13 +134,14 @@ func preCreateTasks(path string) error {
 		}
 	}
 
-	if _, err := exe_cmd("mkdir -p " + path + "certs"); err != nil {
+	if _, err := exeCmd("mkdir -p " + path + "certs"); err != nil {
 		return reportError(err)
 	}
 
 	return nil
 }
 
+// Generate a key and certificate file for the data from this CertificateInfo
 func (ci *CertificateInfo) Generate(path string, certBase string) error {
 	// 1. Generate key
 	createCmd := "genrsa -aes256 -passout pass:foobar"
@@ -159,17 +164,17 @@ func (ci *CertificateInfo) Generate(path string, certBase string) error {
 		}
 	}
 
-	if _, err := exe_cmd("openssl " + createCmd + " -out " + path + certBase + ".key" + keySize); err != nil {
+	if _, err := exeCmd("openssl " + createCmd + " -out " + path + certBase + ".key" + keySize); err != nil {
 		return reportError(err)
 	}
-	if _, err := exe_cmd("openssl pkey -in " + path + certBase + ".key -passin pass:foobar -out " + path + certBase + ".tmp"); err != nil {
+	if _, err := exeCmd("openssl pkey -in " + path + certBase + ".key -passin pass:foobar -out " + path + certBase + ".tmp"); err != nil {
 		return reportError(err)
 	}
-	if _, err := exe_cmd("mv " + path + certBase + ".tmp " + path + certBase + ".key"); err != nil {
+	if _, err := exeCmd("mv " + path + certBase + ".tmp " + path + certBase + ".key"); err != nil {
 		return reportError(err)
 	}
 
-	_, _ = exe_cmd("sleep 1")
+	_, _ = exeCmd("sleep 1")
 
 	// 2. Generate certificate
 	subject := "/C=" + ci.Country + "/O=" + ci.Organization
@@ -180,14 +185,14 @@ func (ci *CertificateInfo) Generate(path string, certBase string) error {
 	subject = strings.Replace(subject, " ", "\\\\", -1)
 
 	if ci.IsRoot {
-		if _, err := exe_cmd("openssl req -config " + path + "openssl.cnf -days 3650 -new -x509 -extensions v3_ca -subj " + subject + " -key " + path + certBase + ".key -out " + path + certBase + ".pem"); err != nil {
+		if _, err := exeCmd("openssl req -config " + path + "openssl.cnf -days 3650 -new -x509 -extensions v3_ca -subj " + subject + " -key " + path + certBase + ".key -out " + path + certBase + ".pem"); err != nil {
 			return reportError(err)
 		}
 	} else {
-		if _, err := exe_cmd("openssl req -config " + path + "openssl.cnf -new -subj " + subject + " -key " + path + certBase + ".key -out " + path + certBase + ".csr"); err != nil {
+		if _, err := exeCmd("openssl req -config " + path + "openssl.cnf -new -subj " + subject + " -key " + path + certBase + ".key -out " + path + certBase + ".csr"); err != nil {
 			return reportError(err)
 		}
-		if _, err := exe_cmd("openssl ca -config " + path + "../openssl.cnf -extensions v3_intermediate_ca -days 3600 -md sha384 -notext -batch -in " + path + certBase + ".csr -out " + path + certBase + ".pem"); err != nil {
+		if _, err := exeCmd("openssl ca -config " + path + "../openssl.cnf -extensions v3_intermediate_ca -days 3600 -md sha384 -notext -batch -in " + path + certBase + ".csr -out " + path + certBase + ".pem"); err != nil {
 			return reportError(err)
 		}
 	}
@@ -195,6 +200,7 @@ func (ci *CertificateInfo) Generate(path string, certBase string) error {
 	return nil
 }
 
+// ImportPkcs12 imports an uploaded PKCS#12 / PFX file
 func (ci *CertificateInfo) ImportPkcs12(tmpFile string, tmpKey string, tmpCert string) error {
 	if ci.IsRoot {
 		if strings.Index(ci.ImportHandler.Filename, "labca_root") != 0 {
@@ -211,24 +217,25 @@ func (ci *CertificateInfo) ImportPkcs12(tmpFile string, tmpKey string, tmpCert s
 		pwd = "pass:" + strings.Replace(ci.ImportPwd, " ", "\\\\", -1)
 	}
 
-	if out, err := exe_cmd("openssl pkcs12 -in " + strings.Replace(tmpFile, " ", "\\\\", -1) + " -password " + pwd + " -nocerts -nodes -out " + tmpKey); err != nil {
+	if out, err := exeCmd("openssl pkcs12 -in " + strings.Replace(tmpFile, " ", "\\\\", -1) + " -password " + pwd + " -nocerts -nodes -out " + tmpKey); err != nil {
 		if strings.Index(string(out), "invalid password") >= 0 {
 			return errors.New("Incorrect password!")
-		} else {
-			return reportError(err)
 		}
+
+		return reportError(err)
 	}
-	if out, err := exe_cmd("openssl pkcs12 -in " + strings.Replace(tmpFile, " ", "\\\\", -1) + " -password " + pwd + " -nokeys -out " + tmpCert); err != nil {
+	if out, err := exeCmd("openssl pkcs12 -in " + strings.Replace(tmpFile, " ", "\\\\", -1) + " -password " + pwd + " -nokeys -out " + tmpCert); err != nil {
 		if strings.Index(string(out), "invalid password") >= 0 {
 			return errors.New("Incorrect password!")
-		} else {
-			return reportError(err)
 		}
+
+		return reportError(err)
 	}
 
 	return nil
 }
 
+// ImportZip imports an uploaded ZIP file
 func (ci *CertificateInfo) ImportZip(tmpFile string, tmpDir string) error {
 	if ci.IsRoot {
 		if (strings.Index(ci.ImportHandler.Filename, "labca_root") != 0) && (strings.Index(ci.ImportHandler.Filename, "labca_certificates") != 0) {
@@ -248,17 +255,18 @@ func (ci *CertificateInfo) ImportZip(tmpFile string, tmpDir string) error {
 	}
 	cmd = cmd + " " + strings.Replace(tmpFile, " ", "\\\\", -1) + " -d " + tmpDir
 
-	if _, err := exe_cmd(cmd); err != nil {
+	if _, err := exeCmd(cmd); err != nil {
 		if err.Error() == "exit status 82" {
 			return errors.New("Incorrect password!")
-		} else {
-			return reportError(err)
 		}
+
+		return reportError(err)
 	}
 
 	return nil
 }
 
+// Import a certificate and key file
 func (ci *CertificateInfo) Import(path string, certBase string, tmpDir string, tmpKey string, tmpCert string) error {
 	tmpFile := filepath.Join(tmpDir, ci.ImportHandler.Filename)
 
@@ -291,6 +299,7 @@ func (ci *CertificateInfo) Import(path string, certBase string, tmpDir string, t
 	return nil
 }
 
+// Upload a certificate and key file
 func (ci *CertificateInfo) Upload(path string, certBase string, tmpKey string, tmpCert string) error {
 	if err := ioutil.WriteFile(tmpKey, []byte(ci.Key), 0644); err != nil {
 		return err
@@ -301,16 +310,16 @@ func (ci *CertificateInfo) Upload(path string, certBase string, tmpKey string, t
 		pwd = "pass:" + strings.Replace(ci.Passphrase, " ", "\\\\", -1)
 	}
 
-	if out, err := exe_cmd("openssl pkey -passin " + pwd + " -in " + tmpKey + " -out " + tmpKey + "-out"); err != nil {
+	if out, err := exeCmd("openssl pkey -passin " + pwd + " -in " + tmpKey + " -out " + tmpKey + "-out"); err != nil {
 		if strings.Index(string(out), ":bad decrypt:") >= 0 {
 			return errors.New("Incorrect password!")
-		} else {
-			return reportError(err)
 		}
-	} else {
-		if _, err = exe_cmd("mv " + tmpKey + "-out " + tmpKey); err != nil {
-			return reportError(err)
-		}
+
+		return reportError(err)
+	}
+
+	if _, err := exeCmd("mv " + tmpKey + "-out " + tmpKey); err != nil {
+		return reportError(err)
 	}
 
 	if err := ioutil.WriteFile(tmpCert, []byte(ci.Certificate), 0644); err != nil {
@@ -320,23 +329,24 @@ func (ci *CertificateInfo) Upload(path string, certBase string, tmpKey string, t
 	return nil
 }
 
+// ImportCerts imports both the root and the issuer certificates
 func (ci *CertificateInfo) ImportCerts(path string, rootCert string, rootKey string, issuerCert string, issuerKey string) error {
 	var rootSubject string
 	if (rootCert != "") && (rootKey != "") {
-		r, err := exe_cmd("openssl x509 -noout -subject -in " + rootCert)
+		r, err := exeCmd("openssl x509 -noout -subject -in " + rootCert)
 		if err != nil {
 			return reportError(err)
-		} else {
-			rootSubject = string(r[0 : len(r)-1])
-			fmt.Printf("Import root with subject '%s'\n", rootSubject)
 		}
 
-		r, err = exe_cmd("openssl pkey -noout -in " + rootKey)
+		rootSubject = string(r[0 : len(r)-1])
+		fmt.Printf("Import root with subject '%s'\n", rootSubject)
+
+		r, err = exeCmd("openssl pkey -noout -in " + rootKey)
 		if err != nil {
 			return reportError(err)
-		} else {
-			fmt.Println("Import root key")
 		}
+
+		fmt.Println("Import root key")
 	}
 
 	if (issuerCert != "") && (issuerKey != "") {
@@ -346,65 +356,66 @@ func (ci *CertificateInfo) ImportCerts(path string, rootCert string, rootKey str
 			}
 		}
 
-		r, err := exe_cmd("openssl x509 -noout -subject -in " + issuerCert)
+		r, err := exeCmd("openssl x509 -noout -subject -in " + issuerCert)
 		if err != nil {
 			return reportError(err)
-		} else {
-			fmt.Printf("Import issuer with subject '%s'\n", string(r[0:len(r)-1]))
 		}
 
-		r, err = exe_cmd("openssl x509 -noout -issuer -in " + issuerCert)
+		fmt.Printf("Import issuer with subject '%s'\n", string(r[0:len(r)-1]))
+
+		r, err = exeCmd("openssl x509 -noout -issuer -in " + issuerCert)
 		if err != nil {
 			return reportError(err)
-		} else {
-			issuerIssuer := string(r[0 : len(r)-1])
-			fmt.Printf("Issuer certificate issued by CA '%s'\n", issuerIssuer)
+		}
 
-			if rootSubject == "" {
-				r, err := exe_cmd("openssl x509 -noout -subject -in data/root-ca.pem")
-				if err != nil {
-					return reportError(err)
-				} else {
-					rootSubject = string(r[0 : len(r)-1])
-				}
+		issuerIssuer := string(r[0 : len(r)-1])
+		fmt.Printf("Issuer certificate issued by CA '%s'\n", issuerIssuer)
+
+		if rootSubject == "" {
+			r, err := exeCmd("openssl x509 -noout -subject -in data/root-ca.pem")
+			if err != nil {
+				return reportError(err)
 			}
 
-			issuerIssuer = strings.Replace(issuerIssuer, "issuer=", "", -1)
-			rootSubject = strings.Replace(rootSubject, "subject=", "", -1)
-			if issuerIssuer != rootSubject {
-				return errors.New("Issuer not issued by our Root CA!")
-			}
+			rootSubject = string(r[0 : len(r)-1])
 		}
 
-		r, err = exe_cmd("openssl pkey -noout -in " + issuerKey)
+		issuerIssuer = strings.Replace(issuerIssuer, "issuer=", "", -1)
+		rootSubject = strings.Replace(rootSubject, "subject=", "", -1)
+		if issuerIssuer != rootSubject {
+			return errors.New("Issuer not issued by our Root CA!")
+		}
+
+		r, err = exeCmd("openssl pkey -noout -in " + issuerKey)
 		if err != nil {
 			return reportError(err)
-		} else {
-			fmt.Println("Import issuer key")
 		}
+
+		fmt.Println("Import issuer key")
 	}
 
 	return nil
 }
 
+// MoveFiles moves certificate / key files to their final location
 func (ci *CertificateInfo) MoveFiles(path string, rootCert string, rootKey string, issuerCert string, issuerKey string) error {
 	if rootCert != "" {
-		if _, err := exe_cmd("mv " + rootCert + " " + path); err != nil {
+		if _, err := exeCmd("mv " + rootCert + " " + path); err != nil {
 			return reportError(err)
 		}
 	}
 	if rootKey != "" {
-		if _, err := exe_cmd("mv " + rootKey + " " + path); err != nil {
+		if _, err := exeCmd("mv " + rootKey + " " + path); err != nil {
 			return reportError(err)
 		}
 	}
 	if issuerCert != "" {
-		if _, err := exe_cmd("mv " + issuerCert + " data/issuer/"); err != nil {
+		if _, err := exeCmd("mv " + issuerCert + " data/issuer/"); err != nil {
 			return reportError(err)
 		}
 	}
 	if issuerKey != "" {
-		if _, err := exe_cmd("mv " + issuerKey + " data/issuer/"); err != nil {
+		if _, err := exeCmd("mv " + issuerKey + " data/issuer/"); err != nil {
 			return reportError(err)
 		}
 	}
@@ -418,6 +429,7 @@ func (ci *CertificateInfo) MoveFiles(path string, rootCert string, rootKey strin
 	return nil
 }
 
+// Extract key and certificate files from a container file
 func (ci *CertificateInfo) Extract(path string, certBase string, tmpDir string) error {
 	var rootCert string
 	var rootKey string
@@ -468,6 +480,7 @@ func (ci *CertificateInfo) Extract(path string, certBase string, tmpDir string) 
 	return nil
 }
 
+// Create a new pair of key + certificate files based on the info in CertificateInfo
 func (ci *CertificateInfo) Create(path string, certBase string) error {
 	if err := preCreateTasks(path); err != nil {
 		return err
@@ -525,7 +538,7 @@ func (ci *CertificateInfo) Create(path string, certBase string) error {
 	}
 
 	if ci.IsRoot {
-		if _, err := exe_cmd("openssl ca -config " + path + "openssl.cnf -gencrl -keyfile " + path + certBase + ".key -cert " + path + certBase + ".pem -out " + path + certBase + ".crl"); err != nil {
+		if _, err := exeCmd("openssl ca -config " + path + "openssl.cnf -gencrl -keyfile " + path + certBase + ".key -cert " + path + certBase + ".pem -out " + path + certBase + ".crl"); err != nil {
 			return reportError(err)
 		}
 	}
@@ -534,18 +547,18 @@ func (ci *CertificateInfo) Create(path string, certBase string) error {
 }
 
 func postCreateTasks(path string, certBase string) error {
-	if _, err := exe_cmd("openssl pkey -in " + path + certBase + ".key -out " + path + certBase + ".key.der -outform der"); err != nil {
+	if _, err := exeCmd("openssl pkey -in " + path + certBase + ".key -out " + path + certBase + ".key.der -outform der"); err != nil {
 		return reportError(err)
 	}
 
-	if _, err := exe_cmd("openssl x509 -in " + path + certBase + ".pem -out " + path + certBase + ".der -outform DER"); err != nil {
+	if _, err := exeCmd("openssl x509 -in " + path + certBase + ".pem -out " + path + certBase + ".der -outform DER"); err != nil {
 		return reportError(err)
 	}
 
 	return nil
 }
 
-func exe_cmd(cmd string) ([]byte, error) {
+func exeCmd(cmd string) ([]byte, error) {
 	parts := strings.Fields(cmd)
 	for i := 0; i < len(parts); i++ {
 		parts[i] = strings.Replace(parts[i], "\\\\", " ", -1)

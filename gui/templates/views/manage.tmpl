@@ -38,7 +38,7 @@
                   {{ if ne $item.TimestampRel "stopped" }}Up {{ end }}{{ $item.TimestampRel }}
                 </span>
               </td>
-              <td class="vmiddle">{{ if or $item.LogUrl $item.LogTitle}}<a href="{{ $item.LogUrl }}" title="{{ $item.LogTitle }}"><i class="fa fa-fw fa-file"></i></a>{{ end }}</td>
+              <td class="vmiddle">{{ if or $item.LogURL $item.LogTitle}}<a href="{{ $item.LogURL }}" title="{{ $item.LogTitle }}"><i class="fa fa-fw fa-file"></i></a>{{ end }}</td>
               <td class="vmiddle">
                 {{ range $btn := $item.Buttons }}
                 <button class="btn btn-outline btn-reg {{ $btn.Class }}" type="button" id="{{ $btn.Id }}" title="{{ $btn.Title }}">{{ $btn.Label }}</button>
@@ -144,7 +144,7 @@
       </div>
       <div class="form-group">
         <label for="dns">Internal DNS server to use:</label>
-        <input class="form-control non-fluid" type="text" id="dns" name="dns" value="{{ .Dns }}" required>
+        <input class="form-control non-fluid" type="text" id="dns" name="dns" value="{{ .DNS }}" required>
         <span class="error config-error hidden" id="dns-error"></span>
       </div>
 

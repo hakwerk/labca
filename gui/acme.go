@@ -8,26 +8,30 @@ import (
 	"strconv"
 )
 
+// BaseList is the generic base struct for showing lists of data
 type BaseList struct {
 	Title      string
 	TableClass string
 	Header     []template.HTML
 }
 
+// Account contains the data representing an ACME account
 type Account struct {
-	Id        int
+	ID        int
 	Status    string
 	Contact   string
 	Agreement string
-	InitialIp net.IP
+	InitialIP net.IP
 	CreatedAt string
 }
 
+// AccountList is a list of Account records
 type AccountList struct {
 	BaseList
 	Rows []Account
 }
 
+// GetAccounts returns the list of accounts
 func GetAccounts(w http.ResponseWriter, r *http.Request) (AccountList, error) {
 	db, err := sql.Open(dbType, dbConn)
 	if err != nil {
@@ -54,7 +58,7 @@ func GetAccounts(w http.ResponseWriter, r *http.Request) (AccountList, error) {
 
 	for rows.Next() {
 		row := Account{}
-		err = rows.Scan(&row.Id, &row.Status, &row.Contact, &row.Agreement, &row.InitialIp, &row.CreatedAt)
+		err = rows.Scan(&row.ID, &row.Status, &row.Contact, &row.Agreement, &row.InitialIP, &row.CreatedAt)
 		if err != nil {
 			errorHandler(w, r, err, http.StatusInternalServerError)
 			return AccountList{}, err
@@ -65,39 +69,45 @@ func GetAccounts(w http.ResponseWriter, r *http.Request) (AccountList, error) {
 	return Accounts, nil
 }
 
+// Order contains the data representing an ACME order
 type Order struct {
-	Id             int
-	RegistrationId int
+	ID             int
+	RegistrationID int
 	Expires        string
 	CertSerial     string
 	BeganProc      bool
 	Created        string
 }
 
+// OrderList is a list of Order records
 type OrderList struct {
 	BaseList
 	Rows []Order
 }
 
+// NameValue is a pair of a name and a value
 type NameValue struct {
 	Name  string
 	Value string
 }
 
+// BaseShow is the generic base struct for showing an individual data record
 type BaseShow struct {
 	Title      string
 	TableClass string
 	Rows       []NameValue
-	Links      []NameValHtml
+	Links      []NameValHTML
 	Extra      []template.HTML
 }
 
+// AccountShow contains the data of an ACME account and its related data lists
 type AccountShow struct {
 	BaseShow
 	Related  []CertificateList
 	Related2 []OrderList
 }
 
+// GetAccount returns an account
 func GetAccount(w http.ResponseWriter, r *http.Request, id int) (AccountShow, error) {
 	db, err := sql.Open(dbType, dbConn)
 	if err != nil {
@@ -124,7 +134,7 @@ func GetAccount(w http.ResponseWriter, r *http.Request, id int) (AccountShow, er
 
 	for rows.Next() {
 		row := Certificate{}
-		err = rows.Scan(&row.Id, &row.RegistrationId, &row.Serial, &row.Status, &row.Issued, &row.Expires)
+		err = rows.Scan(&row.ID, &row.RegistrationID, &row.Serial, &row.Status, &row.Issued, &row.Expires)
 		if err != nil {
 			errorHandler(w, r, err, http.StatusInternalServerError)
 			return AccountShow{}, err
@@ -149,7 +159,7 @@ func GetAccount(w http.ResponseWriter, r *http.Request, id int) (AccountShow, er
 
 	for rows.Next() {
 		row := Order{}
-		err = rows.Scan(&row.Id, &row.RegistrationId, &row.Expires, &row.CertSerial, &row.BeganProc, &row.Created)
+		err = rows.Scan(&row.ID, &row.RegistrationID, &row.Expires, &row.CertSerial, &row.BeganProc, &row.Created)
 		if err != nil {
 			errorHandler(w, r, err, http.StatusInternalServerError)
 			return AccountShow{}, err
@@ -175,22 +185,23 @@ func GetAccount(w http.ResponseWriter, r *http.Request, id int) (AccountShow, er
 
 	for rows.Next() {
 		row := Account{}
-		err = rows.Scan(&row.Id, &row.Status, &row.Contact, &row.Agreement, &row.InitialIp, &row.CreatedAt)
+		err = rows.Scan(&row.ID, &row.Status, &row.Contact, &row.Agreement, &row.InitialIP, &row.CreatedAt)
 		if err != nil {
 			errorHandler(w, r, err, http.StatusInternalServerError)
 			return AccountShow{}, err
 		}
-		AccountDetails.Rows = append(AccountDetails.Rows, NameValue{"ID", strconv.Itoa(row.Id)})
+		AccountDetails.Rows = append(AccountDetails.Rows, NameValue{"ID", strconv.Itoa(row.ID)})
 		AccountDetails.Rows = append(AccountDetails.Rows, NameValue{"Status", row.Status})
 		AccountDetails.Rows = append(AccountDetails.Rows, NameValue{"Contact", row.Contact})
 		AccountDetails.Rows = append(AccountDetails.Rows, NameValue{"Agreement", row.Agreement})
-		AccountDetails.Rows = append(AccountDetails.Rows, NameValue{"Initial IP", row.InitialIp.String()})
+		AccountDetails.Rows = append(AccountDetails.Rows, NameValue{"Initial IP", row.InitialIP.String()})
 		AccountDetails.Rows = append(AccountDetails.Rows, NameValue{"Created At", row.CreatedAt})
 	}
 
 	return AccountDetails, nil
 }
 
+// GetOrders returns the list of orders
 func GetOrders(w http.ResponseWriter, r *http.Request) (OrderList, error) {
 	db, err := sql.Open(dbType, dbConn)
 	if err != nil {
@@ -217,7 +228,7 @@ func GetOrders(w http.ResponseWriter, r *http.Request) (OrderList, error) {
 
 	for rows.Next() {
 		row := Order{}
-		err = rows.Scan(&row.Id, &row.RegistrationId, &row.Expires, &row.CertSerial, &row.BeganProc, &row.Created)
+		err = rows.Scan(&row.ID, &row.RegistrationID, &row.Expires, &row.CertSerial, &row.BeganProc, &row.Created)
 		if err != nil {
 			errorHandler(w, r, err, http.StatusInternalServerError)
 			return OrderList{}, err
@@ -228,26 +239,30 @@ func GetOrders(w http.ResponseWriter, r *http.Request) (OrderList, error) {
 	return Orders, nil
 }
 
+// Auth contains the data representing an ACME auth
 type Auth struct {
-	Id             string
+	ID             string
 	Identifier     string
-	RegistrationId int
+	RegistrationID int
 	Status         string
 	Expires        string
 	Combinations   string
 }
 
+// AuthList is a list of Auth records
 type AuthList struct {
 	BaseList
 	Rows []Auth
 }
 
+// OrderShow contains the data of an ACME order and its related data lists
 type OrderShow struct {
 	BaseShow
 	Related  []AuthList
 	Related2 []BaseList
 }
 
+// GetOrder returns an order with the given id
 func GetOrder(w http.ResponseWriter, r *http.Request, id int) (OrderShow, error) {
 	db, err := sql.Open(dbType, dbConn)
 	if err != nil {
@@ -276,7 +291,7 @@ func GetOrder(w http.ResponseWriter, r *http.Request, id int) (OrderShow, error)
 
 	for rows.Next() {
 		row := Auth{}
-		err = rows.Scan(&row.Id, &row.Identifier, &row.RegistrationId, &row.Status, &row.Expires, &row.Combinations)
+		err = rows.Scan(&row.ID, &row.Identifier, &row.RegistrationID, &row.Status, &row.Expires, &row.Combinations)
 		if err != nil {
 			errorHandler(w, r, err, http.StatusInternalServerError)
 			return OrderShow{}, err
@@ -295,19 +310,19 @@ func GetOrder(w http.ResponseWriter, r *http.Request, id int) (OrderShow, error)
 			Title:      "Order",
 			TableClass: "order_show",
 			Rows:       []NameValue{},
-			Links:      []NameValHtml{},
+			Links:      []NameValHTML{},
 		},
 		Related: []AuthList{Authz},
 	}
 
 	for rows.Next() {
 		row := Order{}
-		err = rows.Scan(&row.Id, &row.RegistrationId, &row.Expires, &row.CertSerial, &row.BeganProc, &row.Created)
+		err = rows.Scan(&row.ID, &row.RegistrationID, &row.Expires, &row.CertSerial, &row.BeganProc, &row.Created)
 		if err != nil {
 			errorHandler(w, r, err, http.StatusInternalServerError)
 			return OrderShow{}, err
 		}
-		OrderDetails.Rows = append(OrderDetails.Rows, NameValue{"ID", strconv.Itoa(row.Id)})
+		OrderDetails.Rows = append(OrderDetails.Rows, NameValue{"ID", strconv.Itoa(row.ID)})
 		OrderDetails.Rows = append(OrderDetails.Rows, NameValue{"Expires", row.Expires})
 		v := "false"
 		if row.BeganProc {
@@ -316,13 +331,14 @@ func GetOrder(w http.ResponseWriter, r *http.Request, id int) (OrderShow, error)
 		OrderDetails.Rows = append(OrderDetails.Rows, NameValue{"Began Processing?", v})
 		OrderDetails.Rows = append(OrderDetails.Rows, NameValue{"Created", row.Created})
 
-		OrderDetails.Links = append(OrderDetails.Links, NameValHtml{"Certificate", template.HTML("<a href=\"" + r.Header.Get("X-Request-Base") + "/certificates/" + row.CertSerial + "\">" + row.CertSerial + "</a>")})
-		OrderDetails.Links = append(OrderDetails.Links, NameValHtml{"Account", template.HTML("<a href=\"" + r.Header.Get("X-Request-Base") + "/accounts/" + strconv.Itoa(row.RegistrationId) + "\">" + strconv.Itoa(row.RegistrationId) + "</a>")})
+		OrderDetails.Links = append(OrderDetails.Links, NameValHTML{"Certificate", template.HTML("<a href=\"" + r.Header.Get("X-Request-Base") + "/certificates/" + row.CertSerial + "\">" + row.CertSerial + "</a>")})
+		OrderDetails.Links = append(OrderDetails.Links, NameValHTML{"Account", template.HTML("<a href=\"" + r.Header.Get("X-Request-Base") + "/accounts/" + strconv.Itoa(row.RegistrationID) + "\">" + strconv.Itoa(row.RegistrationID) + "</a>")})
 	}
 
 	return OrderDetails, nil
 }
 
+// GetAuthz returns the list of authz
 func GetAuthz(w http.ResponseWriter, r *http.Request) (AuthList, error) {
 	db, err := sql.Open(dbType, dbConn)
 	if err != nil {
@@ -349,7 +365,7 @@ func GetAuthz(w http.ResponseWriter, r *http.Request) (AuthList, error) {
 
 	for rows.Next() {
 		row := Auth{}
-		err = rows.Scan(&row.Id, &row.Identifier, &row.RegistrationId, &row.Status, &row.Expires, &row.Combinations)
+		err = rows.Scan(&row.ID, &row.Identifier, &row.RegistrationID, &row.Status, &row.Expires, &row.Combinations)
 		if err != nil {
 			errorHandler(w, r, err, http.StatusInternalServerError)
 			return AuthList{}, err
@@ -360,9 +376,10 @@ func GetAuthz(w http.ResponseWriter, r *http.Request) (AuthList, error) {
 	return Authz, nil
 }
 
+// Challenge contains the data representing an ACME challenge
 type Challenge struct {
-	Id        int
-	AuthId    string
+	ID        int
+	AuthID    string
 	Type      string
 	Status    string
 	Validated string
@@ -370,22 +387,26 @@ type Challenge struct {
 	KeyAuth   string
 }
 
+// ChallengeList is a list of Challenge records
 type ChallengeList struct {
 	BaseList
 	Rows []Challenge
 }
 
-type NameValHtml struct {
+// NameValHTML is a pair of a name and an HTML value
+type NameValHTML struct {
 	Name  string
 	Value template.HTML
 }
 
+// AuthShow contains the data of an ACME auth and its related data lists
 type AuthShow struct {
 	BaseShow
 	Related  []ChallengeList
 	Related2 []BaseList
 }
 
+// GetAuth returns an auth with the given id
 func GetAuth(w http.ResponseWriter, r *http.Request, id string) (AuthShow, error) {
 	db, err := sql.Open(dbType, dbConn)
 	if err != nil {
@@ -412,7 +433,7 @@ func GetAuth(w http.ResponseWriter, r *http.Request, id string) (AuthShow, error
 
 	for rows.Next() {
 		row := Challenge{}
-		err = rows.Scan(&row.Id, &row.AuthId, &row.Type, &row.Status, &row.Validated, &row.Token, &row.KeyAuth)
+		err = rows.Scan(&row.ID, &row.AuthID, &row.Type, &row.Status, &row.Validated, &row.Token, &row.KeyAuth)
 		if err != nil {
 			errorHandler(w, r, err, http.StatusInternalServerError)
 			return AuthShow{}, err
@@ -433,31 +454,32 @@ func GetAuth(w http.ResponseWriter, r *http.Request, id string) (AuthShow, error
 			Title:      "Authorization",
 			TableClass: "auth_show",
 			Rows:       []NameValue{},
-			Links:      []NameValHtml{},
+			Links:      []NameValHTML{},
 		},
 		Related: []ChallengeList{Challenges},
 	}
 
 	for rows.Next() {
 		row := Auth{}
-		err = rows.Scan(&row.Id, &row.Identifier, &row.RegistrationId, &row.Status, &row.Expires, &row.Combinations)
+		err = rows.Scan(&row.ID, &row.Identifier, &row.RegistrationID, &row.Status, &row.Expires, &row.Combinations)
 		if err != nil {
 			errorHandler(w, r, err, http.StatusInternalServerError)
 			return AuthShow{}, err
 		}
-		AuthDetails.Rows = append(AuthDetails.Rows, NameValue{"ID", row.Id})
+		AuthDetails.Rows = append(AuthDetails.Rows, NameValue{"ID", row.ID})
 		AuthDetails.Rows = append(AuthDetails.Rows, NameValue{"Identifier", row.Identifier})
 		AuthDetails.Rows = append(AuthDetails.Rows, NameValue{"Status", row.Status})
 		AuthDetails.Rows = append(AuthDetails.Rows, NameValue{"Expires", row.Expires})
 		AuthDetails.Rows = append(AuthDetails.Rows, NameValue{"Combinations", row.Combinations})
 
-		Link := NameValHtml{"Account", template.HTML("<a href=\"" + r.Header.Get("X-Request-Base") + "/accounts/" + strconv.Itoa(row.RegistrationId) + "\">" + strconv.Itoa(row.RegistrationId) + "</a>")}
+		Link := NameValHTML{"Account", template.HTML("<a href=\"" + r.Header.Get("X-Request-Base") + "/accounts/" + strconv.Itoa(row.RegistrationID) + "\">" + strconv.Itoa(row.RegistrationID) + "</a>")}
 		AuthDetails.Links = append(AuthDetails.Links, Link)
 	}
 
 	return AuthDetails, nil
 }
 
+// GetChallenges returns the list of challenges
 func GetChallenges(w http.ResponseWriter, r *http.Request) (ChallengeList, error) {
 	db, err := sql.Open(dbType, dbConn)
 	if err != nil {
@@ -484,7 +506,7 @@ func GetChallenges(w http.ResponseWriter, r *http.Request) (ChallengeList, error
 
 	for rows.Next() {
 		row := Challenge{}
-		err = rows.Scan(&row.Id, &row.AuthId, &row.Type, &row.Status, &row.Validated, &row.Token, &row.KeyAuth)
+		err = rows.Scan(&row.ID, &row.AuthID, &row.Type, &row.Status, &row.Validated, &row.Token, &row.KeyAuth)
 		if err != nil {
 			errorHandler(w, r, err, http.StatusInternalServerError)
 			return ChallengeList{}, err
@@ -495,12 +517,14 @@ func GetChallenges(w http.ResponseWriter, r *http.Request) (ChallengeList, error
 	return Challenges, nil
 }
 
+// ChallengeShow contains the data of an ACME challenge and its related data lists
 type ChallengeShow struct {
 	BaseShow
 	Related  []ChallengeList
 	Related2 []BaseList
 }
 
+// GetChallenge returns a challenge with the given id
 func GetChallenge(w http.ResponseWriter, r *http.Request, id int) (ChallengeShow, error) {
 	db, err := sql.Open(dbType, dbConn)
 	if err != nil {
@@ -521,46 +545,49 @@ func GetChallenge(w http.ResponseWriter, r *http.Request, id int) (ChallengeShow
 			Title:      "Challenge",
 			TableClass: "challenge_show",
 			Rows:       []NameValue{},
-			Links:      []NameValHtml{},
+			Links:      []NameValHTML{},
 		},
 		Related: []ChallengeList{},
 	}
 
 	for rows.Next() {
 		row := Challenge{}
-		err = rows.Scan(&row.Id, &row.AuthId, &row.Type, &row.Status, &row.Validated, &row.Token, &row.KeyAuth)
+		err = rows.Scan(&row.ID, &row.AuthID, &row.Type, &row.Status, &row.Validated, &row.Token, &row.KeyAuth)
 		if err != nil {
 			errorHandler(w, r, err, http.StatusInternalServerError)
 			return ChallengeShow{}, err
 		}
-		ChallengeDetails.Rows = append(ChallengeDetails.Rows, NameValue{"ID", strconv.Itoa(row.Id)})
+		ChallengeDetails.Rows = append(ChallengeDetails.Rows, NameValue{"ID", strconv.Itoa(row.ID)})
 		ChallengeDetails.Rows = append(ChallengeDetails.Rows, NameValue{"Type", row.Type})
 		ChallengeDetails.Rows = append(ChallengeDetails.Rows, NameValue{"Status", row.Status})
 		ChallengeDetails.Rows = append(ChallengeDetails.Rows, NameValue{"Validated", row.Validated})
 		ChallengeDetails.Rows = append(ChallengeDetails.Rows, NameValue{"Token", row.Token})
 		ChallengeDetails.Rows = append(ChallengeDetails.Rows, NameValue{"KeyAuth", row.KeyAuth})
 
-		Link := NameValHtml{"Authorization", template.HTML("<a href=\"" + r.Header.Get("X-Request-Base") + "/authz/" + row.AuthId + "\">" + row.AuthId + "</a>")}
+		Link := NameValHTML{"Authorization", template.HTML("<a href=\"" + r.Header.Get("X-Request-Base") + "/authz/" + row.AuthID + "\">" + row.AuthID + "</a>")}
 		ChallengeDetails.Links = append(ChallengeDetails.Links, Link)
 	}
 
 	return ChallengeDetails, nil
 }
 
+// Certificate contains the data representing an ACME certificate
 type Certificate struct {
-	Id             int
-	RegistrationId int
+	ID             int
+	RegistrationID int
 	Serial         string
 	Status         string
 	Issued         string
 	Expires        string
 }
 
+// CertificateList is a list of Certificate records
 type CertificateList struct {
 	BaseList
 	Rows []Certificate
 }
 
+// GetCertificates returns the list of certificates
 func GetCertificates(w http.ResponseWriter, r *http.Request) (CertificateList, error) {
 	db, err := sql.Open(dbType, dbConn)
 	if err != nil {
@@ -596,7 +623,7 @@ func GetCertificates(w http.ResponseWriter, r *http.Request) (CertificateList, e
 
 	for rows.Next() {
 		row := Certificate{}
-		err = rows.Scan(&row.Id, &row.RegistrationId, &row.Serial, &row.Status, &row.Issued, &row.Expires)
+		err = rows.Scan(&row.ID, &row.RegistrationID, &row.Serial, &row.Status, &row.Issued, &row.Expires)
 		if err != nil {
 			errorHandler(w, r, err, http.StatusInternalServerError)
 			return CertificateList{}, err
@@ -607,15 +634,17 @@ func GetCertificates(w http.ResponseWriter, r *http.Request) (CertificateList, e
 	return Certificates, nil
 }
 
+// CertificateShow contains the data of an ACME certificate and its related data lists
 type CertificateShow struct {
 	BaseShow
 	Related  []BaseList
 	Related2 []BaseList
 }
 
+// CertificateExtra contains more detailed data of an ACME certificate
 type CertificateExtra struct {
-	Id                 int
-	RegistrationId     int
+	ID                 int
+	RegistrationID     int
 	Serial             string
 	Digest             string
 	Issued             string
@@ -660,6 +689,7 @@ func _getReasonText(RevokedReason int, Revoked string) string {
 	return reasonText
 }
 
+// GetCertificate returns a certificate with the given id or serial
 func GetCertificate(w http.ResponseWriter, r *http.Request, id int, serial string) (CertificateShow, error) {
 	db, err := sql.Open(dbType, dbConn)
 	if err != nil {
@@ -687,18 +717,18 @@ func GetCertificate(w http.ResponseWriter, r *http.Request, id int, serial strin
 			Title:      "Certificate",
 			TableClass: "certificate_show",
 			Rows:       []NameValue{},
-			Links:      []NameValHtml{},
+			Links:      []NameValHTML{},
 		},
 	}
 
 	for rows.Next() {
 		row := CertificateExtra{}
-		err = rows.Scan(&row.Id, &row.RegistrationId, &row.Serial, &row.Digest, &row.Issued, &row.Expires, &row.SubscriberApproved, &row.Status, &row.OCSPLastUpdate, &row.Revoked, &row.RevokedReason, &row.LastNagSent, &row.NotAfter, &row.IsExpired)
+		err = rows.Scan(&row.ID, &row.RegistrationID, &row.Serial, &row.Digest, &row.Issued, &row.Expires, &row.SubscriberApproved, &row.Status, &row.OCSPLastUpdate, &row.Revoked, &row.RevokedReason, &row.LastNagSent, &row.NotAfter, &row.IsExpired)
 		if err != nil {
 			errorHandler(w, r, err, http.StatusInternalServerError)
 			return CertificateShow{}, err
 		}
-		CertificateDetails.Rows = append(CertificateDetails.Rows, NameValue{"ID", strconv.Itoa(row.Id)})
+		CertificateDetails.Rows = append(CertificateDetails.Rows, NameValue{"ID", strconv.Itoa(row.ID)})
 		CertificateDetails.Rows = append(CertificateDetails.Rows, NameValue{"Serial", row.Serial})
 		CertificateDetails.Rows = append(CertificateDetails.Rows, NameValue{"Digest", row.Digest})
 		CertificateDetails.Rows = append(CertificateDetails.Rows, NameValue{"Issued", row.Issued})
@@ -721,16 +751,16 @@ func GetCertificate(w http.ResponseWriter, r *http.Request, id int, serial strin
 		}
 		CertificateDetails.Rows = append(CertificateDetails.Rows, NameValue{"Is Expired", v})
 
-		Link := NameValHtml{"Account", template.HTML("<a href=\"" + r.Header.Get("X-Request-Base") + "/accounts/" + strconv.Itoa(row.RegistrationId) + "\">" + strconv.Itoa(row.RegistrationId) + "</a>")}
+		Link := NameValHTML{"Account", template.HTML("<a href=\"" + r.Header.Get("X-Request-Base") + "/accounts/" + strconv.Itoa(row.RegistrationID) + "\">" + strconv.Itoa(row.RegistrationID) + "</a>")}
 		CertificateDetails.Links = append(CertificateDetails.Links, Link)
 
 		if row.Revoked == "0000-00-00 00:00:00" {
-			revokeHtml, err := tmpls.RenderSingle("views/revoke-partial.tmpl", struct{ Serial string }{Serial: row.Serial})
+			revokeHTML, err := tmpls.RenderSingle("views/revoke-partial.tmpl", struct{ Serial string }{Serial: row.Serial})
 			if err != nil {
 				errorHandler(w, r, err, http.StatusInternalServerError)
 				return CertificateShow{}, err
 			}
-			CertificateDetails.Extra = append(CertificateDetails.Extra, template.HTML(revokeHtml))
+			CertificateDetails.Extra = append(CertificateDetails.Extra, template.HTML(revokeHTML))
 		}
 	}
 

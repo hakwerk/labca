@@ -60,6 +60,7 @@ var (
 	}
 )
 
+// User struct for storing the admin user account details.
 type User struct {
 	Name        string
 	Email       string
@@ -70,6 +71,7 @@ type User struct {
 	Errors      map[string]string
 }
 
+// ValidatePassword checks that the password of a User is non-empty, matches the confirmation, is not on the blacklist and is sufficiently complex.
 func (reg *User) ValidatePassword(isNew bool, isChange bool) {
 	blacklist := []string{"labca", "acme", reg.Name}
 	if x := strings.Index(reg.Email, "@"); x > 0 {
@@ -119,6 +121,7 @@ func (reg *User) ValidatePassword(isNew bool, isChange bool) {
 	}
 }
 
+// Validate that User struct contains at least a Name, has a valid email address and password fields.
 func (reg *User) Validate(isNew bool, isChange bool) bool {
 	reg.Errors = make(map[string]string)
 
@@ -139,10 +142,11 @@ func (reg *User) Validate(isNew bool, isChange bool) bool {
 	return len(reg.Errors) == 0
 }
 
+// SetupConfig stores the basic config settings.
 type SetupConfig struct {
 	Fqdn             string
 	Organization     string
-	Dns              string
+	DNS              string
 	DomainMode       string
 	LockdownDomains  string
 	WhitelistDomains string
@@ -150,6 +154,7 @@ type SetupConfig struct {
 	Errors           map[string]string
 }
 
+// Validate that SetupConfig contains all required data.
 func (cfg *SetupConfig) Validate(orgRequired bool) bool {
 	cfg.Errors = make(map[string]string)
 
@@ -161,8 +166,8 @@ func (cfg *SetupConfig) Validate(orgRequired bool) bool {
 		cfg.Errors["Organization"] = "Please enter the organization name to show on the public pages"
 	}
 
-	if strings.TrimSpace(cfg.Dns) == "" {
-		cfg.Errors["Dns"] = "Please enter the DNS server to be used for validation"
+	if strings.TrimSpace(cfg.DNS) == "" {
+		cfg.Errors["DNS"] = "Please enter the DNS server to be used for validation"
 	}
 
 	if cfg.DomainMode != "lockdown" && cfg.DomainMode != "whitelist" && cfg.DomainMode != "standard" {
@@ -251,15 +256,15 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	session := getSession(w, r)
-	var bounceUrl string
+	var bounceURL string
 	if session.Values["bounce"] == nil {
-		bounceUrl = "/"
+		bounceURL = "/"
 	} else {
-		bounceUrl = session.Values["bounce"].(string)
+		bounceURL = session.Values["bounce"].(string)
 	}
 
 	if session.Values["user"] != nil {
-		http.Redirect(w, r, r.Header.Get("X-Request-Base")+bounceUrl, http.StatusFound)
+		http.Redirect(w, r, r.Header.Get("X-Request-Base")+bounceURL, http.StatusFound)
 		return
 	}
 
@@ -290,21 +295,21 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 			reg.Errors["Name"] = "Incorrect username or password"
 			render(w, r, "login", map[string]interface{}{"User": reg, "IsLogin": true})
 			return
-		} else {
-			byteStored := []byte(viper.GetString("user.password"))
-			err := bcrypt.CompareHashAndPassword(byteStored, []byte(reg.Password))
-			if err != nil {
-				log.Println(err)
-				reg.Errors["Name"] = "Incorrect username or password"
-				render(w, r, "login", map[string]interface{}{"User": reg, "IsLogin": true})
-				return
-			}
+		}
+
+		byteStored := []byte(viper.GetString("user.password"))
+		err := bcrypt.CompareHashAndPassword(byteStored, []byte(reg.Password))
+		if err != nil {
+			log.Println(err)
+			reg.Errors["Name"] = "Incorrect username or password"
+			render(w, r, "login", map[string]interface{}{"User": reg, "IsLogin": true})
+			return
 		}
 
 		session.Values["user"] = reg.Name
 		session.Save(r, w)
 
-		http.Redirect(w, r, r.Header.Get("X-Request-Base")+bounceUrl, http.StatusFound)
+		http.Redirect(w, r, r.Header.Get("X-Request-Base")+bounceURL, http.StatusFound)
 	} else {
 		http.Redirect(w, r, r.Header.Get("X-Request-Base")+"/login", http.StatusSeeOther)
 		return
@@ -419,7 +424,7 @@ func _configUpdateHandler(w http.ResponseWriter, r *http.Request) {
 	cfg := &SetupConfig{
 		Fqdn:             r.Form.Get("fqdn"),
 		Organization:     r.Form.Get("organization"),
-		Dns:              r.Form.Get("dns"),
+		DNS:              r.Form.Get("dns"),
 		DomainMode:       r.Form.Get("domain_mode"),
 		LockdownDomains:  r.Form.Get("lockdown_domains"),
 		WhitelistDomains: r.Form.Get("whitelist_domains"),
@@ -443,29 +448,29 @@ func _configUpdateHandler(w http.ResponseWriter, r *http.Request) {
 			viper.Set("labca.organization", cfg.Organization)
 		}
 
-		matched, err := regexp.MatchString(":\\d+$", cfg.Dns)
+		matched, err := regexp.MatchString(":\\d+$", cfg.DNS)
 		if err == nil && !matched {
-			cfg.Dns += ":53"
+			cfg.DNS += ":53"
 		}
 
-		if cfg.Dns != viper.GetString("labca.dns") {
+		if cfg.DNS != viper.GetString("labca.dns") {
 			delta = true
-			viper.Set("labca.dns", cfg.Dns)
+			viper.Set("labca.dns", cfg.DNS)
 		}
 
-		domain_mode := cfg.DomainMode
-		if domain_mode != viper.GetString("labca.domain_mode") {
+		domainMode := cfg.DomainMode
+		if domainMode != viper.GetString("labca.domain_mode") {
 			delta = true
 			viper.Set("labca.domain_mode", cfg.DomainMode)
 		}
 
-		if domain_mode == "lockdown" {
+		if domainMode == "lockdown" {
 			if cfg.LockdownDomains != viper.GetString("labca.lockdown") {
 				delta = true
 				viper.Set("labca.lockdown", cfg.LockdownDomains)
 			}
 		}
-		if domain_mode == "whitelist" {
+		if domainMode == "whitelist" {
 			if cfg.WhitelistDomains != viper.GetString("labca.whitelist") {
 				delta = true
 				viper.Set("labca.whitelist", cfg.WhitelistDomains)
@@ -496,6 +501,7 @@ func _configUpdateHandler(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(res)
 }
 
+// EmailConfig stores configuration used for sending out emails
 type EmailConfig struct {
 	DoEmail   bool
 	Server    string
@@ -506,6 +512,7 @@ type EmailConfig struct {
 	Errors    map[string]string
 }
 
+// Validate that the email config is valid and complete
 func (cfg *EmailConfig) Validate() bool {
 	cfg.Errors = make(map[string]string)
 
@@ -758,6 +765,7 @@ func _decrypt(ciphertext string) ([]byte, error) {
 	return gcm.Open(nil, ct[:gcm.NonceSize()], ct[gcm.NonceSize():], nil)
 }
 
+// Result contains data on managed processes
 type Result struct {
 	Success      bool
 	Message      string
@@ -766,6 +774,7 @@ type Result struct {
 	Class        string
 }
 
+// ManageComponents sets the additional data to be displayed on the page for the LabCA components
 func (res *Result) ManageComponents(w http.ResponseWriter, r *http.Request, action string) {
 	components := _parseComponents(getLog(w, r, "components"))
 	for i := 0; i < len(components); i++ {
@@ -823,7 +832,7 @@ func _managePost(w http.ResponseWriter, r *http.Request) {
 
 	action := r.Form.Get("action")
 	actionKnown := false
-	for _, a := range []string {
+	for _, a := range []string{
 		"backup-restore",
 		"backup-delete",
 		"backup-now",
@@ -847,7 +856,7 @@ func _managePost(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	if !actionKnown {
-		errorHandler(w, r, errors.New(fmt.Sprintf("Unknown manage action '%s'", action)), http.StatusBadRequest)
+		errorHandler(w, r, fmt.Errorf("Unknown manage action '%s'", action), http.StatusBadRequest)
 		return
 	}
 
@@ -855,7 +864,7 @@ func _managePost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	res := &Result{ Success: true }
+	res := &Result{Success: true}
 	if !_hostCommand(w, r, action) {
 		res.Success = false
 		res.Message = "Command failed - see LabCA log for any details"
@@ -876,7 +885,7 @@ func _manageGet(w http.ResponseWriter, r *http.Request) {
 	components := _parseComponents(getLog(w, r, "components"))
 	for i := 0; i < len(components); i++ {
 		if components[i].Name == "NGINX Webserver" {
-			components[i].LogUrl = r.Header.Get("X-Request-Base") + "/logs/weberr"
+			components[i].LogURL = r.Header.Get("X-Request-Base") + "/logs/weberr"
 			components[i].LogTitle = "Web Error Log"
 
 			btn := make(map[string]interface{})
@@ -895,7 +904,7 @@ func _manageGet(w http.ResponseWriter, r *http.Request) {
 		}
 
 		if components[i].Name == "Host Service" {
-			components[i].LogUrl = ""
+			components[i].LogURL = ""
 			components[i].LogTitle = ""
 
 			btn := make(map[string]interface{})
@@ -907,7 +916,7 @@ func _manageGet(w http.ResponseWriter, r *http.Request) {
 		}
 
 		if components[i].Name == "Boulder (ACME)" {
-			components[i].LogUrl = r.Header.Get("X-Request-Base") + "/logs/boulder"
+			components[i].LogURL = r.Header.Get("X-Request-Base") + "/logs/boulder"
 			components[i].LogTitle = "ACME Log"
 
 			btn := make(map[string]interface{})
@@ -945,7 +954,7 @@ func _manageGet(w http.ResponseWriter, r *http.Request) {
 		}
 
 		if components[i].Name == "LabCA Application" {
-			components[i].LogUrl = r.Header.Get("X-Request-Base") + "/logs/labca"
+			components[i].LogURL = r.Header.Get("X-Request-Base") + "/logs/labca"
 			components[i].LogTitle = "LabCA Log"
 
 			btn := make(map[string]interface{})
@@ -976,13 +985,13 @@ func _manageGet(w http.ResponseWriter, r *http.Request) {
 
 	manageData["Fqdn"] = viper.GetString("labca.fqdn")
 	manageData["Organization"] = viper.GetString("labca.organization")
-	manageData["Dns"] = viper.GetString("labca.dns")
-	domain_mode := viper.GetString("labca.domain_mode")
-	manageData["DomainMode"] = domain_mode
-	if domain_mode == "lockdown" {
+	manageData["DNS"] = viper.GetString("labca.dns")
+	domainMode := viper.GetString("labca.domain_mode")
+	manageData["DomainMode"] = domainMode
+	if domainMode == "lockdown" {
 		manageData["LockdownDomains"] = viper.GetString("labca.lockdown")
 	}
-	if domain_mode == "whitelist" {
+	if domainMode == "whitelist" {
 		manageData["WhitelistDomains"] = viper.GetString("labca.whitelist")
 	}
 
@@ -1015,9 +1024,9 @@ func manageHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if r.Method == "POST" {
-		_managePost(w,r)
+		_managePost(w, r)
 	} else {
-		_manageGet(w,r)
+		_manageGet(w, r)
 	}
 }
 
@@ -1060,7 +1069,7 @@ func logsHandler(w http.ResponseWriter, r *http.Request) {
 		wsurl = ""
 		data = getLog(w, r, logType)
 	default:
-		errorHandler(w, r, errors.New(fmt.Sprintf("Unknown log type '%s'", logType)), http.StatusBadRequest)
+		errorHandler(w, r, fmt.Errorf("Unknown log type '%s'", logType), http.StatusBadRequest)
 		return
 	}
 
@@ -1196,7 +1205,7 @@ func wsHandler(w http.ResponseWriter, r *http.Request) {
 	case "labca":
 	case "web":
 	default:
-		errorHandler(w, r, errors.New(fmt.Sprintf("Unknown log type '%s'", logType)), http.StatusBadRequest)
+		errorHandler(w, r, fmt.Errorf("Unknown log type '%s'", logType), http.StatusBadRequest)
 		return
 	}
 
@@ -1446,7 +1455,7 @@ func _applyConfig() error {
 		os.Setenv("PKI_EMAIL_FROM", "Expiry bot <test@example.com>")
 	}
 
-	_, err := exe_cmd("./apply")
+	_, err := exeCmd("./apply")
 	if err != nil {
 		fmt.Println("")
 	}
@@ -1459,45 +1468,39 @@ func _progress(stage string) int {
 
 	if stage == "register" {
 		return int(math.Round(curr / max))
-	} else {
-		curr += 2.0
 	}
+	curr += 2.0
 
 	if stage == "setup" {
 		return int(math.Round(curr / max))
-	} else {
-		curr += 3.0
 	}
+	curr += 3.0
 
 	if stage == "root-ca" {
 		return int(math.Round(curr / max))
-	} else {
-		curr += 4.0
 	}
+	curr += 4.0
 
 	if stage == "ca-int" {
 		return int(math.Round(curr / max))
-	} else {
-		curr += 3.0
 	}
+	curr += 3.0
 
 	if stage == "polling" {
 		return int(math.Round(curr / max))
-	} else {
-		curr += 4.0
 	}
+	curr += 4.0
 
 	if stage == "wrapup" {
 		return int(math.Round(curr / max))
-	} else {
-		curr += 3.0
 	}
+	curr += 3.0
 
 	if stage == "final" {
 		return int(math.Round(curr / max))
-	} else {
-		return 0
 	}
+
+	return 0
 }
 
 func _helptext(stage string) template.HTML {
@@ -1612,7 +1615,7 @@ func _setupBaseConfig(w http.ResponseWriter, r *http.Request) bool {
 
 		cfg := &SetupConfig{
 			Fqdn:             r.Form.Get("fqdn"),
-			Dns:              r.Form.Get("dns"),
+			DNS:              r.Form.Get("dns"),
 			DomainMode:       r.Form.Get("domain_mode"),
 			LockdownDomains:  r.Form.Get("lockdown_domains"),
 			WhitelistDomains: r.Form.Get("whitelist_domains"),
@@ -1624,13 +1627,13 @@ func _setupBaseConfig(w http.ResponseWriter, r *http.Request) bool {
 			return false
 		}
 
-		matched, err := regexp.MatchString(":\\d+$", cfg.Dns)
+		matched, err := regexp.MatchString(":\\d+$", cfg.DNS)
 		if err == nil && !matched {
-			cfg.Dns += ":53"
+			cfg.DNS += ":53"
 		}
 
 		viper.Set("labca.fqdn", cfg.Fqdn)
-		viper.Set("labca.dns", cfg.Dns)
+		viper.Set("labca.dns", cfg.DNS)
 		viper.Set("labca.domain_mode", cfg.DomainMode)
 		if cfg.DomainMode == "lockdown" {
 			viper.Set("labca.lockdown", cfg.LockdownDomains)
@@ -1702,10 +1705,9 @@ func setupHandler(w http.ResponseWriter, r *http.Request) {
 			http.Redirect(w, r, r.Header.Get("X-Request-Base")+"/wait?restart="+restartSecret, http.StatusFound)
 		}
 		return
-
-	} else {
-		render(w, r, "wrapup:manage", map[string]interface{}{"Progress": _progress("wrapup"), "HelpText": _helptext("wrapup")})
 	}
+
+	render(w, r, "wrapup:manage", map[string]interface{}{"Progress": _progress("wrapup"), "HelpText": _helptext("wrapup")})
 }
 
 func waitHandler(w http.ResponseWriter, r *http.Request) {
@@ -1989,12 +1991,12 @@ type navItem struct {
 }
 
 func _matchPrefix(uri string, prefix string) bool {
-	return (uri == prefix || strings.HasPrefix(uri, prefix + "/"))
+	return (uri == prefix || strings.HasPrefix(uri, prefix+"/"))
 }
 
 func _acmeNav(active string, uri string, requestBase string) navItem {
 	isAcmeActive := _matchPrefix(uri, "/accounts") || _matchPrefix(uri, "/orders") ||
-		_matchPrefix(uri, "/authz") || _matchPrefix(uri, "/challenges" ) ||
+		_matchPrefix(uri, "/authz") || _matchPrefix(uri, "/challenges") ||
 		_matchPrefix(uri, "/certificates") || false
 
 	accounts := navItem{
@@ -2132,7 +2134,7 @@ func activeNav(active string, uri string, requestBase string) []navItem {
 			"title": "Log Files",
 		},
 		IsActive: strings.HasPrefix(uri, "/logs/"),
-		SubMenu: []navItem{cert, boulder, audit, labca, web, weberr},
+		SubMenu:  []navItem{cert, boulder, audit, labca, web, weberr},
 	}
 	manage := navItem{
 		Name: "Manage",
