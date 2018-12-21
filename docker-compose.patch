@@ -29,7 +29,7 @@ index b0e2c1f1..30426452 100644
 +        restart: always
      bhsm:
          # To minimize fetching this should be the same version used above
-         image: letsencrypt/boulder-tools-go${TRAVIS_GO_VERSION:-1.11.1}:2018-10-18
+         image: letsencrypt/boulder-tools-go${TRAVIS_GO_VERSION:-1.11.2}:2018-11-19
 @@ -61,8 +68,16 @@ services:
            bluenet:
              aliases:
@@ -59,7 +59,7 @@ index b0e2c1f1..30426452 100644
 +            max-file: "5"
 +        restart: always
 +    labca:
-         image: letsencrypt/boulder-tools-go${TRAVIS_GO_VERSION:-1.11.1}:2018-10-18
+         image: letsencrypt/boulder-tools-go${TRAVIS_GO_VERSION:-1.11.2}:2018-11-19
          networks:
            - bluenet
          volumes:
