@@ -12,6 +12,7 @@ import (
 	"time"
 )
 
+// Activity is a message to be shown on the dashboard, with timestamp and css class
 type Activity struct {
 	Title        string
 	Message      string
@@ -124,12 +125,13 @@ func _parseActivity(data string) []Activity {
 	return activity
 }
 
+// Component contains status info related to a LabCA component
 type Component struct {
 	Name         string
 	Timestamp    string
 	TimestampRel string
 	Class        string
-	LogUrl       string
+	LogURL       string
 	LogTitle     string
 	Buttons      []map[string]interface{}
 }
@@ -197,6 +199,7 @@ func _parseComponents(data string) []Component {
 	return components
 }
 
+// Stat contains a statistic
 type Stat struct {
 	Name  string
 	Hint  string
@@ -273,6 +276,7 @@ func _parseStats(data string) []Stat {
 	return stats
 }
 
+// CollectDashboardData collects all data relevant for building the dashboard page
 func CollectDashboardData(w http.ResponseWriter, r *http.Request) (map[string]interface{}, error) {
 	db, err := sql.Open(dbType, dbConn)
 	if err != nil {

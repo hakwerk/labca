@@ -1,5 +1,5 @@
 diff --git a/docker-compose.yml b/docker-compose.yml
-index b0e2c1f1..be6edbda 100644
+index b0e2c1f1..30426452 100644
 --- a/docker-compose.yml
 +++ b/docker-compose.yml
 @@ -6,9 +6,10 @@ services:
@@ -14,21 +14,31 @@ index b0e2c1f1..be6edbda 100644
            - ./.gocache:/root/.cache/go-build
          networks:
            bluenet:
-@@ -47,8 +48,9 @@ services:
+@@ -47,8 +48,14 @@ services:
          depends_on:
            - bhsm
            - bmysql
 -        entrypoint: test/entrypoint.sh
 +        entrypoint: labca/entrypoint.sh
          working_dir: /go/src/github.com/letsencrypt/boulder
++        logging:
++          driver: "json-file"
++          options:
++            max-size: "500k"
++            max-file: "5"
 +        restart: always
      bhsm:
          # To minimize fetching this should be the same version used above
-         image: letsencrypt/boulder-tools-go${TRAVIS_GO_VERSION:-1.11.1}:2018-10-18
-@@ -61,8 +63,11 @@ services:
+         image: letsencrypt/boulder-tools-go${TRAVIS_GO_VERSION:-1.11.2}:2018-11-19
+@@ -61,8 +68,16 @@ services:
            bluenet:
              aliases:
                - boulder-hsm
++        logging:
++          driver: "json-file"
++          options:
++            max-size: "500k"
++            max-file: "5"
 +        restart: always
      bmysql:
          image: mariadb:10.3
@@ -37,14 +47,19 @@ index b0e2c1f1..be6edbda 100644
          networks:
            bluenet:
              aliases:
-@@ -72,16 +77,27 @@ services:
+@@ -72,16 +87,37 @@ services:
          command: mysqld --bind-address=0.0.0.0
          logging:
              driver: none
 -    netaccess:
++        logging:
++          driver: "json-file"
++          options:
++            max-size: "500k"
++            max-file: "5"
 +        restart: always
 +    labca:
-         image: letsencrypt/boulder-tools-go${TRAVIS_GO_VERSION:-1.11.1}:2018-10-18
+         image: letsencrypt/boulder-tools-go${TRAVIS_GO_VERSION:-1.11.2}:2018-11-19
          networks:
            - bluenet
          volumes:
@@ -62,6 +77,11 @@ index b0e2c1f1..be6edbda 100644
            - bmysql
 +        working_dir: /go/src/labca
 +        command: ./setup.sh
++        logging:
++          driver: "json-file"
++          options:
++            max-size: "500k"
++            max-file: "5"
 +        restart: always
 +
 +volumes:

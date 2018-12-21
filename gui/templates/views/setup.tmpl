@@ -14,8 +14,8 @@
   </div>
   <div class="form-group">
     <label for="dns">Internal DNS server to use:</label>
-    <input class="form-control non-fluid" type="text" id="dns" name="dns" value="{{ .Dns }}" required>
-    {{ with .Errors.Dns }}
+    <input class="form-control non-fluid" type="text" id="dns" name="dns" value="{{ .DNS }}" required>
+    {{ with .Errors.DNS }}
     <span class="error">{{ . }}</span>
     {{ end }}
   </div>

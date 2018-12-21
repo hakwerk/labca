@@ -1,6 +1,8 @@
 # LabCA
 
-A private Certificate Authority for internal (lab) use, based on the open source ACME Automated Certificate Management Environment implementation from Let's Encrypt (tm).
+[![Go Report Card](https://goreportcard.com/badge/github.com/hakwerk/labca)](https://goreportcard.com/report/github.com/hakwerk/labca)
+
+**A private Certificate Authority for internal (lab) use, based on the open source ACME Automated Certificate Management Environment implementation from Let's Encrypt (tm).**
 
 ![08-dashboard](https://user-images.githubusercontent.com/44847421/48658726-ebd4c400-ea46-11e8-8cb1-43584dbc3719.jpg)
 
