@@ -24,7 +24,7 @@ dockerComposeVersion="1.22.0"
 
 labcaUrl="https://github.com/hakwerk/labca/"
 boulderUrl="https://github.com/letsencrypt/boulder/"
-boulderTag="release-2018-12-10"
+boulderTag="release-2019-06-28"
 
 #
 # Color configuration
@@ -417,6 +417,8 @@ get_boulder() {
 
     cd "$boulderDir"
     sudo -u labca git reset --hard $boulderTag &>>$installLog
+    sudo -u labca cp sa/_db-next/migrations/20190221140139_AddAuthz2.sql sa/_db/migrations/
+    sudo -u labca cp sa/_db-next/migrations/20190524120239_AddAuthz2ExpiresIndex.sql sa/_db/migrations/
     msg_ok "Boulder checkout '$boulderTag'"
 }
 
@@ -480,6 +482,7 @@ config_boulder() {
     sed -i -e "s/test-ca2.pem/test-ca.pem/" config/ocsp-responder.json
     sed -i -e "s/test-ca2.pem/test-ca.pem/" config/ocsp-updater.json
     sed -i -e "s/test-ca2.pem/test-ca.pem/" config/publisher.json
+    sed -i -e "s/test-ca2.pem/test-ca.pem/" config/ra.json
     sed -i -e "s/test-ca2.pem/test-ca.pem/" config/wfe.json
     sed -i -e "s/test-ca2.pem/test-ca.pem/" config/wfe2.json
     sed -i -e "s/5001/443/g" config/va.json

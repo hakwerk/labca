@@ -1,90 +1,91 @@
 diff --git a/policy/pa.go b/policy/pa.go
-index a8337bf7..83150102 100644
+index 3d097365..ce3c32e3 100644
 --- a/policy/pa.go
 +++ b/policy/pa.go
-@@ -29,6 +29,8 @@ type AuthorityImpl struct {
- 	blacklist              map[string]bool
- 	exactBlacklist         map[string]bool
- 	wildcardExactBlacklist map[string]bool
-+	whitelist              map[string]bool
-+	lockdown               map[string]bool
- 	blacklistMu            sync.RWMutex
- 
- 	enabledChallenges          map[string]bool
-@@ -53,6 +55,8 @@ func New(challengeTypes map[string]bool) (*AuthorityImpl, error) {
- type blacklistJSON struct {
- 	Blacklist      []string
- 	ExactBlacklist []string
-+	Whitelist      []string
-+	Lockdown       []string
+@@ -30,6 +30,8 @@ type AuthorityImpl struct {
+        blocklist              map[string]bool
+        exactBlocklist         map[string]bool
+        wildcardExactBlocklist map[string]bool
++       whitelist              map[string]bool
++       lockdown               map[string]bool
+        blocklistMu            sync.RWMutex
+
+        enabledChallenges map[string]bool
+@@ -70,6 +72,9 @@ type blockedNamesPolicy struct {
+        // time above and beyond the high-risk domains. Managing these entries separately
+        // from HighRiskBlockedNames makes it easier to vet changes accurately.
+        AdminBlockedNames []string `yaml:"AdminBlockedNames"`
++
++       Whitelist []string `yaml:"Whitelist"`
++       Lockdown []string `yaml:"Lockdown"`
  }
- 
+
  // SetHostnamePolicyFile will load the given policy file, returning error if it
-@@ -103,10 +107,20 @@ func (pa *AuthorityImpl) loadHostnamePolicy(b []byte) error {
- 		// wildcardNameMap to block issuance for `*.`+parts[1]
- 		wildcardNameMap[parts[1]] = true
- 	}
-+	whiteMap := make(map[string]bool)
-+	for _, v := range bl.Whitelist {
-+		whiteMap[v] = true
-+	}
-+	lockMap := make(map[string]bool)
-+	for _, v := range bl.Lockdown {
-+		lockMap[v] = true
-+	}
- 	pa.blacklistMu.Lock()
- 	pa.blacklist = nameMap
- 	pa.exactBlacklist = exactNameMap
- 	pa.wildcardExactBlacklist = wildcardNameMap
-+	pa.whitelist = whiteMap
-+	pa.lockdown = lockMap
- 	pa.blacklistMu.Unlock()
- 	return nil
+@@ -138,10 +143,20 @@ func (pa *AuthorityImpl) processHostnamePolicy(policy blockedNamesPolicy) error
+                // wildcardNameMap to block issuance for `*.`+parts[1]
+                wildcardNameMap[parts[1]] = true
+        }
++       whiteMap := make(map[string]bool)
++       for _, v := range policy.Whitelist {
++               whiteMap[v] = true
++       }
++       lockMap := make(map[string]bool)
++       for _, v := range policy.Lockdown {
++               lockMap[v] = true
++       }
+        pa.blocklistMu.Lock()
+        pa.blocklist = nameMap
+        pa.exactBlocklist = exactNameMap
+        pa.wildcardExactBlocklist = wildcardNameMap
++       pa.whitelist = whiteMap
++       pa.lockdown = lockMap
+        pa.blocklistMu.Unlock()
+        return nil
  }
-@@ -288,6 +302,14 @@ func (pa *AuthorityImpl) WillingToIssue(id core.AcmeIdentifier) error {
- 		}
- 	}
- 
-+	ok, err := pa.checkWhitelist(domain)
-+	if err != nil {
-+		return err
-+	}
-+	if ok {
-+		return nil
-+	}
+@@ -287,6 +302,14 @@ func (pa *AuthorityImpl) WillingToIssue(id identifier.ACMEIdentifier) error {
+                }
+        }
+
++       ok, err := pa.checkWhitelist(domain)
++       if err != nil {
++               return err
++       }
++       if ok {
++               return nil
++       }
 +
- 	// Names must end in an ICANN TLD, but they must not be equal to an ICANN TLD.
- 	icannTLD, err := extractDomainIANASuffix(domain)
- 	if err != nil {
-@@ -413,6 +435,31 @@ func (pa *AuthorityImpl) checkHostLists(domain string) error {
- 	return nil
+        // Names must end in an ICANN TLD, but they must not be equal to an ICANN TLD.
+        icannTLD, err := iana.ExtractSuffix(domain)
+        if err != nil {
+@@ -304,6 +327,31 @@ func (pa *AuthorityImpl) WillingToIssue(id identifier.ACMEIdentifier) error {
+        return nil
  }
- 
+
 +func (pa *AuthorityImpl) checkWhitelist(domain string) (bool,error) {
-+	pa.blacklistMu.RLock()
-+	defer pa.blacklistMu.RUnlock()
++       pa.blocklistMu.RLock()
++       defer pa.blocklistMu.RUnlock()
 +
-+	if (pa.whitelist == nil) || (pa.lockdown == nil) {
-+		return false, fmt.Errorf("Hostname policy not yet loaded.")
-+	}
++       if (pa.whitelist == nil) || (pa.lockdown == nil) {
++               return false, fmt.Errorf("Hostname policy not yet loaded.")
++       }
 +
-+	labels := strings.Split(domain, ".")
-+	for i := range labels {
-+		joined := strings.Join(labels[i:], ".")
-+		if pa.whitelist[joined] || pa.lockdown[joined] {
-+			return true, nil
-+		}
-+	}
++       labels := strings.Split(domain, ".")
++       for i := range labels {
++               joined := strings.Join(labels[i:], ".")
++               if pa.whitelist[joined] || pa.lockdown[joined] {
++                       return true, nil
++               }
++       }
 +
-+	if len(pa.lockdown) > 0 {
-+		// In Lockdown mode, the domain MUST be in the list, so return an error if not found
-+		return false, errBlacklisted
-+	} else {
-+		// In Whitelist mode, if the domain is not in the list, continue with the other checks
-+		return false, nil
-+	}
++       if len(pa.lockdown) > 0 {
++               // In Lockdown mode, the domain MUST be in the list, so return an error if not found
++               return false, errPolicyForbidden
++       } else {
++               // In Whitelist mode, if the domain is not in the list, continue with the other checks
++               return false, nil
++       }
 +}
 +
- // ChallengesFor makes a decision of what challenges, and combinations, are
- // acceptable for the given identifier. If the TLSSNIRevalidation feature flag
- // is set, create TLS-SNI-01 challenges for revalidation requests even if
+ // WillingToIssueWildcards is an extension of WillingToIssue that accepts DNS
+ // identifiers for well formed wildcard domains in addition to regular
+ // identifiers.
