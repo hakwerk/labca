@@ -49,6 +49,9 @@ wait_up() {
 dn=$(dirname $0)
 source "$dn/utils.sh" &>/dev/null || true
 
+cmdlineFqdn=""
+cmdlineBranch=""
+
 #
 # Helper functions for informing the user and logging to file
 #
@@ -136,14 +139,22 @@ labca_user() {
 clone_repo() {
     local dir="$1"
     local url="$2"
+    local branch="$3"
 
     local msg="Clone $url to $dir"
     msg_info "$msg"
     sudo -u labca git clone -q "$url" "$dir" &>>$installLog && msg_ok "$msg" || msg_fatal "Could not clone git repository"
+
+    if [ "$branch" != "" ]; then
+        cd "$dir"
+        sudo -u labca git checkout $branch
+        cd -
+    fi
 }
 
 pull_repo() {
     local dir="$1"
+    local branch="$2"
 
     cd "$dir" &>>$installLog || msg_fatal "Could not switch to directory '$dir'"
 
@@ -152,11 +163,18 @@ pull_repo() {
     sudo -u labca git stash --all --quiet &>>$installLog || true
     sudo -u labca git clean --quiet --force -d &>>$installLog || true
     sudo -u labca git pull --quiet &>>$installLog && msg_ok "$msg" || msg_fatal "Could not update local repository"
+
+    if [ "$branch" != "" ]; then
+        cd "$dir"
+        sudo -u labca git checkout $branch
+        cd -
+    fi
 }
 
 clone_or_pull() {
     local dir="$1"
     local url="$2"
+    local branch="$3"
 
     local parentdir=$(dirname "$dir")
     local dirbase=$(basename "$dir")
@@ -168,12 +186,12 @@ clone_or_pull() {
         if [ $rc -gt 0 ]; then
             cd "$parentdir"
             mv "$dirbase" "${dirbase}_${runId}" && msg_ok "Backup existing non-git directory '$dir'"
-            clone_repo "$dir" "$url"
+            clone_repo "$dir" "$url" "$branch"
         else
-            pull_repo "$dir"
+            pull_repo "$dir" "$branch"
         fi
     else
-        clone_repo "$dir" "$url"
+        clone_repo "$dir" "$url" "$branch"
     fi
 }
 
@@ -209,20 +227,18 @@ prompt_and_export() {
     fi
 }
 
-# Determine the remote address of this machine from (in order): commandline parameter,
-# existing configuration or full hostname.
-get_fqdn() {
-    local cfgFile="$adminDir/data/config.json"
-    local cfgFqdn=$(grep fqdn $cfgFile 2>/dev/null | grep -v LABCA_FQDN | cut -d ":" -f 2- | tr -d " \",")
-    LABCA_FQDN=${cfgFqdn:-$(hostname -f)}
-
-    local parsed=$(getopt --options=n: --longoptions=name:,fqdn: --name "$0" -- "$@" 2>>$installLog) || msg_fatal "Could not process commandline parameters"
+# Parse the command line options, if any
+parse_cmdline() {
+    local parsed=$(getopt --options=n:,b: --longoptions=name:,fqdn:,branch: --name "$0" -- "$@" 2>>$installLog) || msg_fatal "Could not process commandline parameters"
     eval set -- "$parsed"
-    local cmdlineFqdn
     while true; do
         case "$1" in
             -n|--name|--fqdn)
                 cmdlineFqdn="$2"
+                shift 2
+                ;;
+            -b|--branch)
+                cmdlineBranch="$2"
                 shift 2
                 ;;
             --)
@@ -234,6 +250,14 @@ get_fqdn() {
                 ;;
         esac
     done
+}
+
+# Determine the remote address of this machine from (in order): commandline parameter,
+# existing configuration or full hostname.
+get_fqdn() {
+    local cfgFile="$adminDir/data/config.json"
+    local cfgFqdn=$(grep fqdn $cfgFile 2>/dev/null | grep -v LABCA_FQDN | cut -d ":" -f 2- | tr -d " \",")
+    LABCA_FQDN=${cfgFqdn:-$(hostname -f)}
 
     if [ "$cfgFqdn" == "" ]; then
         if [ "$cmdlineFqdn" != "" ]; then
@@ -640,10 +664,12 @@ main() {
     [ -e $this ] || this="$curdir/$0"
     local checksum=$(md5sum $this 2>/dev/null | cut -d' ' -f1)
     [ ! -e "$cloneDir/cron_d" ] || chown labca:labca "$cloneDir/cron_d"
-    clone_or_pull "$cloneDir" "$labcaUrl"
+
+    parse_cmdline "$@"
+    clone_or_pull "$cloneDir" "$labcaUrl" "$cmdlineBranch"
     restart_if_updated "$checksum"
 
-    get_fqdn "$@"
+    get_fqdn
     copy_admin
 
     update_upgrade
