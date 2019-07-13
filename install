@@ -147,8 +147,8 @@ clone_repo() {
 
     if [ "$branch" != "" ]; then
         cd "$dir"
-        sudo -u labca git checkout $branch
-        cd -
+        sudo -u labca git checkout $branch &>>$installLog
+        cd - >/dev/null
     fi
 }
 
@@ -166,8 +166,8 @@ pull_repo() {
 
     if [ "$branch" != "" ]; then
         cd "$dir"
-        sudo -u labca git checkout $branch
-        cd -
+        sudo -u labca git checkout $branch &>>$installLog
+        cd - >/dev/null
     fi
 }
 
