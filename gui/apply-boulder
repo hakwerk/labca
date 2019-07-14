@@ -2,20 +2,38 @@
 
 set -e
 
-perl -i -p0e "s/(\"dnsResolvers\": \[\n).*?(\s+\],)/\1      \"$PKI_DNS\"\2/igs" config/ra.json
 perl -i -p0e "s/(\"dnsResolvers\": \[\n).*?(\s+\],)/\1      \"$PKI_DNS\"\2/igs" config/va.json
 perl -i -p0e "s/(\"dnsResolvers\": \[\n).*?(\s+\],)/\1      \"$PKI_DNS\"\2/igs" config/expiration-mailer.json
 sed -i -e "s/\"issuerDomain\": \".*\"/\"issuerDomain\": \"$PKI_DOMAIN\"/" config/va.json
 sed -i -e "s/\"directoryCAAIdentity\": \".*\"/\"directoryCAAIdentity\": \"$PKI_DOMAIN\"/" config/wfe.json
 sed -i -e "s/\"directoryCAAIdentity\": \".*\"/\"directoryCAAIdentity\": \"$PKI_DOMAIN\"/" config/wfe2.json
 
-[ -e ../test/hostname-policy.json ] && cp ../test/hostname-policy.json ./ || true
-[ -e ../boulder/test/hostname-policy.json ] && cp ../boulder/test/hostname-policy.json ./ || true
+[ -e ../test/hostname-policy.yaml ] && cp ../test/hostname-policy.yaml ./ || true
+[ -e ../boulder/test/hostname-policy.yaml ] && cp ../boulder/test/hostname-policy.yaml ./ || true
+[ -e hostname-policy.json ] && rm hostname-policy.json || true
 if [ "$PKI_DOMAIN_MODE" == "lockdown" ]; then
-    sed -i -e "s/  \]$/  \],\n  \"Lockdown\": \[\n    \"$PKI_LOCKDOWN_DOMAINS\"\n&/" hostname-policy.json
+    echo "Lockdown:" >> hostname-policy.yaml
+    echo "  - \"$PKI_LOCKDOWN_DOMAINS\"" >> hostname-policy.yaml
 fi
 if [ "$PKI_DOMAIN_MODE" == "whitelist" ]; then
-    sed -i -e "s/  \]$/  \],\n  \"Whitelist\": \[\n    \"$PKI_WHITELIST_DOMAINS\"\n&/" hostname-policy.json
+    echo "Whitelist:" >> hostname-policy.yaml
+    echo "  - \"$PKI_LOCKDOWN_DOMAINS\"" >> hostname-policy.yaml
+fi
+
+if [ "$PKI_EXTENDED_TIMEOUT" == "1" ]; then
+    sed -i -e "s/\"timeout\": \"15s\"/\"timeout\": \"30s\"/" config/ca-a.json
+    sed -i -e "s/\"timeout\": \"15s\"/\"timeout\": \"30s\"/" config/ca-b.json
+    sed -i -e "s/\"timeout\": \"15s\"/\"timeout\": \"30s\"/" config/admin-revoker.json
+    sed -i -e "s/\"timeout\": \"15s\"/\"timeout\": \"30s\"/" config/wfe.json
+    sed -i -e "s/\"timeout\": \"20s\"/\"timeout\": \"40s\"/" config/wfe.json
+    sed -i -e "s/\"timeout\": \"15s\"/\"timeout\": \"30s\"/" config/wfe2.json
+    sed -i -e "s/\"timeout\": \"20s\"/\"timeout\": \"40s\"/" config/wfe2.json
+    sed -i -e "s/\"timeout\": \"15s\"/\"timeout\": \"30s\"/" config/ca.json
+    sed -i -e "s/\"timeout\": \"15s\"/\"timeout\": \"30s\"/" config/expiration-mailer.json
+    sed -i -e "s/\"timeout\": \"15s\"/\"timeout\": \"30s\"/" config/ra.json
+    sed -i -e "s/\"timeout\": \"20s\"/\"timeout\": \"40s\"/" config/ra.json
+    sed -i -e "s/\"timeout\": \"15s\"/\"timeout\": \"30s\"/" config/ocsp-updater.json
+    sed -i -e "s/\"timeout\": \"15s\"/\"timeout\": \"30s\"/" config/orphan-finder.json
 fi
 
 sed -i -e "s/\"server\": \".*\"/\"server\": \"$PKI_EMAIL_SERVER\"/" config/expiration-mailer.json

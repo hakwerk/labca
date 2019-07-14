@@ -150,6 +150,7 @@ type SetupConfig struct {
 	DomainMode       string
 	LockdownDomains  string
 	WhitelistDomains string
+	ExtendedTimeout  bool
 	RequestBase      string
 	Errors           map[string]string
 }
@@ -428,6 +429,7 @@ func _configUpdateHandler(w http.ResponseWriter, r *http.Request) {
 		DomainMode:       r.Form.Get("domain_mode"),
 		LockdownDomains:  r.Form.Get("lockdown_domains"),
 		WhitelistDomains: r.Form.Get("whitelist_domains"),
+		ExtendedTimeout:  (r.Form.Get("extended_timeout") == "true"),
 	}
 
 	res := struct {
@@ -475,6 +477,12 @@ func _configUpdateHandler(w http.ResponseWriter, r *http.Request) {
 				delta = true
 				viper.Set("labca.whitelist", cfg.WhitelistDomains)
 			}
+		}
+
+		extendedTimeout := cfg.ExtendedTimeout
+		if extendedTimeout != viper.GetBool("labca.extended_timeout") {
+			delta = true
+			viper.Set("labca.extended_timeout", cfg.ExtendedTimeout)
 		}
 
 		if delta {
@@ -994,6 +1002,7 @@ func _manageGet(w http.ResponseWriter, r *http.Request) {
 	if domainMode == "whitelist" {
 		manageData["WhitelistDomains"] = viper.GetString("labca.whitelist")
 	}
+	manageData["ExtendedTimeout"] = viper.GetBool("labca.extended_timeout")
 
 	manageData["DoEmail"] = viper.GetBool("labca.email.enable")
 	manageData["Server"] = viper.GetString("labca.email.server")
@@ -1437,6 +1446,11 @@ func _applyConfig() error {
 	os.Setenv("PKI_DOMAIN_MODE", viper.GetString("labca.domain_mode"))
 	os.Setenv("PKI_LOCKDOWN_DOMAINS", viper.GetString("labca.lockdown"))
 	os.Setenv("PKI_WHITELIST_DOMAINS", viper.GetString("labca.whitelist"))
+	if viper.GetBool("labca.extended_timeout") {
+		os.Setenv("PKI_EXTENDED_TIMEOUT", "1")
+	} else {
+		os.Setenv("PKI_EXTENDED_TIMEOUT", "0")
+	}
 	if viper.GetBool("labca.email.enable") {
 		os.Setenv("PKI_EMAIL_SERVER", viper.GetString("labca.email.server"))
 		os.Setenv("PKI_EMAIL_PORT", viper.GetString("labca.email.port"))

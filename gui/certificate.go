@@ -322,11 +322,8 @@ func (ci *CertificateInfo) Upload(path string, certBase string, tmpKey string, t
 		return reportError(err)
 	}
 
-	if err := ioutil.WriteFile(tmpCert, []byte(ci.Certificate), 0644); err != nil {
-		return err
-	}
-
-	return nil
+	err := ioutil.WriteFile(tmpCert, []byte(ci.Certificate), 0644)
+	return err
 }
 
 // ImportCerts imports both the root and the issuer certificates
