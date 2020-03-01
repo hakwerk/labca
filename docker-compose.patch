@@ -1,8 +1,8 @@
 diff --git a/docker-compose.yml b/docker-compose.yml
-index 87840f02..fc6eae34 100644
+index f3279eeab..76573dabe 100644
 --- a/docker-compose.yml
 +++ b/docker-compose.yml
-@@ -6,11 +6,12 @@ services:
+@@ -6,7 +6,7 @@ services:
          environment:
              FAKE_DNS: 10.77.77.77
              PKCS11_PROXY_SOCKET: tcp://boulder-hsm:5657
@@ -10,13 +10,16 @@ index 87840f02..fc6eae34 100644
 +            BOULDER_CONFIG_DIR: labca/config
              GO111MODULE: "on"
              GOFLAGS: "-mod=vendor"
+             # This is required so Python doesn't throw an error when printing
+@@ -14,6 +14,7 @@ services:
+             PYTHONIOENCODING: "utf-8"
          volumes:
            - .:/go/src/github.com/letsencrypt/boulder
 +          - /home/labca/boulder_labca:/go/src/github.com/letsencrypt/boulder/labca
            - ./.gocache:/root/.cache/go-build
          networks:
            bluenet:
-@@ -51,8 +52,14 @@ services:
+@@ -54,8 +55,14 @@ services:
          depends_on:
            - bhsm
            - bmysql
@@ -31,8 +34,8 @@ index 87840f02..fc6eae34 100644
 +        restart: always
      bhsm:
          # To minimize fetching this should be the same version used above
-         image: letsencrypt/boulder-tools-go${TRAVIS_GO_VERSION:-1.12}:2019-04-08
-@@ -65,8 +72,16 @@ services:
+         image: letsencrypt/boulder-tools-go${TRAVIS_GO_VERSION:-1.13.2}:2020-01-07
+@@ -68,8 +75,16 @@ services:
            bluenet:
              aliases:
                - boulder-hsm
@@ -49,9 +52,9 @@ index 87840f02..fc6eae34 100644
          networks:
            bluenet:
              aliases:
-@@ -75,20 +90,36 @@ services:
-             MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
-         command: mysqld --bind-address=0.0.0.0
+@@ -83,20 +98,36 @@ services:
+         # small.
+         command: mysqld --bind-address=0.0.0.0 --slow-query-log --log-output=TABLE --log-queries-not-using-indexes=ON
          logging:
 -            driver: none
 -    netaccess:
@@ -61,7 +64,7 @@ index 87840f02..fc6eae34 100644
 +            max-file: "5"
 +        restart: always
 +    labca:
-         image: letsencrypt/boulder-tools-go${TRAVIS_GO_VERSION:-1.12}:2019-04-08
+         image: letsencrypt/boulder-tools-go${TRAVIS_GO_VERSION:-1.13.2}:2020-01-07
 -        environment:
 -            GO111MODULE: "on"
 -            GOFLAGS: "-mod=vendor"
@@ -91,6 +94,6 @@ index 87840f02..fc6eae34 100644
 +
 +volumes:
 +    dbdata:
-
+ 
  networks:
    bluenet:

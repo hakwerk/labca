@@ -1,12 +1,12 @@
 diff --git a/cmd/notify-mailer/main.go b/cmd/notify-mailer/main.go
-index 8979edce..885f2247 100644
+index f61f21086..87504c55b 100644
 --- a/cmd/notify-mailer/main.go
 +++ b/cmd/notify-mailer/main.go
-@@ -348,6 +348,7 @@ func main() {
+@@ -472,6 +472,7 @@ func main() {
  			cfg.NotifyMailer.Username,
  			smtpPassword,
  			nil,
 +			nil,
  			*address,
  			log,
- 			metrics.NewNoopScope(),
+ 			metrics.NoopRegisterer,
