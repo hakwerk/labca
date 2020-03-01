@@ -24,7 +24,7 @@ dockerComposeVersion="1.22.0"
 
 labcaUrl="https://github.com/hakwerk/labca/"
 boulderUrl="https://github.com/letsencrypt/boulder/"
-boulderTag="release-2019-06-28"
+boulderTag="release-2020-02-17"
 
 #
 # Color configuration
@@ -441,8 +441,12 @@ get_boulder() {
 
     cd "$boulderDir"
     sudo -u labca git reset --hard $boulderTag &>>$installLog
-    sudo -u labca cp sa/_db-next/migrations/20190221140139_AddAuthz2.sql sa/_db/migrations/
-    sudo -u labca cp sa/_db-next/migrations/20190524120239_AddAuthz2ExpiresIndex.sql sa/_db/migrations/
+    if [ -e "sa/_db-next/migrations/20190221140139_AddAuthz2.sql" ]; then
+        sudo -u labca cp sa/_db-next/migrations/20190221140139_AddAuthz2.sql sa/_db/migrations/
+    fi
+    if [ -e "sa/_db-next/migrations/20190524120239_AddAuthz2ExpiresIndex.sql" ]; then
+        sudo -u labca cp sa/_db-next/migrations/20190524120239_AddAuthz2ExpiresIndex.sql sa/_db/migrations/
+    fi
     msg_ok "Boulder checkout '$boulderTag'"
 }
 
@@ -556,7 +560,7 @@ config_boulder() {
         export PKI_EMAIL_USER=$(grep user $adminDir/data/config.json | head -1 | perl -p0e 's/.*?:\s+(.*)/\1/' | sed -e 's/\",//g' | sed -e 's/\"//g')
         export PKI_EMAIL_FROM=$(grep from $adminDir/data/config.json | head -1 | perl -p0e 's/.*?:\s+(.*)/\1/' | sed -e 's/\",//g' | sed -e 's/\"//g')
 
-        $adminDir/apply-boulder
+        $adminDir/apply-boulder &>>$installLog
     else
         chown -R labca:labca "$boulderLabCADir"
     fi

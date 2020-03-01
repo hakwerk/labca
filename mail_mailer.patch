@@ -1,38 +1,39 @@
 diff --git a/mail/mailer.go b/mail/mailer.go
-index 6dac0ab5..dfab66f4 100644
+index de6b1de20..60c58128b 100644
 --- a/mail/mailer.go
 +++ b/mail/mailer.go
-@@ -20,10 +20,13 @@ import (
+@@ -20,10 +20,14 @@ import (
  	"time"
  
  	"github.com/jmhodges/clock"
 +	"golang.org/x/net/context"
+ 	"github.com/prometheus/client_golang/prometheus"
  
  	"github.com/letsencrypt/boulder/core"
 +	"github.com/letsencrypt/boulder/bdns"
  	blog "github.com/letsencrypt/boulder/log"
- 	"github.com/letsencrypt/boulder/metrics"
++	berrors "github.com/letsencrypt/boulder/errors"
 +	"github.com/letsencrypt/boulder/probs"
  )
  
  type idGenerator interface {
-@@ -113,6 +116,7 @@ func New(
+@@ -119,6 +123,7 @@ func New(
  	username,
  	password string,
  	rootCAs *x509.CertPool,
 +	resolver bdns.DNSClient,
  	from mail.Address,
  	logger blog.Logger,
- 	stats metrics.Scope,
-@@ -125,6 +129,7 @@ func New(
+ 	stats prometheus.Registerer,
+@@ -138,6 +143,7 @@ func New(
  			server:   server,
  			port:     port,
  			rootCAs:  rootCAs,
 +			dnsClient: resolver,
  		},
- 		log:           logger,
- 		from:          from,
-@@ -163,7 +168,7 @@ func (m *MailerImpl) generateMessage(to []string, subject, body string) ([]byte,
+ 		log:              logger,
+ 		from:             from,
+@@ -178,7 +184,7 @@ func (m *MailerImpl) generateMessage(to []string, subject, body string) ([]byte,
  		fmt.Sprintf("To: %s", strings.Join(addrs, ", ")),
  		fmt.Sprintf("From: %s", m.from.String()),
  		fmt.Sprintf("Subject: %s", subject),
@@ -41,7 +42,7 @@ index 6dac0ab5..dfab66f4 100644
  		fmt.Sprintf("Message-Id: <%s.%s.%s>", now.Format("20060102T150405"), mid.String(), m.from.Address),
  		"MIME-Version: 1.0",
  		"Content-Type: text/plain; charset=UTF-8",
-@@ -220,23 +225,32 @@ func (m *MailerImpl) Connect() error {
+@@ -235,23 +241,32 @@ func (m *MailerImpl) Connect() error {
  type dialerImpl struct {
  	username, password, server, port string
  	rootCAs                          *x509.CertPool
@@ -67,7 +68,7 @@ index 6dac0ab5..dfab66f4 100644
  	}
 -	client, err := smtp.NewClient(conn, di.server)
 +	if len(addrs) == 0 {
-+		return nil, probs.UnknownHost("No valid IP addresses found for %s", di.server)
++		return nil, berrors.DNSError("No valid IP addresses found for %s", di.server)
 +	}
 +
 +	hostport := net.JoinHostPort(addrs[0].String(), di.port)

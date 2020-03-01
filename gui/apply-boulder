@@ -19,6 +19,10 @@ if [ "$PKI_DOMAIN_MODE" == "whitelist" ]; then
     echo "Whitelist:" >> hostname-policy.yaml
     echo "  - \"$PKI_LOCKDOWN_DOMAINS\"" >> hostname-policy.yaml
 fi
+if [ "$PKI_DOMAIN_MODE" == "lockdown" ] || [ "$PKI_DOMAIN_MODE" == "whitelist" ]; then
+    sed -i -e "s/^\(.*\)\(\"n_subject_common_name_included\"\)/\1\2,\n\1\"e_dnsname_not_valid_tld\"/" config/ca-a.json
+    sed -i -e "s/^\(.*\)\(\"n_subject_common_name_included\"\)/\1\2,\n\1\"e_dnsname_not_valid_tld\"/" config/ca-b.json
+fi
 
 if [ "$PKI_EXTENDED_TIMEOUT" == "1" ]; then
     sed -i -e "s/\"timeout\": \"15s\"/\"timeout\": \"30s\"/" config/ca-a.json
@@ -52,12 +56,15 @@ rm -f test-ca.der
 rm -f test-root.key
 rm -f test-root.key.der
 rm -f test-root.pem
+rm -f test-root.der
 
 cp -p $PKI_INT_CERT_BASE.key test-ca.key
 cp -p $PKI_INT_CERT_BASE.key.der test-ca.key.der
 cp -p $PKI_INT_CERT_BASE.pem test-ca.pem
+openssl rsa -in $PKI_INT_CERT_BASE.key -pubout > test-ca.pubkey.der
 cp -p $PKI_ROOT_CERT_BASE.key test-root.key
 cp -p $PKI_ROOT_CERT_BASE.key.der test-root.key.der
 cp -p $PKI_ROOT_CERT_BASE.pem test-root.pem
+openssl rsa -in $PKI_ROOT_CERT_BASE.key -pubout > test-root.pubkey.der
 
 chown -R `ls -l rate-limit-policies.yml | cut -d" " -f 3,4 | sed 's/ /:/g'` .

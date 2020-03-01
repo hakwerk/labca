@@ -1,16 +1,16 @@
 diff --git a/cmd/expiration-mailer/main.go b/cmd/expiration-mailer/main.go
-index de4af4a0..b58405ef 100644
+index 49ce1a265..9d47457b9 100644
 --- a/cmd/expiration-mailer/main.go
 +++ b/cmd/expiration-mailer/main.go
-@@ -21,6 +21,7 @@ import (
+@@ -19,6 +19,7 @@ import (
+ 
  	"github.com/jmhodges/clock"
- 	"gopkg.in/go-gorp/gorp.v2"
  
 +	"github.com/letsencrypt/boulder/bdns"
  	"github.com/letsencrypt/boulder/cmd"
  	"github.com/letsencrypt/boulder/core"
- 	"github.com/letsencrypt/boulder/features"
-@@ -35,7 +36,7 @@ import (
+ 	"github.com/letsencrypt/boulder/db"
+@@ -34,7 +35,7 @@ import (
  
  const (
  	defaultNagCheckInterval  = 24 * time.Hour
@@ -19,7 +19,7 @@ index de4af4a0..b58405ef 100644
  )
  
  type regStore interface {
-@@ -376,6 +377,9 @@ type config struct {
+@@ -384,6 +385,9 @@ type config struct {
  		TLS       cmd.TLSConfig
  		SAService *cmd.GRPCClientConfig
  
@@ -29,7 +29,7 @@ index de4af4a0..b58405ef 100644
  		// Path to a file containing a list of trusted root certificates for use
  		// during the SMTP connection (as opposed to the gRPC connections).
  		SMTPTrustedRootFile string
-@@ -384,6 +388,12 @@ type config struct {
+@@ -392,6 +396,12 @@ type config struct {
  	}
  
  	Syslog cmd.SyslogConfig
@@ -41,8 +41,8 @@ index de4af4a0..b58405ef 100644
 +	}
  }
  
- func initStats(scope metrics.Scope) mailerStats {
-@@ -485,6 +495,29 @@ func main() {
+ func initStats(stats prometheus.Registerer) mailerStats {
+@@ -495,6 +505,30 @@ func main() {
  	cmd.FailOnError(err, "Failed to load credentials and create gRPC connection to SA")
  	sac := bgrpc.NewStorageAuthorityClient(sapb.NewStorageAuthorityClient(conn))
  
@@ -62,17 +62,18 @@ index de4af4a0..b58405ef 100644
 +			c.Mailer.DNSResolvers,
 +			scope,
 +			clk,
-+			dnsTries)
++			dnsTries,
++			logger)
 +		resolver = r
 +	} else {
-+		r := bdns.NewTestDNSClientImpl(dnsTimeout, c.Mailer.DNSResolvers, scope, clk, dnsTries)
++		r := bdns.NewTestDNSClientImpl(dnsTimeout, c.Mailer.DNSResolvers, scope, clk, dnsTries, logger)
 +		resolver = r
 +	}
 +
  	var smtpRoots *x509.CertPool
  	if c.Mailer.SMTPTrustedRootFile != "" {
  		pem, err := ioutil.ReadFile(c.Mailer.SMTPTrustedRootFile)
-@@ -520,6 +553,7 @@ func main() {
+@@ -530,6 +564,7 @@ func main() {
  		c.Mailer.Username,
  		smtpPassword,
  		smtpRoots,

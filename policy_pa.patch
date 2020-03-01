@@ -1,8 +1,8 @@
 diff --git a/policy/pa.go b/policy/pa.go
-index 3d097365..53cf6020 100644
+index f6c908363..5de2d9ddc 100644
 --- a/policy/pa.go
 +++ b/policy/pa.go
-@@ -30,6 +30,8 @@ type AuthorityImpl struct {
+@@ -29,6 +29,8 @@ type AuthorityImpl struct {
  	blocklist              map[string]bool
  	exactBlocklist         map[string]bool
  	wildcardExactBlocklist map[string]bool
@@ -11,7 +11,7 @@ index 3d097365..53cf6020 100644
  	blocklistMu            sync.RWMutex
  
  	enabledChallenges map[string]bool
-@@ -70,6 +72,9 @@ type blockedNamesPolicy struct {
+@@ -69,6 +71,9 @@ type blockedNamesPolicy struct {
  	// time above and beyond the high-risk domains. Managing these entries separately
  	// from HighRiskBlockedNames makes it easier to vet changes accurately.
  	AdminBlockedNames []string `yaml:"AdminBlockedNames"`
@@ -21,7 +21,7 @@ index 3d097365..53cf6020 100644
  }
  
  // SetHostnamePolicyFile will load the given policy file, returning error if it
-@@ -138,10 +143,20 @@ func (pa *AuthorityImpl) processHostnamePolicy(policy blockedNamesPolicy) error
+@@ -137,10 +142,20 @@ func (pa *AuthorityImpl) processHostnamePolicy(policy blockedNamesPolicy) error
  		// wildcardNameMap to block issuance for `*.`+parts[1]
  		wildcardNameMap[parts[1]] = true
  	}
@@ -42,7 +42,7 @@ index 3d097365..53cf6020 100644
  	pa.blocklistMu.Unlock()
  	return nil
  }
-@@ -287,6 +302,14 @@ func (pa *AuthorityImpl) WillingToIssue(id identifier.ACMEIdentifier) error {
+@@ -280,6 +295,14 @@ func (pa *AuthorityImpl) ValidDomain(domain string) error {
  		}
  	}
  
@@ -57,7 +57,20 @@ index 3d097365..53cf6020 100644
  	// Names must end in an ICANN TLD, but they must not be equal to an ICANN TLD.
  	icannTLD, err := iana.ExtractSuffix(domain)
  	if err != nil {
-@@ -304,6 +327,31 @@ func (pa *AuthorityImpl) WillingToIssue(id identifier.ACMEIdentifier) error {
+@@ -322,14 +345,44 @@ func (pa *AuthorityImpl) WillingToIssue(id identifier.ACMEIdentifier) error {
+ 		return err
+ 	}
+ 
++	if ok, _ := pa.checkWhitelist(domain); ok {
++		return nil
++	}
++
+ 	// Require no match against hostname block lists
+ 	if err := pa.checkHostLists(domain); err != nil {
++		fmt.Print("*** oopsie hij komt niet door checkhostlists...\n")
+ 		return err
+ 	}
+ 
  	return nil
  }
  

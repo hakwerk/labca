@@ -1,5 +1,5 @@
 diff --git a/test/config/expiration-mailer.json b/test/config/expiration-mailer.json
-index 86e8a43..7988b1b 100644
+index 444beae43..e9bd228ef 100644
 --- a/test/config/expiration-mailer.json
 +++ b/test/config/expiration-mailer.json
 @@ -12,6 +12,11 @@
