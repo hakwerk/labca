@@ -199,6 +199,9 @@ case $txt in
 "server-shutdown")
     halt
     ;;
+"version-update")
+    /home/labca/labca/install &>>$LOGFILE
+    ;;
 *)
     echo "Unknown command '$txt'. ERROR!"
     exit 1
@@ -206,8 +209,3 @@ case $txt in
 esac
 
 echo "ok"
-
-
-# TODO:
-# upgrade the labca stuff
-

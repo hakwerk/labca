@@ -127,7 +127,13 @@
         <div class="col-lg-4">
             <div class="panel panel-default">
                 <div class="panel-heading">
-                    <i class="fa fa-fw fa-desktop"></i> System Overview
+                    <span class="pull-left"><i class="fa fa-fw fa-desktop"></i> System Overview</span>
+                    {{ if .UpdateAvailable }}
+                    <span class="pull-right">
+                        <a class="update" href="{{ .RequestBase }}/manage"><i class="fa fa-fw fa-rocket"></i> <i>update available!</i></a>
+                    </span>
+                    {{ end }}
+                    <div class="clearfix"></div>
                 </div>
                 <div class="panel-body">
                     <div class="table-responsive">

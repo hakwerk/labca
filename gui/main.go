@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"bytes"
+	"context"
 	"crypto/aes"
 	"crypto/cipher"
 	"crypto/rand"
@@ -11,7 +12,9 @@ import (
 	"errors"
 	"fmt"
 	"github.com/biz/templates"
+	"github.com/dustin/go-humanize"
 	_ "github.com/go-sql-driver/mysql"
+	"github.com/google/go-github/github"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/securecookie"
 	"github.com/gorilla/sessions"
@@ -39,20 +42,23 @@ import (
 )
 
 const (
-	writeWait  = 10 * time.Second
-	pongWait   = 60 * time.Second
-	pingPeriod = (pongWait * 9) / 10
+	writeWait      = 10 * time.Second
+	pongWait       = 60 * time.Second
+	pingPeriod     = (pongWait * 9) / 10
+	updateInterval = 24 * time.Hour
 )
 
 var (
-	appSession    *sessions.Session
-	restartSecret string
-	sessionStore  *sessions.CookieStore
-	tmpls         *templates.Templates
-	version       string
-	dbConn        string
-	dbType        string
-	isDev         bool
+	appSession      *sessions.Session
+	restartSecret   string
+	sessionStore    *sessions.CookieStore
+	tmpls           *templates.Templates
+	version         string
+	dbConn          string
+	dbType          string
+	isDev           bool
+	updateAvailable bool
+	updateChecked   time.Time
 
 	upgrader = websocket.Upgrader{
 		ReadBufferSize:  1024,
@@ -232,6 +238,43 @@ func errorHandler(w http.ResponseWriter, r *http.Request, err error, status int)
 	}
 }
 
+func checkUpdates(forced bool) ([]string, []string) {
+	var versions []string
+	var descriptions []string
+
+	if forced || updateChecked.Add(updateInterval).Before(time.Now()) {
+		latest := ""
+		newer := true
+
+		client := github.NewClient(nil)
+
+		if releases, _, err := client.Repositories.ListReleases(context.Background(), "hakwerk", "labca", nil); err == nil {
+			for i := 0; i < len(releases); i++ {
+				release := releases[i]
+				if !*release.Draft {
+					if !*release.Prerelease || isDev {
+						if latest == "" {
+							latest = *release.Name
+						}
+						if *release.Name == version {
+							newer = false
+						}
+						if newer {
+							versions = append(versions, *release.Name)
+							descriptions = append(descriptions, *release.Body)
+						}
+					}
+				}
+			}
+
+			updateChecked = time.Now()
+			updateAvailable = (len(releases) > 0) && (latest != version)
+		}
+	}
+
+	return versions, descriptions
+}
+
 func rootHandler(w http.ResponseWriter, r *http.Request) {
 	if !viper.GetBool("config.complete") {
 		http.Redirect(w, r, r.Header.Get("X-Request-Base")+"/setup", http.StatusFound)
@@ -240,6 +283,10 @@ func rootHandler(w http.ResponseWriter, r *http.Request) {
 
 	dashboardData, err := CollectDashboardData(w, r)
 	if err == nil {
+		checkUpdates(false)
+		dashboardData["UpdateAvailable"] = updateAvailable
+		dashboardData["UpdateChecked"] = humanize.RelTime(updateChecked, time.Now(), "", "")
+
 		render(w, r, "dashboard", dashboardData)
 	}
 }
@@ -798,6 +845,24 @@ func (res *Result) ManageComponents(w http.ResponseWriter, r *http.Request, acti
 	}
 }
 
+func _checkUpdatesHandler(w http.ResponseWriter, r *http.Request) {
+	res := struct {
+		Success         bool
+		UpdateAvailable bool
+		UpdateChecked   string
+		Versions        []string
+		Descriptions    []string
+		Errors          map[string]string
+	}{Success: true, Errors: make(map[string]string)}
+
+	res.Versions, res.Descriptions = checkUpdates(true)
+	res.UpdateAvailable = updateAvailable
+	res.UpdateChecked = humanize.RelTime(updateChecked, time.Now(), "", "")
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(res)
+}
+
 func _managePostDispatch(w http.ResponseWriter, r *http.Request, action string) bool {
 	if action == "backup-restore" || action == "backup-delete" || action == "backup-now" {
 		_backupHandler(w, r)
@@ -826,6 +891,11 @@ func _managePostDispatch(w http.ResponseWriter, r *http.Request, action string) 
 
 	if action == "send-email" {
 		_emailSendHandler(w, r)
+		return true
+	}
+
+	if action == "version-check" {
+		_checkUpdatesHandler(w, r)
 		return true
 	}
 
@@ -858,6 +928,8 @@ func _managePost(w http.ResponseWriter, r *http.Request) {
 		"update-config",
 		"update-email",
 		"send-email",
+		"version-check",
+		"version-update",
 	} {
 		if a == action {
 			actionKnown = true
@@ -878,7 +950,7 @@ func _managePost(w http.ResponseWriter, r *http.Request) {
 		res.Message = "Command failed - see LabCA log for any details"
 	}
 
-	if action != "server-restart" && action != "server-shutdown" {
+	if action != "server-restart" && action != "server-shutdown" && action != "version-update" {
 		res.ManageComponents(w, r, action)
 	}
 
@@ -889,6 +961,10 @@ func _managePost(w http.ResponseWriter, r *http.Request) {
 func _manageGet(w http.ResponseWriter, r *http.Request) {
 	manageData := make(map[string]interface{})
 	manageData["RequestBase"] = r.Header.Get("X-Request-Base")
+
+	checkUpdates(false)
+	manageData["UpdateAvailable"] = updateAvailable
+	manageData["UpdateChecked"] = humanize.RelTime(updateChecked, time.Now(), "", "")
 
 	components := _parseComponents(getLog(w, r, "components"))
 	for i := 0; i < len(components); i++ {
@@ -2292,6 +2368,8 @@ func init() {
 	dbType = viper.GetString("db.type")
 
 	version = viper.GetString("version")
+
+	updateAvailable = false
 }
 
 func main() {

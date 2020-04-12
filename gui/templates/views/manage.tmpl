@@ -43,6 +43,16 @@
                 {{ range $btn := $item.Buttons }}
                 <button class="btn btn-outline btn-reg {{ $btn.Class }}" type="button" id="{{ $btn.Id }}" title="{{ $btn.Title }}">{{ $btn.Label }}</button>
                 {{ end }}
+                {{ if eq $item.Name "LabCA Application" }}
+                <br/>
+                <button class="btn btn-outline btn-wide btn-warning mt5 {{ if not $.UpdateAvailable }}hidden{{ end }}" type="button" id="version-update" title="Update to latest version">Update LabCA</button>
+                <br/>
+                <button class="btn btn-outline btn-wide btn-success mt5" type="button" id="version-check" title="Check if there is a newer version available">Check for updates</button>
+                <span id="update-checked-span">
+                    <br/>
+                    Last checked: <span id="update-last-checked">{{ $.UpdateChecked }}</span>
+                </span>
+                {{ end }}
               </td>
             </tr>
             {{ end }}
@@ -262,7 +272,7 @@
 
 <span class="hidden" id="request-base">{{ .RequestBase }}</span>
 
-<div class="modal fade bd-modal-lg" data-backdrop="static" data-keyboard="false" tabindex="-1">
+<div id="modal-spinner" class="modal fade bd-modal-lg" data-backdrop="static" data-keyboard="false" tabindex="-1">
   <div class="modal-dialog modal-sm">
     <div class="modal-content" style="width: 48px">
       <img id="manage-spinner" src="static/img/spinner.gif" height="36">
@@ -275,6 +285,7 @@
     <script type="text/javascript" src="static/js/zxcvbn.js"></script>
     <script type="text/javascript" src="static/js/pwdux.js"></script>
     <script type="text/javascript" src="static/js/jquery.stickytabs.js"></script>
+    <script type="text/javascript" src="static/js/bootstrap-dialog.min.js"></script>
     <script>
         $(function() {
             $('.nav-tabs-sticky').stickyTabs();
@@ -292,7 +303,13 @@
             });
 
             $(".btn").click(function(evt) {
-                $('.modal').modal('show');
+                $('#modal-spinner').modal('show');
+                if ($(evt.target).hasClass('btn-warning') || $(evt.target).hasClass('btn-danger')) {
+                    if (!window.confirm("Are you sure?")) {
+                        $('#modal-spinner').modal('hide');
+                        return false;
+                    }
+                }
                 $(evt.target).blur();
                 $("#backup-result").hide();
                 $("#export-pwd-err").hide();
@@ -314,7 +331,7 @@
                         },
                     })
                     .done(function(data) {
-                        $('.modal').modal('hide');
+                        $('#modal-spinner').modal('hide');
 
                         if (data.Success) {
                             var msg = "Successfully created backup";
@@ -327,7 +344,7 @@
                         }
                     })
                     .fail(function(xhr, status, err) {
-                        $('.modal').modal('hide');
+                        $('#modal-spinner').modal('hide');
                         $("#backup-result").removeClass("hidden").removeClass("success").show().text(err).addClass("error");
                     });
 
@@ -342,7 +359,7 @@
                         },
                     })
                     .done(function(data) {
-                        $('.modal').modal('hide');
+                        $('#modal-spinner').modal('hide');
 
                         if (data.Success) {
                             var msg = "Successfully restored backup, restarting server now...";
@@ -356,7 +373,7 @@
                         }
                     })
                     .fail(function(xhr, status, err) {
-                        $('.modal').modal('hide');
+                        $('#modal-spinner').modal('hide');
                         $("#backup-result").removeClass("hidden").removeClass("success").show().text(err).addClass("error");
                     });
 
@@ -372,7 +389,7 @@
                         },
                     })
                     .done(function(data) {
-                        $('.modal').modal('hide');
+                        $('#modal-spinner').modal('hide');
 
                         if (data.Success) {
                             var msg = "Successfully removed backup file";
@@ -384,7 +401,7 @@
                         }
                     })
                     .fail(function(xhr, status, err) {
-                        $('.modal').modal('hide');
+                        $('#modal-spinner').modal('hide');
                         $("#backup-result").removeClass("hidden").removeClass("success").show().text(err).addClass("error");
                     });
 
@@ -392,10 +409,10 @@
                     type = ($("#export-zip").prop('checked') ? "zip" : ($("#export-pfx").prop('checked') ? "pfx" : "none"));
 
                     if ($("#export-pwd").val().length < 4) {
-                        $('.modal').modal('hide');
+                        $('#modal-spinner').modal('hide');
                         $("#export-pwd-err").removeClass("hidden").show().text("Password needs to be at least 4 characters!");
                     } else if ($("#export-pwd").val() != $("#export-pwd2").val()) {
-                        $('.modal').modal('hide');
+                        $('#modal-spinner').modal('hide');
                         $("#export-pwd2-err").removeClass("hidden").show().text("Passwords are not the same!");
                     } else {
                         var req = new XMLHttpRequest();
@@ -404,7 +421,7 @@
                         req.responseType = "blob";
 
                         req.onload = function (event) {
-                            $('.modal').modal('hide');
+                            $('#modal-spinner').modal('hide');
 
                             var blob = req.response;
                             var fileName = null;
@@ -430,7 +447,7 @@
                         };
 
                         req.onerror = function (event) {
-                            $('.modal').modal('hide');
+                            $('#modal-spinner').modal('hide');
                             $("#cert-export-err").removeClass("hidden").show().text("Oops, something went wrong...");
                         };
 
@@ -451,7 +468,7 @@
                         },
                     })
                     .done(function(data) {
-                        $('.modal').modal('hide');
+                        $('#modal-spinner').modal('hide');
 
                         if (data.Success) {
                             var msg = "Successfully updated account.";
@@ -479,7 +496,7 @@
 
                     })
                     .fail(function(xhr, status, err) {
-                        $('.modal').modal('hide');
+                        $('#modal-spinner').modal('hide');
                         $("#update-account-result").removeClass("hidden").removeClass("success").show().text(err).addClass("error");
                     });
 
@@ -498,7 +515,7 @@
                         },
                     })
                     .done(function(data) {
-                        $('.modal').modal('hide');
+                        $('#modal-spinner').modal('hide');
 
                         if (data.Success) {
                             var msg = "Successfully updated configuration.<br/>";
@@ -518,14 +535,14 @@
                         }
                     })
                     .fail(function(xhr, status, err) {
-                        $('.modal').modal('hide');
+                        $('#modal-spinner').modal('hide');
                         $("#update-config-result").removeClass("hidden").removeClass("success").show().html(err + "<br/>").addClass("error");
                     });
 
                 } else if ( $(evt.target).attr("id") == "update-email") {
                     form = $(evt.target).parent().parent()[0]
                     if (!form.checkValidity()) {
-                        $('.modal').modal('hide');
+                        $('#modal-spinner').modal('hide');
                         const tmpSubmit = document.createElement('button')
                         form.appendChild(tmpSubmit)
                         tmpSubmit.click()
@@ -545,7 +562,7 @@
                             },
                         })
                         .done(function(data) {
-                            $('.modal').modal('hide');
+                            $('#modal-spinner').modal('hide');
 
                             if (data.Success) {
                                 var msg = "Successfully updated configuration.<br/>";
@@ -563,7 +580,7 @@
                             }
                         })
                         .fail(function(xhr, status, err) {
-                            $('.modal').modal('hide');
+                            $('#modal-spinner').modal('hide');
                             $("#update-email-result").removeClass("hidden").removeClass("success").show().html(err + "<br/>").addClass("error");
                         });
                     }
@@ -576,7 +593,7 @@
                         },
                     })
                     .done(function(data) {
-                        $('.modal').modal('hide');
+                        $('#modal-spinner').modal('hide');
 
                         if (data.Success) {
                             var msg = "Successfully sent test email.<br/>";
@@ -594,8 +611,60 @@
                         }
                     })
                     .fail(function(xhr, status, err) {
-                        $('.modal').modal('hide');
+                        $('#modal-spinner').modal('hide');
                         $("#send-email-result").removeClass("hidden").removeClass("success").show().html(err + "<br/>").addClass("error");
+                    });
+
+                } else if ( $(evt.target).attr("id") == "version-check") {
+                    $.ajax(window.location.href, {
+                        method: "POST",
+                        data: {
+                            action: $(evt.target).attr("id"),
+                        },
+                    })
+                    .done(function(data) {
+                        $('#modal-spinner').modal('hide');
+
+                        if (data.Success) {
+                            if (data.UpdateAvailable) {
+                                $("#version-update").removeClass("hidden");
+
+                                var notes = "<span class=\"rel-notes-title\">RELEASE NOTES</span><br/><br/>";
+                                jQuery.each(data.Versions, function(idx, val) {
+                                    notes += "<span class=\"rel-notes-title\">" + val + "</span><br/>"
+                                    notes += "<span>" + data.Descriptions[idx] + "</span><br/><br/>"
+                                });
+                                BootstrapDialog.show({
+                                    title: 'New version available!',
+                                    message: notes,
+                                    buttons: [{
+                                        label: 'OK',
+                                        cssClass: 'btn-outline btn-success',
+                                        action: function(dialogRef){
+                                            dialogRef.close();
+                                        }
+                                    }]
+                                });
+                            } else {
+                                $("#version-update").addClass("hidden")
+                                BootstrapDialog.show({
+                                    title: 'No new version',
+                                    message: 'There is currently no newer version available.',
+                                    buttons: [{
+                                        label: 'OK',
+                                        cssClass: 'btn-outline btn-success',
+                                        action: function(dialogRef){
+                                            dialogRef.close();
+                                        }
+                                    }]
+                                });
+                            }
+                            $("#update-last-checked").text(data.UpdateChecked)
+
+                        }
+                    })
+                    .fail(function(xhr, status, err) {
+                        $('#modal-spinner').modal('hide');
                     });
 
                 } else {
@@ -606,7 +675,7 @@
                         },
                     })
                     .done(function(data) {
-                        $('.modal').modal('hide');
+                        $('#modal-spinner').modal('hide');
 
                         td = $(evt.target).parent().parent().find("td:eq(1)");
                         $(td).attr("title", data.Timestamp);
@@ -630,7 +699,7 @@
                         }
                     })
                     .fail(function(xhr, status, err) {
-                        $('.modal').modal('hide');
+                        $('#modal-spinner').modal('hide');
                         $("#cert-export-err").removeClass("hidden").show().text(err);
                     });
                 }
