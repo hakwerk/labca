@@ -1,5 +1,5 @@
 diff --git a/docker-compose.yml b/docker-compose.yml
-index f3279eeab..76573dabe 100644
+index e34704a4d..46365bdcf 100644
 --- a/docker-compose.yml
 +++ b/docker-compose.yml
 @@ -6,7 +6,7 @@ services:
@@ -34,7 +34,7 @@ index f3279eeab..76573dabe 100644
 +        restart: always
      bhsm:
          # To minimize fetching this should be the same version used above
-         image: letsencrypt/boulder-tools-go${TRAVIS_GO_VERSION:-1.13.2}:2020-01-07
+         image: letsencrypt/boulder-tools-go${TRAVIS_GO_VERSION:-1.13.2}:2020-04-08
 @@ -68,8 +75,16 @@ services:
            bluenet:
              aliases:
@@ -64,7 +64,7 @@ index f3279eeab..76573dabe 100644
 +            max-file: "5"
 +        restart: always
 +    labca:
-         image: letsencrypt/boulder-tools-go${TRAVIS_GO_VERSION:-1.13.2}:2020-01-07
+         image: letsencrypt/boulder-tools-go${TRAVIS_GO_VERSION:-1.13.2}:2020-04-08
 -        environment:
 -            GO111MODULE: "on"
 -            GOFLAGS: "-mod=vendor"
