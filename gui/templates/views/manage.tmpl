@@ -50,7 +50,7 @@
                 <button class="btn btn-outline btn-wide btn-success mt5" type="button" id="version-check" title="Check if there is a newer version available">Check for updates</button>
                 <span id="update-checked-span">
                     <br/>
-                    Last checked: <span id="update-last-checked">{{ $.UpdateChecked }}</span>
+                    Last checked: <span id="update-last-checked" title="{{ $.UpdateChecked }}">{{ $.UpdateCheckedRel }}</span>
                 </span>
                 {{ end }}
               </td>
@@ -659,7 +659,8 @@
                                     }]
                                 });
                             }
-                            $("#update-last-checked").text(data.UpdateChecked)
+                            $("#update-last-checked").attr("title", data.UpdateChecked)
+                            $("#update-last-checked").text(data.UpdateCheckedRel)
 
                         }
                     })

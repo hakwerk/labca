@@ -285,7 +285,8 @@ func rootHandler(w http.ResponseWriter, r *http.Request) {
 	if err == nil {
 		checkUpdates(false)
 		dashboardData["UpdateAvailable"] = updateAvailable
-		dashboardData["UpdateChecked"] = humanize.RelTime(updateChecked, time.Now(), "", "")
+		dashboardData["UpdateChecked"] = strings.Replace(updateChecked.Format("02-Jan-2006 15:04:05 MST"), "+0000", "GMT", -1)
+		dashboardData["UpdateCheckedRel"] = humanize.RelTime(updateChecked, time.Now(), "", "")
 
 		render(w, r, "dashboard", dashboardData)
 	}
@@ -847,17 +848,20 @@ func (res *Result) ManageComponents(w http.ResponseWriter, r *http.Request, acti
 
 func _checkUpdatesHandler(w http.ResponseWriter, r *http.Request) {
 	res := struct {
-		Success         bool
-		UpdateAvailable bool
-		UpdateChecked   string
-		Versions        []string
-		Descriptions    []string
-		Errors          map[string]string
+		Success          bool
+		UpdateAvailable  bool
+		UpdateChecked    string
+		UpdateCheckedRel string
+		Versions         []string
+		Descriptions     []string
+		Errors           map[string]string
 	}{Success: true, Errors: make(map[string]string)}
 
 	res.Versions, res.Descriptions = checkUpdates(true)
 	res.UpdateAvailable = updateAvailable
-	res.UpdateChecked = humanize.RelTime(updateChecked, time.Now(), "", "")
+	res.UpdateChecked = updateChecked.Format("02-Jan-2006 15:04:05 MST")
+	res.UpdateChecked = strings.Replace(res.UpdateChecked, "+0000", "GMT", -1)
+	res.UpdateCheckedRel = humanize.RelTime(updateChecked, time.Now(), "", "")
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(res)
@@ -964,7 +968,8 @@ func _manageGet(w http.ResponseWriter, r *http.Request) {
 
 	checkUpdates(false)
 	manageData["UpdateAvailable"] = updateAvailable
-	manageData["UpdateChecked"] = humanize.RelTime(updateChecked, time.Now(), "", "")
+	manageData["UpdateChecked"] = strings.Replace(updateChecked.Format("02-Jan-2006 15:04:05 MST"), "+0000", "GMT", -1)
+	manageData["UpdateCheckedRel"] = humanize.RelTime(updateChecked, time.Now(), "", "")
 
 	components := _parseComponents(getLog(w, r, "components"))
 	for i := 0; i < len(components); i++ {
