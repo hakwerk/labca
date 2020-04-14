@@ -83,6 +83,10 @@ p.caption {
     margin-bottom: 15px;
 }
 
+.mt5 {
+    margin-top: 5px;
+}
+
 .mt20 {
     margin-top: 20px;
 }
@@ -125,4 +129,25 @@ p.caption {
     margin-top: -23px;
     position: relative;
     z-index: 2;
+}
+
+a.update {
+    color: darkgreen;
+}
+
+a.update:hover {
+    text-decoration: none;
+}
+
+.bootstrap-dialog .modal-header {
+  border-top-left-radius: 4px;
+  border-top-right-radius: 4px;
+}
+
+.bootstrap-dialog.type-primary .modal-header {
+  background-color: #f5f5f5;
+}
+
+.rel-notes-title {
+  font-weight: bold;
 }

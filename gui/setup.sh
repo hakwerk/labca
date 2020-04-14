@@ -9,6 +9,7 @@ if [ ! -e bin/labca ]; then
     go get github.com/biz/templates
     go get github.com/go-sql-driver/mysql
     go get github.com/dustin/go-humanize
+    go get github.com/google/go-github/github
     go get github.com/gorilla/mux
     go get github.com/gorilla/securecookie
     go get github.com/gorilla/sessions

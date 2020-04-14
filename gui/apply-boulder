@@ -44,6 +44,7 @@ sed -i -e "s/\"server\": \".*\"/\"server\": \"$PKI_EMAIL_SERVER\"/" config/expir
 sed -i -e "s/\"port\": \".*\"/\"port\": \"$PKI_EMAIL_PORT\"/" config/expiration-mailer.json
 sed -i -e "s/\"username\": \".*\"/\"username\": \"$PKI_EMAIL_USER\"/" config/expiration-mailer.json
 sed -i -e "s/\"from\": \".*\"/\"from\": \"$PKI_EMAIL_FROM\"/" config/expiration-mailer.json
+sed -i -e "s/\"purgeInterval\": \".*\"/\"purgeInterval\": \"1s\"/" config/akamai-purger.json
 
 if [ "$PKI_EMAIL_PASS" != "" ]; then
     sed -i -e "s/.*/$PKI_EMAIL_PASS/" secrets/smtp_password
