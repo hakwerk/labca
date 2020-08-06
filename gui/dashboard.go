@@ -86,7 +86,7 @@ func _parseLine(line string, loc *time.Location) Activity {
 		message = message[0:strings.Index(message, ",")]
 	}
 	if strings.Index(message, "Validation result") > -1 {
-		message = message[0:17]
+		message = message[0:30]
 	}
 	idx = strings.Index(message, " csr=[")
 	if idx > -1 {
