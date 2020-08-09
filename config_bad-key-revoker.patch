@@ -1,0 +1,32 @@
+diff --git a/test/config/bad-key-revoker.json b/test/config/bad-key-revoker.json
+index 7d1b704..1bead8d 100644
+--- a/test/config/bad-key-revoker.json
++++ b/test/config/bad-key-revoker.json
+@@ -3,6 +3,10 @@
+         "dbConnectFile": "labca/secrets/badkeyrevoker_dburl",
+         "maxDBConns": 10,
+         "debugAddr": ":8020",
++        "dnsTries": 3,
++        "dnsResolvers": [
++            "127.0.0.1:8053",
++            "127.0.0.1:8054"
++        ],
+         "tls": {
+             "caCertFile": "labca/grpc-creds/minica.pem",
+             "certFile": "labca/grpc-creds/bad-key-revoker.boulder/cert.pem",
+@@ -24,10 +28,14 @@
+         },
+         "maximumRevocations": 15,
+         "findCertificatesBatchSize": 10,
+-        "interval": "1s"
++        "interval": "1h"
+     },
+     "syslog": {
+         "stdoutlevel": 6,
+         "sysloglevel": 4
++    },
++    "common": {
++        "dnsTimeout": "3s",
++        "dnsAllowLoopbackAddresses": true
+     }
+ }

@@ -24,7 +24,7 @@ dockerComposeVersion="1.22.0"
 
 labcaUrl="https://github.com/hakwerk/labca/"
 boulderUrl="https://github.com/letsencrypt/boulder/"
-boulderTag="release-2020-04-13"
+boulderTag="release-2020-04-27"
 
 #
 # Color configuration
@@ -492,10 +492,14 @@ config_boulder() {
     sudo -u labca patch -p1 < $cloneDir/notify-mailer_main.patch &>>$installLog
     cp cmd/notify-mailer/main.go "$boulderLabCADir/.backup/"
 
+    sudo -u labca patch -p1 < $cloneDir/bad-key-revoker_main.patch &>>$installLog
+    cp cmd/bad-key-revoker/main.go "$boulderLabCADir/.backup/"
+
     sudo -u labca patch -p1 -o "$boulderLabCADir/config/ca-a.json" < $cloneDir/test_config_ca_a.patch &>>$installLog
     sudo -u labca patch -p1 -o "$boulderLabCADir/config/ca-b.json" < $cloneDir/test_config_ca_b.patch &>>$installLog
 
     sudo -u labca patch -p1 -o "$boulderLabCADir/config/expiration-mailer.json" < $cloneDir/config_expiration-mailer.patch &>>$installLog
+    #sudo -u labca patch -p1 -o "$boulderLabCADir/config/bad-key-revoker.json" < $cloneDir/config_bad-key-revoker.patch &>>$installLog
 
     sed -i -e "s|https://letsencrypt.org/docs/rate-limits/|http://$LABCA_FQDN/rate-limits|" errors/errors.go &>>$installLog
     cp errors/errors.go "$boulderLabCADir/.backup/"

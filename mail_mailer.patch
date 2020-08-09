@@ -63,7 +63,7 @@ index de6b1de20..60c58128b 100644
 +	addrs, err := di.dnsClient.LookupHost(ctx, di.server)
  	if err != nil {
 -		return nil, err
-+		problem := probs.DNS("%v", err)
++		problem := probs.DNS("%v")
 +		return nil, problem
  	}
 -	client, err := smtp.NewClient(conn, di.server)

@@ -1,5 +1,5 @@
 diff --git a/docker-compose.yml b/docker-compose.yml
-index e34704a4d..46365bdcf 100644
+index e67d892a6..9b097c8b6 100644
 --- a/docker-compose.yml
 +++ b/docker-compose.yml
 @@ -6,7 +6,7 @@ services:
@@ -19,13 +19,19 @@ index e34704a4d..46365bdcf 100644
            - ./.gocache:/root/.cache/go-build
          networks:
            bluenet:
-@@ -54,8 +55,14 @@ services:
+@@ -54,7 +55,7 @@ services:
          depends_on:
            - bhsm
            - bmysql
 -        entrypoint: test/entrypoint.sh
 +        entrypoint: labca/entrypoint.sh
          working_dir: /go/src/github.com/letsencrypt/boulder
+         # This works around a kernel bug that is tickled by Go 1.14:
+         # https://github.com/golang/go/issues/37436
+@@ -63,6 +64,12 @@ services:
+           memlock:
+             soft: -1
+             hard: -1
 +        logging:
 +          driver: "json-file"
 +          options:
@@ -34,8 +40,8 @@ index e34704a4d..46365bdcf 100644
 +        restart: always
      bhsm:
          # To minimize fetching this should be the same version used above
-         image: letsencrypt/boulder-tools-go${TRAVIS_GO_VERSION:-1.13.2}:2020-04-08
-@@ -68,8 +75,16 @@ services:
+         image: letsencrypt/boulder-tools-go${TRAVIS_GO_VERSION:-1.14.1}:2020-04-23
+@@ -75,8 +82,16 @@ services:
            bluenet:
              aliases:
                - boulder-hsm
@@ -52,7 +58,7 @@ index e34704a4d..46365bdcf 100644
          networks:
            bluenet:
              aliases:
-@@ -83,20 +98,36 @@ services:
+@@ -90,20 +105,36 @@ services:
          # small.
          command: mysqld --bind-address=0.0.0.0 --slow-query-log --log-output=TABLE --log-queries-not-using-indexes=ON
          logging:
@@ -64,7 +70,7 @@ index e34704a4d..46365bdcf 100644
 +            max-file: "5"
 +        restart: always
 +    labca:
-         image: letsencrypt/boulder-tools-go${TRAVIS_GO_VERSION:-1.13.2}:2020-04-08
+         image: letsencrypt/boulder-tools-go${TRAVIS_GO_VERSION:-1.14.1}:2020-04-23
 -        environment:
 -            GO111MODULE: "on"
 -            GOFLAGS: "-mod=vendor"

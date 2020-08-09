@@ -17,7 +17,7 @@ index 444beae43..e9bd228ef 100644
 @@ -28,5 +33,10 @@
    "syslog": {
      "stdoutlevel": 6,
-     "sysloglevel": 4
+     "sysloglevel": 6
 +  },
 +
 +  "common": {
