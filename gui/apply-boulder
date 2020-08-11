@@ -62,10 +62,10 @@ rm -f test-root.der
 cp -p $PKI_INT_CERT_BASE.key test-ca.key
 cp -p $PKI_INT_CERT_BASE.key.der test-ca.key.der
 cp -p $PKI_INT_CERT_BASE.pem test-ca.pem
-openssl rsa -in $PKI_INT_CERT_BASE.key -pubout > test-ca.pubkey.der
+openssl rsa -in $PKI_INT_CERT_BASE.key -pubout > test-ca.pubkey.pem
 cp -p $PKI_ROOT_CERT_BASE.key test-root.key
 cp -p $PKI_ROOT_CERT_BASE.key.der test-root.key.der
 cp -p $PKI_ROOT_CERT_BASE.pem test-root.pem
-openssl rsa -in $PKI_ROOT_CERT_BASE.key -pubout > test-root.pubkey.der
+openssl rsa -in $PKI_ROOT_CERT_BASE.key -pubout > test-root.pubkey.pem
 
 chown -R `ls -l rate-limit-policies.yml | cut -d" " -f 3,4 | sed 's/ /:/g'` .

@@ -24,7 +24,7 @@ dockerComposeVersion="1.22.0"
 
 labcaUrl="https://github.com/hakwerk/labca/"
 boulderUrl="https://github.com/letsencrypt/boulder/"
-boulderTag="release-2020-05-18"
+boulderTag="release-2020-06-08"
 
 #
 # Color configuration
@@ -480,8 +480,14 @@ config_boulder() {
     sudo -u labca patch -p1 < $cloneDir/docker-compose.patch &>>$installLog
     cp docker-compose.yml "$boulderLabCADir/.backup/"
 
+    sudo -u labca patch -p1 < $cloneDir/core_interfaces.patch &>>$installLog
+    cp core/interfaces.go "$boulderLabCADir/.backup/"
+
     sudo -u labca patch -p1 < $cloneDir/policy_pa.patch &>>$installLog
     cp policy/pa.go "$boulderLabCADir/.backup/"
+
+    sudo -u labca patch -p1 < $cloneDir/ra_ra.patch &>>$installLog
+    cp ra/ra.go "$boulderLabCADir/.backup/"
 
     sudo -u labca patch -p1 < $cloneDir/mail_mailer.patch &>>$installLog
     cp mail/mailer.go "$boulderLabCADir/.backup/"
@@ -499,6 +505,7 @@ config_boulder() {
     sudo -u labca patch -p1 -o "$boulderLabCADir/config/ca-b.json" < $cloneDir/test_config_ca_b.patch &>>$installLog
 
     sudo -u labca patch -p1 -o "$boulderLabCADir/config/expiration-mailer.json" < $cloneDir/config_expiration-mailer.patch &>>$installLog
+    sudo -u labca patch -p1 -o "$boulderLabCADir/config/notify-mailer.json" < $cloneDir/config_notify-mailer.patch &>>$installLog
     #sudo -u labca patch -p1 -o "$boulderLabCADir/config/bad-key-revoker.json" < $cloneDir/config_bad-key-revoker.patch &>>$installLog
 
     sed -i -e "s|https://letsencrypt.org/docs/rate-limits/|http://$LABCA_FQDN/rate-limits|" errors/errors.go &>>$installLog
@@ -517,6 +524,13 @@ config_boulder() {
     sed -i -e "s/test-ca2.pem/test-ca.pem/" config/ra.json
     sed -i -e "s/test-ca2.pem/test-ca.pem/" config/wfe.json
     sed -i -e "s/test-ca2.pem/test-ca.pem/" config/wfe2.json
+    sed -i -e "s|/tmp/intermediate-cert-rsa-a.pem|labca/test-ca.pem|" config/akamai-purger.json
+    sed -i -e "s|/tmp/intermediate-cert-rsa-a.pem|labca/test-ca.pem|" config/ocsp-responder.json
+    sed -i -e "s|/tmp/intermediate-cert-rsa-a.pem|labca/test-ca.pem|" config/ocsp-updater.json
+    sed -i -e "s|/tmp/intermediate-cert-rsa-a.pem|labca/test-ca.pem|" config/publisher.json
+    sed -i -e "s|/tmp/intermediate-cert-rsa-a.pem|labca/test-ca.pem|" config/ra.json
+    sed -i -e "s|/tmp/intermediate-cert-rsa-a.pem|labca/test-ca.pem|" config/wfe.json
+    sed -i -e "s|/tmp/intermediate-cert-rsa-a.pem|labca/test-ca.pem|" config/wfe2.json
     sed -i -e "s/5001/443/g" config/va.json
     sed -i -e "s/5002/80/g" config/va.json
     sed -i -e "s|http://boulder:4000/terms/v1|http://$LABCA_FQDN/terms/v1|" config/wfe.json

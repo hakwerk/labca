@@ -1,8 +1,8 @@
 diff --git a/policy/pa.go b/policy/pa.go
-index f6c908363..5de2d9ddc 100644
+index 230eaa1e0..4f9c09633 100644
 --- a/policy/pa.go
 +++ b/policy/pa.go
-@@ -29,6 +29,8 @@ type AuthorityImpl struct {
+@@ -30,6 +30,8 @@ type AuthorityImpl struct {
  	blocklist              map[string]bool
  	exactBlocklist         map[string]bool
  	wildcardExactBlocklist map[string]bool
@@ -11,7 +11,7 @@ index f6c908363..5de2d9ddc 100644
  	blocklistMu            sync.RWMutex
  
  	enabledChallenges map[string]bool
-@@ -69,6 +71,9 @@ type blockedNamesPolicy struct {
+@@ -70,6 +72,9 @@ type blockedNamesPolicy struct {
  	// time above and beyond the high-risk domains. Managing these entries separately
  	// from HighRiskBlockedNames makes it easier to vet changes accurately.
  	AdminBlockedNames []string `yaml:"AdminBlockedNames"`
@@ -21,7 +21,7 @@ index f6c908363..5de2d9ddc 100644
  }
  
  // SetHostnamePolicyFile will load the given policy file, returning error if it
-@@ -137,10 +142,20 @@ func (pa *AuthorityImpl) processHostnamePolicy(policy blockedNamesPolicy) error
+@@ -138,10 +143,20 @@ func (pa *AuthorityImpl) processHostnamePolicy(policy blockedNamesPolicy) error
  		// wildcardNameMap to block issuance for `*.`+parts[1]
  		wildcardNameMap[parts[1]] = true
  	}
@@ -42,7 +42,16 @@ index f6c908363..5de2d9ddc 100644
  	pa.blocklistMu.Unlock()
  	return nil
  }
-@@ -280,6 +295,14 @@ func (pa *AuthorityImpl) ValidDomain(domain string) error {
+@@ -214,7 +229,7 @@ var (
+ // * exactly equal to an IANA registered TLD
+ //
+ // It does _not_ check that the domain isn't on any PA blocked lists.
+-func ValidDomain(domain string) error {
++func (pa *AuthorityImpl) ValidDomain(domain string) error {
+ 	if domain == "" {
+ 		return errEmptyName
+ 	}
+@@ -281,6 +296,14 @@ func ValidDomain(domain string) error {
  		}
  	}
  
@@ -57,7 +66,30 @@ index f6c908363..5de2d9ddc 100644
  	// Names must end in an ICANN TLD, but they must not be equal to an ICANN TLD.
  	icannTLD, err := iana.ExtractSuffix(domain)
  	if err != nil {
-@@ -322,14 +345,44 @@ func (pa *AuthorityImpl) WillingToIssue(id identifier.ACMEIdentifier) error {
+@@ -308,7 +331,7 @@ var forbiddenMailDomains = map[string]bool{
+ // ValidEmail returns an error if the input doesn't parse as an email address,
+ // the domain isn't a valid hostname in Preferred Name Syntax, or its on the
+ // list of domains forbidden for mail (because they are often used in examples).
+-func ValidEmail(address string) error {
++func (pa *AuthorityImpl) ValidEmail(address string) error {
+ 	email, err := mail.ParseAddress(address)
+ 	if err != nil {
+ 		if len(address) > 254 {
+@@ -318,7 +341,7 @@ func ValidEmail(address string) error {
+ 	}
+ 	splitEmail := strings.SplitN(email.Address, "@", -1)
+ 	domain := strings.ToLower(splitEmail[len(splitEmail)-1])
+-	if err := ValidDomain(domain); err != nil {
++	if err := pa.ValidDomain(domain); err != nil {
+ 		return berrors.InvalidEmailError(
+ 			"contact email %q has invalid domain : %s",
+ 			email.Address, err)
+@@ -357,10 +380,14 @@ func (pa *AuthorityImpl) WillingToIssue(id identifier.ACMEIdentifier) error {
+ 	}
+ 	domain := id.Value
+ 
+-	if err := ValidDomain(domain); err != nil {
++	if err := pa.ValidDomain(domain); err != nil {
  		return err
  	}
  
@@ -67,10 +99,8 @@ index f6c908363..5de2d9ddc 100644
 +
  	// Require no match against hostname block lists
  	if err := pa.checkHostLists(domain); err != nil {
-+		fmt.Print("*** oopsie hij komt niet door checkhostlists...\n")
  		return err
- 	}
- 
+@@ -369,6 +396,31 @@ func (pa *AuthorityImpl) WillingToIssue(id identifier.ACMEIdentifier) error {
  	return nil
  }
  

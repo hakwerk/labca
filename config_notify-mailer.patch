@@ -1,0 +1,24 @@
+diff --git a/test/config/notify-mailer.json b/test/config/notify-mailer.json
+index 04405da..57f850e 100644
+--- a/test/config/notify-mailer.json
++++ b/test/config/notify-mailer.json
+@@ -2,11 +2,19 @@
+   "notifyMailer": {
+     "server": "localhost",
+     "port": "9380",
++    "hostnamePolicyFile": "test/hostname-policy.yaml",
+     "username": "cert-master@example.com",
+     "passwordFile": "test/secrets/smtp_password",
+     "dbConnectFile": "test/secrets/mailer_dburl",
+     "maxDBConns": 10
+   },
++  "pa": {
++    "challenges": {
++      "http-01": true,
++      "dns-01": true,
++      "tls-alpn-01": true
++    }
++  },
+   "syslog": {
+     "stdoutLevel": 7,
+     "syslogLevel": 7

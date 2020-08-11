@@ -1,50 +1,37 @@
 diff --git a/docker-compose.yml b/docker-compose.yml
-index e67d892a6..9b097c8b6 100644
+index a915b77ad..14fdb1fa6 100644
 --- a/docker-compose.yml
 +++ b/docker-compose.yml
-@@ -6,7 +6,7 @@ services:
+@@ -5,7 +5,7 @@ services:
+         image: letsencrypt/boulder-tools-go${TRAVIS_GO_VERSION:-1.14.1}:2020-06-01
          environment:
-             FAKE_DNS: 10.77.77.77
-             PKCS11_PROXY_SOCKET: tcp://boulder-hsm:5657
--            BOULDER_CONFIG_DIR: test/config
-+            BOULDER_CONFIG_DIR: labca/config
-             GO111MODULE: "on"
-             GOFLAGS: "-mod=vendor"
+             - FAKE_DNS=10.77.77.77
+-            - BOULDER_CONFIG_DIR=test/config
++            - BOULDER_CONFIG_DIR=labca/config
+             - GOFLAGS=-mod=vendor
              # This is required so Python doesn't throw an error when printing
-@@ -14,6 +14,7 @@ services:
-             PYTHONIOENCODING: "utf-8"
+             # non-ASCII to stdout.
+@@ -18,6 +18,7 @@ services:
+             - RACE
          volumes:
-           - .:/go/src/github.com/letsencrypt/boulder
+           - .:/go/src/github.com/letsencrypt/boulder:cached
 +          - /home/labca/boulder_labca:/go/src/github.com/letsencrypt/boulder/labca
-           - ./.gocache:/root/.cache/go-build
+           - ./.gocache:/root/.cache/go-build:cached
          networks:
            bluenet:
-@@ -54,7 +55,7 @@ services:
+@@ -57,7 +58,7 @@ services:
+           - 8055:8055 # dns-test-srv updates
          depends_on:
-           - bhsm
            - bmysql
 -        entrypoint: test/entrypoint.sh
 +        entrypoint: labca/entrypoint.sh
          working_dir: /go/src/github.com/letsencrypt/boulder
          # This works around a kernel bug that is tickled by Go 1.14:
          # https://github.com/golang/go/issues/37436
-@@ -63,6 +64,12 @@ services:
+@@ -66,8 +67,16 @@ services:
            memlock:
              soft: -1
              hard: -1
-+        logging:
-+          driver: "json-file"
-+          options:
-+            max-size: "500k"
-+            max-file: "5"
-+        restart: always
-     bhsm:
-         # To minimize fetching this should be the same version used above
-         image: letsencrypt/boulder-tools-go${TRAVIS_GO_VERSION:-1.14.1}:2020-04-23
-@@ -75,8 +82,16 @@ services:
-           bluenet:
-             aliases:
-               - boulder-hsm
 +        logging:
 +          driver: "json-file"
 +          options:
@@ -58,7 +45,7 @@ index e67d892a6..9b097c8b6 100644
          networks:
            bluenet:
              aliases:
-@@ -90,20 +105,36 @@ services:
+@@ -81,20 +90,36 @@ services:
          # small.
          command: mysqld --bind-address=0.0.0.0 --slow-query-log --log-output=TABLE --log-queries-not-using-indexes=ON
          logging:
@@ -70,7 +57,7 @@ index e67d892a6..9b097c8b6 100644
 +            max-file: "5"
 +        restart: always
 +    labca:
-         image: letsencrypt/boulder-tools-go${TRAVIS_GO_VERSION:-1.14.1}:2020-04-23
+         image: letsencrypt/boulder-tools-go${TRAVIS_GO_VERSION:-1.14.1}:2020-06-01
 -        environment:
 -            GO111MODULE: "on"
 -            GOFLAGS: "-mod=vendor"

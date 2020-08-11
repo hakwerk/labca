@@ -1,15 +1,17 @@
 diff --git a/test/config/ca-b.json b/test/config/ca-b.json
-index 355cfae2..c93fa5a3 100644
+index ed2498f1a..4d24ffa94 100644
 --- a/test/config/ca-b.json
 +++ b/test/config/ca-b.json
-@@ -29,10 +29,6 @@
+@@ -29,11 +29,7 @@
      },
      "Issuers": [{
        "ConfigFile": "test/test-ca.key-pkcs11.json",
--      "CertFile": "test/test-ca2.pem",
+-      "CertFile": "/tmp/intermediate-cert-rsa-a.pem",
 -      "NumSessions": 2
--    }, {
+-    },{
 -      "ConfigFile": "test/test-ca.key-pkcs11.json",
-       "CertFile": "test/test-ca.pem",
+-      "CertFile": "/tmp/intermediate-cert-rsa-b.pem",
++      "CertFile": "test/test-ca.pem",
        "NumSessions": 2
      }],
+     "expiry": "2160h",
