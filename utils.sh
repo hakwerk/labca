@@ -6,7 +6,6 @@ export PS_LABCA="bin/labca"
 export PS_BOULDER="bin/boulder"
 export PS_BOULDER_COUNT=12
 export PS_MYSQL="mysqld"
-export PS_BHSM="pkcs11"
 export PS_SERVICE="sudo___tcpserver"
 
 LOOPCOUNT=120

@@ -501,6 +501,10 @@ config_boulder() {
     sudo -u labca patch -p1 < $cloneDir/bad-key-revoker_main.patch &>>$installLog
     cp cmd/bad-key-revoker/main.go "$boulderLabCADir/.backup/"
 
+    sudo -u labca patch -p1 -o "$boulderLabCADir/entrypoint.sh" < $cloneDir/entrypoint.patch &>>$installLog
+    sudo -u labca patch -p1 -o "$boulderLabCADir/startservers.py" < $cloneDir/startservers.patch &>>$installLog
+    sudo -u labca patch -p1 < $cloneDir/startservers.patch &>>$installLog
+
     sudo -u labca patch -p1 -o "$boulderLabCADir/config/ca-a.json" < $cloneDir/test_config_ca_a.patch &>>$installLog
     sudo -u labca patch -p1 -o "$boulderLabCADir/config/ca-b.json" < $cloneDir/test_config_ca_b.patch &>>$installLog
 
@@ -533,6 +537,10 @@ config_boulder() {
     sed -i -e "s|/tmp/intermediate-cert-rsa-a.pem|labca/test-ca.pem|" config/wfe2.json
     sed -i -e "s/5001/443/g" config/va.json
     sed -i -e "s/5002/80/g" config/va.json
+    sed -i -e "s/5001/443/g" config/va-remote-a.json
+    sed -i -e "s/5002/80/g" config/va-remote-a.json
+    sed -i -e "s/5001/443/g" config/va-remote-b.json
+    sed -i -e "s/5002/80/g" config/va-remote-b.json
     sed -i -e "s|http://boulder:4000/terms/v1|http://$LABCA_FQDN/terms/v1|" config/wfe.json
     sed -i -e "s|https://boulder:4431/terms/v7|https://$LABCA_FQDN/terms/v1|" config/wfe2.json
     sed -i -e "s|http://boulder:4430/acme/issuer-cert|http://$LABCA_FQDN/acme/issuer-cert|" config/ca-a.json
@@ -554,6 +562,8 @@ config_boulder() {
     sed -i -e "s/ocspURL.Path = encodedReq/ocspURL.Path += encodedReq/" ocsp/helper/helper.go
     sed -i -e "s/\"dnsTimeout\": \".*\"/\"dnsTimeout\": \"3s\"/" config/ra.json
     sed -i -e "s/\"dnsTimeout\": \".*\"/\"dnsTimeout\": \"3s\"/" config/va.json
+    sed -i -e "s/\"dnsTimeout\": \".*\"/\"dnsTimeout\": \"3s\"/" config/va-remote-a.json
+    sed -i -e "s/\"dnsTimeout\": \".*\"/\"dnsTimeout\": \"3s\"/" config/va-remote-b.json
 
     for file in `find . -type f | grep -v .git`; do
         sed -i -e "s|test/|labca/|g" $file
@@ -628,10 +638,11 @@ startup() {
     msg_info "$msg (this will take a while!!)"
 
     docker-compose stop &>>$installLog || true
+    docker stop boulder_bhsm_1 &>>$installLog | /bin/true
     wait_down $PS_MYSQL &>>$installLog
-    wait_down $PS_BHSM &>>$installLog
     wait_down $PS_LABCA &>>$installLog
     wait_down $PS_BOULDER &>>$installLog
+    docker rm -f boulder_bhsm_1 &>>$installLog | /bin/true
     docker-compose up -d &>>$installLog
 
     [ -h "/etc/init.d/labca" ] || ln -s "$cloneDir/init_d" /etc/init.d/labca
@@ -643,7 +654,6 @@ startup() {
     wait_up $PS_SERVICE &>>$installLog
 
     wait_up $PS_MYSQL &>>$installLog
-    wait_up $PS_BHSM &>>$installLog
     wait_up $PS_LABCA &>>$installLog
     wait_up $PS_BOULDER $PS_BOULDER_COUNT &>>$installLog
 

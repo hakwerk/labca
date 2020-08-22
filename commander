@@ -39,13 +39,10 @@ case $txt in
     cd /home/labca/boulder
     docker-compose stop &>>$LOGFILE
     wait_down $PS_MYSQL &>>$LOGFILE
-    wait_down $PS_BHSM &>>$LOGFILE
     wait_down $PS_LABCA &>>$LOGFILE
     wait_down $PS_BOULDER &>>$LOGFILE
-    docker-compose rm -f bhsm &>>$LOGFILE
     docker-compose up -d &>>$LOGFILE
     wait_up $PS_MYSQL &>>$LOGFILE
-    wait_up $PS_BHSM &>>$LOGFILE
     wait_up $PS_LABCA &>>$LOGFILE
     wait_up $PS_BOULDER $PS_BOULDER_COUNT &>>$LOGFILE
     ;;
@@ -134,34 +131,26 @@ case $txt in
 "boulder-start")
     cd /home/labca/boulder
     docker-compose up -d bmysql
-    docker-compose up -d bhsm
     docker-compose up -d boulder
     wait_up $PS_MYSQL &>>$LOGFILE
-    wait_up $PS_BHSM &>>$LOGFILE
     wait_up $PS_BOULDER $PS_BOULDER_COUNT &>>$LOGFILE
     ;;
 "boulder-stop")
     cd /home/labca/boulder
     docker-compose stop boulder
-    docker-compose stop bhsm
     docker-compose stop bmysql
     wait_down $PS_MYSQL &>>$LOGFILE
-    wait_down $PS_BHSM &>>$LOGFILE
     wait_down $PS_BOULDER &>>$LOGFILE
     ;;
 "boulder-restart")
     cd /home/labca/boulder
     docker-compose stop boulder
-    docker-compose stop bhsm
     docker-compose stop bmysql
     wait_down $PS_MYSQL &>>$LOGFILE
-    wait_down $PS_BHSM &>>$LOGFILE
     wait_down $PS_BOULDER &>>$LOGFILE
     docker-compose up -d bmysql
-    docker-compose up -d bhsm
     docker-compose up -d boulder
     wait_up $PS_MYSQL &>>$LOGFILE
-    wait_up $PS_BHSM &>>$LOGFILE
     wait_up $PS_BOULDER $PS_BOULDER_COUNT &>>$LOGFILE
     ;;
 "labca-restart")

@@ -3,8 +3,12 @@
 set -e
 
 perl -i -p0e "s/(\"dnsResolvers\": \[\n).*?(\s+\],)/\1      \"$PKI_DNS\"\2/igs" config/va.json
+perl -i -p0e "s/(\"dnsResolvers\": \[\n).*?(\s+\],)/\1      \"$PKI_DNS\"\2/igs" config/va-remote-a.json
+perl -i -p0e "s/(\"dnsResolvers\": \[\n).*?(\s+\],)/\1      \"$PKI_DNS\"\2/igs" config/va-remote-b.json
 perl -i -p0e "s/(\"dnsResolvers\": \[\n).*?(\s+\],)/\1      \"$PKI_DNS\"\2/igs" config/expiration-mailer.json
 sed -i -e "s/\"issuerDomain\": \".*\"/\"issuerDomain\": \"$PKI_DOMAIN\"/" config/va.json
+sed -i -e "s/\"issuerDomain\": \".*\"/\"issuerDomain\": \"$PKI_DOMAIN\"/" config/va-remote-a.json
+sed -i -e "s/\"issuerDomain\": \".*\"/\"issuerDomain\": \"$PKI_DOMAIN\"/" config/va-remote-b.json
 sed -i -e "s/\"directoryCAAIdentity\": \".*\"/\"directoryCAAIdentity\": \"$PKI_DOMAIN\"/" config/wfe.json
 sed -i -e "s/\"directoryCAAIdentity\": \".*\"/\"directoryCAAIdentity\": \"$PKI_DOMAIN\"/" config/wfe2.json
 
@@ -54,18 +58,22 @@ rm -f test-ca.key
 rm -f test-ca.key.der
 rm -f test-ca.pem
 rm -f test-ca.der
+rm -f test-ca.p8
 rm -f test-root.key
 rm -f test-root.key.der
 rm -f test-root.pem
 rm -f test-root.der
+rm -f test-root.p8
 
 cp -p $PKI_INT_CERT_BASE.key test-ca.key
 cp -p $PKI_INT_CERT_BASE.key.der test-ca.key.der
 cp -p $PKI_INT_CERT_BASE.pem test-ca.pem
 openssl rsa -in $PKI_INT_CERT_BASE.key -pubout > test-ca.pubkey.pem
+openssl pkcs8 -topk8 -inform PEM -outform PEM -nocrypt -in test-ca.key -out test-ca.p8
 cp -p $PKI_ROOT_CERT_BASE.key test-root.key
 cp -p $PKI_ROOT_CERT_BASE.key.der test-root.key.der
 cp -p $PKI_ROOT_CERT_BASE.pem test-root.pem
 openssl rsa -in $PKI_ROOT_CERT_BASE.key -pubout > test-root.pubkey.pem
+openssl pkcs8 -topk8 -inform PEM -outform PEM -nocrypt -in test-root.key -out test-root.p8
 
 chown -R `ls -l rate-limit-policies.yml | cut -d" " -f 3,4 | sed 's/ /:/g'` .
