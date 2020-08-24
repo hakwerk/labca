@@ -92,7 +92,7 @@ func _parseLine(line string, loc *time.Location) Activity {
 	if idx > -1 {
 		message = message[0:idx]
 	}
-	idx = strings.Index(message, " precertificate=[")
+	idx = strings.Index(message, " certificate=[")
 	if idx > -1 {
 		message = message[0:idx]
 	}

@@ -1,5 +1,5 @@
 diff --git a/test/config/notify-mailer.json b/test/config/notify-mailer.json
-index 04405da..57f850e 100644
+index 73864aeb5..5e43e7689 100644
 --- a/test/config/notify-mailer.json
 +++ b/test/config/notify-mailer.json
 @@ -2,11 +2,19 @@
@@ -7,7 +7,7 @@ index 04405da..57f850e 100644
      "server": "localhost",
      "port": "9380",
 +    "hostnamePolicyFile": "test/hostname-policy.yaml",
-     "username": "cert-master@example.com",
+     "username": "cert-manager@example.com",
      "passwordFile": "test/secrets/smtp_password",
      "dbConnectFile": "test/secrets/mailer_dburl",
      "maxDBConns": 10
