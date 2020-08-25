@@ -5,6 +5,7 @@ set -e
 perl -i -p0e "s/(\"dnsResolvers\": \[\n).*?(\s+\],)/\1      \"$PKI_DNS\"\2/igs" config/va.json
 perl -i -p0e "s/(\"dnsResolvers\": \[\n).*?(\s+\],)/\1      \"$PKI_DNS\"\2/igs" config/va-remote-a.json
 perl -i -p0e "s/(\"dnsResolvers\": \[\n).*?(\s+\],)/\1      \"$PKI_DNS\"\2/igs" config/va-remote-b.json
+perl -i -p0e "s/(\"dnsResolvers\": \[\n).*?(\s+\],)/\1      \"$PKI_DNS\"\2/igs" config/bad-key-revoker.json
 perl -i -p0e "s/(\"dnsResolvers\": \[\n).*?(\s+\],)/\1      \"$PKI_DNS\"\2/igs" config/expiration-mailer.json
 sed -i -e "s/\"issuerDomain\": \".*\"/\"issuerDomain\": \"$PKI_DOMAIN\"/" config/va.json
 sed -i -e "s/\"issuerDomain\": \".*\"/\"issuerDomain\": \"$PKI_DOMAIN\"/" config/va-remote-a.json
@@ -44,10 +45,18 @@ if [ "$PKI_EXTENDED_TIMEOUT" == "1" ]; then
     sed -i -e "s/\"timeout\": \"15s\"/\"timeout\": \"30s\"/" config/orphan-finder.json
 fi
 
+sed -i -e "s/\"server\": \".*\"/\"server\": \"$PKI_EMAIL_SERVER\"/" config/bad-key-revoker.json
+sed -i -e "s/\"port\": \".*\"/\"port\": \"$PKI_EMAIL_PORT\"/" config/bad-key-revoker.json
+sed -i -e "s/\"username\": \".*\"/\"username\": \"$PKI_EMAIL_USER\"/" config/bad-key-revoker.json
+sed -i -e "s/\"from\": \".*\"/\"from\": \"$PKI_EMAIL_FROM\"/" config/bad-key-revoker.json
 sed -i -e "s/\"server\": \".*\"/\"server\": \"$PKI_EMAIL_SERVER\"/" config/expiration-mailer.json
 sed -i -e "s/\"port\": \".*\"/\"port\": \"$PKI_EMAIL_PORT\"/" config/expiration-mailer.json
 sed -i -e "s/\"username\": \".*\"/\"username\": \"$PKI_EMAIL_USER\"/" config/expiration-mailer.json
 sed -i -e "s/\"from\": \".*\"/\"from\": \"$PKI_EMAIL_FROM\"/" config/expiration-mailer.json
+sed -i -e "s/\"server\": \".*\"/\"server\": \"$PKI_EMAIL_SERVER\"/" config/notify-mailer.json
+sed -i -e "s/\"port\": \".*\"/\"port\": \"$PKI_EMAIL_PORT\"/" config/notify-mailer.json
+sed -i -e "s/\"username\": \".*\"/\"username\": \"$PKI_EMAIL_USER\"/" config/notify-mailer.json
+sed -i -e "s/\"from\": \".*\"/\"from\": \"$PKI_EMAIL_FROM\"/" config/notify-mailer.json
 sed -i -e "s/\"purgeInterval\": \".*\"/\"purgeInterval\": \"1s\"/" config/akamai-purger.json
 
 if [ "$PKI_EMAIL_PASS" != "" ]; then

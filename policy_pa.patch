@@ -1,5 +1,5 @@
 diff --git a/policy/pa.go b/policy/pa.go
-index 230eaa1e0..4f9c09633 100644
+index 599dcdb10..084cb3ba8 100644
 --- a/policy/pa.go
 +++ b/policy/pa.go
 @@ -30,6 +30,8 @@ type AuthorityImpl struct {
@@ -10,7 +10,7 @@ index 230eaa1e0..4f9c09633 100644
 +	lockdown               map[string]bool
  	blocklistMu            sync.RWMutex
  
- 	enabledChallenges map[string]bool
+ 	enabledChallenges map[core.AcmeChallenge]bool
 @@ -70,6 +72,9 @@ type blockedNamesPolicy struct {
  	// time above and beyond the high-risk domains. Managing these entries separately
  	// from HighRiskBlockedNames makes it easier to vet changes accurately.

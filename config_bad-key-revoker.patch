@@ -19,7 +19,7 @@ index 482fd85fc..3e678aa5b 100644
          "maximumRevocations": 15,
          "findCertificatesBatchSize": 10,
 -        "interval": "1s"
-+        "interval": "1h"
++        "interval": "5m"
      },
      "syslog": {
          "stdoutlevel": 6,
