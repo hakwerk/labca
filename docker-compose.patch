@@ -1,9 +1,9 @@
 diff --git a/docker-compose.yml b/docker-compose.yml
-index c5239fb0e..1334f34c1 100644
+index 5f93fe866..b4a0b75e0 100644
 --- a/docker-compose.yml
 +++ b/docker-compose.yml
 @@ -5,7 +5,7 @@ services:
-         image: letsencrypt/boulder-tools-go${TRAVIS_GO_VERSION:-1.14.5}:2020-08-12
+         image: letsencrypt/boulder-tools-go${TRAVIS_GO_VERSION:-1.15}:2020-08-12
          environment:
              - FAKE_DNS=10.77.77.77
 -            - BOULDER_CONFIG_DIR=test/config
@@ -51,7 +51,7 @@ index c5239fb0e..1334f34c1 100644
 +            max-file: "5"
 +        restart: always
 +    labca:
-         image: letsencrypt/boulder-tools-go${TRAVIS_GO_VERSION:-1.14.5}:2020-08-12
+         image: letsencrypt/boulder-tools-go${TRAVIS_GO_VERSION:-1.15}:2020-08-12
 -        environment:
 -            GO111MODULE: "on"
 -            GOFLAGS: "-mod=vendor"

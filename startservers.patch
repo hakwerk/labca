@@ -1,5 +1,5 @@
 diff --git a/test/startservers.py b/test/startservers.py
-index 5e729986..ae4ff439 100644
+index ec8ada190..be5b7a2f2 100644
 --- a/test/startservers.py
 +++ b/test/startservers.py
 @@ -146,6 +146,9 @@ processes = []
@@ -11,4 +11,4 @@ index 5e729986..ae4ff439 100644
 +def setupHierarchyOriginal():
      e = os.environ.copy()
      e.setdefault("GOBIN", "%s/bin" % os.getcwd())
-     subprocess.check_call(["go", "install", "./cmd/ceremony"], env=e)
+     try:
