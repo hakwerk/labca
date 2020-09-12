@@ -1,0 +1,14 @@
+diff --git a/test/startservers.py b/test/startservers.py
+index ec8ada190..be5b7a2f2 100644
+--- a/test/startservers.py
++++ b/test/startservers.py
+@@ -146,6 +146,9 @@ processes = []
+ challSrvProcess = None
+ 
+ def setupHierarchy():
++    pass
++
++def setupHierarchyOriginal():
+     e = os.environ.copy()
+     e.setdefault("GOBIN", "%s/bin" % os.getcwd())
+     try:

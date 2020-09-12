@@ -259,6 +259,10 @@ func checkUpdates(forced bool) ([]string, []string) {
 						if *release.Name == version {
 							newer = false
 						}
+						if strings.HasPrefix(version, *release.Name + "-") {    // git describe format
+							newer = false
+							latest = version
+						}
 						if newer {
 							versions = append(versions, *release.Name)
 							descriptions = append(descriptions, *release.Body)

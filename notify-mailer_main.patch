@@ -1,8 +1,50 @@
 diff --git a/cmd/notify-mailer/main.go b/cmd/notify-mailer/main.go
-index bb8945236..e278cdc16 100644
+index 0445a04c0..ba2be9e2f 100644
 --- a/cmd/notify-mailer/main.go
 +++ b/cmd/notify-mailer/main.go
-@@ -468,6 +468,7 @@ func main() {
+@@ -37,6 +37,7 @@ type mailer struct {
+ 	destinations  []recipient
+ 	targetRange   interval
+ 	sleepInterval time.Duration
++	pa            *policy.AuthorityImpl
+ }
+ 
+ // interval defines a range of email addresses to send to, alphabetically.
+@@ -146,7 +147,7 @@ func (m *mailer) run() error {
+ 			m.log.Debugf("skipping %q: out of target range")
+ 			continue
+ 		}
+-		if err := policy.ValidEmail(address); err != nil {
++		if err := m.pa.ValidEmail(address); err != nil {
+ 			m.log.Infof("skipping %q: %s", address, err)
+ 			continue
+ 		}
+@@ -410,7 +411,9 @@ func main() {
+ 			cmd.PasswordConfig
+ 			cmd.SMTPConfig
+ 			Features map[string]bool
++			cmd.HostnamePolicyConfig
+ 		}
++		PA cmd.PAConfig
+ 		Syslog cmd.SyslogConfig
+ 	}
+ 	configFile := flag.String("config", "", "File containing a JSON config.")
+@@ -461,6 +464,14 @@ func main() {
+ 		end:   *end,
+ 	}
+ 
++	// Validate PA config and set defaults if needed
++	cmd.FailOnError(cfg.PA.CheckChallenges(), "Invalid PA configuration")
++
++	pa, err := policy.New(cfg.PA.Challenges)
++	cmd.FailOnError(err, "Failed to create PA")
++	err = pa.SetHostnamePolicyFile(cfg.NotifyMailer.HostnamePolicyFile)
++	cmd.FailOnError(err, "Failed to load HostnamePolicyFile")
++
+ 	var mailClient bmail.Mailer
+ 	if *dryRun {
+ 		log.Infof("Doing a dry run.")
+@@ -474,6 +485,7 @@ func main() {
  			cfg.NotifyMailer.Username,
  			smtpPassword,
  			nil,
@@ -10,3 +52,11 @@ index bb8945236..e278cdc16 100644
  			*address,
  			log,
  			metrics.NoopRegisterer,
+@@ -491,6 +503,7 @@ func main() {
+ 		emailTemplate: template,
+ 		targetRange:   targetRange,
+ 		sleepInterval: *sleep,
++		pa:            pa,
+ 	}
+ 
+ 	err = m.run()
