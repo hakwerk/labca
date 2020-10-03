@@ -6,6 +6,7 @@ import (
 	"net"
 	"net/http"
 	"strconv"
+	"strings"
 )
 
 // BaseList is the generic base struct for showing lists of data
@@ -73,10 +74,11 @@ func GetAccounts(w http.ResponseWriter, r *http.Request) (AccountList, error) {
 type Order struct {
 	ID             int
 	RegistrationID int
-	Expires        string
 	CertSerial     string
+	RequestedName  string
 	BeganProc      bool
 	Created        string
+	Expires        string
 }
 
 // OrderList is a list of Order records
@@ -117,7 +119,7 @@ func GetAccount(w http.ResponseWriter, r *http.Request, id int) (AccountShow, er
 
 	defer db.Close()
 
-	rows, err := db.Query("SELECT c.id, c.registrationID, c.serial, CASE WHEN cs.notAfter < NOW() THEN 'expired' ELSE cs.status END AS status, c.issued, c.expires FROM certificates c JOIN certificateStatus cs ON cs.id = c.id WHERE registrationID=?", strconv.Itoa(id))
+	rows, err := db.Query("SELECT c.id, c.registrationID, c.serial, n.reversedName, CASE WHEN cs.notAfter < NOW() THEN 'expired' ELSE cs.status END AS status, c.issued, c.expires FROM certificates c JOIN certificateStatus cs ON cs.id = c.id JOIN issuedNames n ON n.serial = c.serial WHERE registrationID=?", strconv.Itoa(id))
 	if err != nil {
 		errorHandler(w, r, err, http.StatusInternalServerError)
 		return AccountShow{}, err
@@ -127,22 +129,23 @@ func GetAccount(w http.ResponseWriter, r *http.Request, id int) (AccountShow, er
 		BaseList: BaseList{
 			Title:      "Certificates",
 			TableClass: "rel_certificates_list",
-			Header:     []template.HTML{"ID", "Account ID", "Serial", "Status", "Issued", "Expires"},
+			Header:     []template.HTML{"ID", "Account ID", "Serial", "Issued Name", "Status", "Issued", "Expires"},
 		},
 		Rows: []Certificate{},
 	}
 
 	for rows.Next() {
 		row := Certificate{}
-		err = rows.Scan(&row.ID, &row.RegistrationID, &row.Serial, &row.Status, &row.Issued, &row.Expires)
+		err = rows.Scan(&row.ID, &row.RegistrationID, &row.Serial, &row.IssuedName, &row.Status, &row.Issued, &row.Expires)
 		if err != nil {
 			errorHandler(w, r, err, http.StatusInternalServerError)
 			return AccountShow{}, err
 		}
+		row.IssuedName = ReverseName(row.IssuedName)
 		Certificates.Rows = append(Certificates.Rows, row)
 	}
 
-	rows, err = db.Query("SELECT id, registrationID, expires, certificateSerial, beganProcessing, created FROM orders WHERE registrationID=?", strconv.Itoa(id))
+	rows, err = db.Query("SELECT o.id, o.registrationID, o.certificateSerial, n.reversedName, o.beganProcessing, o.created, o.expires FROM orders o JOIN requestedNames n ON n.orderID = o.id WHERE o.registrationID=?", strconv.Itoa(id))
 	if err != nil {
 		errorHandler(w, r, err, http.StatusInternalServerError)
 		return AccountShow{}, err
@@ -152,18 +155,19 @@ func GetAccount(w http.ResponseWriter, r *http.Request, id int) (AccountShow, er
 		BaseList: BaseList{
 			Title:      "Orders",
 			TableClass: "rel_orders_list",
-			Header:     []template.HTML{"ID", "Account ID", "Expires", "Certificate Serial", "Began Processing?", "Created"},
+			Header:     []template.HTML{"ID", "Account ID", "Certificate Serial", "Requested Name", "Began Processing?", "Created", "Expires", },
 		},
 		Rows: []Order{},
 	}
 
 	for rows.Next() {
 		row := Order{}
-		err = rows.Scan(&row.ID, &row.RegistrationID, &row.Expires, &row.CertSerial, &row.BeganProc, &row.Created)
+		err = rows.Scan(&row.ID, &row.RegistrationID, &row.CertSerial, &row.RequestedName, &row.BeganProc, &row.Created, &row.Expires)
 		if err != nil {
 			errorHandler(w, r, err, http.StatusInternalServerError)
 			return AccountShow{}, err
 		}
+		row.RequestedName = ReverseName(row.RequestedName)
 		Orders.Rows = append(Orders.Rows, row)
 	}
 
@@ -211,7 +215,7 @@ func GetOrders(w http.ResponseWriter, r *http.Request) (OrderList, error) {
 
 	defer db.Close()
 
-	rows, err := db.Query("SELECT id, registrationID, expires, certificateSerial, beganProcessing, created FROM orders")
+	rows, err := db.Query("SELECT o.id, o.registrationID, o.certificateSerial, n.reversedName, o.beganProcessing, o.created, o.expires FROM orders o JOIN requestedNames n ON n.orderID = o.id")
 	if err != nil {
 		errorHandler(w, r, err, http.StatusInternalServerError)
 		return OrderList{}, err
@@ -221,18 +225,19 @@ func GetOrders(w http.ResponseWriter, r *http.Request) (OrderList, error) {
 		BaseList: BaseList{
 			Title:      "Orders",
 			TableClass: "orders_list",
-			Header:     []template.HTML{"ID", "Account ID", "Expires", "Certificate Serial", "Began Processing?", "Created"},
+			Header:     []template.HTML{"ID", "Account ID", "Certificate Serial", "Requested Name", "Began Processing?", "Created", "Expires"},
 		},
 		Rows: []Order{},
 	}
 
 	for rows.Next() {
 		row := Order{}
-		err = rows.Scan(&row.ID, &row.RegistrationID, &row.Expires, &row.CertSerial, &row.BeganProc, &row.Created)
+		err = rows.Scan(&row.ID, &row.RegistrationID, &row.CertSerial, &row.RequestedName, &row.BeganProc, &row.Created, &row.Expires)
 		if err != nil {
 			errorHandler(w, r, err, http.StatusInternalServerError)
 			return OrderList{}, err
 		}
+		row.RequestedName = ReverseName(row.RequestedName)
 		Orders.Rows = append(Orders.Rows, row)
 	}
 
@@ -241,12 +246,11 @@ func GetOrders(w http.ResponseWriter, r *http.Request) (OrderList, error) {
 
 // Auth contains the data representing an ACME auth
 type Auth struct {
-	ID             string
-	Identifier     string
-	RegistrationID int
-	Status         string
-	Expires        string
-	Combinations   string
+	ID               string
+	Identifier       string
+	RegistrationID   int
+	Status           string
+	Expires          string
 }
 
 // AuthList is a list of Auth records
@@ -262,6 +266,15 @@ type OrderShow struct {
 	Related2 []BaseList
 }
 
+// Helper method from sa/model.go
+var uintToStatus = map[int]string{
+	0: "pending",
+	1: "valid",
+	2: "invalid",
+	3: "deactivated",
+	4: "revoked",
+}
+
 // GetOrder returns an order with the given id
 func GetOrder(w http.ResponseWriter, r *http.Request, id int) (OrderShow, error) {
 	db, err := sql.Open(dbType, dbConn)
@@ -272,9 +285,11 @@ func GetOrder(w http.ResponseWriter, r *http.Request, id int) (OrderShow, error)
 
 	defer db.Close()
 
-	partial := "SELECT id, identifier, registrationID, status, expires, combinations FROM "
+	partial := "SELECT id, identifier, registrationID, status, expires FROM "
 	where := " WHERE id IN (SELECT authzID FROM orderToAuthz WHERE orderID=?)"
-	rows, err := db.Query(partial+"authz"+where+" UNION "+partial+"pendingAuthorizations"+where, strconv.Itoa(id), strconv.Itoa(id))
+	partial2 := "SELECT id, identifierValue, registrationID, status, expires FROM "
+	where2 := " WHERE id IN (SELECT authzID FROM orderToAuthz2 WHERE orderID=?)"
+	rows, err := db.Query(partial+"authz"+where+" UNION "+partial+"pendingAuthorizations"+where+" UNION "+partial2+"authz2"+where2, strconv.Itoa(id), strconv.Itoa(id), strconv.Itoa(id))
 	if err != nil {
 		errorHandler(w, r, err, http.StatusInternalServerError)
 		return OrderShow{}, err
@@ -284,22 +299,25 @@ func GetOrder(w http.ResponseWriter, r *http.Request, id int) (OrderShow, error)
 		BaseList: BaseList{
 			Title:      "Authorizations",
 			TableClass: "rel_authz_list",
-			Header:     []template.HTML{"ID", "Identifier", "Account ID", "Status", "Expires", "Combinations"},
+			Header:     []template.HTML{"ID", "Identifier", "Account ID", "Status", "Expires"},
 		},
 		Rows: []Auth{},
 	}
 
 	for rows.Next() {
 		row := Auth{}
-		err = rows.Scan(&row.ID, &row.Identifier, &row.RegistrationID, &row.Status, &row.Expires, &row.Combinations)
+		err = rows.Scan(&row.ID, &row.Identifier, &row.RegistrationID, &row.Status, &row.Expires)
 		if err != nil {
 			errorHandler(w, r, err, http.StatusInternalServerError)
 			return OrderShow{}, err
 		}
+		if s, err := strconv.Atoi(row.Status); err == nil {
+			row.Status = uintToStatus[s]
+		}
 		Authz.Rows = append(Authz.Rows, row)
 	}
 
-	rows, err = db.Query("SELECT id, registrationID, expires, certificateSerial, beganProcessing, created FROM orders WHERE id=?", strconv.Itoa(id))
+	rows, err = db.Query("SELECT o.id, o.registrationID, o.certificateSerial, n.reversedName, o.beganProcessing, o.created, o.expires FROM orders o JOIN requestedNames n ON n.orderID = o.id WHERE o.id=?", strconv.Itoa(id))
 	if err != nil {
 		errorHandler(w, r, err, http.StatusInternalServerError)
 		return OrderShow{}, err
@@ -317,21 +335,22 @@ func GetOrder(w http.ResponseWriter, r *http.Request, id int) (OrderShow, error)
 
 	for rows.Next() {
 		row := Order{}
-		err = rows.Scan(&row.ID, &row.RegistrationID, &row.Expires, &row.CertSerial, &row.BeganProc, &row.Created)
+		err = rows.Scan(&row.ID, &row.RegistrationID, &row.CertSerial, &row.RequestedName, &row.BeganProc, &row.Created, &row.Expires)
 		if err != nil {
 			errorHandler(w, r, err, http.StatusInternalServerError)
 			return OrderShow{}, err
 		}
 		OrderDetails.Rows = append(OrderDetails.Rows, NameValue{"ID", strconv.Itoa(row.ID)})
-		OrderDetails.Rows = append(OrderDetails.Rows, NameValue{"Expires", row.Expires})
 		v := "false"
 		if row.BeganProc {
 			v = "true"
 		}
 		OrderDetails.Rows = append(OrderDetails.Rows, NameValue{"Began Processing?", v})
 		OrderDetails.Rows = append(OrderDetails.Rows, NameValue{"Created", row.Created})
+		OrderDetails.Rows = append(OrderDetails.Rows, NameValue{"Expires", row.Expires})
 
 		OrderDetails.Links = append(OrderDetails.Links, NameValHTML{"Certificate", template.HTML("<a href=\"" + r.Header.Get("X-Request-Base") + "/certificates/" + row.CertSerial + "\">" + row.CertSerial + "</a>")})
+		OrderDetails.Rows = append(OrderDetails.Rows, NameValue{"Requested Name", ReverseName(row.RequestedName)})
 		OrderDetails.Links = append(OrderDetails.Links, NameValHTML{"Account", template.HTML("<a href=\"" + r.Header.Get("X-Request-Base") + "/accounts/" + strconv.Itoa(row.RegistrationID) + "\">" + strconv.Itoa(row.RegistrationID) + "</a>")})
 	}
 
@@ -348,7 +367,7 @@ func GetAuthz(w http.ResponseWriter, r *http.Request) (AuthList, error) {
 
 	defer db.Close()
 
-	rows, err := db.Query("SELECT id, identifier, registrationID, status, expires, combinations FROM authz UNION SELECT id, identifier, registrationID, status, expires, combinations FROM pendingAuthorizations")
+	rows, err := db.Query("SELECT id, identifier, registrationID, status, expires FROM authz UNION SELECT id, identifier, registrationID, status, expires FROM pendingAuthorizations UNION SELECT id, identifierValue, registrationID, status, expires FROM authz2")
 	if err != nil {
 		errorHandler(w, r, err, http.StatusInternalServerError)
 		return AuthList{}, err
@@ -358,17 +377,20 @@ func GetAuthz(w http.ResponseWriter, r *http.Request) (AuthList, error) {
 		BaseList: BaseList{
 			Title:      "Authorizations",
 			TableClass: "authz_list",
-			Header:     []template.HTML{"ID", "Identifier", "Account ID", "Status", "Expires", "Combinations"},
+			Header:     []template.HTML{"ID", "Identifier", "Account ID", "Status", "Expires"},
 		},
 		Rows: []Auth{},
 	}
 
 	for rows.Next() {
 		row := Auth{}
-		err = rows.Scan(&row.ID, &row.Identifier, &row.RegistrationID, &row.Status, &row.Expires, &row.Combinations)
+		err = rows.Scan(&row.ID, &row.Identifier, &row.RegistrationID, &row.Status, &row.Expires)
 		if err != nil {
 			errorHandler(w, r, err, http.StatusInternalServerError)
 			return AuthList{}, err
+		}
+		if s, err := strconv.Atoi(row.Status); err == nil {
+			row.Status = uintToStatus[s]
 		}
 		Authz.Rows = append(Authz.Rows, row)
 	}
@@ -441,9 +463,11 @@ func GetAuth(w http.ResponseWriter, r *http.Request, id string) (AuthShow, error
 		Challenges.Rows = append(Challenges.Rows, row)
 	}
 
-	partial := "SELECT id, identifier, registrationID, status, expires, combinations FROM "
+	partial := "SELECT id, identifier, registrationID, status, expires, '', '' FROM "
 	where := " WHERE id IN (SELECT authzID FROM orderToAuthz WHERE id=?)"
-	rows, err = db.Query(partial+"authz"+where+" UNION "+partial+"pendingAuthorizations"+where, id, id)
+	partial2 := "SELECT id, identifierValue, registrationID, status, expires, validationError, validationRecord FROM "
+	where2 := " WHERE id IN (SELECT authzID FROM orderToAuthz2 WHERE id=?)"
+	rows, err = db.Query(partial+"authz"+where+" UNION "+partial+"pendingAuthorizations"+where+" UNION "+partial2+"authz2"+where2, id, id, id)
 	if err != nil {
 		errorHandler(w, r, err, http.StatusInternalServerError)
 		return AuthShow{}, err
@@ -461,16 +485,26 @@ func GetAuth(w http.ResponseWriter, r *http.Request, id string) (AuthShow, error
 
 	for rows.Next() {
 		row := Auth{}
-		err = rows.Scan(&row.ID, &row.Identifier, &row.RegistrationID, &row.Status, &row.Expires, &row.Combinations)
+		validationError :=  sql.NullString{}
+		validationRecord := sql.NullString{}
+		err = rows.Scan(&row.ID, &row.Identifier, &row.RegistrationID, &row.Status, &row.Expires, &validationError, &validationRecord)
 		if err != nil {
 			errorHandler(w, r, err, http.StatusInternalServerError)
 			return AuthShow{}, err
 		}
 		AuthDetails.Rows = append(AuthDetails.Rows, NameValue{"ID", row.ID})
 		AuthDetails.Rows = append(AuthDetails.Rows, NameValue{"Identifier", row.Identifier})
+		if s, err := strconv.Atoi(row.Status); err == nil {
+			row.Status = uintToStatus[s]
+		}
 		AuthDetails.Rows = append(AuthDetails.Rows, NameValue{"Status", row.Status})
 		AuthDetails.Rows = append(AuthDetails.Rows, NameValue{"Expires", row.Expires})
-		AuthDetails.Rows = append(AuthDetails.Rows, NameValue{"Combinations", row.Combinations})
+		if validationError.Valid  && validationError.String != "" {
+			AuthDetails.Rows = append(AuthDetails.Rows, NameValue{"Validation Error", validationError.String})
+		}
+		if validationRecord.Valid && validationRecord.String != "" {
+			AuthDetails.Rows = append(AuthDetails.Rows, NameValue{"Validation Record", validationRecord.String})
+		}
 
 		Link := NameValHTML{"Account", template.HTML("<a href=\"" + r.Header.Get("X-Request-Base") + "/accounts/" + strconv.Itoa(row.RegistrationID) + "\">" + strconv.Itoa(row.RegistrationID) + "</a>")}
 		AuthDetails.Links = append(AuthDetails.Links, Link)
@@ -576,6 +610,7 @@ type Certificate struct {
 	ID             int
 	RegistrationID int
 	Serial         string
+	IssuedName     string
 	Status         string
 	Issued         string
 	Expires        string
@@ -585,6 +620,15 @@ type Certificate struct {
 type CertificateList struct {
 	BaseList
 	Rows []Certificate
+}
+
+// domains are stored in reverse order...
+func ReverseName(domain string) string {
+	labels := strings.Split(domain, ".")
+	for i, j := 0, len(labels)-1; i < j; i, j = i+1, j-1 {
+		labels[i], labels[j] = labels[j], labels[i]
+	}
+	return strings.Join(labels, ".")
 }
 
 // GetCertificates returns the list of certificates
@@ -606,7 +650,7 @@ func GetCertificates(w http.ResponseWriter, r *http.Request) (CertificateList, e
 		where = " WHERE cs.revokedDate<>'0000-00-00 00:00:00'"
 	}
 
-	rows, err := db.Query("SELECT c.id, c.registrationID, c.serial, CASE WHEN cs.notAfter < NOW() THEN 'expired' ELSE cs.status END AS status, c.issued, c.expires FROM certificates c JOIN certificateStatus cs ON cs.id = c.id" + where)
+	rows, err := db.Query("SELECT c.id, c.registrationID, c.serial, n.reversedName, CASE WHEN cs.notAfter < NOW() THEN 'expired' ELSE cs.status END AS status, c.issued, c.expires FROM certificates c JOIN certificateStatus cs ON cs.id = c.id JOIN issuedNames n ON n.serial = c.serial" + where)
 	if err != nil {
 		errorHandler(w, r, err, http.StatusInternalServerError)
 		return CertificateList{}, err
@@ -616,18 +660,19 @@ func GetCertificates(w http.ResponseWriter, r *http.Request) (CertificateList, e
 		BaseList: BaseList{
 			Title:      "Certificates",
 			TableClass: "certificates_list",
-			Header:     []template.HTML{"ID", "Account ID", "Serial", "Status", "Issued", "Expires"},
+			Header:     []template.HTML{"ID", "Account ID", "Serial", "Issued Name", "Status", "Issued", "Expires"},
 		},
 		Rows: []Certificate{},
 	}
 
 	for rows.Next() {
 		row := Certificate{}
-		err = rows.Scan(&row.ID, &row.RegistrationID, &row.Serial, &row.Status, &row.Issued, &row.Expires)
+		err = rows.Scan(&row.ID, &row.RegistrationID, &row.Serial, &row.IssuedName, &row.Status, &row.Issued, &row.Expires)
 		if err != nil {
 			errorHandler(w, r, err, http.StatusInternalServerError)
 			return CertificateList{}, err
 		}
+		row.IssuedName = ReverseName(row.IssuedName)
 		Certificates.Rows = append(Certificates.Rows, row)
 	}
 
@@ -646,6 +691,7 @@ type CertificateExtra struct {
 	ID                 int
 	RegistrationID     int
 	Serial             string
+	IssuedName         string
 	Digest             string
 	Issued             string
 	Expires            string
@@ -700,7 +746,7 @@ func GetCertificate(w http.ResponseWriter, r *http.Request, id int, serial strin
 	defer db.Close()
 
 	var rows *sql.Rows
-	selectWhere := "SELECT c.id, c.registrationID, c.serial, c.digest, c.issued, c.expires, cs.subscriberApproved, CASE WHEN cs.notAfter < NOW() THEN 'expired' ELSE cs.status END AS status, cs.ocspLastUpdated, cs.revokedDate, cs.revokedReason, cs.lastExpirationNagSent, cs.notAfter, cs.isExpired FROM certificates c JOIN certificateStatus cs ON cs.id = c.id WHERE "
+	selectWhere := "SELECT c.id, c.registrationID, c.serial, n.reversedName, c.digest, c.issued, c.expires, cs.subscriberApproved, CASE WHEN cs.notAfter < NOW() THEN 'expired' ELSE cs.status END AS status, cs.ocspLastUpdated, cs.revokedDate, cs.revokedReason, cs.lastExpirationNagSent, cs.notAfter, cs.isExpired FROM certificates c JOIN certificateStatus cs ON cs.id = c.id JOIN issuedNames n ON n.serial = c.serial WHERE "
 
 	if serial != "" {
 		rows, err = db.Query(selectWhere+"c.serial=?", serial)
@@ -723,13 +769,14 @@ func GetCertificate(w http.ResponseWriter, r *http.Request, id int, serial strin
 
 	for rows.Next() {
 		row := CertificateExtra{}
-		err = rows.Scan(&row.ID, &row.RegistrationID, &row.Serial, &row.Digest, &row.Issued, &row.Expires, &row.SubscriberApproved, &row.Status, &row.OCSPLastUpdate, &row.Revoked, &row.RevokedReason, &row.LastNagSent, &row.NotAfter, &row.IsExpired)
+		err = rows.Scan(&row.ID, &row.RegistrationID, &row.Serial, &row.IssuedName, &row.Digest, &row.Issued, &row.Expires, &row.SubscriberApproved, &row.Status, &row.OCSPLastUpdate, &row.Revoked, &row.RevokedReason, &row.LastNagSent, &row.NotAfter, &row.IsExpired)
 		if err != nil {
 			errorHandler(w, r, err, http.StatusInternalServerError)
 			return CertificateShow{}, err
 		}
 		CertificateDetails.Rows = append(CertificateDetails.Rows, NameValue{"ID", strconv.Itoa(row.ID)})
 		CertificateDetails.Rows = append(CertificateDetails.Rows, NameValue{"Serial", row.Serial})
+		CertificateDetails.Rows = append(CertificateDetails.Rows, NameValue{"Issued Name", ReverseName(row.IssuedName)})
 		CertificateDetails.Rows = append(CertificateDetails.Rows, NameValue{"Digest", row.Digest})
 		CertificateDetails.Rows = append(CertificateDetails.Rows, NameValue{"Issued", row.Issued})
 		CertificateDetails.Rows = append(CertificateDetails.Rows, NameValue{"Expires", row.Expires})
