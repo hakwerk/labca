@@ -2255,7 +2255,7 @@ func activeNav(active string, uri string, requestBase string) []navItem {
 		Name: "Public Area",
 		Icon: "fa-home",
 		Attrs: map[template.HTMLAttr]string{
-			"href":  "/",
+			"href":  "http://" + viper.GetString("labca.fqdn"),
 			"title": "The non-Admin pages of this LabCA instance",
 		},
 	}

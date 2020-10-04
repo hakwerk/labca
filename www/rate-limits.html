@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="LabCA is a private Certificate Authority for internal (intranet) use, based on the open source ACME Automated Certificate Management Environment implementation from Let's Encrypt (tm).">
+  <meta name="keywords" content="LabCA PKI CA Certificate Authority ACME Boulder">
+  <meta name="author" content="Arjan Hakkesteegt">
+
+  <title>LabCA</title>
+
+  <link href="css/bootstrap.min.css" rel="stylesheet">
+  <link href="css/sb-admin-2.min.css" rel="stylesheet">
+  <link href="css/font-awesome.min.css" rel="stylesheet" type="text/css">
+  <link href="css/labca.css" rel="stylesheet">
+  <link rel="icon" type="image/png" href="img/fav-public.png">
+</head>
+
+<body>
+  <div id="wrapper">
+    <nav class="navbar navbar-default navbar-static-top" role="navigation" style="margin-bottom: 0">
+      <div class="navbar-header">
+        <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+          <span class="sr-only">Toggle navigation</span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+        </button>
+        <a class="navbar-brand" href="/">LabCA</a>
+      </div>
+
+      <ul class="nav navbar-top-links navbar-right">
+        <li title="Login to Admin Area"><a href="/admin/"><i class="fa fa-user fa-fw admin-login"></i></a>
+        </li>
+      </ul>
+
+      <div class="navbar-default sidebar" role="navigation">
+        <div class="sidebar-nav navbar-collapse">
+          <ul class="nav" id="side-menu">
+            <li><a class="public" href="/"><i class="fa fa-home fa-fw"></i> Home</a>
+            </li>
+            <li><a class="public" href="/certs/index.html"><i class="fa fa-download fa-fw"></i> Certificates</a>
+            </li>
+            <li><a class="public" href="/cps/index.html" title="Certification Practice Statement"><i class="fa fa-book fa-fw"></i> CPS</a>
+            </li>
+            <li><a class="public" href="/rate-limits.html" title="Rate Limits"><i class="fa fa-clock-o fa-fw"></i> Rate Limits</a>
+            </li>
+            <li><a class="public" href="/terms/v1" title="Usage Terms"><i class="fa fa-edit fa-fw"></i> Terms</a>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </nav>
+
+    <div id="page-wrapper">
+      <div class="row">
+        <div class="col-lg-12">
+          <h1 class="page-header">Rate Limits</h1>
+
+          <p>
+            It is unlikely that you hit the rate limit mechanism for your selected domain, as it is set to allow 10,000 certificates in LabCA.
+          </p>
+          <p>
+            If your LabCA instance is set up to (also) allow official domains (not recommended), then for the other domains the main limit is
+            <b>Certificates per Registered Domain</b>: 5 per 24 hours. As per the
+            <a class="public" href="https://letsencrypt.org/docs/rate-limits/">Let's Encrypt&trade; rate limits page <i class="fa fa-external-link fa-fw ext-link"></i></a>,
+            a registered domain is, generally speaking, the part of the domain you purchased from your domain name registrar. For instance,
+            in the name <code>www.example.com</code>, the registered domain is <code>example.com</code>.
+            In <code>new.blog.example.co.uk</code>, the registered domain is <code>example.co.uk</code>.
+          </p>
+          <p>
+            The other limit is the <b>Duplicate Certificate</b> limit of 2 per 90 days. This applies to renewals when the old dertificate
+            is still valid.
+          </p>
+          <p>
+            <b>Revoking certificates does not reset rate limits</b>, because the resources used to issue those certificates have already been
+            consumed.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/jquery.min.js"></script>
+  <script src="js/bootstrap.min.js"></script>
+  <script src="js/metisMenu.min.js"></script>
+  <script src="js/sb-admin-2.min.js"></script>
+  <script src="js/labca.js"></script>
+</body>
+</html>
