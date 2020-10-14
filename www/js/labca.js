@@ -297,7 +297,7 @@ $(function() {
 
             if ( $('.orders_list').length || $('.rel_orders_list').length ) {
                 options["columnDefs"] = [ {
-                        targets: 3,
+                        targets: 2,
                         render: $.fn.dataTable.render.ellipsis(15)
                     } ];
             }
