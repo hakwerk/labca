@@ -4,14 +4,14 @@ index be064a52e..e7ef8fcf6 100644
 +++ b/test/config/ca-a.json
 @@ -30,11 +30,7 @@
      },
-     "Issuers": [{
-       "ConfigFile": "test/test-ca.key-pkcs11.json",
--      "CertFile": "/tmp/intermediate-cert-rsa-a.pem",
--      "NumSessions": 2
+     "issuers": [{
+       "configFile": "test/test-ca.key-pkcs11.json",
+-      "certFile": "/tmp/intermediate-cert-rsa-a.pem",
+-      "numSessions": 2
 -    },{
--      "ConfigFile": "test/test-ca.key-pkcs11.json",
--      "CertFile": "/tmp/intermediate-cert-rsa-b.pem",
-+      "CertFile": "test/test-ca.pem",
-       "NumSessions": 2
+-      "configFile": "test/test-ca.key-pkcs11.json",
+-      "certFile": "/tmp/intermediate-cert-rsa-b.pem",
++      "certFile": "test/test-ca.pem",
+       "numSessions": 2
      }],
      "expiry": "2160h",

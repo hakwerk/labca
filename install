@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # LabCA: a private Certificate Authority for internal lab usage
-# (c) 2018 Arjan Hakkesteegt
+# (c) 2018-2020 Arjan Hakkesteegt
 #
 # Install with this command from a Linux machine (only tested with Debian 9):
 # curl -sSL https://raw.githubusercontent.com/hakwerk/labca/master/install | bash
@@ -24,7 +24,7 @@ dockerComposeVersion="1.22.0"
 
 labcaUrl="https://github.com/hakwerk/labca/"
 boulderUrl="https://github.com/letsencrypt/boulder/"
-boulderTag="release-2020-09-09"
+boulderTag="release-2020-10-13"
 
 #
 # Color configuration

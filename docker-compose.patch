@@ -33,7 +33,7 @@ index 5f93fe866..b4a0b75e0 100644
 +            max-file: "5"
 +        restart: always
      bmysql:
-         image: mariadb:10.3
+         image: mariadb:10.5
 +        volumes:
 +          - dbdata:/var/lib/mysql
          networks:

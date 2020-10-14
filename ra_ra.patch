@@ -1,16 +1,16 @@
 diff --git a/ra/ra.go b/ra/ra.go
-index a92965189..aeccb9c3c 100644
+index ca21ace0e..6d90d7eff 100644
 --- a/ra/ra.go
 +++ b/ra/ra.go
-@@ -28,7 +28,6 @@ import (
- 	"github.com/letsencrypt/boulder/identifier"
+@@ -29,7 +29,6 @@ import (
+ 	"github.com/letsencrypt/boulder/issuance"
  	blog "github.com/letsencrypt/boulder/log"
  	"github.com/letsencrypt/boulder/metrics"
 -	"github.com/letsencrypt/boulder/policy"
  	"github.com/letsencrypt/boulder/probs"
  	rapb "github.com/letsencrypt/boulder/ra/proto"
  	"github.com/letsencrypt/boulder/ratelimit"
-@@ -399,7 +398,7 @@ func (ra *RegistrationAuthorityImpl) validateContacts(ctx context.Context, conta
+@@ -400,7 +399,7 @@ func (ra *RegistrationAuthorityImpl) validateContacts(ctx context.Context, conta
  				contact,
  			)
  		}

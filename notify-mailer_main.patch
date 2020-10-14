@@ -1,8 +1,8 @@
 diff --git a/cmd/notify-mailer/main.go b/cmd/notify-mailer/main.go
-index 0445a04c0..ba2be9e2f 100644
+index e00541cb1..39af62530 100644
 --- a/cmd/notify-mailer/main.go
 +++ b/cmd/notify-mailer/main.go
-@@ -37,6 +37,7 @@ type mailer struct {
+@@ -38,6 +38,7 @@ type mailer struct {
  	destinations  []recipient
  	targetRange   interval
  	sleepInterval time.Duration
@@ -10,7 +10,7 @@ index 0445a04c0..ba2be9e2f 100644
  }
  
  // interval defines a range of email addresses to send to, alphabetically.
-@@ -146,7 +147,7 @@ func (m *mailer) run() error {
+@@ -147,7 +148,7 @@ func (m *mailer) run() error {
  			m.log.Debugf("skipping %q: out of target range")
  			continue
  		}
