@@ -151,3 +151,10 @@ a.update:hover {
 .rel-notes-title {
   font-weight: bold;
 }
+
+pre.json {
+    background-color: transparent;
+    border: none;
+    margin: 0px;
+    padding: 0px;
+}
