@@ -54,7 +54,9 @@ Once the setup is completed, please make a backup of your Root and Issuer certif
 
 ### Update
 
-Until [issue #1](https://github.com/hakwerk/labca/issues/1) is implemented, updates can only be done from the Linux shell. On the server run this command as root to update the installation:
+When updates are available, this will be indicated on the Dashboard page (System Overview section). They can be installed from the Manage page where you can also manually check for available updates (but this is done regularly automatically).
+
+Updates can also be done from the Linux shell, on the server run this command as root to update the installation:
 
 ```sh
 ~labca/labca/install
@@ -82,6 +84,8 @@ Some of the commonly used clients are:
 * [acme-tiny](https://github.com/diafygi/acme-tiny)
 * [dehydrated](https://github.com/lukas2511/dehydrated)
 * ...
+
+Make sure to configure the client to use the server URL "https://YOUR_LABCA_FQDN/directory".
 
 ### Public Pages
 

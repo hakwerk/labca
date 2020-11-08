@@ -1363,7 +1363,9 @@ func _certCreate(w http.ResponseWriter, r *http.Request, certBase string, isRoot
 				return false
 			}
 
-			ci := &CertificateInfo{}
+			ci := &CertificateInfo{
+				IsRoot: r.Form.Get("cert") == "root",
+			}
 			ci.Initialize()
 			ci.IsRoot = r.Form.Get("cert") == "root"
 			ci.CreateType = r.Form.Get("createtype")
@@ -1630,8 +1632,9 @@ func _helptext(stage string) template.HTML {
 			"you can either generate a fresh certificate or import an existing one, as long as it is signed by\n",
 			"the Root CA from the previous step.</p>\n",
 			"<p>If you want to generate a certificate, by default the same key type and strength is selected as\n",
-			"was chosen in the previous step when generating the root, but you may choose a different one. By\n",
-			"default the common name is the same as the CN for the Root CA, minus the word 'Root'.</p>"))
+			"was chosen in the previous step when generating the root (except that the issuer certificate cannot\n",
+			"be ECDSA due to a limitation in the Let's Encrypt implementation), but you may choose a different\n",
+			"one. By default the common name is the same as the CN for the Root CA, minus the word 'Root'.</p>"))
 	} else {
 		return template.HTML("")
 	}

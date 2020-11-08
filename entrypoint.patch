@@ -8,9 +8,9 @@ index 5ca9929..f18e1d8 100755
 
 +#softhsm2-util --show-slots
 +softhsm2-util --init-token --slot 0 --label "intermediate signing key (rsa)" --pin 1234 --so-pin 5678 | /bin/true
-+softhsm2-util --import labca/test-ca.p8 --id 333333 --force --token "intermediate signing key (rsa)" --pin 1234 --so-pin 5678 --label 'intermediate_key'
++[ -e labca/test-ca.p8 ] && softhsm2-util --import labca/test-ca.p8 --id 333333 --force --token "intermediate signing key (rsa)" --pin 1234 --so-pin 5678 --label 'intermediate_key'
 +softhsm2-util --init-token --slot 1 --label "root signing key (rsa)" --pin 1234 --so-pin 5678 | /bin/true
-+softhsm2-util --import labca/test-root.p8 --id 777777 --force --token "root signing key (rsa)" --pin 1234 --so-pin 5678 --label 'root_key'
++[ -e labca/test-root.p8 ] && softhsm2-util --import labca/test-root.p8 --id 777777 --force --token "root signing key (rsa)" --pin 1234 --so-pin 5678 --label 'root_key'
 +
  if [[ $# -eq 0 ]]; then
      exec python3 ./start.py
