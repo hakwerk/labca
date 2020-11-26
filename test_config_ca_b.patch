@@ -2,7 +2,7 @@ diff --git a/test/config/ca-b.json b/test/config/ca-b.json
 index ed2498f1a..4d24ffa94 100644
 --- a/test/config/ca-b.json
 +++ b/test/config/ca-b.json
-@@ -30,11 +30,7 @@
+@@ -127,11 +127,7 @@
      },
      "issuers": [{
        "configFile": "test/test-ca.key-pkcs11.json",

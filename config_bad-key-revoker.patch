@@ -22,7 +22,7 @@ index 482fd85fc..3e678aa5b 100644
 +        "interval": "5m"
      },
      "syslog": {
-         "stdoutlevel": 6,
+         "stdoutlevel": 4,
          "sysloglevel": 4
 +    },
 +    "common": {
