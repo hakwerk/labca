@@ -259,7 +259,7 @@ func checkUpdates(forced bool) ([]string, []string) {
 						if *release.Name == version {
 							newer = false
 						}
-						if strings.HasPrefix(version, *release.Name + "-") {    // git describe format
+						if latest == *release.Name && strings.HasPrefix(version, *release.Name + "-") {    // git describe format
 							newer = false
 							latest = version
 						}
