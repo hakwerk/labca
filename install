@@ -343,7 +343,7 @@ install_pkg() {
 }
 
 install_extra() {
-    local packages=(apt-transport-https ca-certificates curl gnupg2 net-tools nginx software-properties-common sudo tzdata ucspi-tcp zip python)
+    local packages=(apt-transport-https ca-certificates curl gnupg2 net-tools nginx software-properties-common tzdata ucspi-tcp zip python)
     for package in "${packages[@]}"; do
         install_pkg "$package"
     done
@@ -689,6 +689,7 @@ main() {
     start_temporary_log
     check_root
     install_pkg "git"
+    install_pkg "sudo"
     labca_user
     end_temporary_log
 
