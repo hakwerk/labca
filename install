@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # LabCA: a private Certificate Authority for internal lab usage
-# (c) 2018-2020 Arjan Hakkesteegt
+# (c) 2018-2021 Arjan Hakkesteegt
 #
 # Install with this command from a Linux machine (only tested with Debian 9):
 # curl -sSL https://raw.githubusercontent.com/hakwerk/labca/master/install | bash
