@@ -348,9 +348,10 @@ install_extra() {
         install_pkg "$package"
     done
 
-    curl -fsSL https://download.docker.com/linux/debian/gpg 2>>$installLog | apt-key add - &>>$installLog || msg_fatal "Could not download docker repository key"
-    add-apt-repository -r "deb [arch=amd64] https://download.docker.com/linux/debian $(lsb_release -cs) stable" &>>$installLog
-    add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/debian $(lsb_release -cs) stable" &>>$installLog
+    distrib=$(lsb_release -is | tr '[:upper:]' '[:lower:]')
+    curl -fsSL https://download.docker.com/linux/${distrib}/gpg 2>>$installLog | apt-key add - &>>$installLog || msg_fatal "Could not download docker repository key"
+    add-apt-repository -r "deb [arch=amd64] https://download.docker.com/linux/${distrib} $(lsb_release -cs) stable" &>>$installLog
+    add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/${distrib} $(lsb_release -cs) stable" &>>$installLog
     apt update &>>$installLog
     install_pkg "docker-ce"
 
