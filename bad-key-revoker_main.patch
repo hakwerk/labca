@@ -1,5 +1,5 @@
 diff --git a/cmd/bad-key-revoker/main.go b/cmd/bad-key-revoker/main.go
-index 563ce678c..1e53d875c 100644
+index 7d4c9311..2858ada7 100644
 --- a/cmd/bad-key-revoker/main.go
 +++ b/cmd/bad-key-revoker/main.go
 @@ -13,6 +13,7 @@ import (
@@ -33,7 +33,7 @@ index 563ce678c..1e53d875c 100644
  	}
  	configPath := flag.String("config", "", "File path to the configuration file for this service")
  	flag.Parse()
-@@ -404,6 +414,30 @@ func main() {
+@@ -411,6 +421,30 @@ func main() {
  	cmd.FailOnError(err, "Failed to load credentials and create gRPC connection to RA")
  	rac := rapb.NewRegistrationAuthorityClient(conn)
  
@@ -43,12 +43,12 @@ index 563ce678c..1e53d875c 100644
 +	if dnsTries < 1 {
 +		dnsTries = 1
 +	}
-+	var resolver bdns.DNSClient
++	var resolver bdns.Client
 +	if len(config.Common.DNSResolver) != 0 {
 +		config.BadKeyRevoker.DNSResolvers = append(config.BadKeyRevoker.DNSResolvers, config.Common.DNSResolver)
 +	}
 +	if !config.Common.DNSAllowLoopbackAddresses {
-+		r := bdns.NewDNSClientImpl(
++		r := bdns.New(
 +			dnsTimeout,
 +			config.BadKeyRevoker.DNSResolvers,
 +			scope,
@@ -57,14 +57,14 @@ index 563ce678c..1e53d875c 100644
 +			logger)
 +		resolver = r
 +	} else {
-+		r := bdns.NewTestDNSClientImpl(dnsTimeout, config.BadKeyRevoker.DNSResolvers, scope, clk, dnsTries, logger)
++		r := bdns.NewTest(dnsTimeout, config.BadKeyRevoker.DNSResolvers, scope, clk, dnsTries, logger)
 +		resolver = r
 +	}
 +
  	var smtpRoots *x509.CertPool
  	if config.BadKeyRevoker.Mailer.SMTPTrustedRootFile != "" {
  		pem, err := ioutil.ReadFile(config.BadKeyRevoker.Mailer.SMTPTrustedRootFile)
-@@ -425,6 +459,7 @@ func main() {
+@@ -432,6 +466,7 @@ func main() {
  		config.BadKeyRevoker.Mailer.Username,
  		smtpPassword,
  		smtpRoots,

@@ -1,9 +1,9 @@
 diff --git a/test/config/ca-a.json b/test/config/ca-a.json
-index be064a52e..e7ef8fcf6 100644
+index 51f8416..7668fd5 100644
 --- a/test/config/ca-a.json
 +++ b/test/config/ca-a.json
 @@ -122,11 +122,7 @@
-     },
+     "ecdsaProfile": "ecdsaEE",
      "issuers": [{
        "configFile": "test/test-ca.key-pkcs11.json",
 -      "certFile": "/tmp/intermediate-cert-rsa-a.pem",

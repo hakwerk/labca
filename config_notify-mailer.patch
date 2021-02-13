@@ -1,5 +1,5 @@
 diff --git a/test/config/notify-mailer.json b/test/config/notify-mailer.json
-index 73864aeb5..93b17c28e 100644
+index 1d17012..0d061b5 100644
 --- a/test/config/notify-mailer.json
 +++ b/test/config/notify-mailer.json
 @@ -2,11 +2,20 @@
@@ -11,7 +11,7 @@ index 73864aeb5..93b17c28e 100644
 +    "from": "notify mailer <test@example.com>",
      "passwordFile": "test/secrets/smtp_password",
      "dbConnectFile": "test/secrets/mailer_dburl",
-     "maxDBConns": 10
+     "maxOpenConns": 10
    },
 +  "pa": {
 +    "challenges": {

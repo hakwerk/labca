@@ -4,7 +4,7 @@ index 482fd85fc..3e678aa5b 100644
 +++ b/test/config/bad-key-revoker.json
 @@ -3,6 +3,11 @@
          "dbConnectFile": "test/secrets/badkeyrevoker_dburl",
-         "maxDBConns": 10,
+         "maxOpenConns": 10,
          "debugAddr": ":8020",
 +        "dnsTries": 3,
 +        "dnsResolvers": [

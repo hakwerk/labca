@@ -1,5 +1,5 @@
 diff --git a/cmd/expiration-mailer/main.go b/cmd/expiration-mailer/main.go
-index 6d31a7033..c2ad80495 100644
+index 30aa52a1..a72b4734 100644
 --- a/cmd/expiration-mailer/main.go
 +++ b/cmd/expiration-mailer/main.go
 @@ -19,6 +19,7 @@ import (
@@ -42,7 +42,7 @@ index 6d31a7033..c2ad80495 100644
  }
  
  func initStats(stats prometheus.Registerer) mailerStats {
-@@ -494,6 +504,30 @@ func main() {
+@@ -500,6 +510,30 @@ func main() {
  	cmd.FailOnError(err, "Failed to load credentials and create gRPC connection to SA")
  	sac := bgrpc.NewStorageAuthorityClient(sapb.NewStorageAuthorityClient(conn))
  
@@ -52,12 +52,12 @@ index 6d31a7033..c2ad80495 100644
 +	if dnsTries < 1 {
 +		dnsTries = 1
 +	}
-+	var resolver bdns.DNSClient
++	var resolver bdns.Client
 +	if len(c.Common.DNSResolver) != 0 {
 +		c.Mailer.DNSResolvers = append(c.Mailer.DNSResolvers, c.Common.DNSResolver)
 +	}
 +	if !c.Common.DNSAllowLoopbackAddresses {
-+		r := bdns.NewDNSClientImpl(
++		r := bdns.New(
 +			dnsTimeout,
 +			c.Mailer.DNSResolvers,
 +			scope,
@@ -66,14 +66,14 @@ index 6d31a7033..c2ad80495 100644
 +			logger)
 +		resolver = r
 +	} else {
-+		r := bdns.NewTestDNSClientImpl(dnsTimeout, c.Mailer.DNSResolvers, scope, clk, dnsTries, logger)
++		r := bdns.NewTest(dnsTimeout, c.Mailer.DNSResolvers, scope, clk, dnsTries, logger)
 +		resolver = r
 +	}
 +
  	var smtpRoots *x509.CertPool
  	if c.Mailer.SMTPTrustedRootFile != "" {
  		pem, err := ioutil.ReadFile(c.Mailer.SMTPTrustedRootFile)
-@@ -529,6 +563,7 @@ func main() {
+@@ -535,6 +569,7 @@ func main() {
  		c.Mailer.Username,
  		smtpPassword,
  		smtpRoots,

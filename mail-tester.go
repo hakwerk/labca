@@ -79,12 +79,12 @@ func main() {
 	if dnsTries < 1 {
 		dnsTries = 1
 	}
-	var resolver bdns.DNSClient
+	var resolver bdns.Client
 	if len(c.Common.DNSResolver) != 0 {
 		c.Mailer.DNSResolvers = append(c.Mailer.DNSResolvers, c.Common.DNSResolver)
 	}
 	if !c.Common.DNSAllowLoopbackAddresses {
-		r := bdns.NewDNSClientImpl(
+		r := bdns.New(
 			dnsTimeout,
 			c.Mailer.DNSResolvers,
 			scope,
@@ -93,7 +93,7 @@ func main() {
 			logger)
 		resolver = r
 	} else {
-		r := bdns.NewTestDNSClientImpl(dnsTimeout, c.Mailer.DNSResolvers, scope, clk, dnsTries, logger)
+		r := bdns.NewTest(dnsTimeout, c.Mailer.DNSResolvers, scope, clk, dnsTries, logger)
 		resolver = r
 	}
 

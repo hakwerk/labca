@@ -1,5 +1,5 @@
 diff --git a/cmd/notify-mailer/main.go b/cmd/notify-mailer/main.go
-index e00541cb1..39af62530 100644
+index f4a25a78..68b23dc7 100644
 --- a/cmd/notify-mailer/main.go
 +++ b/cmd/notify-mailer/main.go
 @@ -38,6 +38,7 @@ type mailer struct {
@@ -29,7 +29,7 @@ index e00541cb1..39af62530 100644
  		Syslog cmd.SyslogConfig
  	}
  	configFile := flag.String("config", "", "File containing a JSON config.")
-@@ -461,6 +464,14 @@ func main() {
+@@ -464,6 +467,14 @@ func main() {
  		end:   *end,
  	}
  
@@ -44,7 +44,7 @@ index e00541cb1..39af62530 100644
  	var mailClient bmail.Mailer
  	if *dryRun {
  		log.Infof("Doing a dry run.")
-@@ -474,6 +485,7 @@ func main() {
+@@ -477,6 +488,7 @@ func main() {
  			cfg.NotifyMailer.Username,
  			smtpPassword,
  			nil,
@@ -52,7 +52,7 @@ index e00541cb1..39af62530 100644
  			*address,
  			log,
  			metrics.NoopRegisterer,
-@@ -491,6 +503,7 @@ func main() {
+@@ -494,6 +506,7 @@ func main() {
  		emailTemplate: template,
  		targetRange:   targetRange,
  		sleepInterval: *sleep,
