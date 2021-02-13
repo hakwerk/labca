@@ -100,9 +100,10 @@ Some log files to check in case of issues are:
 * /home/labca/logs/commander.log
 * cd /home/labca/boulder; docker-compose logs labca
 * cd /home/labca/boulder; docker-compose logs boulder
+* /var/log/labca.err
 * possibly /var/log/nginx/error.log
 
-If you get "No valid IP addresses found for <hostname>" in /etc/nginx/ssl/acme_tiny.log, solve it by entering the hostname in your local DNS.
+If you get "No valid IP addresses found for <hostname>" in /etc/nginx/ssl/acme_tiny.log, solve it by entering the hostname in your local DNS. Same for "Could not resolve host: <hostname>" in /var/log/labca.err.
 
 ### NOTE
 

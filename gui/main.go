@@ -1499,11 +1499,13 @@ func _hostCommand(w http.ResponseWriter, r *http.Request, command string, params
 		return true
 	}
 
-	tail := message[len(message)-4:]
-	if strings.Compare(string(tail), "\nok\n") == 0 {
-		msg := message[0 : len(message)-4]
-		log.Printf("Message from server: '%s'", msg)
-		return true
+	if len(message) >= 4 {
+		tail := message[len(message)-4:]
+		if strings.Compare(string(tail), "\nok\n") == 0 {
+			msg := message[0 : len(message)-4]
+			log.Printf("Message from server: '%s'", msg)
+			return true
+		}
 	}
 
 	log.Printf("ERROR: Message from server: '%s'", message)
