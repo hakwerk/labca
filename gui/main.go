@@ -20,7 +20,7 @@ import (
 	"github.com/gorilla/sessions"
 	"github.com/gorilla/websocket"
 	"github.com/nbutton23/zxcvbn-go"
-	"github.com/theherk/viper"
+	"github.com/spf13/viper"
 	"golang.org/x/crypto/bcrypt"
 	"html/template"
 	"io"
