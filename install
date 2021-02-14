@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # LabCA: a private Certificate Authority for internal lab usage
-# (c) 2018-2020 Arjan Hakkesteegt
+# (c) 2018-2021 Arjan Hakkesteegt
 #
 # Install with this command from a Linux machine (only tested with Debian 9):
 # curl -sSL https://raw.githubusercontent.com/hakwerk/labca/master/install | bash
@@ -24,7 +24,7 @@ dockerComposeVersion="1.22.0"
 
 labcaUrl="https://github.com/hakwerk/labca/"
 boulderUrl="https://github.com/letsencrypt/boulder/"
-boulderTag="release-2021-01-12"
+boulderTag="release-2021-02-08"
 
 #
 # Color configuration
@@ -121,16 +121,16 @@ labca_user() {
     chown -R labca:labca "$logDir"
 
     cd ~labca
-    local gig=$(sudo -u labca git config --global core.excludesfile 2>/dev/null)
+    local gig=$(sudo -u labca -H git config --global core.excludesfile 2>/dev/null)
     if [ -z "$gig" ]; then
-        sudo -u labca git config --global core.excludesfile /home/labca/.gitignore_global >/dev/null 2>&1 || msg_info "WARNING: could not set core.excludesfile"
-        gig=$(sudo -u labca git config --global core.excludesfile 2>/dev/null)
+        sudo -u labca -H git config --global core.excludesfile /home/labca/.gitignore_global >/dev/null 2>&1 || msg_info "WARNING: could not set core.excludesfile"
+        gig=$(sudo -u labca -H git config --global core.excludesfile 2>/dev/null)
     fi
     gig=${gig/\~/\/home\/labca}
     gig=${gig:-/home/labca/.gitignore_global}
 
-    [ -e "$gig" ] || sudo -u labca touch $gig
-    sudo -u labca grep config_labca "$gig" >/dev/null 2>&1 || sudo -u labca echo "config_labca/" >> "$gig"
+    [ -e "$gig" ] || sudo -u labca -H touch $gig
+    sudo -u labca -H grep config_labca "$gig" >/dev/null 2>&1 || sudo -u labca -H echo "config_labca/" >> "$gig"
 }
 
 #
@@ -143,11 +143,11 @@ clone_repo() {
 
     local msg="Clone $url to $dir"
     msg_info "$msg"
-    sudo -u labca git clone -q "$url" "$dir" &>>$installLog && msg_ok "$msg" || msg_fatal "Could not clone git repository"
+    sudo -u labca -H git clone -q "$url" "$dir" &>>$installLog && msg_ok "$msg" || msg_fatal "Could not clone git repository"
 
     if [ "$branch" != "" ]; then
         cd "$dir"
-        sudo -u labca git checkout $branch &>>$installLog
+        sudo -u labca -H git checkout $branch &>>$installLog
         cd - >/dev/null
     fi
 }
@@ -160,13 +160,13 @@ pull_repo() {
 
     local msg="Update git repository in $dir"
     msg_info "$msg"
-    sudo -u labca git stash --all --quiet &>>$installLog || true
-    sudo -u labca git clean --quiet --force -d &>>$installLog || true
-    sudo -u labca git pull --quiet &>>$installLog && msg_ok "$msg" || msg_fatal "Could not update local repository"
+    sudo -u labca -H git stash --all --quiet &>>$installLog || true
+    sudo -u labca -H git clean --quiet --force -d &>>$installLog || true
+    sudo -u labca -H git pull --quiet &>>$installLog && msg_ok "$msg" || msg_fatal "Could not update local repository"
 
     if [ "$branch" != "" ]; then
         cd "$dir"
-        sudo -u labca git checkout $branch &>>$installLog
+        sudo -u labca -H git checkout $branch &>>$installLog
         cd - >/dev/null
     fi
 }
@@ -348,9 +348,10 @@ install_extra() {
         install_pkg "$package"
     done
 
-    curl -fsSL https://download.docker.com/linux/debian/gpg 2>>$installLog | apt-key add - &>>$installLog || msg_fatal "Could not download docker repository key"
-    add-apt-repository -r "deb [arch=amd64] https://download.docker.com/linux/debian $(lsb_release -cs) stable" &>>$installLog
-    add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/debian $(lsb_release -cs) stable" &>>$installLog
+    distrib=$(lsb_release -is | tr '[:upper:]' '[:lower:]')
+    curl -fsSL https://download.docker.com/linux/${distrib}/gpg 2>>$installLog | apt-key add - &>>$installLog || msg_fatal "Could not download docker repository key"
+    add-apt-repository -r "deb [arch=amd64] https://download.docker.com/linux/${distrib} $(lsb_release -cs) stable" &>>$installLog
+    add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/${distrib} $(lsb_release -cs) stable" &>>$installLog
     apt update &>>$installLog
     install_pkg "docker-ce"
 
@@ -428,8 +429,8 @@ selfsigned_cert() {
 # Clone or update the boulder code (Let's Encrypt (tm) implementation of ACME protocol)
 get_boulder() {
     export GOPATH="/home/labca/gopath"
-    sudo -u labca mkdir -p "$GOPATH/src/github.com/letsencrypt"
-    [ -h "$boulderDir" ] || sudo -u labca ln -s "$GOPATH/src/github.com/letsencrypt/boulder" "$boulderDir"
+    sudo -u labca -H mkdir -p "$GOPATH/src/github.com/letsencrypt"
+    [ -h "$boulderDir" ] || sudo -u labca -H ln -s "$GOPATH/src/github.com/letsencrypt/boulder" "$boulderDir"
 
     if [ -e "$boulderDir" ]; then
         cd "$boulderDir"
@@ -440,12 +441,12 @@ get_boulder() {
     clone_or_pull "$GOPATH/src/github.com/letsencrypt/boulder" "$boulderUrl"
 
     cd "$boulderDir"
-    sudo -u labca git reset --hard $boulderTag &>>$installLog
+    sudo -u labca -H git reset --hard $boulderTag &>>$installLog
     if [ -e "sa/_db-next/migrations/20190221140139_AddAuthz2.sql" ]; then
-        sudo -u labca cp sa/_db-next/migrations/20190221140139_AddAuthz2.sql sa/_db/migrations/
+        sudo -u labca -H cp sa/_db-next/migrations/20190221140139_AddAuthz2.sql sa/_db/migrations/
     fi
     if [ -e "sa/_db-next/migrations/20190524120239_AddAuthz2ExpiresIndex.sql" ]; then
-        sudo -u labca cp sa/_db-next/migrations/20190524120239_AddAuthz2ExpiresIndex.sql sa/_db/migrations/
+        sudo -u labca -H cp sa/_db-next/migrations/20190524120239_AddAuthz2ExpiresIndex.sql sa/_db/migrations/
     fi
     msg_ok "Boulder checkout '$boulderTag'"
 }
@@ -477,40 +478,40 @@ config_boulder() {
     msg_info "$msg"
 
     cd "$boulderDir"
-    sudo -u labca patch -p1 < $cloneDir/docker-compose.patch &>>$installLog
+    sudo -u labca -H patch -p1 < $cloneDir/docker-compose.patch &>>$installLog
     cp docker-compose.yml "$boulderLabCADir/.backup/"
 
-    sudo -u labca patch -p1 < $cloneDir/core_interfaces.patch &>>$installLog
+    sudo -u labca -H patch -p1 < $cloneDir/core_interfaces.patch &>>$installLog
     cp core/interfaces.go "$boulderLabCADir/.backup/"
 
-    sudo -u labca patch -p1 < $cloneDir/policy_pa.patch &>>$installLog
+    sudo -u labca -H patch -p1 < $cloneDir/policy_pa.patch &>>$installLog
     cp policy/pa.go "$boulderLabCADir/.backup/"
 
-    sudo -u labca patch -p1 < $cloneDir/ra_ra.patch &>>$installLog
+    sudo -u labca -H patch -p1 < $cloneDir/ra_ra.patch &>>$installLog
     cp ra/ra.go "$boulderLabCADir/.backup/"
 
-    sudo -u labca patch -p1 < $cloneDir/mail_mailer.patch &>>$installLog
+    sudo -u labca -H patch -p1 < $cloneDir/mail_mailer.patch &>>$installLog
     cp mail/mailer.go "$boulderLabCADir/.backup/"
 
-    sudo -u labca patch -p1 < $cloneDir/expiration-mailer_main.patch &>>$installLog
+    sudo -u labca -H patch -p1 < $cloneDir/expiration-mailer_main.patch &>>$installLog
     cp cmd/expiration-mailer/main.go "$boulderLabCADir/.backup/"
 
-    sudo -u labca patch -p1 < $cloneDir/notify-mailer_main.patch &>>$installLog
+    sudo -u labca -H patch -p1 < $cloneDir/notify-mailer_main.patch &>>$installLog
     cp cmd/notify-mailer/main.go "$boulderLabCADir/.backup/"
 
-    sudo -u labca patch -p1 < $cloneDir/bad-key-revoker_main.patch &>>$installLog
+    sudo -u labca -H patch -p1 < $cloneDir/bad-key-revoker_main.patch &>>$installLog
     cp cmd/bad-key-revoker/main.go "$boulderLabCADir/.backup/"
 
-    sudo -u labca patch -p1 -o "$boulderLabCADir/entrypoint.sh" < $cloneDir/entrypoint.patch &>>$installLog
-    sudo -u labca patch -p1 -o "$boulderLabCADir/startservers.py" < $cloneDir/startservers.patch &>>$installLog
-    sudo -u labca patch -p1 < $cloneDir/startservers.patch &>>$installLog
+    sudo -u labca -H patch -p1 -o "$boulderLabCADir/entrypoint.sh" < $cloneDir/entrypoint.patch &>>$installLog
+    sudo -u labca -H patch -p1 -o "$boulderLabCADir/startservers.py" < $cloneDir/startservers.patch &>>$installLog
+    sudo -u labca -H patch -p1 < $cloneDir/startservers.patch &>>$installLog
 
-    sudo -u labca patch -p1 -o "$boulderLabCADir/config/ca-a.json" < $cloneDir/test_config_ca_a.patch &>>$installLog
-    sudo -u labca patch -p1 -o "$boulderLabCADir/config/ca-b.json" < $cloneDir/test_config_ca_b.patch &>>$installLog
+    sudo -u labca -H patch -p1 -o "$boulderLabCADir/config/ca-a.json" < $cloneDir/test_config_ca_a.patch &>>$installLog
+    sudo -u labca -H patch -p1 -o "$boulderLabCADir/config/ca-b.json" < $cloneDir/test_config_ca_b.patch &>>$installLog
 
-    sudo -u labca patch -p1 -o "$boulderLabCADir/config/expiration-mailer.json" < $cloneDir/config_expiration-mailer.patch &>>$installLog
-    sudo -u labca patch -p1 -o "$boulderLabCADir/config/notify-mailer.json" < $cloneDir/config_notify-mailer.patch &>>$installLog
-    sudo -u labca patch -p1 -o "$boulderLabCADir/config/bad-key-revoker.json" < $cloneDir/config_bad-key-revoker.patch &>>$installLog
+    sudo -u labca -H patch -p1 -o "$boulderLabCADir/config/expiration-mailer.json" < $cloneDir/config_expiration-mailer.patch &>>$installLog
+    sudo -u labca -H patch -p1 -o "$boulderLabCADir/config/notify-mailer.json" < $cloneDir/config_notify-mailer.patch &>>$installLog
+    sudo -u labca -H patch -p1 -o "$boulderLabCADir/config/bad-key-revoker.json" < $cloneDir/config_bad-key-revoker.patch &>>$installLog
 
     sed -i -e "s|https://letsencrypt.org/docs/rate-limits/|http://$LABCA_FQDN/rate-limits|" errors/errors.go &>>$installLog
     cp errors/errors.go "$boulderLabCADir/.backup/"
@@ -583,10 +584,18 @@ config_boulder() {
         export PKI_LOCKDOWN_DOMAINS=$(grep lockdown $adminDir/data/config.json | grep -v domain_mode | sed -e 's/.*:[ ]*//' | sed -e 's/\",//g' | sed -e 's/\"//g')
         export PKI_WHITELIST_DOMAINS=$(grep whitelist $adminDir/data/config.json | grep -v domain_mode | sed -e 's/.*:[ ]*//' | sed -e 's/\",//g' | sed -e 's/\"//g')
 
-        export PKI_EMAIL_SERVER=$(grep server $adminDir/data/config.json | head -1 | perl -p0e 's/.*?:\s+(.*)/\1/' | sed -e 's/\",//g' | sed -e 's/\"//g')
-        export PKI_EMAIL_PORT=$(grep port $adminDir/data/config.json | head -1 | perl -p0e 's/.*?:\s+(.*)/\1/' | sed -e 's/\",//g' | sed -e 's/\"//g')
-        export PKI_EMAIL_USER=$(grep user $adminDir/data/config.json | head -1 | perl -p0e 's/.*?:\s+(.*)/\1/' | sed -e 's/\",//g' | sed -e 's/\"//g')
-        export PKI_EMAIL_FROM=$(grep from $adminDir/data/config.json | head -1 | perl -p0e 's/.*?:\s+(.*)/\1/' | sed -e 's/\",//g' | sed -e 's/\"//g')
+        enabled=$(grep "email\": {" config.json -A1 | grep enable | head -1 | perl -p0e 's/.*?:\s+(.*)/\1/' | sed -e 's/\",//g' | sed -e 's/\"//g')
+        if [ "$enabled" == "true," ]; then
+            export PKI_EMAIL_SERVER=$(grep server $adminDir/data/config.json | head -1 | perl -p0e 's/.*?:\s+(.*)/\1/' | sed -e 's/\",//g' | sed -e 's/\"//g')
+            export PKI_EMAIL_PORT=$(grep port $adminDir/data/config.json | head -1 | perl -p0e 's/.*?:\s+(.*)/\1/' | sed -e 's/\",//g' | sed -e 's/\"//g')
+            export PKI_EMAIL_USER=$(grep user $adminDir/data/config.json | head -1 | perl -p0e 's/.*?:\s+(.*)/\1/' | sed -e 's/\",//g' | sed -e 's/\"//g')
+            export PKI_EMAIL_FROM=$(grep from $adminDir/data/config.json | head -1 | perl -p0e 's/.*?:\s+(.*)/\1/' | sed -e 's/\",//g' | sed -e 's/\"//g')
+        else
+            export PKI_EMAIL_SERVER="localhost"
+            export PKI_EMAIL_PORT="9380"
+            export PKI_EMAIL_USER="cert-manager@example.com"
+            export PKI_EMAIL_FROM="Expiry bot <test@example.com>"
+        fi
 
         $adminDir/apply-boulder &>>$installLog
     else

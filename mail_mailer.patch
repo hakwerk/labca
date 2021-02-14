@@ -21,7 +21,7 @@ index bb5bacaf2..946992dca 100644
  	username,
  	password string,
  	rootCAs *x509.CertPool,
-+	resolver bdns.DNSClient,
++	resolver bdns.Client,
  	from mail.Address,
  	logger blog.Logger,
  	stats prometheus.Registerer,
@@ -46,7 +46,7 @@ index bb5bacaf2..946992dca 100644
  type dialerImpl struct {
  	username, password, server, port string
  	rootCAs                          *x509.CertPool
-+	dnsClient                        bdns.DNSClient
++	dnsClient                        bdns.Client
  }
  
  func (di *dialerImpl) Dial() (smtpClient, error) {

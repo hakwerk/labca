@@ -221,14 +221,14 @@ func (ci *CertificateInfo) ImportPkcs12(tmpFile string, tmpKey string, tmpCert s
 
 	if out, err := exeCmd("openssl pkcs12 -in " + strings.Replace(tmpFile, " ", "\\\\", -1) + " -password " + pwd + " -nocerts -nodes -out " + tmpKey); err != nil {
 		if strings.Index(string(out), "invalid password") >= 0 {
-			return errors.New("Incorrect password!")
+			return errors.New("incorrect password")
 		}
 
 		return reportError(err)
 	}
 	if out, err := exeCmd("openssl pkcs12 -in " + strings.Replace(tmpFile, " ", "\\\\", -1) + " -password " + pwd + " -nokeys -out " + tmpCert); err != nil {
 		if strings.Index(string(out), "invalid password") >= 0 {
-			return errors.New("Incorrect password!")
+			return errors.New("incorrect password")
 		}
 
 		return reportError(err)
@@ -259,7 +259,7 @@ func (ci *CertificateInfo) ImportZip(tmpFile string, tmpDir string) error {
 
 	if _, err := exeCmd(cmd); err != nil {
 		if err.Error() == "exit status 82" {
-			return errors.New("Incorrect password!")
+			return errors.New("incorrect password")
 		}
 
 		return reportError(err)
@@ -314,7 +314,7 @@ func (ci *CertificateInfo) Upload(path string, certBase string, tmpKey string, t
 
 	if out, err := exeCmd("openssl pkey -passin " + pwd + " -in " + tmpKey + " -out " + tmpKey + "-out"); err != nil {
 		if strings.Index(string(out), ":bad decrypt:") >= 0 {
-			return errors.New("Incorrect password!")
+			return errors.New("incorrect password")
 		}
 
 		return reportError(err)
@@ -382,7 +382,7 @@ func (ci *CertificateInfo) ImportCerts(path string, rootCert string, rootKey str
 		issuerIssuer = strings.Replace(issuerIssuer, "issuer=", "", -1)
 		rootSubject = strings.Replace(rootSubject, "subject=", "", -1)
 		if issuerIssuer != rootSubject {
-			return errors.New("Issuer not issued by our Root CA!")
+			return errors.New("issuer not issued by our Root CA")
 		}
 
 		r, err = exeCmd("openssl pkey -noout -in " + issuerKey)
@@ -440,10 +440,10 @@ func (ci *CertificateInfo) Extract(path string, certBase string, tmpDir string) 
 		rootKey = filepath.Join(tmpDir, "root-ca.key")
 
 		if _, err := os.Stat(rootCert); os.IsNotExist(err) {
-			return errors.New("File does not contain root-ca.pem!")
+			return errors.New("file does not contain root-ca.pem")
 		}
 		if _, err := os.Stat(rootKey); os.IsNotExist(err) {
-			return errors.New("File does not contain root-ca.key!")
+			return errors.New("file does not contain root-ca.key")
 		}
 	}
 
@@ -454,14 +454,14 @@ func (ci *CertificateInfo) Extract(path string, certBase string, tmpDir string) 
 		if ci.IsRoot {
 			issuerCert = ""
 		} else {
-			return errors.New("File does not contain ca-int.pem!")
+			return errors.New("file does not contain ca-int.pem")
 		}
 	}
 	if _, err := os.Stat(issuerKey); os.IsNotExist(err) {
 		if ci.IsRoot {
 			issuerKey = ""
 		} else {
-			return errors.New("File does not contain ca-int.key!")
+			return errors.New("file does not contain ca-int.key")
 		}
 	}
 
@@ -521,7 +521,7 @@ func (ci *CertificateInfo) Create(path string, certBase string) error {
 		}
 
 	} else {
-		return fmt.Errorf("Unknown CreateType!")
+		return fmt.Errorf("unknown CreateType")
 	}
 
 	// This is shared between pfx/zip upload and pem text upload

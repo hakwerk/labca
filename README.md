@@ -72,7 +72,7 @@ The admin section is only accessible to the user account created at the start of
 
 These screenshots give a preview of the admin section:
 
-<img src="https://user-images.githubusercontent.com/44847421/48658727-ee371e00-ea46-11e8-93a6-40e9f37dd3ba.jpg" width="300"> <img src="https://user-images.githubusercontent.com/44847421/48658728-f0997800-ea46-11e8-8d37-9244086b09d4.jpg" width="300"> <img src="https://user-images.githubusercontent.com/44847421/48658729-f2633b80-ea46-11e8-8fcb-78c273cf914f.jpg" width="300"> <img src="https://user-images.githubusercontent.com/44847421/48658730-f4c59580-ea46-11e8-9d26-8ec6da00c3ad.jpg" width="300">
+<img src="https://user-images.githubusercontent.com/44847421/107797072-cf757e00-6d5a-11eb-8998-4ca00534d36d.png" width="300"> <img src="https://user-images.githubusercontent.com/44847421/107797106-d8fee600-6d5a-11eb-958d-512ddf9ef7ed.png" width="300"> <img src="https://user-images.githubusercontent.com/44847421/107797122-dc926d00-6d5a-11eb-8027-4e3854ce749c.png" width="300"> <img src="https://user-images.githubusercontent.com/44847421/48658728-f0997800-ea46-11e8-8d37-9244086b09d4.jpg" width="300"> <img src="https://user-images.githubusercontent.com/44847421/48658729-f2633b80-ea46-11e8-8fcb-78c273cf914f.jpg" width="300"> <img src="https://user-images.githubusercontent.com/44847421/48658730-f4c59580-ea46-11e8-9d26-8ec6da00c3ad.jpg" width="300">
 
 ### ACME Client
 
@@ -100,9 +100,10 @@ Some log files to check in case of issues are:
 * /home/labca/logs/commander.log
 * cd /home/labca/boulder; docker-compose logs labca
 * cd /home/labca/boulder; docker-compose logs boulder
+* /var/log/labca.err
 * possibly /var/log/nginx/error.log
 
-If you get "No valid IP addresses found for <hostname>" in /etc/nginx/ssl/acme_tiny.log, solve it by entering the hostname in your local DNS.
+If you get "No valid IP addresses found for <hostname>" in /etc/nginx/ssl/acme_tiny.log, solve it by entering the hostname in your local DNS. Same for "Could not resolve host: <hostname>" in /var/log/labca.err.
 
 ### NOTE
 

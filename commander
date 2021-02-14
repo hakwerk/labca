@@ -167,7 +167,7 @@ case $txt in
     wait_up $PS_SERVICE &>>$LOGFILE
     ;;
 "log-backups")
-    ls -1tr /home/labca/backup
+    ls -1tr /home/labca/backup || /bin/true
     exit 0
     ;;
 "log-server-backup")
