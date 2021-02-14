@@ -11,17 +11,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/biz/templates"
-	"github.com/dustin/go-humanize"
-	_ "github.com/go-sql-driver/mysql"
-	"github.com/google/go-github/github"
-	"github.com/gorilla/mux"
-	"github.com/gorilla/securecookie"
-	"github.com/gorilla/sessions"
-	"github.com/gorilla/websocket"
-	"github.com/nbutton23/zxcvbn-go"
-	"github.com/spf13/viper"
-	"golang.org/x/crypto/bcrypt"
 	"html/template"
 	"io"
 	"io/ioutil"
@@ -39,6 +28,18 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/biz/templates"
+	"github.com/dustin/go-humanize"
+	_ "github.com/go-sql-driver/mysql"
+	"github.com/google/go-github/github"
+	"github.com/gorilla/mux"
+	"github.com/gorilla/securecookie"
+	"github.com/gorilla/sessions"
+	"github.com/gorilla/websocket"
+	"github.com/nbutton23/zxcvbn-go"
+	"github.com/spf13/viper"
+	"golang.org/x/crypto/bcrypt"
 )
 
 const (
@@ -259,7 +260,7 @@ func checkUpdates(forced bool) ([]string, []string) {
 						if *release.Name == version {
 							newer = false
 						}
-						if latest == *release.Name && strings.HasPrefix(version, *release.Name + "-") {    // git describe format
+						if latest == *release.Name && strings.HasPrefix(version, *release.Name+"-") { // git describe format
 							newer = false
 							latest = version
 						}
@@ -2330,7 +2331,7 @@ func init() {
 	var err error
 	tmpls, err = templates.New().ParseDir("./templates", "templates/")
 	if err != nil {
-		panic(fmt.Errorf("Fatal error templates: %s \n", err))
+		panic(fmt.Errorf("fatal error templates: '%s'", err))
 	}
 	tmpls.AddFunc("rangeStruct", RangeStructer)
 
@@ -2338,13 +2339,13 @@ func init() {
 	viper.AddConfigPath("data")
 	viper.SetDefault("config.complete", false)
 	if err := viper.ReadInConfig(); err != nil {
-		panic(fmt.Errorf("Fatal error config file: %s \n", err))
+		panic(fmt.Errorf("fatal error config file: '%s'", err))
 	}
 
 	if viper.Get("keys.auth") == nil {
 		key := securecookie.GenerateRandomKey(32)
 		if key == nil {
-			panic(fmt.Errorf("Fatal error random key\n"))
+			panic(fmt.Errorf("fatal error random key"))
 		}
 		viper.Set("keys.auth", key)
 		viper.WriteConfig()
@@ -2352,7 +2353,7 @@ func init() {
 	if viper.Get("keys.enc") == nil {
 		key := securecookie.GenerateRandomKey(32)
 		if key == nil {
-			panic(fmt.Errorf("Fatal error random key\n"))
+			panic(fmt.Errorf("fatal error random key"))
 		}
 		viper.Set("keys.enc", key)
 		viper.WriteConfig()

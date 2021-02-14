@@ -155,7 +155,7 @@ func GetAccount(w http.ResponseWriter, r *http.Request, id int) (AccountShow, er
 		BaseList: BaseList{
 			Title:      "Orders",
 			TableClass: "rel_orders_list",
-			Header:     []template.HTML{"ID", "Account ID", "Certificate Serial", "Requested Name", "Began Processing?", "Created", "Expires", },
+			Header:     []template.HTML{"ID", "Account ID", "Certificate Serial", "Requested Name", "Began Processing?", "Created", "Expires"},
 		},
 		Rows: []Order{},
 	}
@@ -246,11 +246,11 @@ func GetOrders(w http.ResponseWriter, r *http.Request) (OrderList, error) {
 
 // Auth contains the data representing an ACME auth
 type Auth struct {
-	ID               string
-	Identifier       string
-	RegistrationID   int
-	Status           string
-	Expires          string
+	ID             string
+	Identifier     string
+	RegistrationID int
+	Status         string
+	Expires        string
 }
 
 // AuthList is a list of Auth records
@@ -485,7 +485,7 @@ func GetAuth(w http.ResponseWriter, r *http.Request, id string) (AuthShow, error
 
 	for rows.Next() {
 		row := Auth{}
-		validationError :=  sql.NullString{}
+		validationError := sql.NullString{}
 		validationRecord := sql.NullString{}
 		err = rows.Scan(&row.ID, &row.Identifier, &row.RegistrationID, &row.Status, &row.Expires, &validationError, &validationRecord)
 		if err != nil {
@@ -499,7 +499,7 @@ func GetAuth(w http.ResponseWriter, r *http.Request, id string) (AuthShow, error
 		}
 		AuthDetails.Rows = append(AuthDetails.Rows, NameValue{"Status", row.Status})
 		AuthDetails.Rows = append(AuthDetails.Rows, NameValue{"Expires", row.Expires})
-		if validationError.Valid  && validationError.String != "" {
+		if validationError.Valid && validationError.String != "" {
 			AuthDetails.Rows = append(AuthDetails.Rows, NameValue{"Validation Error", validationError.String})
 		}
 		if validationRecord.Valid && validationRecord.String != "" {
@@ -622,7 +622,7 @@ type CertificateList struct {
 	Rows []Certificate
 }
 
-// domains are stored in reverse order...
+// ReverseName as domains are stored in reverse order...
 func ReverseName(domain string) string {
 	labels := strings.Split(domain, ".")
 	for i, j := 0, len(labels)-1; i < j; i, j = i+1, j-1 {
