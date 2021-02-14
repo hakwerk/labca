@@ -285,11 +285,26 @@ func GetOrder(w http.ResponseWriter, r *http.Request, id int) (OrderShow, error)
 
 	defer db.Close()
 
-	partial := "SELECT id, identifier, registrationID, status, expires FROM "
-	where := " WHERE id IN (SELECT authzID FROM orderToAuthz WHERE orderID=?)"
-	partial2 := "SELECT id, identifierValue, registrationID, status, expires FROM "
-	where2 := " WHERE id IN (SELECT authzID FROM orderToAuthz2 WHERE orderID=?)"
-	rows, err := db.Query(partial+"authz"+where+" UNION "+partial+"pendingAuthorizations"+where+" UNION "+partial2+"authz2"+where2, strconv.Itoa(id), strconv.Itoa(id), strconv.Itoa(id))
+	query := ""
+	if tableExists(db, "authz") {
+		ident := "identifier"
+		if columnExists(db, "authz", "identifierValue") {
+			ident = "identifierValue"
+		}
+		query = "SELECT id, " + ident + ", registrationID, status, expires FROM authz WHERE id IN (SELECT authzID FROM orderToAuthz WHERE orderID=?)"
+	}
+	if tableExists(db, "authz2") {
+		if query != "" {
+			query = query + " UNION "
+		}
+		query = "SELECT id, identifierValue, registrationID, status, expires FROM authz2 WHERE id IN (SELECT authzID FROM orderToAuthz2 WHERE orderID=?)"
+	}
+	var rows *sql.Rows
+	if tableExists(db, "authz") && tableExists(db, "authz2") {
+		rows, err = db.Query(query, strconv.Itoa(id), strconv.Itoa(id))
+	} else {
+		rows, err = db.Query(query, strconv.Itoa(id))
+	}
 	if err != nil {
 		errorHandler(w, r, err, http.StatusInternalServerError)
 		return OrderShow{}, err
@@ -357,6 +372,16 @@ func GetOrder(w http.ResponseWriter, r *http.Request, id int) (OrderShow, error)
 	return OrderDetails, nil
 }
 
+func tableExists(db *sql.DB, tableName string) bool {
+	rows, _ := db.Query("SHOW TABLES LIKE '" + tableName + "'")
+	return rows.Next()
+}
+
+func columnExists(db *sql.DB, tableName, columnName string) bool {
+	rows, _ := db.Query("SHOW COLUMNS FROM `" + tableName + "` LIKE '" + columnName + "'")
+	return rows.Next()
+}
+
 // GetAuthz returns the list of authz
 func GetAuthz(w http.ResponseWriter, r *http.Request) (AuthList, error) {
 	db, err := sql.Open(dbType, dbConn)
@@ -367,7 +392,21 @@ func GetAuthz(w http.ResponseWriter, r *http.Request) (AuthList, error) {
 
 	defer db.Close()
 
-	rows, err := db.Query("SELECT id, identifier, registrationID, status, expires FROM authz UNION SELECT id, identifier, registrationID, status, expires FROM pendingAuthorizations UNION SELECT id, identifierValue, registrationID, status, expires FROM authz2")
+	query := ""
+	if tableExists(db, "authz") {
+		if columnExists(db, "authz", "identifierValue") {
+			query = "SELECT id, identifierValue, registrationID, status, expires FROM authz"
+		} else {
+			query = "SELECT id, identifier, registrationID, status, expires FROM authz"
+		}
+	}
+	if tableExists(db, "authz2") {
+		if query != "" {
+			query = query + " UNION "
+		}
+		query = query + "SELECT id, identifierValue, registrationID, status, expires FROM authz2"
+	}
+	rows, err := db.Query(query)
 	if err != nil {
 		errorHandler(w, r, err, http.StatusInternalServerError)
 		return AuthList{}, err
@@ -463,11 +502,25 @@ func GetAuth(w http.ResponseWriter, r *http.Request, id string) (AuthShow, error
 		Challenges.Rows = append(Challenges.Rows, row)
 	}
 
-	partial := "SELECT id, identifier, registrationID, status, expires, '', '' FROM "
-	where := " WHERE id IN (SELECT authzID FROM orderToAuthz WHERE id=?)"
-	partial2 := "SELECT id, identifierValue, registrationID, status, expires, validationError, validationRecord FROM "
-	where2 := " WHERE id IN (SELECT authzID FROM orderToAuthz2 WHERE id=?)"
-	rows, err = db.Query(partial+"authz"+where+" UNION "+partial+"pendingAuthorizations"+where+" UNION "+partial2+"authz2"+where2, id, id, id)
+	query := ""
+	if tableExists(db, "authz") {
+		if columnExists(db, "authz", "identifierValue") {
+			query = "SELECT id, identifierValue, registrationID, status, expires, validationError, validationRecord FROM authz WHERE id IN (SELECT authzID FROM orderToAuthz WHERE id=?)"
+		} else {
+			query = "SELECT id, identifier, registrationID, status, expires, '', '' FROM authz WHERE id IN (SELECT authzID FROM orderToAuthz WHERE id=?)"
+		}
+	}
+	if tableExists(db, "authz2") {
+		if query != "" {
+			query = query + " UNION "
+		}
+		query = "SELECT id, identifierValue, registrationID, status, expires, validationError, validationRecord FROM authz2 WHERE id IN (SELECT authzID FROM orderToAuthz2 WHERE id=?)"
+	}
+	if tableExists(db, "authz") && tableExists(db, "authz2") {
+		rows, err = db.Query(query, id, id)
+	} else {
+		rows, err = db.Query(query, id)
+	}
 	if err != nil {
 		errorHandler(w, r, err, http.StatusInternalServerError)
 		return AuthShow{}, err
