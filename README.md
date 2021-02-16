@@ -34,7 +34,7 @@ Getting Boulder up and running has quite a learning curve though and that is whe
 
 ## Install
 
-LabCA is best run on its own server / virtual machine to prevent any issues caused by conflicting applications. On a freshly installed Linux machine (currently only tested with Debian 9/stretch and Debian 10/buster) run this command as root user:
+LabCA is best run on its own server / virtual machine to prevent any issues caused by conflicting applications. On a freshly installed Linux machine (currently only tested with Debian 9/stretch, Debian 10/buster and Ubuntu 18.04) run this command as root user (or as a regular user that already is in the sudo group):
 
 ```sh
 curl -sSL https://raw.githubusercontent.com/hakwerk/labca/master/install | bash
