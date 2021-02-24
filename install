@@ -51,6 +51,7 @@ source "$dn/utils.sh" &>/dev/null || true
 
 cmdlineFqdn=""
 cmdlineBranch=""
+fullCmdline=""
 
 #
 # Helper functions for informing the user and logging to file
@@ -195,6 +196,16 @@ clone_or_pull() {
     fi
 }
 
+# Checkout the latest release tag
+checkout_release() {
+    local branch="$1"
+    if [ "$branch" == "" ] || [ "$branch" == "master" ]; then
+        cd "$cloneDir"
+        TAG=$(git describe --tags $(git rev-list --tags --max-count=1))
+        sudo -u labca -H git reset --hard $TAG &>>$installLog
+    fi
+}
+
 # Restart the script if it was updated itself
 restart_if_updated() {
     local curChecksum="$1"
@@ -206,7 +217,7 @@ restart_if_updated() {
         if [ "$curChecksum" != "$newChecksum" ]; then
             msg_info "Restarting updated version of install script"
             echo
-            exec $cloneDir/install
+            exec $cloneDir/install $fullCmdline
             exit $?
         fi
     fi
@@ -229,6 +240,7 @@ prompt_and_export() {
 
 # Parse the command line options, if any
 parse_cmdline() {
+    fullCmdline="$@"
     local parsed=$(getopt --options=n:,b: --longoptions=name:,fqdn:,branch: --name "$0" -- "$@" 2>>$installLog) || msg_fatal "Could not process commandline parameters"
     eval set -- "$parsed"
     while true; do
@@ -709,6 +721,7 @@ main() {
 
     parse_cmdline "$@"
     clone_or_pull "$cloneDir" "$labcaUrl" "$cmdlineBranch"
+    checkout_release "$cmdlineBranch"
     restart_if_updated "$checksum"
 
     get_fqdn
