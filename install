@@ -264,6 +264,21 @@ parse_cmdline() {
     done
 }
 
+# Utility method to check if value looks like a host + domain
+has_domain() {
+    local dom="$1"
+
+    if [[ "$dom" =~ ^\..*$ ]]; then
+        false
+    elif [[ "$dom" =~ ^.*\.$ ]]; then
+        false
+    elif [[ "$dom" =~ ^.*\..*$ ]]; then
+        true
+    else
+        false
+    fi
+}
+
 # Determine the remote address of this machine from (in order): commandline parameter,
 # existing configuration or full hostname.
 get_fqdn() {
@@ -271,12 +286,23 @@ get_fqdn() {
     local cfgFqdn=$(grep fqdn $cfgFile 2>/dev/null | grep -v LABCA_FQDN | cut -d ":" -f 2- | tr -d " \",")
     LABCA_FQDN=${cfgFqdn:-$(hostname -f)}
 
-    if [ "$cfgFqdn" == "" ]; then
+    while [ "$cfgFqdn" == "" ]; do
         if [ "$cmdlineFqdn" != "" ]; then
             export LABCA_FQDN="$cmdlineFqdn"
         else
             prompt_and_export LABCA_FQDN "$LABCA_FQDN" "FQDN (Fully Qualified Domain Name) for this PKI host (users will use this in their browsers and clients)?"
         fi
+
+        if has_domain $LABCA_FQDN; then
+            cfgFqdn="ok"
+        else
+            msg_err "FQDN must include a hostname AND a domain!"
+            cmdlineFqdn=""
+        fi
+    done
+
+    if ! has_domain $LABCA_FQDN; then
+        msg_fatal "FQDN must include a hostname AND a domain!"
     fi
 
     msg_ok "Determine web address"
