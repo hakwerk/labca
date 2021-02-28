@@ -55,6 +55,7 @@ case $txt in
     chown -R www-data:www-data *
     url=$(grep 'DEFAULT_DIRECTORY_URL =' /home/labca/acme_tiny.py | sed -e 's/.*=[ ]*//' | sed -e 's/\"//g')
     wait_server $url
+    sleep 10
     /home/labca/labca/renew
     ln -sf /home/labca/labca/cron_d /etc/cron.d/labca
     ln -sf /home/labca/labca/logrotate_d /etc/logrotate.d/labca

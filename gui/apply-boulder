@@ -95,3 +95,5 @@ openssl rsa -in $PKI_ROOT_CERT_BASE.key -pubout > test-root.pubkey.pem 2>/dev/nu
 openssl pkcs8 -topk8 -inform PEM -outform PEM -nocrypt -in test-root.key -out test-root.p8
 
 chown -R `ls -l PKI.md | cut -d" " -f 3,4 | sed 's/ /:/g'` .
+
+[ -f setup_complete ] || touch setup_complete
