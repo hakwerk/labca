@@ -22,17 +22,20 @@ if [ "$PKI_DOMAIN_MODE" == "lockdown" ] && [ "$PKI_LOCKDOWN_DOMAINS" != "" ]; th
     echo "Lockdown:" >> hostname-policy.yaml
     echo "  - \"$PKI_LOCKDOWN_DOMAINS\"" >> hostname-policy.yaml
 fi
-if [ "$PKI_DOMAIN_MODE" == "whitelist" ] && [ "$PKI_LOCKDOWN_DOMAINS" != "" ]; then
+if [ "$PKI_DOMAIN_MODE" == "whitelist" ] && [ "$PKI_WHITELIST_DOMAINS" != "" ]; then
     echo "Whitelist:" >> hostname-policy.yaml
-    echo "  - \"$PKI_LOCKDOWN_DOMAINS\"" >> hostname-policy.yaml
+    echo "  - \"$PKI_WHITELIST_DOMAINS\"" >> hostname-policy.yaml
 fi
 if [ "$PKI_DOMAIN_MODE" == "lockdown" ] || [ "$PKI_DOMAIN_MODE" == "whitelist" ]; then
     sed -i -e "s/^\(.*\)\(\"n_subject_common_name_included\"\)/\1\2,\n\1\"e_dnsname_not_valid_tld\"/" config/ca-a.json
     sed -i -e "s/^\(.*\)\(\"n_subject_common_name_included\"\)/\1\2,\n\1\"e_dnsname_not_valid_tld\"/" config/ca-b.json
 
     REPLACEMENT=""
-    if [ "$PKI_LOCKDOWN_DOMAINS" != "" ]; then
+    if [ "$PKI_DOMAIN_MODE" == "lockdown" ] && [ "$PKI_LOCKDOWN_DOMAINS" != "" ]; then
         REPLACEMENT="    $PKI_LOCKDOWN_DOMAINS: 10000\n"
+    fi
+    if [ "$PKI_DOMAIN_MODE" == "whitelist" ] && [ "$PKI_WHITELIST_DOMAINS" != "" ]; then
+        REPLACEMENT="    $PKI_WHITELIST_DOMAINS: 10000\n"
     fi
     cat rate-limit-policies.yml | tr '\n' '\r' | sed -e "s/\(must-staple.le.wtf: 10000\).*\(  registrationOverrides:\)/\1\n$REPLACEMENT\2/" | tr '\r' '\n' > rate-limit-policies.yml.bak && mv rate-limit-policies.yml.bak rate-limit-policies.yml
     cat rate-limit-policies.yml | tr '\n' '\r' | sed -e "s/\(certificatesPerFQDNSet:.*must-staple.le.wtf: 10000\).*/\1\n$REPLACEMENT/" | tr '\r' '\n' > rate-limit-policies.yml.bak && mv rate-limit-policies.yml.bak rate-limit-policies.yml
