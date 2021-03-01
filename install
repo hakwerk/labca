@@ -702,7 +702,7 @@ startup() {
 
     wait_up $PS_MYSQL &>>$installLog
     wait_up $PS_LABCA &>>$installLog
-    wait_up $PS_BOULDER $PS_BOULDER_COUNT &>>$installLog
+    [ -f "$boulderLabCADir/setup_complete" ] && wait_up $PS_BOULDER $PS_BOULDER_COUNT &>>$installLog || /bin/true
 
     msg_ok "$msg"
 }
