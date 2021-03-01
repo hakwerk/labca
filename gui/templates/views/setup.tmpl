@@ -31,7 +31,7 @@
     <span class="error">{{ . }}</span><br/>
     {{ end }}
 
-    <input type="radio" id="whitelist" name="domain_mode" value="whitelist" {{ if eq .DomainMode "whitelist"}}checked{{ end }}/> Next to all official domains, also allow this domain:<br/>
+    <input type="radio" id="whitelist" name="domain_mode" value="whitelist" {{ if eq .DomainMode "whitelist"}}checked{{ end }}/> Next to all official domains, also allow this domain (whitelist):<br/>
     <input class="form-control non-fluid" type="text" id="whitelist_domains" name="whitelist_domains" value="{{ .WhitelistDomains }}"/><br/>
     {{ with .Errors.WhitelistDomains }}
     <span class="error">{{ . }}</span><br/>
