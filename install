@@ -528,6 +528,9 @@ config_boulder() {
     sudo -u labca -H patch -p1 < $cloneDir/ra_ra.patch &>>$installLog
     cp ra/ra.go "$boulderLabCADir/.backup/"
 
+    sudo -u labca -H patch -p1 < $cloneDir/reloader_reloader.patch &>>$installLog
+    cp reloader/reloader.go "$boulderLabCADir/.backup/"
+
     sudo -u labca -H patch -p1 < $cloneDir/mail_mailer.patch &>>$installLog
     cp mail/mailer.go "$boulderLabCADir/.backup/"
 
