@@ -2,10 +2,16 @@ diff --git a/test/entrypoint.sh b/test/entrypoint.sh
 index 5ca9929..f18e1d8 100755
 --- a/test/entrypoint.sh
 +++ b/test/entrypoint.sh
-@@ -36,6 +36,12 @@ wait_tcp_port boulder-mysql 3306
+@@ -36,6 +36,18 @@ wait_tcp_port boulder-mysql 3306
  # create the database
  MYSQL_CONTAINER=1 $DIR/create_db.sh
 
++fl=$(pwd)/labca/setup_complete
++while [ ! -f $fl ]; do
++    echo "Waiting for $fl to appear..."
++    sleep 30
++done
++
 +#softhsm2-util --show-slots
 +softhsm2-util --init-token --slot 0 --label "intermediate signing key (rsa)" --pin 1234 --so-pin 5678 | /bin/true
 +[ -e labca/test-ca.p8 ] && softhsm2-util --import labca/test-ca.p8 --id 333333 --force --token "intermediate signing key (rsa)" --pin 1234 --so-pin 5678 --label 'intermediate_key'

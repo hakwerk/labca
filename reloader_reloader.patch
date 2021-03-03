@@ -1,0 +1,28 @@
+diff --git a/reloader/reloader.go b/reloader/reloader.go
+index d885af63..ab71babf 100644
+--- a/reloader/reloader.go
++++ b/reloader/reloader.go
+@@ -9,7 +9,7 @@ import (
+ 
+ // Wrap time.Tick so we can override it in tests.
+ var makeTicker = func() (func(), <-chan time.Time) {
+-	t := time.NewTicker(1 * time.Second)
++	t := time.NewTicker(30 * time.Second)
+ 	return t.Stop, t.C
+ }
+ 
+@@ -55,8 +55,12 @@ func New(filename string, dataCallback func([]byte) error, errorCallback func(er
+ 			case <-tickChan:
+ 				currentFileInfo, err := os.Stat(filename)
+ 				if err != nil {
+-					errorCallback(err)
+-					continue
++					time.Sleep(10 * time.Second)
++					currentFileInfo, err = os.Stat(filename)
++					if err != nil {
++						errorCallback(err)
++						continue
++					}
+ 				}
+ 				if !currentFileInfo.ModTime().After(fileInfo.ModTime()) {
+ 					continue

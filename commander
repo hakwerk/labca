@@ -18,11 +18,11 @@ function wait_server() {
 
     local status=0
     local cnt=0
-    while [ $cnt -lt 20 ] && [ "$status" != "200" ]; do
+    while [ $cnt -lt 40 ] && [ "$status" != "200" ]; do
         status=$(curl -o /dev/null -sSL --head --write-out '%{http_code}\n' $url)
         let cnt=$cnt+1
-        if [ $cnt -lt 10 ] && [ "$status" != "200" ]; then
-            sleep 3
+        if [ "$status" != "200" ]; then
+            sleep 5
         fi
     done
 }
@@ -55,6 +55,7 @@ case $txt in
     chown -R www-data:www-data *
     url=$(grep 'DEFAULT_DIRECTORY_URL =' /home/labca/acme_tiny.py | sed -e 's/.*=[ ]*//' | sed -e 's/\"//g')
     wait_server $url
+    sleep 10
     /home/labca/labca/renew
     ln -sf /home/labca/labca/cron_d /etc/cron.d/labca
     ln -sf /home/labca/labca/logrotate_d /etc/logrotate.d/labca

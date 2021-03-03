@@ -8,7 +8,7 @@ set -e
 if [ ! -e bin/labca ]; then
     go mod download
 
-    go build -o bin/labca main.go acme.go certificate.go dashboard.go
+    go build -o bin/labca
 fi
 
 bin/labca

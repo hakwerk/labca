@@ -297,7 +297,7 @@ func GetOrder(w http.ResponseWriter, r *http.Request, id int) (OrderShow, error)
 		if query != "" {
 			query = query + " UNION "
 		}
-		query = "SELECT id, identifierValue, registrationID, status, expires FROM authz2 WHERE id IN (SELECT authzID FROM orderToAuthz2 WHERE orderID=?)"
+		query = query + "SELECT id, identifierValue, registrationID, status, expires FROM authz2 WHERE id IN (SELECT authzID FROM orderToAuthz2 WHERE orderID=?)"
 	}
 	var rows *sql.Rows
 	if tableExists(db, "authz") && tableExists(db, "authz2") {
@@ -514,7 +514,7 @@ func GetAuth(w http.ResponseWriter, r *http.Request, id string) (AuthShow, error
 		if query != "" {
 			query = query + " UNION "
 		}
-		query = "SELECT id, identifierValue, registrationID, status, expires, validationError, validationRecord FROM authz2 WHERE id IN (SELECT authzID FROM orderToAuthz2 WHERE id=?)"
+		query = query + "SELECT id, identifierValue, registrationID, status, expires, validationError, validationRecord FROM authz2 WHERE id IN (SELECT authzID FROM orderToAuthz2 WHERE id=?)"
 	}
 	if tableExists(db, "authz") && tableExists(db, "authz2") {
 		rows, err = db.Query(query, id, id)
