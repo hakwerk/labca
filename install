@@ -20,7 +20,7 @@ cloneDir="$baseDir/labca"
 adminDir="$baseDir/admin"
 boulderDir="$baseDir/boulder"
 boulderLabCADir="${boulderDir}_labca"
-dockerComposeVersion="1.22.0"
+dockerComposeVersion="1.28.5"
 
 labcaUrl="https://github.com/hakwerk/labca/"
 boulderUrl="https://github.com/letsencrypt/boulder/"
