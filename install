@@ -24,7 +24,7 @@ dockerComposeVersion="1.28.5"
 
 labcaUrl="https://github.com/hakwerk/labca/"
 boulderUrl="https://github.com/letsencrypt/boulder/"
-boulderTag="release-2021-02-22"
+boulderTag="release-2021-03-01"
 
 #
 # Color configuration
@@ -562,6 +562,12 @@ config_boulder() {
 
     mkdir -p "cmd/mail-tester"
     cp $cloneDir/mail-tester.go cmd/mail-tester/main.go
+
+    sudo -u labca -H patch -p1 < $cloneDir/db_migrations.patch &>>$installLog
+    cp sa/_db/migrations/20210223140000_CombinedSchema.sql "$boulderLabCADir/.backup/"
+
+    mkdir -p $baseDir/backup
+    [ -z "$(docker ps | grep boulder_bmysql_1)" ] || docker exec -it boulder_bmysql_1 mysqldump boulder_sa_integration >$baseDir/backup/dbdata-${runId}.sql
 
     cd "$boulderLabCADir"
     sed -i -e "s/test-ca2.pem/test-ca.pem/" config/ocsp-responder.json
