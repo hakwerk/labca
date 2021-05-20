@@ -1,86 +1,85 @@
 diff --git a/docker-compose.yml b/docker-compose.yml
-index 13cc6a54b..afbfd4bdf 100644
+index c5d84e1c6..8a57bc326 100644
 --- a/docker-compose.yml
 +++ b/docker-compose.yml
-@@ -5,7 +5,7 @@ services:
-         image: letsencrypt/boulder-tools:${BOULDER_TOOLS_TAG:-go1.15.7_2021-02-25}
-         environment:
-             - FAKE_DNS=10.77.77.77
--            - BOULDER_CONFIG_DIR=test/config
-+            - BOULDER_CONFIG_DIR=labca/config
-             - GOFLAGS=-mod=vendor
-             # This is required so Python doesn't throw an error when printing
-             # non-ASCII to stdout.
-@@ -18,6 +18,7 @@ services:
-             - RACE
-         volumes:
-           - .:/go/src/github.com/letsencrypt/boulder:cached
-+          - /home/labca/boulder_labca:/go/src/github.com/letsencrypt/boulder/labca
-           - ./.gocache:/root/.cache/go-build:cached
-         networks:
-           bluenet:
-@@ -57,10 +58,18 @@ services:
-           - 8055:8055 # dns-test-srv updates
-         depends_on:
-           - bmysql
--        entrypoint: test/entrypoint.sh
-+        entrypoint: labca/entrypoint.sh
-         working_dir: /go/src/github.com/letsencrypt/boulder
-+        logging:
-+          driver: "json-file"
-+          options:
-+            max-size: "500k"
-+            max-file: "5"
-+        restart: always
-     bmysql:
-         image: mariadb:10.5
-+        volumes:
-+          - dbdata:/var/lib/mysql
-         networks:
-           bluenet:
-             aliases:
-@@ -74,20 +83,36 @@ services:
-         # small.
-         command: mysqld --bind-address=0.0.0.0 --slow-query-log --log-output=TABLE --log-queries-not-using-indexes=ON
-         logging:
--            driver: none
--    netaccess:
-+          driver: "json-file"
-+          options:
-+            max-size: "500k"
-+            max-file: "5"
-+        restart: always
-+    labca:
-         image: letsencrypt/boulder-tools:${BOULDER_TOOLS_TAG:-go1.15.7_2021-02-25}
--        environment:
--            GO111MODULE: "on"
--            GOFLAGS: "-mod=vendor"
-         networks:
-           - bluenet
-         volumes:
--          - .:/go/src/github.com/letsencrypt/boulder
--        working_dir: /go/src/github.com/letsencrypt/boulder
--        entrypoint: test/entrypoint-netaccess.sh
-+          - /home/labca/admin:/go/src/labca
-+          - ./.gocache:/root/.cache/go-build
-+          - /var/www/html:/wwwstatic
-+          - .:/boulder
-+          - /home/labca/boulder_labca:/boulder/labca
-+        ports:
-+          - 3000:3000
-         depends_on:
-           - bmysql
-+        working_dir: /go/src/labca
-+        command: ./setup.sh
-+        logging:
-+          driver: "json-file"
-+          options:
-+            max-size: "500k"
-+            max-file: "5"
-+        restart: always
+@@ -4,10 +4,11 @@ services:
+     image: &boulder_image letsencrypt/boulder-tools:${BOULDER_TOOLS_TAG:-go1.15.7_2021-03-26}
+     environment:
+       FAKE_DNS: 10.77.77.77
+-      BOULDER_CONFIG_DIR: test/config
++      BOULDER_CONFIG_DIR: labca/config
+       GOFLAGS: -mod=vendor
+     volumes:
+       - .:/go/src/github.com/letsencrypt/boulder:cached
++      - /home/labca/boulder_labca:/go/src/github.com/letsencrypt/boulder/labca
+       - ./.gocache:/root/.cache/go-build:cached
+     networks:
+       bluenet:
+@@ -47,11 +48,19 @@ services:
+       - 8055:8055 # dns-test-srv updates
+     depends_on:
+       - bmysql
+-    entrypoint: test/entrypoint.sh
++    entrypoint: labca/entrypoint.sh
+     working_dir: &boulder_working_dir /go/src/github.com/letsencrypt/boulder
++    logging:
++      driver: "json-file"
++      options:
++        max-size: "500k"
++        max-file: "5"
++    restart: always
+ 
+   bmysql:
+     image: mariadb:10.5
++    volumes:
++      - dbdata:/var/lib/mysql
+     networks:
+       bluenet:
+         aliases:
+@@ -65,22 +74,37 @@ services:
+     # small.
+     command: mysqld --bind-address=0.0.0.0 --slow-query-log --log-output=TABLE --log-queries-not-using-indexes=ON
+     logging:
+-        driver: none
++      driver: "json-file"
++      options:
++        max-size: "500k"
++        max-file: "5"
++    restart: always
+ 
+-  netaccess:
++  labca:
+     image: *boulder_image
+-    environment:
+-        GO111MODULE: "on"
+-        GOFLAGS: -mod=vendor
+-        BOULDER_CONFIG_DIR: test/config
+     networks:
+       - bluenet
+     volumes:
+-      - .:/go/src/github.com/letsencrypt/boulder
+-    working_dir: *boulder_working_dir
+-    entrypoint: test/entrypoint-netaccess.sh
++      - /home/labca/admin:/go/src/labca
++      - ./.gocache:/root/.cache/go-build
++      - /var/www/html:/wwwstatic
++      - .:/boulder
++      - /home/labca/boulder_labca:/boulder/labca
++    ports:
++      - 3000:3000
+     depends_on:
+       - bmysql
++    working_dir: /go/src/labca
++    command: ./setup.sh
++    logging:
++      driver: "json-file"
++      options:
++        max-size: "500k"
++        max-file: "5"
++    restart: always
 +
 +volumes:
-+    dbdata:
++  dbdata:
  
  networks:
    bluenet:

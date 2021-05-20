@@ -1,0 +1,23 @@
+diff --git a/test/config/publisher.json b/test/config/publisher.json
+index 6c75f71..54fb877 100644
+--- a/test/config/publisher.json
++++ b/test/config/publisher.json
+@@ -6,18 +6,6 @@
+       [
+         "/tmp/intermediate-cert-rsa-a.pem",
+         "/tmp/root-cert-rsa.pem"
+-      ],
+-      [
+-        "/tmp/intermediate-cert-rsa-b.pem",
+-        "/tmp/root-cert-rsa.pem"
+-      ],
+-      [
+-        "/tmp/intermediate-cert-ecdsa-a.pem",
+-        "/tmp/root-cert-ecdsa.pem"
+-      ],
+-      [
+-        "/tmp/intermediate-cert-ecdsa-b.pem",
+-        "/tmp/root-cert-ecdsa.pem"
+       ]
+     ],
+     "debugAddr": ":8009",
