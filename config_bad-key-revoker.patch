@@ -2,9 +2,9 @@ diff --git a/test/config/bad-key-revoker.json b/test/config/bad-key-revoker.json
 index 482fd85fc..3e678aa5b 100644
 --- a/test/config/bad-key-revoker.json
 +++ b/test/config/bad-key-revoker.json
-@@ -3,6 +3,11 @@
-         "dbConnectFile": "test/secrets/badkeyrevoker_dburl",
-         "maxOpenConns": 10,
+@@ -5,6 +5,11 @@
+             "maxOpenConns": 10
+         },
          "debugAddr": ":8020",
 +        "dnsTries": 3,
 +        "dnsResolvers": [
@@ -14,7 +14,7 @@ index 482fd85fc..3e678aa5b 100644
          "tls": {
              "caCertFile": "test/grpc-creds/minica.pem",
              "certFile": "test/grpc-creds/bad-key-revoker.boulder/cert.pem",
-@@ -24,10 +29,14 @@
+@@ -26,10 +31,14 @@
          },
          "maximumRevocations": 15,
          "findCertificatesBatchSize": 10,

@@ -86,14 +86,14 @@ func main() {
 	if !c.Common.DNSAllowLoopbackAddresses {
 		r := bdns.New(
 			dnsTimeout,
-			c.Mailer.DNSResolvers,
+			bdns.NewStaticProvider(c.Mailer.DNSResolvers),
 			scope,
 			clk,
 			dnsTries,
 			logger)
 		resolver = r
 	} else {
-		r := bdns.NewTest(dnsTimeout, c.Mailer.DNSResolvers, scope, clk, dnsTries, logger)
+		r := bdns.NewTest(dnsTimeout, bdns.NewStaticProvider(c.Mailer.DNSResolvers), scope, clk, dnsTries, logger)
 		resolver = r
 	}
 

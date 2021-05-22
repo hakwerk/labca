@@ -27,8 +27,8 @@ if [ "$PKI_DOMAIN_MODE" == "whitelist" ] && [ "$PKI_WHITELIST_DOMAINS" != "" ]; 
     echo "  - \"$PKI_WHITELIST_DOMAINS\"" >> hostname-policy.yaml
 fi
 if [ "$PKI_DOMAIN_MODE" == "lockdown" ] || [ "$PKI_DOMAIN_MODE" == "whitelist" ]; then
-    sed -i -e "s/^\(.*\)\(\"n_subject_common_name_included\"\)/\1\2,\n\1\"e_dnsname_not_valid_tld\"/" config/ca-a.json
-    sed -i -e "s/^\(.*\)\(\"n_subject_common_name_included\"\)/\1\2,\n\1\"e_dnsname_not_valid_tld\"/" config/ca-b.json
+    sed -i -e "s/\(\"n_subject_common_name_included\"\)/\1,\"e_dnsname_not_valid_tld\"/" config/ca-a.json
+    sed -i -e "s/\(\"n_subject_common_name_included\"\)/\1,\"e_dnsname_not_valid_tld\"/" config/ca-b.json
 
     REPLACEMENT=""
     if [ "$PKI_DOMAIN_MODE" == "lockdown" ] && [ "$PKI_LOCKDOWN_DOMAINS" != "" ]; then

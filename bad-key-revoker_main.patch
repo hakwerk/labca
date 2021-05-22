@@ -50,14 +50,14 @@ index 7d4c9311..2858ada7 100644
 +	if !config.Common.DNSAllowLoopbackAddresses {
 +		r := bdns.New(
 +			dnsTimeout,
-+			config.BadKeyRevoker.DNSResolvers,
++			bdns.NewStaticProvider(config.BadKeyRevoker.DNSResolvers),
 +			scope,
 +			clk,
 +			dnsTries,
 +			logger)
 +		resolver = r
 +	} else {
-+		r := bdns.NewTest(dnsTimeout, config.BadKeyRevoker.DNSResolvers, scope, clk, dnsTries, logger)
++		r := bdns.NewTest(dnsTimeout, bdns.NewStaticProvider(config.BadKeyRevoker.DNSResolvers), scope, clk, dnsTries, logger)
 +		resolver = r
 +	}
 +

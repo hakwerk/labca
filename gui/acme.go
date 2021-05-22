@@ -698,12 +698,12 @@ func GetCertificates(w http.ResponseWriter, r *http.Request) (CertificateList, e
 	if r.URL.Query().Get("active") != "" {
 		where = " WHERE cs.revokedDate='0000-00-00 00:00:00' AND cs.notAfter >= NOW()"
 	} else if r.URL.Query().Get("expired") != "" {
-		where = " WHERE cs.revokedDate='0000-00-00 00:00:00' AND cs.notAfter < NOW()"
+		where = " WHERE cs.notAfter < NOW()"
 	} else if r.URL.Query().Get("revoked") != "" {
 		where = " WHERE cs.revokedDate<>'0000-00-00 00:00:00'"
 	}
 
-	rows, err := db.Query("SELECT c.id, c.registrationID, c.serial, n.reversedName, CASE WHEN cs.notAfter < NOW() THEN 'expired' ELSE cs.status END AS status, c.issued, c.expires FROM certificates c JOIN certificateStatus cs ON cs.id = c.id JOIN issuedNames n ON n.serial = c.serial" + where)
+	rows, err := db.Query("SELECT c.id, c.registrationID, c.serial, n.reversedName, CASE WHEN cs.notAfter < NOW() THEN CASE WHEN cs.status <> 'good' THEN concat(cs.status, ' / expired') ELSE 'expired' END ELSE cs.status END AS status, c.issued, c.expires FROM certificates c JOIN certificateStatus cs ON cs.id = c.id JOIN issuedNames n ON n.serial = c.serial" + where)
 	if err != nil {
 		errorHandler(w, r, err, http.StatusInternalServerError)
 		return CertificateList{}, err

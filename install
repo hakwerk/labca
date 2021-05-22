@@ -20,11 +20,11 @@ cloneDir="$baseDir/labca"
 adminDir="$baseDir/admin"
 boulderDir="$baseDir/boulder"
 boulderLabCADir="${boulderDir}_labca"
-dockerComposeVersion="1.22.0"
+dockerComposeVersion="1.28.5"
 
 labcaUrl="https://github.com/hakwerk/labca/"
 boulderUrl="https://github.com/letsencrypt/boulder/"
-boulderTag="release-2021-02-08"
+boulderTag="release-2021-05-17"
 
 #
 # Color configuration
@@ -367,6 +367,7 @@ update_upgrade() {
     msg_info "Making sure all software is up-to-date"
     apt update &>>$installLog
     apt upgrade -y &>>$installLog
+    apt autoremove -y &>>$installLog
     msg_ok "Software is up-to-date"
 }
 
@@ -519,6 +520,9 @@ config_boulder() {
     sudo -u labca -H patch -p1 < $cloneDir/docker-compose.patch &>>$installLog
     cp docker-compose.yml "$boulderLabCADir/.backup/"
 
+    sudo -u labca -H patch -p1 < $cloneDir/cmd_shell.patch &>>$installLog
+    cp cmd/shell.go "$boulderLabCADir/.backup/"
+
     sudo -u labca -H patch -p1 < $cloneDir/core_interfaces.patch &>>$installLog
     cp core/interfaces.go "$boulderLabCADir/.backup/"
 
@@ -553,6 +557,8 @@ config_boulder() {
     sudo -u labca -H patch -p1 -o "$boulderLabCADir/config/expiration-mailer.json" < $cloneDir/config_expiration-mailer.patch &>>$installLog
     sudo -u labca -H patch -p1 -o "$boulderLabCADir/config/notify-mailer.json" < $cloneDir/config_notify-mailer.patch &>>$installLog
     sudo -u labca -H patch -p1 -o "$boulderLabCADir/config/bad-key-revoker.json" < $cloneDir/config_bad-key-revoker.patch &>>$installLog
+    sudo -u labca -H patch -p1 -o "$boulderLabCADir/config/ocsp-responder.json" < $cloneDir/config_ocsp-responder.patch &>>$installLog
+    sudo -u labca -H patch -p1 -o "$boulderLabCADir/config/publisher.json" < $cloneDir/config_publisher.patch &>>$installLog
 
     sed -i -e "s|https://letsencrypt.org/docs/rate-limits/|http://$LABCA_FQDN/rate-limits|" errors/errors.go &>>$installLog
     cp errors/errors.go "$boulderLabCADir/.backup/"
@@ -562,6 +568,12 @@ config_boulder() {
 
     mkdir -p "cmd/mail-tester"
     cp $cloneDir/mail-tester.go cmd/mail-tester/main.go
+
+    sudo -u labca -H patch -p1 < $cloneDir/db_migrations.patch &>>$installLog
+    cp sa/_db/migrations/20210223140000_CombinedSchema.sql "$boulderLabCADir/.backup/"
+
+    mkdir -p $baseDir/backup
+    [ -z "$(docker ps | grep boulder_bmysql_1)" ] || docker exec -it boulder_bmysql_1 mysqldump boulder_sa_integration >$baseDir/backup/dbdata-${runId}.sql
 
     cd "$boulderLabCADir"
     sed -i -e "s/test-ca2.pem/test-ca.pem/" config/ocsp-responder.json
@@ -577,6 +589,10 @@ config_boulder() {
     sed -i -e "s|/tmp/intermediate-cert-rsa-a.pem|labca/test-ca.pem|" config/ra.json
     sed -i -e "s|/tmp/intermediate-cert-rsa-a.pem|labca/test-ca.pem|" config/wfe.json
     sed -i -e "s|/tmp/intermediate-cert-rsa-a.pem|labca/test-ca.pem|" config/wfe2.json
+    sed -i -e "s|/tmp/root-cert-rsa.pem|labca/test-root.pem|" config/publisher.json
+    sed -i -e "s|/tmp/root-cert-rsa.pem|labca/test-root.pem|" integration-test.py
+    sed -i -e "s|/tmp/root-cert-rsa.pem|labca/test-root.pem|" helpers.py
+    sed -i -e "s|/tmp/root-cert-rsa.pem|labca/test-root.pem|" v1_integration.py
     sed -i -e "s/5001/443/g" config/va.json
     sed -i -e "s/5002/80/g" config/va.json
     sed -i -e "s/5001/443/g" config/va-remote-a.json
@@ -614,6 +630,7 @@ config_boulder() {
     sed -i -e "s/names/name\(s\)/" example-expiration-template
 
     rm test-ca2.pem
+    ([ -e mock-vendor.go ] && rm mock-vendor.go) || /bin/true
 
     local have_config=$(grep restarted $adminDir/data/config.json | grep true)
     if [ "$have_config" != "" ]; then
@@ -688,11 +705,11 @@ startup() {
     msg_info "$msg (this will take a while!!)"
 
     docker-compose stop &>>$installLog || true
-    docker stop boulder_bhsm_1 &>>$installLog | /bin/true
+    [ -z "$(docker ps | grep boulder_bhsm_1)" ] || docker stop boulder_bhsm_1 &>>$installLog
     wait_down $PS_MYSQL &>>$installLog
     wait_down $PS_LABCA &>>$installLog
     wait_down $PS_BOULDER &>>$installLog
-    docker rm -f boulder_bhsm_1 &>>$installLog | /bin/true
+    [ -z "$(docker ps | grep boulder_bhsm_1)" ] || docker rm -f boulder_bhsm_1 &>>$installLog
     docker-compose up -d &>>$installLog
 
     [ -h "/etc/init.d/labca" ] || ln -s "$cloneDir/init_d" /etc/init.d/labca
@@ -705,6 +722,7 @@ startup() {
 
     wait_up $PS_MYSQL &>>$installLog
     wait_up $PS_LABCA &>>$installLog
+    docker exec -it boulder_bmysql_1 mysql_upgrade &>>$installLog
     [ -f "$boulderLabCADir/setup_complete" ] && wait_up $PS_BOULDER $PS_BOULDER_COUNT &>>$installLog || /bin/true
 
     msg_ok "$msg"

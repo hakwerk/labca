@@ -323,7 +323,7 @@ func CollectDashboardData(w http.ResponseWriter, r *http.Request) (map[string]in
 		dashboardData["NumCerts"] = dbres
 	}
 
-	rows, err = db.Query("SELECT count(*) FROM certificateStatus WHERE revokedDate='0000-00-00 00:00:00' AND notAfter < NOW()")
+	rows, err = db.Query("SELECT count(*) FROM certificateStatus WHERE notAfter < NOW()")
 	if err != nil {
 		errorHandler(w, r, err, http.StatusInternalServerError)
 		return nil, err

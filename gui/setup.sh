@@ -11,4 +11,6 @@ if [ ! -e bin/labca ]; then
     go build -o bin/labca
 fi
 
+[ -e /bin/ip ] || (apt update && apt install -y iproute2)
+
 bin/labca
