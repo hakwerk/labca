@@ -1,9 +1,9 @@
 diff --git a/docker-compose.yml b/docker-compose.yml
-index c5d84e1c6..8a57bc326 100644
+index 1a4dd8295..d2c105ec4 100644
 --- a/docker-compose.yml
 +++ b/docker-compose.yml
 @@ -4,10 +4,11 @@ services:
-     image: &boulder_image letsencrypt/boulder-tools:${BOULDER_TOOLS_TAG:-go1.15.7_2021-03-26}
+     image: &boulder_image letsencrypt/boulder-tools:${BOULDER_TOOLS_TAG:-go1.16.4_2021-05-06}
      environment:
        FAKE_DNS: 10.77.77.77
 -      BOULDER_CONFIG_DIR: test/config
@@ -15,7 +15,7 @@ index c5d84e1c6..8a57bc326 100644
        - ./.gocache:/root/.cache/go-build:cached
      networks:
        bluenet:
-@@ -47,11 +48,19 @@ services:
+@@ -49,11 +50,19 @@ services:
        - 8055:8055 # dns-test-srv updates
      depends_on:
        - bmysql
@@ -36,7 +36,7 @@ index c5d84e1c6..8a57bc326 100644
      networks:
        bluenet:
          aliases:
-@@ -65,22 +74,37 @@ services:
+@@ -67,22 +76,37 @@ services:
      # small.
      command: mysqld --bind-address=0.0.0.0 --slow-query-log --log-output=TABLE --log-queries-not-using-indexes=ON
      logging:

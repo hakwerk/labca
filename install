@@ -24,7 +24,7 @@ dockerComposeVersion="1.28.5"
 
 labcaUrl="https://github.com/hakwerk/labca/"
 boulderUrl="https://github.com/letsencrypt/boulder/"
-boulderTag="release-2021-03-29"
+boulderTag="release-2021-05-17"
 
 #
 # Color configuration
