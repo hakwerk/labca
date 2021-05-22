@@ -520,6 +520,9 @@ config_boulder() {
     sudo -u labca -H patch -p1 < $cloneDir/docker-compose.patch &>>$installLog
     cp docker-compose.yml "$boulderLabCADir/.backup/"
 
+    sudo -u labca -H patch -p1 < $cloneDir/cmd_shell.patch &>>$installLog
+    cp cmd/shell.go "$boulderLabCADir/.backup/"
+
     sudo -u labca -H patch -p1 < $cloneDir/core_interfaces.patch &>>$installLog
     cp core/interfaces.go "$boulderLabCADir/.backup/"
 
