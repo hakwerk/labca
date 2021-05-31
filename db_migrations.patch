@@ -1,5 +1,5 @@
 diff --git a/sa/_db/migrations/20210223140000_CombinedSchema.sql b/sa/_db/migrations/20210223140000_CombinedSchema.sql
-index f9705d01..783c371e 100644
+index f9705d018..035c5009f 100644
 --- a/sa/_db/migrations/20210223140000_CombinedSchema.sql
 +++ b/sa/_db/migrations/20210223140000_CombinedSchema.sql
 @@ -1,7 +1,9 @@
@@ -40,7 +40,7 @@ index f9705d01..783c371e 100644
    `id` bigint(20) NOT NULL AUTO_INCREMENT,
    `eTLDPlusOne` varchar(255) NOT NULL,
    `time` datetime NOT NULL,
-@@ -63,14 +65,9 @@ CREATE TABLE `certificatesPerName` (
+@@ -63,14 +65,24 @@ CREATE TABLE `certificatesPerName` (
    UNIQUE KEY `eTLDPlusOne_time_idx` (`eTLDPlusOne`,`time`)
  ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
  
@@ -49,15 +49,29 @@ index f9705d01..783c371e 100644
 -  `createdAt` datetime NOT NULL,
 -  `crl` varchar(255) NOT NULL,
 -  PRIMARY KEY (`serial`)
--) ENGINE=InnoDB DEFAULT CHARSET=utf8;
-+DROP TABLE IF EXISTS `crls`;
++CREATE TABLE IF NOT EXISTS `challenges` (
++  `id` bigint(20) NOT NULL AUTO_INCREMENT,
++  `authorizationID` varchar(255) NOT NULL,
++  `LockCol` bigint(20) DEFAULT NULL,
++  `type` varchar(255) NOT NULL,
++  `status` varchar(255) NOT NULL,
++  `error` mediumblob DEFAULT NULL,
++  `validated` datetime DEFAULT NULL,
++  `token` varchar(255) NOT NULL,
++  `validationRecord` mediumblob DEFAULT NULL,
++  `keyAuthorization` varchar(255) DEFAULT NULL,
++  PRIMARY KEY (`id`),
++  KEY `authorizationID_challenges_idx` (`authorizationID`)
+ ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
  
 -CREATE TABLE `fqdnSets` (
++DROP TABLE IF EXISTS `crls`;
++
 +CREATE TABLE IF NOT EXISTS `fqdnSets` (
    `id` bigint(20) NOT NULL AUTO_INCREMENT,
    `setHash` binary(32) NOT NULL,
    `serial` varchar(255) NOT NULL,
-@@ -81,7 +78,7 @@ CREATE TABLE `fqdnSets` (
+@@ -81,7 +93,7 @@ CREATE TABLE `fqdnSets` (
    KEY `setHash_issued_idx` (`setHash`,`issued`)
  ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
  
@@ -66,7 +80,7 @@ index f9705d01..783c371e 100644
    `id` bigint(20) NOT NULL AUTO_INCREMENT,
    `reversedName` varchar(640) CHARACTER SET ascii NOT NULL,
    `notBefore` datetime NOT NULL,
-@@ -92,7 +89,7 @@ CREATE TABLE `issuedNames` (
+@@ -92,7 +104,7 @@ CREATE TABLE `issuedNames` (
    KEY `reversedName_renewal_notBefore_Idx` (`reversedName`,`renewal`,`notBefore`)
  ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
  
@@ -75,7 +89,7 @@ index f9705d01..783c371e 100644
    `id` bigint(20) NOT NULL AUTO_INCREMENT,
    `keyHash` binary(32) NOT NULL,
    `certNotAfter` datetime NOT NULL,
-@@ -102,7 +99,7 @@ CREATE TABLE `keyHashToSerial` (
+@@ -102,7 +114,7 @@ CREATE TABLE `keyHashToSerial` (
    KEY `keyHash_certNotAfter` (`keyHash`,`certNotAfter`)
  ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
  
@@ -84,7 +98,7 @@ index f9705d01..783c371e 100644
    `id` bigint(20) NOT NULL AUTO_INCREMENT,
    `regID` bigint(20) NOT NULL,
    `time` datetime NOT NULL,
-@@ -111,14 +108,16 @@ CREATE TABLE `newOrdersRL` (
+@@ -111,14 +123,16 @@ CREATE TABLE `newOrdersRL` (
    UNIQUE KEY `regID_time_idx` (`regID`,`time`)
  ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
  
@@ -103,7 +117,7 @@ index f9705d01..783c371e 100644
    `id` bigint(20) NOT NULL AUTO_INCREMENT,
    `registrationID` bigint(20) NOT NULL,
    `expires` datetime NOT NULL,
-@@ -131,7 +130,9 @@ CREATE TABLE `orders` (
+@@ -131,7 +145,9 @@ CREATE TABLE `orders` (
    KEY `regID_created_idx` (`registrationID`,`created`)
  ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
  
@@ -114,7 +128,7 @@ index f9705d01..783c371e 100644
    `id` bigint(20) NOT NULL AUTO_INCREMENT,
    `jwk` mediumblob NOT NULL,
    `jwk_sha256` varchar(255) NOT NULL,
-@@ -148,7 +149,7 @@ CREATE TABLE `registrations` (
+@@ -148,7 +164,7 @@ CREATE TABLE `registrations` (
  
  -- Tables below have foreign key constraints, so are created after all other tables.
  
@@ -123,7 +137,7 @@ index f9705d01..783c371e 100644
    `id` bigint(20) NOT NULL AUTO_INCREMENT,
    `registrationID` bigint(20) NOT NULL,
    `serial` varchar(255) NOT NULL,
-@@ -163,7 +164,7 @@ CREATE TABLE `certificates` (
+@@ -163,7 +179,7 @@ CREATE TABLE `certificates` (
    CONSTRAINT `regId_certificates` FOREIGN KEY (`registrationID`) REFERENCES `registrations` (`id`) ON DELETE NO ACTION ON UPDATE NO ACTION
  ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
  
@@ -132,7 +146,7 @@ index f9705d01..783c371e 100644
    `id` bigint(20) NOT NULL AUTO_INCREMENT,
    `setHash` binary(32) NOT NULL,
    `orderID` bigint(20) NOT NULL,
-@@ -177,7 +178,7 @@ CREATE TABLE `orderFqdnSets` (
+@@ -177,7 +193,7 @@ CREATE TABLE `orderFqdnSets` (
    CONSTRAINT `orderFqdnSets_registrationID_registrations` FOREIGN KEY (`registrationID`) REFERENCES `registrations` (`id`) ON DELETE NO ACTION ON UPDATE NO ACTION
  ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
  
@@ -141,7 +155,7 @@ index f9705d01..783c371e 100644
    `id` bigint(20) NOT NULL AUTO_INCREMENT,
    `registrationID` bigint(20) NOT NULL,
    `serial` varchar(255) NOT NULL,
-@@ -191,7 +192,7 @@ CREATE TABLE `precertificates` (
+@@ -191,7 +207,7 @@ CREATE TABLE `precertificates` (
    CONSTRAINT `regId_precertificates` FOREIGN KEY (`registrationID`) REFERENCES `registrations` (`id`) ON DELETE NO ACTION ON UPDATE NO ACTION
  ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
  
@@ -150,7 +164,7 @@ index f9705d01..783c371e 100644
    `id` bigint(20) NOT NULL AUTO_INCREMENT,
    `orderID` bigint(20) NOT NULL,
    `reversedName` varchar(253) CHARACTER SET ascii NOT NULL,
-@@ -201,7 +202,9 @@ CREATE TABLE `requestedNames` (
+@@ -201,7 +217,9 @@ CREATE TABLE `requestedNames` (
    CONSTRAINT `orderID_orders` FOREIGN KEY (`orderID`) REFERENCES `orders` (`id`) ON DELETE CASCADE
  ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
  
@@ -161,7 +175,7 @@ index f9705d01..783c371e 100644
    `id` bigint(20) NOT NULL AUTO_INCREMENT,
    `registrationID` bigint(20) NOT NULL,
    `serial` varchar(255) NOT NULL,
-@@ -223,15 +226,71 @@ DROP TABLE `precertificates`
+@@ -223,15 +241,71 @@ DROP TABLE `precertificates`
  DROP TABLE `requestedNames`
  DROP TABLE `serials`
  
