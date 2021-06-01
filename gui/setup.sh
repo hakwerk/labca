@@ -12,5 +12,6 @@ if [ ! -e bin/labca ]; then
 fi
 
 [ -e /bin/ip ] || (apt update && apt install -y iproute2)
+[ -e /bin/zip ] || (apt update && apt install -y zip)
 
 bin/labca

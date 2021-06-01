@@ -711,6 +711,12 @@
                 }
             });
 
+            $(".backup-restore").each(function() {
+                if ($(this).parent().parent().find("td").eq(0).text().startsWith("dbdata-") ) {
+                    $(this).addClass("hidden");
+                }
+            });
+
             $("#root-details").on('show.bs.collapse', function() {
                 $("#root-show").hide();
                 $("#root-hide").removeClass("hidden").show();

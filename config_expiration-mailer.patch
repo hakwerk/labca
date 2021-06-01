@@ -1,5 +1,5 @@
 diff --git a/test/config/expiration-mailer.json b/test/config/expiration-mailer.json
-index 566585628..09ff81a2c 100644
+index 4519fe4d..f52a408c 100644
 --- a/test/config/expiration-mailer.json
 +++ b/test/config/expiration-mailer.json
 @@ -13,6 +13,11 @@
@@ -14,12 +14,11 @@ index 566585628..09ff81a2c 100644
      "tls": {
        "caCertFile": "test/grpc-creds/minica.pem",
        "certFile": "test/grpc-creds/expiration-mailer.boulder/cert.pem",
-@@ -29,5 +34,10 @@
-   "syslog": {
-     "stdoutlevel": 6,
-     "sysloglevel": 6
+@@ -33,5 +38,9 @@
+   "beeline": {
+       "mute": true,
+       "dataset": "Test"
 +  },
-+
 +  "common": {
 +    "dnsTimeout": "3s",
 +    "dnsAllowLoopbackAddresses": true
