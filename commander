@@ -190,7 +190,13 @@ case $txt in
     halt
     ;;
 "version-update")
-    /home/labca/labca/install &>>$LOGFILE
+    cd $dn
+    branch="$(git symbolic-ref --short HEAD 2>/dev/null)" || branch="(none)"
+    if [ "$branch" == "master" ] || [ "$branch" == "main" ] || [ "$branch" == "(none)" ]; then
+        /home/labca/labca/install &>>$LOGFILE
+    else
+        /home/labca/labca/install -b $branch &>>$LOGFILE
+    fi
     ;;
 *)
     echo "Unknown command '$txt'. ERROR!"
