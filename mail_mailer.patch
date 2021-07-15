@@ -1,8 +1,8 @@
 diff --git a/mail/mailer.go b/mail/mailer.go
-index bb5bacaf2..946992dca 100644
+index 864cdbd51..21b2417f4 100644
 --- a/mail/mailer.go
 +++ b/mail/mailer.go
-@@ -20,10 +20,14 @@ import (
+@@ -21,10 +21,14 @@ import (
  	"time"
  
  	"github.com/jmhodges/clock"
@@ -17,7 +17,7 @@ index bb5bacaf2..946992dca 100644
  )
  
  type idGenerator interface {
-@@ -121,6 +125,7 @@ func New(
+@@ -122,6 +126,7 @@ func New(
  	username,
  	password string,
  	rootCAs *x509.CertPool,
@@ -25,7 +25,7 @@ index bb5bacaf2..946992dca 100644
  	from mail.Address,
  	logger blog.Logger,
  	stats prometheus.Registerer,
-@@ -140,6 +145,7 @@ func New(
+@@ -141,6 +146,7 @@ func New(
  			server:   server,
  			port:     port,
  			rootCAs:  rootCAs,
@@ -33,7 +33,7 @@ index bb5bacaf2..946992dca 100644
  		},
  		log:              logger,
  		from:             from,
-@@ -180,7 +186,7 @@ func (m *MailerImpl) generateMessage(to []string, subject, body string) ([]byte,
+@@ -181,7 +187,7 @@ func (m *MailerImpl) generateMessage(to []string, subject, body string) ([]byte,
  		fmt.Sprintf("To: %s", strings.Join(addrs, ", ")),
  		fmt.Sprintf("From: %s", m.from.String()),
  		fmt.Sprintf("Subject: %s", subject),
@@ -42,7 +42,7 @@ index bb5bacaf2..946992dca 100644
  		fmt.Sprintf("Message-Id: <%s.%s.%s>", now.Format("20060102T150405"), mid.String(), m.from.Address),
  		"MIME-Version: 1.0",
  		"Content-Type: text/plain; charset=UTF-8",
-@@ -237,23 +243,32 @@ func (m *MailerImpl) Connect() error {
+@@ -238,23 +244,32 @@ func (m *MailerImpl) Connect() error {
  type dialerImpl struct {
  	username, password, server, port string
  	rootCAs                          *x509.CertPool

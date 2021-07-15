@@ -1,36 +1,36 @@
 diff --git a/cmd/notify-mailer/main.go b/cmd/notify-mailer/main.go
-index f4a25a78..68b23dc7 100644
+index fa2aac74e..08430ee10 100644
 --- a/cmd/notify-mailer/main.go
 +++ b/cmd/notify-mailer/main.go
-@@ -38,6 +38,7 @@ type mailer struct {
- 	destinations  []recipient
+@@ -37,6 +37,7 @@ type mailer struct {
+ 	recipients    []recipient
  	targetRange   interval
  	sleepInterval time.Duration
 +	pa            *policy.AuthorityImpl
  }
  
- // interval defines a range of email addresses to send to, alphabetically.
-@@ -147,7 +148,7 @@ func (m *mailer) run() error {
- 			m.log.Debugf("skipping %q: out of target range")
+ // interval defines a range of email addresses to send to in alphabetical order.
+@@ -151,7 +152,7 @@ func (m *mailer) run() error {
  			continue
  		}
+ 
 -		if err := policy.ValidEmail(address); err != nil {
 +		if err := m.pa.ValidEmail(address); err != nil {
- 			m.log.Infof("skipping %q: %s", address, err)
+ 			m.log.Infof("Skipping %q due to policy violation: %s", address, err)
  			continue
  		}
-@@ -410,7 +411,9 @@ func main() {
- 			cmd.PasswordConfig
+@@ -477,7 +478,9 @@ func main() {
+ 		NotifyMailer struct {
+ 			DB cmd.DBConfig
  			cmd.SMTPConfig
- 			Features map[string]bool
 +			cmd.HostnamePolicyConfig
  		}
 +		PA cmd.PAConfig
  		Syslog cmd.SyslogConfig
  	}
- 	configFile := flag.String("config", "", "File containing a JSON config.")
-@@ -464,6 +467,14 @@ func main() {
- 		end:   *end,
+ 
+@@ -531,6 +534,14 @@ func main() {
+ 		log.Infof("While reading the recipient list file %s", probs)
  	}
  
 +	// Validate PA config and set defaults if needed
@@ -43,8 +43,8 @@ index f4a25a78..68b23dc7 100644
 +
  	var mailClient bmail.Mailer
  	if *dryRun {
- 		log.Infof("Doing a dry run.")
-@@ -477,6 +488,7 @@ func main() {
+ 		log.Infof("Starting %s in dry-run mode", cmd.VersionString())
+@@ -546,6 +557,7 @@ func main() {
  			cfg.NotifyMailer.Username,
  			smtpPassword,
  			nil,
@@ -52,9 +52,9 @@ index f4a25a78..68b23dc7 100644
  			*address,
  			log,
  			metrics.NoopRegisterer,
-@@ -494,6 +506,7 @@ func main() {
- 		emailTemplate: template,
- 		targetRange:   targetRange,
+@@ -566,6 +578,7 @@ func main() {
+ 			end:   *end,
+ 		},
  		sleepInterval: *sleep,
 +		pa:            pa,
  	}

@@ -24,7 +24,7 @@ dockerComposeVersion="1.28.5"
 
 labcaUrl="https://github.com/hakwerk/labca/"
 boulderUrl="https://github.com/letsencrypt/boulder/"
-boulderTag="release-2021-06-01"
+boulderTag="release-2021-07-12"
 
 #
 # Color configuration
@@ -544,6 +544,9 @@ config_boulder() {
     sudo -u labca -H patch -p1 < $cloneDir/notify-mailer_main.patch &>>$installLog
     cp cmd/notify-mailer/main.go "$boulderLabCADir/.backup/"
 
+    sudo -u labca -H patch -p1 < $cloneDir/contact-auditor_main.patch &>>$installLog
+    cp cmd/contact-auditor/main.go "$boulderLabCADir/.backup/"
+
     sudo -u labca -H patch -p1 < $cloneDir/bad-key-revoker_main.patch &>>$installLog
     cp cmd/bad-key-revoker/main.go "$boulderLabCADir/.backup/"
 
@@ -631,6 +634,7 @@ config_boulder() {
 
     rm test-ca2.pem
     ([ -e mock-vendor.go ] && rm mock-vendor.go) || /bin/true
+    ([ -e test-tools.go ] && rm test-tools.go) || /bin/true
 
     local have_config=$(grep restarted $adminDir/data/config.json | grep true)
     if [ "$have_config" != "" ]; then
