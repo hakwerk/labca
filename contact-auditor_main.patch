@@ -1,0 +1,26 @@
+diff --git a/cmd/contact-auditor/main.go b/cmd/contact-auditor/main.go
+index 88792e42a..26dfed7e5 100644
+--- a/cmd/contact-auditor/main.go
++++ b/cmd/contact-auditor/main.go
+@@ -12,6 +12,7 @@ import (
+ 	"time"
+ 
+ 	"github.com/go-sql-driver/mysql"
++	"github.com/letsencrypt/boulder/core"
+ 	"github.com/letsencrypt/boulder/cmd"
+ 	blog "github.com/letsencrypt/boulder/log"
+ 	"github.com/letsencrypt/boulder/policy"
+@@ -49,9 +50,12 @@ func validateContacts(id int64, createdAt string, contacts []string) error {
+ 		fmt.Fprintf(&probsBuff, "%d\t%s\tvalidation\t%q\t%q\n", id, createdAt, contact, prob)
+ 	}
+ 
++	var pa *policy.AuthorityImpl
++	pa, _ = policy.New(map[core.AcmeChallenge]bool{})
++
+ 	for _, contact := range contacts {
+ 		if strings.HasPrefix(contact, "mailto:") {
+-			err := policy.ValidEmail(strings.TrimPrefix(contact, "mailto:"))
++			err := pa.ValidEmail(strings.TrimPrefix(contact, "mailto:"))
+ 			if err != nil {
+ 				writeProb(contact, err.Error())
+ 			}

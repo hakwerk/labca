@@ -24,7 +24,7 @@ dockerComposeVersion="1.28.5"
 
 labcaUrl="https://github.com/hakwerk/labca/"
 boulderUrl="https://github.com/letsencrypt/boulder/"
-boulderTag="release-2021-06-01"
+boulderTag="release-2021-07-12"
 
 #
 # Color configuration
@@ -544,6 +544,9 @@ config_boulder() {
     sudo -u labca -H patch -p1 < $cloneDir/notify-mailer_main.patch &>>$installLog
     cp cmd/notify-mailer/main.go "$boulderLabCADir/.backup/"
 
+    sudo -u labca -H patch -p1 < $cloneDir/contact-auditor_main.patch &>>$installLog
+    cp cmd/contact-auditor/main.go "$boulderLabCADir/.backup/"
+
     sudo -u labca -H patch -p1 < $cloneDir/bad-key-revoker_main.patch &>>$installLog
     cp cmd/bad-key-revoker/main.go "$boulderLabCADir/.backup/"
 
@@ -573,7 +576,7 @@ config_boulder() {
     cp sa/_db/migrations/20210223140000_CombinedSchema.sql "$boulderLabCADir/.backup/"
 
     mkdir -p $baseDir/backup
-    [ -z "$(docker ps | grep boulder_bmysql_1)" ] || docker exec -it boulder_bmysql_1 mysqldump boulder_sa_integration >$baseDir/backup/dbdata-${runId}.sql
+    [ -z "$(docker ps | grep boulder_bmysql_1)" ] || docker exec -i boulder_bmysql_1 mysqldump boulder_sa_integration >$baseDir/backup/dbdata-${runId}.sql
 
     cd "$boulderLabCADir"
     sed -i -e "s/test-ca2.pem/test-ca.pem/" config/ocsp-responder.json
@@ -631,6 +634,7 @@ config_boulder() {
 
     rm test-ca2.pem
     ([ -e mock-vendor.go ] && rm mock-vendor.go) || /bin/true
+    ([ -e test-tools.go ] && rm test-tools.go) || /bin/true
 
     local have_config=$(grep restarted $adminDir/data/config.json | grep true)
     if [ "$have_config" != "" ]; then
@@ -722,7 +726,7 @@ startup() {
 
     wait_up $PS_MYSQL &>>$installLog
     wait_up $PS_LABCA &>>$installLog
-    docker exec -it boulder_bmysql_1 mysql_upgrade &>>$installLog
+    docker exec -i boulder_bmysql_1 mysql_upgrade &>>$installLog
     [ -f "$boulderLabCADir/setup_complete" ] && wait_up $PS_BOULDER $PS_BOULDER_COUNT &>>$installLog || /bin/true
 
     msg_ok "$msg"
