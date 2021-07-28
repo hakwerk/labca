@@ -394,6 +394,9 @@ install_extra() {
     apt update &>>$installLog
     install_pkg "docker-ce"
 
+    # Make sure the labca user has docker permissions
+    usermod -aG docker labca
+
     msg_info "Install binary 'docker-compose'"
     local dcver=""
     [ -x /usr/local/bin/docker-compose ] && dcver="`/usr/local/bin/docker-compose --version`"
