@@ -83,17 +83,19 @@ func main() {
 	if len(c.Common.DNSResolver) != 0 {
 		c.Mailer.DNSResolvers = append(c.Mailer.DNSResolvers, c.Common.DNSResolver)
 	}
+	servers, err := bdns.NewStaticProvider(c.Mailer.DNSResolvers)
+	cmd.FailOnError(err, "Couldn't parse static DNS server(s)")
 	if !c.Common.DNSAllowLoopbackAddresses {
 		r := bdns.New(
 			dnsTimeout,
-			bdns.NewStaticProvider(c.Mailer.DNSResolvers),
+			servers,
 			scope,
 			clk,
 			dnsTries,
 			logger)
 		resolver = r
 	} else {
-		r := bdns.NewTest(dnsTimeout, bdns.NewStaticProvider(c.Mailer.DNSResolvers), scope, clk, dnsTries, logger)
+		r := bdns.NewTest(dnsTimeout, servers, scope, clk, dnsTries, logger)
 		resolver = r
 	}
 

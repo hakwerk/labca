@@ -1,9 +1,9 @@
 diff --git a/docker-compose.yml b/docker-compose.yml
-index ec5150a2a..ea23aa838 100644
+index 713667d60..0a384c8ab 100644
 --- a/docker-compose.yml
 +++ b/docker-compose.yml
 @@ -4,10 +4,11 @@ services:
-     image: &boulder_image letsencrypt/boulder-tools:${BOULDER_TOOLS_TAG:-go1.16.5_2021-06-11}
+     image: &boulder_image letsencrypt/boulder-tools:${BOULDER_TOOLS_TAG:-go1.16.6_2021-07-12}
      environment:
        FAKE_DNS: 10.77.77.77
 -      BOULDER_CONFIG_DIR: test/config
