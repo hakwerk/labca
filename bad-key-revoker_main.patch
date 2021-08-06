@@ -1,16 +1,16 @@
 diff --git a/cmd/bad-key-revoker/main.go b/cmd/bad-key-revoker/main.go
-index a78efee19..1c08b7035 100644
+index 2d6d17f16..e09948cfc 100644
 --- a/cmd/bad-key-revoker/main.go
 +++ b/cmd/bad-key-revoker/main.go
-@@ -14,6 +14,7 @@ import (
- 	"time"
+@@ -15,6 +15,7 @@ import (
  
  	"github.com/honeycombio/beeline-go"
+ 	"github.com/jmhodges/clock"
 +	"github.com/letsencrypt/boulder/bdns"
  	"github.com/letsencrypt/boulder/cmd"
  	"github.com/letsencrypt/boulder/core"
  	"github.com/letsencrypt/boulder/db"
-@@ -345,6 +346,9 @@ func main() {
+@@ -348,6 +349,9 @@ func main() {
  			TLS       cmd.TLSConfig
  			RAService *cmd.GRPCClientConfig
  
@@ -20,7 +20,7 @@ index a78efee19..1c08b7035 100644
  			// MaximumRevocations specifies the maximum number of certificates associated with
  			// a key hash that bad-key-revoker will attempt to revoke. If the number of certificates
  			// is higher than MaximumRevocations bad-key-revoker will error out and refuse to
-@@ -372,6 +376,12 @@ func main() {
+@@ -375,6 +379,12 @@ func main() {
  
  		Syslog  cmd.SyslogConfig
  		Beeline cmd.BeelineConfig
@@ -33,7 +33,7 @@ index a78efee19..1c08b7035 100644
  	}
  	configPath := flag.String("config", "", "File path to the configuration file for this service")
  	flag.Parse()
-@@ -417,6 +427,30 @@ func main() {
+@@ -424,6 +434,32 @@ func main() {
  	cmd.FailOnError(err, "Failed to load credentials and create gRPC connection to RA")
  	rac := rapb.NewRegistrationAuthorityClient(conn)
  
@@ -47,24 +47,26 @@ index a78efee19..1c08b7035 100644
 +	if len(config.Common.DNSResolver) != 0 {
 +		config.BadKeyRevoker.DNSResolvers = append(config.BadKeyRevoker.DNSResolvers, config.Common.DNSResolver)
 +	}
++	servers, err := bdns.NewStaticProvider(config.BadKeyRevoker.DNSResolvers)
++	cmd.FailOnError(err, "Couldn't parse static DNS server(s)")
 +	if !config.Common.DNSAllowLoopbackAddresses {
 +		r := bdns.New(
 +			dnsTimeout,
-+			bdns.NewStaticProvider(config.BadKeyRevoker.DNSResolvers),
++			servers,
 +			scope,
 +			clk,
 +			dnsTries,
 +			logger)
 +		resolver = r
 +	} else {
-+		r := bdns.NewTest(dnsTimeout, bdns.NewStaticProvider(config.BadKeyRevoker.DNSResolvers), scope, clk, dnsTries, logger)
++		r := bdns.NewTest(dnsTimeout, servers, scope, clk, dnsTries, logger)
 +		resolver = r
 +	}
 +
  	var smtpRoots *x509.CertPool
  	if config.BadKeyRevoker.Mailer.SMTPTrustedRootFile != "" {
  		pem, err := ioutil.ReadFile(config.BadKeyRevoker.Mailer.SMTPTrustedRootFile)
-@@ -438,6 +472,7 @@ func main() {
+@@ -445,6 +481,7 @@ func main() {
  		config.BadKeyRevoker.Mailer.Username,
  		smtpPassword,
  		smtpRoots,

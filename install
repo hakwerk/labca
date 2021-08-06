@@ -24,7 +24,7 @@ dockerComposeVersion="1.28.5"
 
 labcaUrl="https://github.com/hakwerk/labca/"
 boulderUrl="https://github.com/letsencrypt/boulder/"
-boulderTag="release-2021-07-12"
+boulderTag="release-2021-08-02"
 
 #
 # Color configuration
@@ -393,6 +393,9 @@ install_extra() {
     add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/${distrib} $(lsb_release -cs) stable" &>>$installLog
     apt update &>>$installLog
     install_pkg "docker-ce"
+
+    # Make sure the labca user has docker permissions
+    usermod -aG docker labca
 
     msg_info "Install binary 'docker-compose'"
     local dcver=""
