@@ -186,8 +186,16 @@ func (cfg *SetupConfig) Validate(orgRequired bool) bool {
 		cfg.Errors["LockdownDomains"] = "Please enter one or more domains that this PKI host is locked down to"
 	}
 
+	if cfg.DomainMode == "lockdown" && strings.HasPrefix(cfg.LockdownDomains, ".") {
+		cfg.Errors["LockdownDomains"] = "Domain should not start with a dot"
+	}
+
 	if cfg.DomainMode == "whitelist" && strings.TrimSpace(cfg.WhitelistDomains) == "" {
 		cfg.Errors["WhitelistDomains"] = "Please enter one or more domains that are whitelisted for this PKI host"
+	}
+
+	if cfg.DomainMode == "whitelist" && strings.HasPrefix(cfg.WhitelistDomains, ".") {
+		cfg.Errors["WhitelistDomains"] = "Domain should not start with a dot"
 	}
 
 	return len(cfg.Errors) == 0
@@ -234,8 +242,34 @@ func errorHandler(w http.ResponseWriter, r *http.Request, err error, status int)
 		}
 		fmt.Print(strings.Join(lines, "\n"))
 
-		render(w, r, "error", map[string]interface{}{"Message": "Some unexpected error occurred!"})
-		// TODO: send email eventually with info on the error
+		if viper.GetBool("config.complete") {
+			render(w, r, "error", map[string]interface{}{"Message": "Some unexpected error occurred!"})
+		} else {
+			// ONLY in the setup phase to prevent leaking too much details to users
+			var FileErrors []interface{}
+			data := getLog(w, r, "cert")
+			if data != "" {
+				FileErrors = append(FileErrors, map[string]interface{}{"FileName": "/etc/nginx/ssl/acme_tiny.log", "Content": data})
+			}
+			data = getLog(w, r, "commander")
+			if data != "" {
+				FileErrors = append(FileErrors, map[string]interface{}{"FileName": "/home/labca/logs/commander.log", "Content": data})
+			}
+			data = getLog(w, r, "labca-notail")
+			if data != "" {
+				FileErrors = append(FileErrors, map[string]interface{}{"FileName": "docker-compose logs labca", "Content": data})
+			}
+			data = getLog(w, r, "boulder-notail")
+			if data != "" {
+				FileErrors = append(FileErrors, map[string]interface{}{"FileName": "docker-compose logs boulder", "Content": data})
+			}
+			data = getLog(w, r, "labca-err")
+			if data != "" {
+				FileErrors = append(FileErrors, map[string]interface{}{"FileName": "/var/log/labca.err", "Content": data})
+			}
+
+			render(w, r, "error", map[string]interface{}{"Message": "Some unexpected error occurred!", "FileErrors": FileErrors})
+		}
 	}
 }
 

@@ -1,4 +1,13 @@
 {{ define "body" }}
     <h3>OOPS</h3>
     <p>{{ .Message }}</p>
+    {{ if .FileErrors }}
+    <br/>
+    <h4>Diagnostics</h4>
+    <p>These log files might help you determine what the problem is:</p>
+        {{ range $item := .FileErrors }}
+            <p><b>{{ $item.FileName }}</b></p>
+            <pre>{{ $item.Content }}</pre>
+        {{ end }}
+    {{ end }}
 {{ end }}

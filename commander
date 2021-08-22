@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-set -e
+set -euo pipefail
 
 LOGFILE=/home/labca/logs/commander.log
 
@@ -18,8 +18,15 @@ function wait_server() {
 
     local status=0
     local cnt=0
+
+    set +e
+    res=$(curl -o /dev/null -sSL --head --write-out '%{http_code}\n' $url 2>&1)
+    if [ $? -ne 0 ]; then
+        echo -n $res
+    fi
+    set -e
     while [ $cnt -lt 40 ] && [ "$status" != "200" ]; do
-        status=$(curl -o /dev/null -sSL --head --write-out '%{http_code}\n' $url)
+        status=$(curl -o /dev/null -sSL --head --write-out '%{http_code}\n' $url &>>$LOGFILE)
         let cnt=$cnt+1
         if [ "$status" != "200" ]; then
             sleep 5
@@ -70,12 +77,20 @@ case $txt in
     service nginx restart
     ;;
 "log-cert")
-    tail -200 /etc/nginx/ssl/acme_tiny.log
+    [ -f /etc/nginx/ssl/acme_tiny.log ] && tail -200 /etc/nginx/ssl/acme_tiny.log || /bin/true
+    exit 0
+    ;;
+"log-commander")
+    [ -f $LOGFILE ] && tail -200 $LOGFILE || /bin/true
     exit 0
     ;;
 "log-boulder")
     cd /home/labca/boulder
     docker-compose logs -f --no-color --tail=50 boulder
+    ;;
+"log-boulder-notail")
+    cd /home/labca/boulder
+    docker-compose logs --no-color --tail=50 boulder
     ;;
 "log-audit")
     cd /home/labca/boulder
@@ -92,11 +107,19 @@ case $txt in
     cd /home/labca/boulder
     docker-compose logs -f --no-color --tail=50 labca
     ;;
+"log-labca-notail")
+    cd /home/labca/boulder
+    docker-compose logs --no-color --tail=50 labca
+    ;;
+"log-labca-err")
+    [ -f /var/log/labca.err ] && tail -200 /var/log/labca.err || /bin/true
+    exit 0
+    ;;
 "log-web")
     tail -f -n 50 /var/log/nginx/access.log
     ;;
 "log-weberr")
-    tail -200 /var/log/nginx/error.log
+    [ -f /var/log/nginx/error.log ] && tail -200 /var/log/nginx/error.log || /bin/true
     exit 0
     ;;
 "log-components")
