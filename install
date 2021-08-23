@@ -553,6 +553,9 @@ config_boulder() {
     sudo -u labca -H patch -p1 < $cloneDir/bad-key-revoker_main.patch &>>$installLog
     cp cmd/bad-key-revoker/main.go "$boulderLabCADir/.backup/"
 
+    sudo -u labca -H patch -p1 < $cloneDir/log-validator_main.patch &>>$installLog
+    cp cmd/log-validator/main.go "$boulderLabCADir/.backup/"
+
     sudo -u labca -H patch -p1 -o "$boulderLabCADir/entrypoint.sh" < $cloneDir/entrypoint.patch &>>$installLog
     sudo -u labca -H patch -p1 -o "$boulderLabCADir/startservers.py" < $cloneDir/startservers.patch &>>$installLog
     sudo -u labca -H patch -p1 < $cloneDir/startservers.patch &>>$installLog
