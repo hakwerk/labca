@@ -190,7 +190,13 @@ $(function() {
         $("#restarting").show();
         $(window).resize();
 
-        var args = window.location.href.split('?')[1].split('=');
+        var args = [ "unknown" ];
+        if (window.location.href.indexOf('?') > 0 ) {
+            var tmp = window.location.href.split('?');
+            if (tmp.length > 1) {
+                args = tmp[1].split('=');
+            }
+        }
         var secret = "";
         if (args[0] == "restart") {
             secret = args[1];
@@ -203,14 +209,14 @@ $(function() {
             data: {
                 token: secret,
             },
-            timeout: 3000
+            timeout: 30000
         })
         .done(function(data) {
             clearInterval(pollTimer);
             window.location.href = baseUrl + "/setup";
         })
         .fail(function(xhr, status, err) {
-            if (err === "timeout") {
+            if (err === "timeout" || err === "Bad Gateway") {
                 // Assume that the restart was initiated... Wait for server to be available again.
                 var ctr = 0;
                 pollTimer = setInterval(pollServer, 3000);

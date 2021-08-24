@@ -1793,7 +1793,7 @@ func _setupBaseConfig(w http.ResponseWriter, r *http.Request) bool {
 }
 
 func setupHandler(w http.ResponseWriter, r *http.Request) {
-	if viper.GetBool("config.complete") == true {
+	if viper.GetBool("config.complete") {
 		render(w, r, "index:manage", map[string]interface{}{"Message": template.HTML("Setup already completed! Go <a href=\"" + r.Header.Get("X-Request-Base") + "/\">home</a>")})
 		return
 	}
@@ -1890,6 +1890,13 @@ func finalHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Header.Get("X-Requested-With") == "XMLHttpRequest" {
 		render(w, r, "index", map[string]interface{}{"Message": "Retry OK"})
 	} else {
+		t := viper.GetTime("config.cert_requested")
+		if !t.IsZero() && t.After(time.Now().Add(-5*time.Minute)) {
+			render(w, r, "polling:manage", map[string]interface{}{"Progress": _progress("polling"), "HelpText": _helptext("polling")})
+			return
+		}
+		viper.Set("config.cert_requested", time.Now())
+		viper.WriteConfig()
 		// 9. Setup our own web certificate
 		if !_hostCommand(w, r, "acme-request") {
 			http.Redirect(w, r, r.Header.Get("X-Request-Base")+"/logs/cert", http.StatusSeeOther)
