@@ -20,7 +20,7 @@ function wait_server() {
     local cnt=0
 
     set +e
-    res=$(curl -o /dev/null -sSL --head --write-out '%{http_code}\n' $url 2>&1)
+    res=$(curl -o /dev/null -sSLk --head --write-out '%{http_code}\n' $url 2>&1)
     if [ $? -ne 0 ]; then
         echo -n $res
     fi
@@ -95,7 +95,7 @@ case $txt in
 "log-audit")
     cd /home/labca/boulder
     docker-compose logs --no-color boulder | grep "\[AUDIT\]" | grep -v "grpc: parseServiceConfig error unmarshaling  due to unexpected end of JSON input" | tail -50
-    docker-compose logs -f --no-color --tail=0 boulder
+    docker-compose logs -f --no-color --tail=0 boulder | grep "\[AUDIT\]"
     ;;
 "log-activity")
     cd /home/labca/boulder
