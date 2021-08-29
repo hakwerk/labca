@@ -218,7 +218,7 @@ func getSession(w http.ResponseWriter, r *http.Request) *sessions.Session {
 }
 
 func errorHandler(w http.ResponseWriter, r *http.Request, err error, status int) {
-	log.Printf("errorHandler: %v", err)
+	log.Printf("errorHandler: err=%v\n", err)
 
 	w.WriteHeader(status)
 
@@ -374,7 +374,7 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 			RequestBase: r.Header.Get("X-Request-Base"),
 		}
 
-		if reg.Validate(false, false) == false {
+		if !reg.Validate(false, false) {
 			render(w, r, "login", map[string]interface{}{"User": reg, "IsLogin": true})
 			return
 		}
@@ -618,7 +618,7 @@ func (cfg *EmailConfig) Validate() bool {
 		cfg.Errors["EmailPwd"] = "Could not encrypt this password: " + err.Error()
 	}
 
-	if cfg.DoEmail == false {
+	if !cfg.DoEmail {
 		return len(cfg.Errors) == 0
 	}
 
@@ -979,7 +979,7 @@ func _managePost(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	if !actionKnown {
-		errorHandler(w, r, fmt.Errorf("Unknown manage action '%s'", action), http.StatusBadRequest)
+		errorHandler(w, r, fmt.Errorf("unknown manage action '%s'", action), http.StatusBadRequest)
 		return
 	}
 
@@ -1198,7 +1198,7 @@ func logsHandler(w http.ResponseWriter, r *http.Request) {
 		wsurl = ""
 		data = getLog(w, r, logType)
 	default:
-		errorHandler(w, r, fmt.Errorf("Unknown log type '%s'", logType), http.StatusBadRequest)
+		errorHandler(w, r, fmt.Errorf("unknown log type '%s'", logType), http.StatusBadRequest)
 		return
 	}
 
@@ -1267,7 +1267,7 @@ func showLog(ws *websocket.Conn, logType string) {
 	scanner := bufio.NewScanner(conn)
 	for scanner.Scan() {
 		msg := scanner.Text()
-		if logType != "audit" || strings.Index(msg, "[AUDIT]") > -1 {
+		if logType != "audit" || strings.Contains(msg, "[AUDIT]") {
 			ws.SetWriteDeadline(time.Now().Add(writeWait))
 			if err := ws.WriteMessage(websocket.TextMessage, []byte(msg)); err != nil {
 				// Probably "websocket: close sent"
@@ -1279,8 +1279,6 @@ func showLog(ws *websocket.Conn, logType string) {
 		wsErrorHandler(err)
 		return
 	}
-
-	return
 }
 
 func reader(ws *websocket.Conn) {
@@ -1334,7 +1332,7 @@ func wsHandler(w http.ResponseWriter, r *http.Request) {
 	case "labca":
 	case "web":
 	default:
-		errorHandler(w, r, fmt.Errorf("Unknown log type '%s'", logType), http.StatusBadRequest)
+		errorHandler(w, r, fmt.Errorf("unknown log type '%s'", logType), http.StatusBadRequest)
 		return
 	}
 
@@ -1432,7 +1430,7 @@ func _certCreate(w http.ResponseWriter, r *http.Request, certBase string, isRoot
 			ci.Certificate = r.Form.Get("certificate")
 			ci.RequestBase = r.Header.Get("X-Request-Base")
 
-			if ci.Validate() == false {
+			if !ci.Validate() {
 				render(w, r, "cert:manage", map[string]interface{}{"CertificateInfo": ci, "Progress": _progress(certBase), "HelpText": _helptext(certBase)})
 				return false
 			}
@@ -1698,7 +1696,7 @@ func _setupAdminUser(w http.ResponseWriter, r *http.Request) bool {
 			RequestBase: r.Header.Get("X-Request-Base"),
 		}
 
-		if reg.Validate(true, false) == false {
+		if !reg.Validate(true, false) {
 			render(w, r, "register:manage", map[string]interface{}{"User": reg, "IsLogin": true, "Progress": _progress("register"), "HelpText": _helptext("register")})
 			return false
 		}
@@ -1761,7 +1759,7 @@ func _setupBaseConfig(w http.ResponseWriter, r *http.Request) bool {
 			RequestBase:      r.Header.Get("X-Request-Base"),
 		}
 
-		if cfg.Validate(false) == false {
+		if !cfg.Validate(false) {
 			render(w, r, "setup:manage", map[string]interface{}{"SetupConfig": cfg, "Progress": _progress("setup"), "HelpText": _helptext("setup")})
 			return false
 		}
@@ -1886,38 +1884,58 @@ func finalHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Don't let the retry mechanism trigger a certificate request and restart!
-	if r.Header.Get("X-Requested-With") == "XMLHttpRequest" {
-		render(w, r, "index", map[string]interface{}{"Message": "Retry OK"})
-	} else {
-		t := viper.GetTime("config.cert_requested")
-		if !t.IsZero() && t.After(time.Now().Add(-5*time.Minute)) {
+	t := viper.GetTime("config.cert_requested")
+	if !t.IsZero() && t.After(time.Now().Add(-5*time.Minute)) {
+		// Too soon
+		if r.Header.Get("X-Requested-With") == "XMLHttpRequest" {
+			w.Header().Set("Content-Type", "application/json")
+			if viper.GetBool("config.error") {
+				viper.Set("config.cert_requested", nil)
+				viper.WriteConfig()
+			}
+			json.NewEncoder(w).Encode(map[string]interface{}{"complete": viper.GetBool("config.complete"), "error": viper.GetBool("config.error")})
+		} else {
 			render(w, r, "polling:manage", map[string]interface{}{"Progress": _progress("polling"), "HelpText": _helptext("polling")})
-			return
 		}
-		viper.Set("config.cert_requested", time.Now())
+		return
+	}
+
+	viper.Set("config.cert_requested", time.Now())
+	if viper.GetBool("config.error") {
+		viper.Set("config.error", false)
+	}
+	viper.WriteConfig()
+	// 9. Setup our own web certificate
+	if !_hostCommand(w, r, "acme-request") {
+		viper.Set("config.error", true)
 		viper.WriteConfig()
-		// 9. Setup our own web certificate
-		if !_hostCommand(w, r, "acme-request") {
-			http.Redirect(w, r, r.Header.Get("X-Request-Base")+"/logs/cert", http.StatusSeeOther)
-			return
-		}
+		http.Redirect(w, r, r.Header.Get("X-Request-Base")+"/logs/cert", http.StatusSeeOther)
+		return
+	}
 
-		// 10. remove the temporary bit from nginx config
-		if !_hostCommand(w, r, "nginx-remove-redirect") {
-			return
-		}
+	// 10. remove the temporary bit from nginx config
+	if !_hostCommand(w, r, "nginx-remove-redirect") {
+		return
+	}
 
-		// 11. reload nginx
-		if !_hostCommand(w, r, "nginx-reload") {
-			return
-		}
+	// 11. reload nginx
+	if !_hostCommand(w, r, "nginx-reload") {
+		return
+	}
 
-		viper.Set("config.complete", true)
-		viper.WriteConfig()
+	viper.Set("config.complete", true)
+	viper.WriteConfig()
 
+	if r.Header.Get("X-Requested-With") == "XMLHttpRequest" {
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]interface{}{"complete": viper.GetBool("config.complete")})
+	} else {
 		render(w, r, "final:manage", map[string]interface{}{"RequestBase": r.Header.Get("X-Request-Base"), "Progress": _progress("final"), "HelpText": _helptext("final")})
 	}
+}
+
+func showErrorHandler(w http.ResponseWriter, r *http.Request) {
+	errorHandler(w, r, nil, http.StatusInternalServerError)
 }
 
 // RangeStructer takes the first argument, which must be a struct, and
@@ -2105,7 +2123,7 @@ func certificateHandler(w http.ResponseWriter, r *http.Request) {
 
 func certRevokeHandler(w http.ResponseWriter, r *http.Request) {
 	if !viper.GetBool("config.complete") {
-		errorHandler(w, r, errors.New("Method not allowed at this point"), http.StatusMethodNotAllowed)
+		errorHandler(w, r, errors.New("method not allowed at this point"), http.StatusMethodNotAllowed)
 		return
 	}
 
@@ -2443,6 +2461,7 @@ func main() {
 	r.HandleFunc("/about", aboutHandler).Methods("GET")
 	r.HandleFunc("/manage", manageHandler).Methods("GET", "POST")
 	r.HandleFunc("/final", finalHandler).Methods("GET")
+	r.HandleFunc("/error", showErrorHandler).Methods("GET")
 	r.HandleFunc("/login", loginHandler).Methods("GET", "POST")
 	r.HandleFunc("/logout", logoutHandler).Methods("GET")
 	r.HandleFunc("/logs/{type}", logsHandler).Methods("GET")

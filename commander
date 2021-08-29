@@ -26,7 +26,7 @@ function wait_server() {
     fi
     set -e
     while [ $cnt -lt 40 ] && [ "$status" != "200" ]; do
-        status=$(curl -o /dev/null -sSL --head --write-out '%{http_code}\n' $url &>>$LOGFILE)
+        status=$(curl -o /dev/null -sSL --head --write-out '%{http_code}\n' $url 2>>$LOGFILE)
         let cnt=$cnt+1
         if [ "$status" != "200" ]; then
             sleep 5

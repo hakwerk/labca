@@ -182,7 +182,6 @@ $(function() {
         positionFooter();
     });
 
-
     $("#restart-button").click(function(evt) {
         $("#pre-restart-1").hide();
         $("#pre-restart-2").hide();
@@ -198,14 +197,22 @@ $(function() {
             }
         }
         var secret = "";
+        var nextPath = "";
         if (args[0] == "restart") {
             secret = args[1];
+            nextPath = "/restart";
         }
 
         var pollTimer;
 
-        var baseUrl = window.location.href.substr(0, window.location.href.indexOf("?")).replace("/wait", "");
-        $.ajax(baseUrl + "/restart", {
+        var baseUrl = window.location.href;
+        if (baseUrl.indexOf("?") > 0) {
+            baseUrl = baseUrl.substr(0, baseUrl.indexOf("?"));
+        }
+        if (baseUrl.endsWith("/wait")) {
+            baseUrl = baseUrl.substr(0, baseUrl.length-5);
+        }
+        $.ajax(baseUrl + nextPath, {
             data: {
                 token: secret,
             },
@@ -216,33 +223,35 @@ $(function() {
             window.location.href = baseUrl + "/setup";
         })
         .fail(function(xhr, status, err) {
-            if (err === "timeout" || err === "Bad Gateway") {
-                // Assume that the restart was initiated... Wait for server to be available again.
-                var ctr = 0;
-                pollTimer = setInterval(pollServer, 3000);
-                pollServer();
+            nextPath = "";
+            // Assume that the restart was initiated... Wait for server to be available again.
+            var ctr = 0;
+            pollTimer = setInterval(pollServer, 3000);
 
-                function pollServer() {
-                    if (ctr > 59) {
+            function pollServer() {
+                if (ctr > 59) {
+                    clearInterval(pollTimer);
+                    $("img#restart-spinner").parent().text("timeout").addClass("error");
+                } else if (ctr < 10) {
+                    // No need to try immediately, the server is restarting
+                    ctr++;
+                } else {
+                    $.ajax(baseUrl + nextPath, {
+                        timeout: 2500
+                    })
+                    .done(function(data) {
                         clearInterval(pollTimer);
-                        $("img#restart-spinner").parent().text("timeout").addClass("error");
-                    } else {
-                        $.ajax(baseUrl + "/setup", {
-                            timeout: 2500
-                        })
-                        .done(function(data) {
+                        window.location.href = baseUrl;
+                    })
+                    .fail(function(xhr, status, err) {
+                        ctr++;
+                        if ((typeof err === 'undefined' || err === "") && status === "error") {
+                            // Probably because the certificate has changed
                             clearInterval(pollTimer);
-                            window.location.href = baseUrl + "/setup";
-                        })
-                        .fail(function(xhr, status, err) {
-                            ctr++;
-                        });
-                    }
+                            window.location.href = baseUrl;
+                        }
+                    });
                 }
-
-            } else {
-                clearInterval(pollTimer);
-                $("img#restart-spinner").parent().text(err).addClass("error");
             }
         });
 
@@ -252,23 +261,37 @@ $(function() {
     if ( $("img#wrapup-spinner").length ) {
         var targetUrl = window.location.href.replace("/setup", "/final");
         var ctr = 0;
-        var pollTimer = setInterval(pollServer, 3000);
-        pollServer();
+        var pollTimer = setInterval(pollServer, 5000);
 
         function pollServer() {
-            if (ctr > 20) {
+            if (ctr > 60) {
                 clearInterval(pollTimer);
                 $("img#wrapup-spinner").parent().text("timeout").addClass("error");
+            } else if (ctr < 5) {
+                // No need to try immediately, the server won't be ready this quick
+                ctr++;
             } else {
                 $.ajax(targetUrl, {
-                    timeout: 2500
+                    timeout: 4500
                 })
                 .done(function(data) {
-                    clearInterval(pollTimer);
-                    window.location.href = targetUrl;
+                    if (data.error) {
+                        clearInterval(pollTimer);
+                        targetUrl = targetUrl.replace("/final", "/error");
+                        window.location.href = targetUrl;
+                    } else if (data.complete) {
+                        clearInterval(pollTimer);
+                        targetUrl = targetUrl.replace("/final", "");
+                        window.location.href = targetUrl;
+                    }
                 })
                 .fail(function(xhr, status, err) {
                     ctr++;
+                    if ((typeof err === 'undefined' || err === "") && status === "error") {
+                        // Probably because the certificate has changed
+                        clearInterval(pollTimer);
+                        window.location.href = targetUrl;
+                    }
                 });
             }
         }
