@@ -520,54 +520,54 @@ config_boulder() {
     msg_info "$msg"
 
     cd "$boulderDir"
-    sudo -u labca -H patch -p1 < $cloneDir/docker-compose.patch &>>$installLog
+    sudo -u labca -H patch -p1 < $cloneDir/patches/docker-compose.patch &>>$installLog
     cp docker-compose.yml "$boulderLabCADir/.backup/"
 
-    sudo -u labca -H patch -p1 < $cloneDir/cmd_shell.patch &>>$installLog
+    sudo -u labca -H patch -p1 < $cloneDir/patches/cmd_shell.patch &>>$installLog
     cp cmd/shell.go "$boulderLabCADir/.backup/"
 
-    sudo -u labca -H patch -p1 < $cloneDir/core_interfaces.patch &>>$installLog
+    sudo -u labca -H patch -p1 < $cloneDir/patches/core_interfaces.patch &>>$installLog
     cp core/interfaces.go "$boulderLabCADir/.backup/"
 
-    sudo -u labca -H patch -p1 < $cloneDir/policy_pa.patch &>>$installLog
+    sudo -u labca -H patch -p1 < $cloneDir/patches/policy_pa.patch &>>$installLog
     cp policy/pa.go "$boulderLabCADir/.backup/"
 
-    sudo -u labca -H patch -p1 < $cloneDir/ra_ra.patch &>>$installLog
+    sudo -u labca -H patch -p1 < $cloneDir/patches/ra_ra.patch &>>$installLog
     cp ra/ra.go "$boulderLabCADir/.backup/"
 
-    sudo -u labca -H patch -p1 < $cloneDir/reloader_reloader.patch &>>$installLog
+    sudo -u labca -H patch -p1 < $cloneDir/patches/reloader_reloader.patch &>>$installLog
     cp reloader/reloader.go "$boulderLabCADir/.backup/"
 
-    sudo -u labca -H patch -p1 < $cloneDir/mail_mailer.patch &>>$installLog
+    sudo -u labca -H patch -p1 < $cloneDir/patches/mail_mailer.patch &>>$installLog
     cp mail/mailer.go "$boulderLabCADir/.backup/"
 
-    sudo -u labca -H patch -p1 < $cloneDir/expiration-mailer_main.patch &>>$installLog
+    sudo -u labca -H patch -p1 < $cloneDir/patches/expiration-mailer_main.patch &>>$installLog
     cp cmd/expiration-mailer/main.go "$boulderLabCADir/.backup/"
 
-    sudo -u labca -H patch -p1 < $cloneDir/notify-mailer_main.patch &>>$installLog
+    sudo -u labca -H patch -p1 < $cloneDir/patches/notify-mailer_main.patch &>>$installLog
     cp cmd/notify-mailer/main.go "$boulderLabCADir/.backup/"
 
-    sudo -u labca -H patch -p1 < $cloneDir/contact-auditor_main.patch &>>$installLog
+    sudo -u labca -H patch -p1 < $cloneDir/patches/contact-auditor_main.patch &>>$installLog
     cp cmd/contact-auditor/main.go "$boulderLabCADir/.backup/"
 
-    sudo -u labca -H patch -p1 < $cloneDir/bad-key-revoker_main.patch &>>$installLog
+    sudo -u labca -H patch -p1 < $cloneDir/patches/bad-key-revoker_main.patch &>>$installLog
     cp cmd/bad-key-revoker/main.go "$boulderLabCADir/.backup/"
 
-    sudo -u labca -H patch -p1 < $cloneDir/log-validator_main.patch &>>$installLog
+    sudo -u labca -H patch -p1 < $cloneDir/patches/log-validator_main.patch &>>$installLog
     cp cmd/log-validator/main.go "$boulderLabCADir/.backup/"
 
-    sudo -u labca -H patch -p1 -o "$boulderLabCADir/entrypoint.sh" < $cloneDir/entrypoint.patch &>>$installLog
-    sudo -u labca -H patch -p1 -o "$boulderLabCADir/startservers.py" < $cloneDir/startservers.patch &>>$installLog
-    sudo -u labca -H patch -p1 < $cloneDir/startservers.patch &>>$installLog
+    sudo -u labca -H patch -p1 -o "$boulderLabCADir/entrypoint.sh" < $cloneDir/patches/entrypoint.patch &>>$installLog
+    sudo -u labca -H patch -p1 -o "$boulderLabCADir/startservers.py" < $cloneDir/patches/startservers.patch &>>$installLog
+    sudo -u labca -H patch -p1 < $cloneDir/patches/startservers.patch &>>$installLog
 
-    sudo -u labca -H patch -p1 -o "$boulderLabCADir/config/ca-a.json" < $cloneDir/test_config_ca_a.patch &>>$installLog
-    sudo -u labca -H patch -p1 -o "$boulderLabCADir/config/ca-b.json" < $cloneDir/test_config_ca_b.patch &>>$installLog
+    sudo -u labca -H patch -p1 -o "$boulderLabCADir/config/ca-a.json" < $cloneDir/patches/test_config_ca_a.patch &>>$installLog
+    sudo -u labca -H patch -p1 -o "$boulderLabCADir/config/ca-b.json" < $cloneDir/patches/test_config_ca_b.patch &>>$installLog
 
-    sudo -u labca -H patch -p1 -o "$boulderLabCADir/config/expiration-mailer.json" < $cloneDir/config_expiration-mailer.patch &>>$installLog
-    sudo -u labca -H patch -p1 -o "$boulderLabCADir/config/notify-mailer.json" < $cloneDir/config_notify-mailer.patch &>>$installLog
-    sudo -u labca -H patch -p1 -o "$boulderLabCADir/config/bad-key-revoker.json" < $cloneDir/config_bad-key-revoker.patch &>>$installLog
-    sudo -u labca -H patch -p1 -o "$boulderLabCADir/config/ocsp-responder.json" < $cloneDir/config_ocsp-responder.patch &>>$installLog
-    sudo -u labca -H patch -p1 -o "$boulderLabCADir/config/publisher.json" < $cloneDir/config_publisher.patch &>>$installLog
+    sudo -u labca -H patch -p1 -o "$boulderLabCADir/config/expiration-mailer.json" < $cloneDir/patches/config_expiration-mailer.patch &>>$installLog
+    sudo -u labca -H patch -p1 -o "$boulderLabCADir/config/notify-mailer.json" < $cloneDir/patches/config_notify-mailer.patch &>>$installLog
+    sudo -u labca -H patch -p1 -o "$boulderLabCADir/config/bad-key-revoker.json" < $cloneDir/patches/config_bad-key-revoker.patch &>>$installLog
+    sudo -u labca -H patch -p1 -o "$boulderLabCADir/config/ocsp-responder.json" < $cloneDir/patches/config_ocsp-responder.patch &>>$installLog
+    sudo -u labca -H patch -p1 -o "$boulderLabCADir/config/publisher.json" < $cloneDir/patches/config_publisher.patch &>>$installLog
 
     sed -i -e "s|https://letsencrypt.org/docs/rate-limits/|http://$LABCA_FQDN/rate-limits|" errors/errors.go &>>$installLog
     cp errors/errors.go "$boulderLabCADir/.backup/"
@@ -578,7 +578,7 @@ config_boulder() {
     mkdir -p "cmd/mail-tester"
     cp $cloneDir/mail-tester.go cmd/mail-tester/main.go
 
-    sudo -u labca -H patch -p1 < $cloneDir/db_migrations.patch &>>$installLog
+    sudo -u labca -H patch -p1 < $cloneDir/patches/db_migrations.patch &>>$installLog
     cp sa/_db/migrations/20210223140000_CombinedSchema.sql "$boulderLabCADir/.backup/"
 
     mkdir -p $baseDir/backup
