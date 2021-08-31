@@ -2,7 +2,7 @@ diff --git a/test/config/ca-b.json b/test/config/ca-b.json
 index 6c7d9d272..4e428bc4a 100644
 --- a/test/config/ca-b.json
 +++ b/test/config/ca-b.json
-@@ -58,19 +58,7 @@
+@@ -60,19 +60,7 @@
            "crlURL": "http://example.com/crl",
            "location": {
              "configFile": "test/test-ca.key-pkcs11.json",
