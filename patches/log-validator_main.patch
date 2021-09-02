@@ -1,0 +1,15 @@
+diff --git a/cmd/log-validator/main.go b/cmd/log-validator/main.go
+index fdab2ac6..bb136880 100644
+--- a/cmd/log-validator/main.go
++++ b/cmd/log-validator/main.go
+@@ -52,8 +52,8 @@ func lineValid(text string) error {
+ 	if strings.Contains(text, errorPrefix) {
+ 		return nil
+ 	}
+-	// Check the extracted checksum against the computed checksum
+-	if computedChecksum := blog.LogLineChecksum(line); checksum != computedChecksum {
++	// Check the extracted checksum against the computed checksum, but ignore "message repeated X times" lines
++	if computedChecksum := blog.LogLineChecksum(line); checksum != computedChecksum && checksum != "message" {
+ 		return fmt.Errorf("%s invalid checksum (expected %q, got %q)", errorPrefix, computedChecksum, checksum)
+ 	}
+ 	return nil

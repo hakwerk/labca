@@ -105,6 +105,12 @@ Some log files to check in case of issues are:
 
 If you get "No valid IP addresses found for <hostname>" in /etc/nginx/ssl/acme_tiny.log, solve it by entering the hostname in your local DNS. Same for "Could not resolve host: <hostname>" in /var/log/labca.err.
 
+When issuing a certificate, LabCA/boulder checks for CAA (Certification Authority Authorization) records in DNS, which specify what CAs are allowed to issue certificates for the domain. If you get an error like "SERVFAIL looking up CAA for internal" or "CAA record for ca01.foo.internal prevents issuance", you can try to add something like this to your DNS domain:
+```
+foo.internal. CAA 0 issue "foo.internal"
+```
+See also the [Let's Encrypt&trade; page on CAA](https://letsencrypt.org/docs/caa/).
+
 ### NOTE
 
 Although LabCA tries to be as robust as possible, use it at your own risk. If you depend on it, make sure that you know what you are doing!

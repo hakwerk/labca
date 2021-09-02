@@ -47,6 +47,9 @@ func _parseLine(line string, loc *time.Location) Activity {
 
 	re := regexp.MustCompile("^.*\\|\\s*(\\S)(\\S+) (\\S+) (\\S+) (.*)$")
 	result := re.FindStringSubmatch(line)
+	if len(result) == 0 {
+		return activity
+	}
 
 	activity.Class = ""
 	if result[1] == "W" {
