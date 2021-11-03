@@ -50,7 +50,6 @@ const (
 )
 
 var (
-	appSession      *sessions.Session
 	restartSecret   string
 	sessionStore    *sessions.CookieStore
 	tmpls           *templates.Templates
@@ -201,22 +200,6 @@ func (cfg *SetupConfig) Validate(orgRequired bool) bool {
 	return len(cfg.Errors) == 0
 }
 
-func getSession(w http.ResponseWriter, r *http.Request) *sessions.Session {
-	if appSession != nil {
-		return appSession
-	}
-
-	session, err := sessionStore.Get(r, "labca")
-	if err != nil {
-		// Create new session
-		session = sessions.NewSession(sessionStore, "labca")
-		session.Save(r, w)
-	}
-
-	appSession = session
-	return appSession
-}
-
 func errorHandler(w http.ResponseWriter, r *http.Request, err error, status int) {
 	log.Printf("errorHandler: err=%v\n", err)
 
@@ -343,7 +326,7 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	session := getSession(w, r)
+	session, _ := sessionStore.Get(r, "labca")
 	var bounceURL string
 	if session.Values["bounce"] == nil {
 		bounceURL = "/"
@@ -395,7 +378,9 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 		}
 
 		session.Values["user"] = reg.Name
-		session.Save(r, w)
+		if err = session.Save(r, w); err != nil {
+			log.Printf("cannot save session: %s\n", err)
+		}
 
 		http.Redirect(w, r, r.Header.Get("X-Request-Base")+bounceURL, http.StatusFound)
 	} else {
@@ -405,7 +390,11 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func logoutHandler(w http.ResponseWriter, r *http.Request) {
-	appSession = nil
+	session, _ := sessionStore.Get(r, "labca")
+	session.Options.MaxAge = -1
+	if err := session.Save(r, w); err != nil {
+		log.Printf("cannot save session: %s\n", err)
+	}
 	http.Redirect(w, r, r.Header.Get("X-Request-Base")+"/", http.StatusFound)
 }
 
@@ -494,7 +483,11 @@ func _accountUpdateHandler(w http.ResponseWriter, r *http.Request) {
 			viper.Set("user.password", string(hash))
 
 			// Forget current session, so user has to login with the new password
-			appSession = nil
+			session, _ := sessionStore.Get(r, "labca")
+			session.Options.MaxAge = -1
+			if err = session.Save(r, w); err != nil {
+				log.Printf("cannot save session: %s\n", err)
+			}
 		}
 
 		viper.WriteConfig()
@@ -1383,7 +1376,7 @@ func _certCreate(w http.ResponseWriter, r *http.Request, certBase string, isRoot
 	}
 
 	if _, err := os.Stat(path + certBase + ".pem"); os.IsNotExist(err) {
-		session := getSession(w, r)
+		session, _ := sessionStore.Get(r, "labca")
 
 		if r.Method == "GET" {
 			ci := _buildCI(r, session, isRoot)
@@ -1453,7 +1446,9 @@ func _certCreate(w http.ResponseWriter, r *http.Request, certBase string, isRoot
 			session.Values["o"] = ci.Organization
 			session.Values["ou"] = ci.OrgUnit
 			session.Values["cn"] = ci.CommonName
-			session.Save(r, w)
+			if err = session.Save(r, w); err != nil {
+				log.Printf("cannot save session: %s\n", err)
+			}
 
 			// Fake the method to GET as we need to continue in the setupHandler() function
 			r.Method = "GET"
@@ -1711,9 +1706,11 @@ func _setupAdminUser(w http.ResponseWriter, r *http.Request) bool {
 		viper.Set("user.password", string(hash))
 		viper.WriteConfig()
 
-		session := getSession(w, r)
+		session, _ := sessionStore.Get(r, "labca")
 		session.Values["user"] = reg.Name
-		session.Save(r, w)
+		if err = session.Save(r, w); err != nil {
+			log.Printf("cannot save session: %s\n", err)
+		}
 
 		// Fake the method to GET as we need to continue in the setupHandler() function
 		r.Method = "GET"
@@ -2370,12 +2367,14 @@ func authorized(next http.Handler) http.Handler {
 		if r.RequestURI == "/login" || strings.Contains(r.RequestURI, "/static/") {
 			next.ServeHTTP(w, r)
 		} else {
-			session := getSession(w, r)
+			session, _ := sessionStore.Get(r, "labca")
 			if session.Values["user"] != nil || (r.RequestURI == "/setup" && viper.Get("user.password") == nil) {
 				next.ServeHTTP(w, r)
 			} else {
 				session.Values["bounce"] = r.RequestURI
-				session.Save(r, w)
+				if err := session.Save(r, w); err != nil {
+					log.Printf("cannot save session: %s\n", err)
+				}
 				http.Redirect(w, r, r.Header.Get("X-Request-Base")+"/login", http.StatusFound)
 			}
 		}
@@ -2449,7 +2448,15 @@ func init() {
 func main() {
 	tmpls.Parse()
 
-	sessionStore = sessions.NewCookieStore([]byte(viper.GetString("keys.auth")), []byte(viper.GetString("keys.enc")))
+	keys_auth, err := base64.StdEncoding.DecodeString(viper.GetString("keys.auth"))
+	if err != nil {
+		log.Fatalf("cannot decode configured 'keys.auth': %s\n", err)
+	}
+	keys_enc, err := base64.StdEncoding.DecodeString(viper.GetString("keys.enc"))
+	if err != nil {
+		log.Fatalf("cannot decode configured 'keys.enc': %s\n", err)
+	}
+	sessionStore = sessions.NewCookieStore(keys_auth, keys_enc)
 	sessionStore.Options = &sessions.Options{
 		Path:     "/",
 		MaxAge:   viper.GetInt("server.session.maxage") * 1,
