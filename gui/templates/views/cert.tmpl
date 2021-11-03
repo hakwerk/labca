@@ -77,7 +77,7 @@
   <input type="hidden" name="cert" value="{{ if .IsRoot }}root{{ else }}issuer{{ end }}">
   <input type="hidden" name="createtype" value="import">
   <p>
-    Here you can import a certificate that was exported from another LabCA instance, either in the .pfx or in the .zip format.<br/>
+    Here you can import a certificate that was exported from another LabCA instance, either in the .pfx (PKCS#12) or in the .zip format.<br/>
     If you have separate key and certificate files, use the
     <a href="#upload" onClick='$(".nav-tabs > li:nth-child(3) > a:nth-child(1)").click()'>Upload</a> tab.
   </p>
