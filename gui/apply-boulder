@@ -55,6 +55,7 @@ if [ "$PKI_EXTENDED_TIMEOUT" == "1" ]; then
     sed -i -e "s/\"timeout\": \"20s\"/\"timeout\": \"40s\"/" config/ra.json
     sed -i -e "s/\"timeout\": \"15s\"/\"timeout\": \"30s\"/" config/ocsp-updater.json
     sed -i -e "s/\"timeout\": \"15s\"/\"timeout\": \"30s\"/" config/orphan-finder.json
+    sed -i -e "s/\"timeout\": \"1s\"/\"timeout\": \"5s\"/" config/health-checker.json
 fi
 
 sed -i -e "s/\"server\": \".*\"/\"server\": \"$PKI_EMAIL_SERVER\"/" config/bad-key-revoker.json

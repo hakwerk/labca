@@ -2,7 +2,7 @@ diff --git a/test/config/expiration-mailer.json b/test/config/expiration-mailer.
 index 4519fe4d..f52a408c 100644
 --- a/test/config/expiration-mailer.json
 +++ b/test/config/expiration-mailer.json
-@@ -13,6 +13,11 @@
+@@ -14,6 +14,11 @@
      "nagCheckInterval": "24h",
      "emailTemplate": "test/example-expiration-template",
      "debugAddr": ":8008",
@@ -14,7 +14,7 @@ index 4519fe4d..f52a408c 100644
      "tls": {
        "caCertFile": "test/grpc-creds/minica.pem",
        "certFile": "test/grpc-creds/expiration-mailer.boulder/cert.pem",
-@@ -33,5 +38,9 @@
+@@ -34,5 +39,9 @@
    "beeline": {
        "mute": true,
        "dataset": "Test"

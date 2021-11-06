@@ -24,7 +24,7 @@ dockerComposeVersion="1.28.5"
 
 labcaUrl="https://github.com/hakwerk/labca/"
 boulderUrl="https://github.com/letsencrypt/boulder/"
-boulderTag="release-2021-08-31"
+boulderTag="release-2021-11-02"
 
 #
 # Color configuration
@@ -515,6 +515,8 @@ config_boulder() {
     [ ! -e "$boulderLabCADir/secrets/smtp_password_PRESERVE" ] || mv "$boulderLabCADir/secrets/smtp_password_PRESERVE" "$boulderLabCADir/secrets/smtp_password"
     chown -R labca:labca "$boulderLabCADir"
 
+    rm -rf authz-filler challtestsrv gsb-test-srv
+
     msg_ok "$msg"
     msg="Configure the boulder application"
     msg_info "$msg"
@@ -591,17 +593,17 @@ config_boulder() {
     sed -i -e "s/test-ca2.pem/test-ca.pem/" config/ra.json
     sed -i -e "s/test-ca2.pem/test-ca.pem/" config/wfe.json
     sed -i -e "s/test-ca2.pem/test-ca.pem/" config/wfe2.json
-    sed -i -e "s|/tmp/intermediate-cert-rsa-a.pem|labca/test-ca.pem|" config/akamai-purger.json
-    sed -i -e "s|/tmp/intermediate-cert-rsa-a.pem|labca/test-ca.pem|" config/ocsp-responder.json
-    sed -i -e "s|/tmp/intermediate-cert-rsa-a.pem|labca/test-ca.pem|" config/ocsp-updater.json
-    sed -i -e "s|/tmp/intermediate-cert-rsa-a.pem|labca/test-ca.pem|" config/publisher.json
-    sed -i -e "s|/tmp/intermediate-cert-rsa-a.pem|labca/test-ca.pem|" config/ra.json
-    sed -i -e "s|/tmp/intermediate-cert-rsa-a.pem|labca/test-ca.pem|" config/wfe.json
-    sed -i -e "s|/tmp/intermediate-cert-rsa-a.pem|labca/test-ca.pem|" config/wfe2.json
-    sed -i -e "s|/tmp/root-cert-rsa.pem|labca/test-root.pem|" config/publisher.json
-    sed -i -e "s|/tmp/root-cert-rsa.pem|labca/test-root.pem|" integration-test.py
-    sed -i -e "s|/tmp/root-cert-rsa.pem|labca/test-root.pem|" helpers.py
-    sed -i -e "s|/tmp/root-cert-rsa.pem|labca/test-root.pem|" v1_integration.py
+    sed -i -e "s|/hierarchy/intermediate-cert-rsa-a.pem|labca/test-ca.pem|" config/akamai-purger.json
+    sed -i -e "s|/hierarchy/intermediate-cert-rsa-a.pem|labca/test-ca.pem|" config/ocsp-responder.json
+    sed -i -e "s|/hierarchy/intermediate-cert-rsa-a.pem|labca/test-ca.pem|" config/ocsp-updater.json
+    sed -i -e "s|/hierarchy/intermediate-cert-rsa-a.pem|labca/test-ca.pem|" config/publisher.json
+    sed -i -e "s|/hierarchy/intermediate-cert-rsa-a.pem|labca/test-ca.pem|" config/ra.json
+    sed -i -e "s|/hierarchy/intermediate-cert-rsa-a.pem|labca/test-ca.pem|" config/wfe.json
+    sed -i -e "s|/hierarchy/intermediate-cert-rsa-a.pem|labca/test-ca.pem|" config/wfe2.json
+    sed -i -e "s|/hierarchy/root-cert-rsa.pem|labca/test-root.pem|" config/publisher.json
+    sed -i -e "s|/hierarchy/root-cert-rsa.pem|labca/test-root.pem|" integration-test.py
+    sed -i -e "s|/hierarchy/root-cert-rsa.pem|labca/test-root.pem|" helpers.py
+    sed -i -e "s|/hierarchy/root-cert-rsa.pem|labca/test-root.pem|" v1_integration.py
     sed -i -e "s/5001/443/g" config/va.json
     sed -i -e "s/5002/80/g" config/va.json
     sed -i -e "s/5001/443/g" config/va-remote-a.json
@@ -663,6 +665,11 @@ config_boulder() {
             export PKI_EMAIL_PORT="9380"
             export PKI_EMAIL_USER="cert-manager@example.com"
             export PKI_EMAIL_FROM="Expiry bot <test@example.com>"
+        fi
+
+        local extended_timeout=$(grep extended_timeout $adminDir/data/config.json | grep true)
+        if [ "$extended_timeout" != "" ]; then
+            export PKI_EXTENDED_TIMEOUT=1
         fi
 
         $adminDir/apply-boulder &>>$installLog
