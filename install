@@ -52,6 +52,7 @@ source "$dn/utils.sh" &>/dev/null || true
 cmdlineFqdn=""
 cmdlineBranch=""
 fullCmdline=""
+keepLocal=0
 
 #
 # Helper functions for informing the user and logging to file
@@ -241,17 +242,24 @@ prompt_and_export() {
 # Parse the command line options, if any
 parse_cmdline() {
     fullCmdline="$@"
-    local parsed=$(getopt --options=n:,b: --longoptions=name:,fqdn:,branch: --name "$0" -- "$@" 2>>$installLog) || msg_fatal "Could not process commandline parameters"
+    local parsed=$(getopt --options=n:,b:,k --longoptions=name:,fqdn:,branch:,keep --name "$0" -- "$@" 2>>$installLog) || msg_fatal "Could not process commandline parameters"
     eval set -- "$parsed"
     while true; do
         case "$1" in
             -n|--name|--fqdn)
                 cmdlineFqdn="$2"
                 shift 2
+                msg_ok "option: using FQDN name '$cmdlineFqdn'"
                 ;;
             -b|--branch)
                 cmdlineBranch="$2"
                 shift 2
+                msg_ok "option: using branch '$cmdlineBranch'"
+                ;;
+            -k|--keep)
+                keepLocal=1
+                shift 1
+                msg_ok "option: keeping local version as is"
                 ;;
             --)
                 shift
@@ -785,9 +793,11 @@ main() {
     [ ! -e "$cloneDir/cron_d" ] || chown labca:labca "$cloneDir/cron_d"
 
     parse_cmdline "$@"
-    clone_or_pull "$cloneDir" "$labcaUrl" "$cmdlineBranch"
-    checkout_release "$cmdlineBranch"
-    restart_if_updated "$checksum"
+    if [ $keepLocal -eq 0 ]; then
+        clone_or_pull "$cloneDir" "$labcaUrl" "$cmdlineBranch"
+        checkout_release "$cmdlineBranch"
+        restart_if_updated "$checksum"
+    fi
 
     get_fqdn
     copy_admin
