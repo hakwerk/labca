@@ -1,16 +1,16 @@
 diff --git a/cmd/expiration-mailer/main.go b/cmd/expiration-mailer/main.go
-index f6b02976e..0b00b794d 100644
+index 862ed2fe7..e8b0aac3d 100644
 --- a/cmd/expiration-mailer/main.go
 +++ b/cmd/expiration-mailer/main.go
-@@ -20,6 +20,7 @@ import (
- 	"github.com/honeycombio/beeline-go"
+@@ -22,6 +22,7 @@ import (
  	"github.com/jmhodges/clock"
+ 	"google.golang.org/grpc"
  
 +	"github.com/letsencrypt/boulder/bdns"
  	"github.com/letsencrypt/boulder/cmd"
  	"github.com/letsencrypt/boulder/core"
  	corepb "github.com/letsencrypt/boulder/core/proto"
-@@ -36,7 +37,7 @@ import (
+@@ -38,7 +39,7 @@ import (
  
  const (
  	defaultNagCheckInterval  = 24 * time.Hour
@@ -19,7 +19,7 @@ index f6b02976e..0b00b794d 100644
  )
  
  type regStore interface {
-@@ -385,6 +386,9 @@ type config struct {
+@@ -408,6 +409,9 @@ type config struct {
  		TLS       cmd.TLSConfig
  		SAService *cmd.GRPCClientConfig
  
@@ -29,7 +29,7 @@ index f6b02976e..0b00b794d 100644
  		// Path to a file containing a list of trusted root certificates for use
  		// during the SMTP connection (as opposed to the gRPC connections).
  		SMTPTrustedRootFile string
-@@ -394,6 +398,12 @@ type config struct {
+@@ -417,6 +421,12 @@ type config struct {
  
  	Syslog  cmd.SyslogConfig
  	Beeline cmd.BeelineConfig
@@ -42,9 +42,9 @@ index f6b02976e..0b00b794d 100644
  }
  
  func initStats(stats prometheus.Registerer) mailerStats {
-@@ -511,6 +521,32 @@ func main() {
+@@ -534,6 +544,32 @@ func main() {
  	cmd.FailOnError(err, "Failed to load credentials and create gRPC connection to SA")
- 	sac := bgrpc.NewStorageAuthorityClient(sapb.NewStorageAuthorityClient(conn))
+ 	sac := sapb.NewStorageAuthorityClient(conn)
  
 +	dnsTimeout, err := time.ParseDuration(c.Common.DNSTimeout)
 +	cmd.FailOnError(err, "Couldn't parse DNS timeout")
@@ -75,7 +75,7 @@ index f6b02976e..0b00b794d 100644
  	var smtpRoots *x509.CertPool
  	if c.Mailer.SMTPTrustedRootFile != "" {
  		pem, err := ioutil.ReadFile(c.Mailer.SMTPTrustedRootFile)
-@@ -546,6 +582,7 @@ func main() {
+@@ -569,6 +605,7 @@ func main() {
  		c.Mailer.Username,
  		smtpPassword,
  		smtpRoots,

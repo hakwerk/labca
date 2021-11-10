@@ -1,12 +1,12 @@
 diff --git a/test/config/ca-a.json b/test/config/ca-a.json
-index 92b32f094..e220d7d4f 100644
+index 0be07e4..cd5de49 100644
 --- a/test/config/ca-a.json
 +++ b/test/config/ca-a.json
 @@ -60,19 +60,7 @@
            "crlURL": "http://example.com/crl",
            "location": {
              "configFile": "test/test-ca.key-pkcs11.json",
--            "certFile": "/tmp/intermediate-cert-rsa-a.pem",
+-            "certFile": "/hierarchy/intermediate-cert-rsa-a.pem",
 -            "numSessions": 2
 -          }
 -        },
@@ -18,7 +18,7 @@ index 92b32f094..e220d7d4f 100644
 -          "crlURL": "http://example.com/crl",
 -          "location": {
 -            "configFile": "test/test-ca.key-pkcs11.json",
--            "certFile": "/tmp/intermediate-cert-rsa-b.pem",
+-            "certFile": "/hierarchy/intermediate-cert-rsa-b.pem",
 +            "certFile": "test/test-ca.pem",
              "numSessions": 2
            }

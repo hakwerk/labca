@@ -1,4 +1,4 @@
-package main
+package notmain
 
 import (
 	"flag"
@@ -25,19 +25,38 @@ args:
 type config struct {
 	Mailer struct {
 		cmd.ServiceConfig
-		cmd.DBConfig
+		DB cmd.DBConfig
 		cmd.SMTPConfig
 
 		From    string
 		Subject string
 
+		CertLimit int
+		NagTimes  []string
+		// How much earlier (than configured nag intervals) to
+		// send reminders, to account for the expected delay
+		// before the next expiration-mailer invocation.
+		NagCheckInterval string
+		// Path to a text/template email template
+		EmailTemplate string
+
+		Frequency cmd.ConfigDuration
+
+		TLS       cmd.TLSConfig
+		SAService *cmd.GRPCClientConfig
+
 		DNSTries     int
 		DNSResolvers []string
+
+		// Path to a file containing a list of trusted root certificates for use
+		// during the SMTP connection (as opposed to the gRPC connections).
+		SMTPTrustedRootFile string
 
 		Features map[string]bool
 	}
 
 	Syslog cmd.SyslogConfig
+	Beeline cmd.BeelineConfig
 
 	Common struct {
 		DNSResolver               string
@@ -54,12 +73,12 @@ func main() {
 
 	configFile := flag.String("config", "", "File path to the configuration file for this service")
 	flag.Parse()
-	args := flag.Args()
-	recipient := args[0]
-
 	if len(os.Args) <= 3 || *configFile == "" {
 		usage()
 	}
+
+	args := flag.Args()
+	recipient := args[0]
 
 	var c config
 	err := cmd.ReadConfigFile(*configFile, &c)
@@ -125,4 +144,8 @@ func main() {
 
 	err = mailClient.SendMail(recipients, "Test Email from LabCA", "Test sending email from the LabCA server")
 	cmd.FailOnError(err, "mail-tester has failed")
+}
+
+func init() {
+	cmd.RegisterCommand("mail-tester", main)
 }

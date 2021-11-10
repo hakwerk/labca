@@ -1,9 +1,9 @@
 diff --git a/docker-compose.yml b/docker-compose.yml
-index 713667d60..0a384c8ab 100644
+index f515225e4..c1d54f235 100644
 --- a/docker-compose.yml
 +++ b/docker-compose.yml
 @@ -4,10 +4,11 @@ services:
-     image: &boulder_image letsencrypt/boulder-tools:${BOULDER_TOOLS_TAG:-go1.16.6_2021-07-12}
+     image: &boulder_image letsencrypt/boulder-tools:${BOULDER_TOOLS_TAG:-go1.17_2021-10-22}
      environment:
        FAKE_DNS: 10.77.77.77
 -      BOULDER_CONFIG_DIR: test/config
@@ -13,12 +13,12 @@ index 713667d60..0a384c8ab 100644
        - .:/go/src/github.com/letsencrypt/boulder:cached
 +      - /home/labca/boulder_labca:/go/src/github.com/letsencrypt/boulder/labca
        - ./.gocache:/root/.cache/go-build:cached
-     networks:
-       bluenet:
-@@ -49,11 +50,19 @@ services:
-       - 8055:8055 # dns-test-srv updates
+       - ./.hierarchy:/hierarchy/:cached
+       - ./.softhsm-tokens/:/var/lib/softhsm/tokens/:cached
+@@ -36,11 +37,19 @@ services:
      depends_on:
        - bmysql
+       - bredis_clusterer
 -    entrypoint: test/entrypoint.sh
 +    entrypoint: labca/entrypoint.sh
      working_dir: &boulder_working_dir /go/src/github.com/letsencrypt/boulder
@@ -36,7 +36,7 @@ index 713667d60..0a384c8ab 100644
      networks:
        bluenet:
          aliases:
-@@ -67,22 +76,37 @@ services:
+@@ -54,7 +63,11 @@ services:
      # small.
      command: mysqld --bind-address=0.0.0.0 --slow-query-log --log-output=TABLE --log-queries-not-using-indexes=ON
      logging:
@@ -46,6 +46,12 @@ index 713667d60..0a384c8ab 100644
 +        max-size: "500k"
 +        max-file: "5"
 +    restart: always
+ 
+   bredis_1:
+     image: redis:latest
+@@ -129,18 +142,31 @@ services:
+           aliases:
+             - boulder-redis-clusterer
  
 -  netaccess:
 +  labca:
@@ -67,8 +73,8 @@ index 713667d60..0a384c8ab 100644
 +      - /home/labca/boulder_labca:/boulder/labca
 +    ports:
 +      - 3000:3000
-     depends_on:
-       - bmysql
++    depends_on:
++      - bmysql
 +    working_dir: /go/src/labca
 +    command: ./setup.sh
 +    logging:

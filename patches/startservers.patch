@@ -1,5 +1,5 @@
 diff --git a/test/startservers.py b/test/startservers.py
-index ec8ada190..be5b7a2f2 100644
+index 0df56a4..14aa548 100644
 --- a/test/startservers.py
 +++ b/test/startservers.py
 @@ -146,6 +146,9 @@ processes = []
@@ -9,6 +9,6 @@ index ec8ada190..be5b7a2f2 100644
 +    pass
 +
 +def setupHierarchyOriginal():
+     """Set up the issuance hierarchy. Must have called install() before this."""
      e = os.environ.copy()
      e.setdefault("GOBIN", "%s/bin" % os.getcwd())
-     try:
