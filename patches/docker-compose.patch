@@ -1,5 +1,5 @@
 diff --git a/docker-compose.yml b/docker-compose.yml
-index f2c81aad9..116b858be 100644
+index f515225e4..c1d54f235 100644
 --- a/docker-compose.yml
 +++ b/docker-compose.yml
 @@ -4,10 +4,11 @@ services:
@@ -15,9 +15,9 @@ index f2c81aad9..116b858be 100644
        - ./.gocache:/root/.cache/go-build:cached
        - ./.hierarchy:/hierarchy/:cached
        - ./.softhsm-tokens/:/var/lib/softhsm/tokens/:cached
-@@ -37,11 +38,19 @@ services:
+@@ -36,11 +37,19 @@ services:
+     depends_on:
        - bmysql
-       - bredis
        - bredis_clusterer
 -    entrypoint: test/entrypoint.sh
 +    entrypoint: labca/entrypoint.sh
@@ -36,7 +36,7 @@ index f2c81aad9..116b858be 100644
      networks:
        bluenet:
          aliases:
-@@ -55,7 +64,11 @@ services:
+@@ -54,7 +63,11 @@ services:
      # small.
      command: mysqld --bind-address=0.0.0.0 --slow-query-log --log-output=TABLE --log-queries-not-using-indexes=ON
      logging:
@@ -47,9 +47,9 @@ index f2c81aad9..116b858be 100644
 +        max-file: "5"
 +    restart: always
  
-   bredis:
+   bredis_1:
      image: redis:latest
-@@ -82,18 +95,31 @@ services:
+@@ -129,18 +142,31 @@ services:
            aliases:
              - boulder-redis-clusterer
  

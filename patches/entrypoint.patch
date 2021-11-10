@@ -2,7 +2,7 @@ diff --git a/test/entrypoint.sh b/test/entrypoint.sh
 index 5ca9929..f18e1d8 100755
 --- a/test/entrypoint.sh
 +++ b/test/entrypoint.sh
-@@ -36,6 +36,18 @@ wait_tcp_port boulder-mysql 3306
+@@ -17,6 +17,18 @@ wait_tcp_port boulder-mysql 3306
  # create the database
  MYSQL_CONTAINER=1 $DIR/create_db.sh
 
