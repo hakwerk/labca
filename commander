@@ -41,6 +41,10 @@ case $txt in
     cp /etc/nginx/ssl/labca_cert.pem /usr/local/share/ca-certificates/labca_cert.crt
     cp ~labca/admin/data/root-ca.pem /usr/local/share/ca-certificates/root-ca.crt
     update-ca-certificates &>>$LOGFILE
+    echo "Waiting for initial startup of the docker containers..." &>>$LOGFILE
+    wait_up $PS_MYSQL &>>$LOGFILE
+    wait_up $PS_LABCA &>>$LOGFILE
+    wait_up $PS_BOULDER $PS_BOULDER_COUNT &>>$LOGFILE
     ;;
 "docker-restart")
     cd /home/labca/boulder
