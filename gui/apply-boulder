@@ -21,15 +21,20 @@ sed -i -e "s/\"directoryCAAIdentity\": \".*\"/\"directoryCAAIdentity\": \"$PKI_D
 [ -e config/ca.json ] && rm config/ca.json || true
 [ -e config/expired-authz-purger2.json ] && rm config/expired-authz-purger2.json || true
 [ -e config/janitor.json ] && rm config/janitor.json || true
-cat hostname-policy.yaml | tr '\n' '\r' | sed -e "s/Lockdown:.*//" | tr '\r' '\n' > hostname-policy.yaml.bak && mv hostname-policy.yaml.bak hostname-policy.yaml
-cat hostname-policy.yaml | tr '\n' '\r' | sed -e "s/Whitelist:.*//" | tr '\r' '\n' > hostname-policy.yaml.bak && mv hostname-policy.yaml.bak hostname-policy.yaml
+cat hostname-policy.yaml | tr '\n' '\r' | sed -e "s/\r# Lockdown.*//" | tr '\r' '\n' > hostname-policy.yaml.bak && mv hostname-policy.yaml.bak hostname-policy.yaml
+cat hostname-policy.yaml | tr '\n' '\r' | sed -e "s/\r# Whitelist.*//" | tr '\r' '\n' > hostname-policy.yaml.bak && mv hostname-policy.yaml.bak hostname-policy.yaml
 if [ "$PKI_DOMAIN_MODE" == "lockdown" ] && [ "$PKI_LOCKDOWN_DOMAINS" != "" ]; then
+    echo >> hostname-policy.yaml
+    echo "# Lockdown are the domains that this LabCA instance can issue certificates for" >> hostname-policy.yaml
     echo "Lockdown:" >> hostname-policy.yaml
     for d in $(echo $PKI_LOCKDOWN_DOMAINS | sed -e "s/\\\r\\\n/ /g" | tr '\r' ' '); do
         echo "  - \"$d\"" >> hostname-policy.yaml
     done
 fi
 if [ "$PKI_DOMAIN_MODE" == "whitelist" ] && [ "$PKI_WHITELIST_DOMAINS" != "" ]; then
+    echo >> hostname-policy.yaml
+    echo "# Whitelist are the domains that this LabCA instance can issue certificates for" >> hostname-policy.yaml
+    echo "in *addition* to all normal public domains" >> hostname-policy.yaml
     echo "Whitelist:" >> hostname-policy.yaml
     for d in $(echo $PKI_WHITELIST_DOMAINS | sed -e "s/\\\r\\\n/ /g" | tr '\r' ' '); do
         echo "  - \"$d\"" >> hostname-policy.yaml
