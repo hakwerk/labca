@@ -15,6 +15,11 @@ sed -i -e "s/\"issuerDomain\": \".*\"/\"issuerDomain\": \"$PKI_DOMAIN\"/" config
 sed -i -e "s/\"directoryCAAIdentity\": \".*\"/\"directoryCAAIdentity\": \"$PKI_DOMAIN\"/" config/wfe.json
 sed -i -e "s/\"directoryCAAIdentity\": \".*\"/\"directoryCAAIdentity\": \"$PKI_DOMAIN\"/" config/wfe2.json
 
+if ([ "$PKI_DOMAIN_MODE" == "lockdown" ] && [ "$PKI_LOCKDOWN_DOMAINS" != "" ]) || ([ "$PKI_DOMAIN_MODE" == "whitelist" ] && [ "$PKI_WHITELIST_DOMAINS" != "" ]); then
+    perl -i -p0e "s/(\"badResultsOnly\":.*?\n)/\1    \"skipForbiddenDomains\": true,\n/igs" config/cert-checker.json
+    perl -i -p0e "s/(\s+\"ignoredLints\": \[\n)/\1      \"e_dnsname_not_valid_tld\",\n/igs" config/cert-checker.json
+fi
+
 [ -e ../test/hostname-policy.yaml ] && cp ../test/hostname-policy.yaml ./ || true
 [ -e ../boulder/test/hostname-policy.yaml ] && cp ../boulder/test/hostname-policy.yaml ./ || true
 [ -e hostname-policy.json ] && rm hostname-policy.json || true

@@ -570,6 +570,9 @@ config_boulder() {
     sudo -u labca -H patch -p1 < $cloneDir/patches/bad-key-revoker_main.patch &>>$installLog
     cp cmd/bad-key-revoker/main.go "$boulderLabCADir/.backup/"
 
+    sudo -u labca -H patch -p1 < $cloneDir/patches/cert-checker_main.patch &>>$installLog
+    cp cmd/cert-checker/main.go "$boulderLabCADir/.backup/"
+
     sudo -u labca -H patch -p1 < $cloneDir/patches/log-validator_main.patch &>>$installLog
     cp cmd/log-validator/main.go "$boulderLabCADir/.backup/"
 
