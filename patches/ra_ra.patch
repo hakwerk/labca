@@ -10,7 +10,7 @@ index 275e64a95..873d5c943 100644
  	"github.com/letsencrypt/boulder/probs"
  	pubpb "github.com/letsencrypt/boulder/publisher/proto"
  	rapb "github.com/letsencrypt/boulder/ra/proto"
-@@ -444,7 +443,7 @@ func (ra *RegistrationAuthorityImpl) validateContacts(ctx context.Context, conta
+@@ -448,7 +447,7 @@ func (ra *RegistrationAuthorityImpl) validateContacts(ctx context.Context, conta
  				contact,
  			)
  		}

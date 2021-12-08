@@ -24,7 +24,10 @@ dockerComposeVersion="1.28.5"
 
 labcaUrl="https://github.com/hakwerk/labca/"
 boulderUrl="https://github.com/letsencrypt/boulder/"
-boulderTag="release-2021-11-09"
+boulderTag="release-2021-12-06"
+
+# Feature flags
+flag_skip_redis=true
 
 #
 # Color configuration
@@ -532,6 +535,9 @@ config_boulder() {
 
     cd "$boulderDir"
     sudo -u labca -H patch -p1 < $cloneDir/patches/docker-compose.patch &>>$installLog
+    if [ "$flag_skip_redis" == true ]; then
+        sudo -u labca -H patch -p1 < $cloneDir/patches/docker-compose-redis.patch &>>$installLog
+    fi
     cp docker-compose.yml "$boulderLabCADir/.backup/"
 
     sudo -u labca -H patch -p1 < $cloneDir/patches/cmd_shell.patch &>>$installLog
@@ -563,6 +569,9 @@ config_boulder() {
 
     sudo -u labca -H patch -p1 < $cloneDir/patches/bad-key-revoker_main.patch &>>$installLog
     cp cmd/bad-key-revoker/main.go "$boulderLabCADir/.backup/"
+
+    sudo -u labca -H patch -p1 < $cloneDir/patches/cert-checker_main.patch &>>$installLog
+    cp cmd/cert-checker/main.go "$boulderLabCADir/.backup/"
 
     sudo -u labca -H patch -p1 < $cloneDir/patches/log-validator_main.patch &>>$installLog
     cp cmd/log-validator/main.go "$boulderLabCADir/.backup/"
@@ -628,6 +637,8 @@ config_boulder() {
     sed -i -e "s|http://127.0.0.1:4000/acme/issuer-cert|http://$LABCA_FQDN/certs/ca-int.der|" config/ca-b.json
     sed -i -e "s|http://boulder:4430/acme/issuer-cert|http://$LABCA_FQDN/acme/issuer-cert|" config/wfe2.json
     sed -i -e "s|http://127.0.0.1:4000/acme/issuer-cert|https://$LABCA_FQDN/acme/issuer-cert|" config/wfe2.json
+    sed -i -e "s|letsencrypt/boulder|hakwerk/labca|" config/wfe.json
+    sed -i -e "s|letsencrypt/boulder|hakwerk/labca|" config/wfe2.json
     sed -i -e "s|http://127.0.0.1:4002/|http://$LABCA_FQDN/ocsp/|g" config/ca-a.json
     sed -i -e "s|http://127.0.0.1:4002/|http://$LABCA_FQDN/ocsp/|g" config/ca-b.json
     sed -i -e "s|http://example.com/cps|http://$LABCA_FQDN/cps/|g" config/ca-a.json
@@ -643,6 +654,10 @@ config_boulder() {
     sed -i -e "s/\"dnsTimeout\": \".*\"/\"dnsTimeout\": \"3s\"/" config/va.json
     sed -i -e "s/\"dnsTimeout\": \".*\"/\"dnsTimeout\": \"3s\"/" config/va-remote-a.json
     sed -i -e "s/\"dnsTimeout\": \".*\"/\"dnsTimeout\": \"3s\"/" config/va-remote-b.json
+
+    if [ "$flag_skip_redis" == true ]; then
+        sed -i -e "s/^\(.*wait-for-it.sh.*4218\)/#\1/" entrypoint.sh
+    fi
 
     for file in `find . -type f | grep -v .git`; do
         sed -i -e "s|test/|labca/|g" $file

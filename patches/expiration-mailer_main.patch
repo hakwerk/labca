@@ -42,7 +42,7 @@ index 862ed2fe7..e8b0aac3d 100644
  }
  
  func initStats(stats prometheus.Registerer) mailerStats {
-@@ -534,6 +544,32 @@ func main() {
+@@ -535,6 +545,32 @@ func main() {
  	cmd.FailOnError(err, "Failed to load credentials and create gRPC connection to SA")
  	sac := sapb.NewStorageAuthorityClient(conn)
  
@@ -75,7 +75,7 @@ index 862ed2fe7..e8b0aac3d 100644
  	var smtpRoots *x509.CertPool
  	if c.Mailer.SMTPTrustedRootFile != "" {
  		pem, err := ioutil.ReadFile(c.Mailer.SMTPTrustedRootFile)
-@@ -569,6 +605,7 @@ func main() {
+@@ -570,6 +606,7 @@ func main() {
  		c.Mailer.Username,
  		smtpPassword,
  		smtpRoots,

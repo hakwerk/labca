@@ -1,0 +1,68 @@
+diff --git a/cmd/cert-checker/main.go b/cmd/cert-checker/main.go
+index fbdd9bb8..dc7fa4fd 100644
+--- a/cmd/cert-checker/main.go
++++ b/cmd/cert-checker/main.go
+@@ -90,9 +90,10 @@ type certChecker struct {
+ 	issuedReport                report
+ 	checkPeriod                 time.Duration
+ 	acceptableValidityDurations map[time.Duration]bool
++	skipForbiddenDomains        bool
+ }
+ 
+-func newChecker(saDbMap certDB, clk clock.Clock, pa core.PolicyAuthority, period time.Duration, avd map[time.Duration]bool) certChecker {
++func newChecker(saDbMap certDB, clk clock.Clock, pa core.PolicyAuthority, period time.Duration, avd map[time.Duration]bool, sfd bool) certChecker {
+ 	return certChecker{
+ 		pa:                          pa,
+ 		dbMap:                       saDbMap,
+@@ -102,6 +103,7 @@ func newChecker(saDbMap certDB, clk clock.Clock, pa core.PolicyAuthority, period
+ 		issuedReport:                report{Entries: make(map[string]reportEntry)},
+ 		checkPeriod:                 period,
+ 		acceptableValidityDurations: avd,
++		skipForbiddenDomains:        sfd,
+ 	}
+ }
+ 
+@@ -271,7 +273,7 @@ func (c *certChecker) checkCert(cert core.Certificate, ignoredLints map[string]b
+ 			err = c.pa.WillingToIssueWildcards([]identifier.ACMEIdentifier{id})
+ 			if err != nil {
+ 				problems = append(problems, fmt.Sprintf("Policy Authority isn't willing to issue for '%s': %s", name, err))
+-			} else {
++			} else if !c.skipForbiddenDomains {
+ 				// For defense-in-depth, even if the PA was willing to issue for a name
+ 				// we double check it against a list of forbidden domains. This way even
+ 				// if the hostnamePolicyFile malfunctions we will flag the forbidden
+@@ -309,11 +311,12 @@ type config struct {
+ 		DB cmd.DBConfig
+ 		cmd.HostnamePolicyConfig
+ 
+-		Workers             int
+-		ReportDirectoryPath string
+-		UnexpiredOnly       bool
+-		BadResultsOnly      bool
+-		CheckPeriod         cmd.ConfigDuration
++		Workers              int
++		ReportDirectoryPath  string
++		UnexpiredOnly        bool
++		BadResultsOnly       bool
++		SkipForbiddenDomains bool
++		CheckPeriod          cmd.ConfigDuration
+ 
+ 		// AcceptableValidityDurations is a list of durations which are
+ 		// acceptable for certificates we issue.
+@@ -364,6 +367,8 @@ func main() {
+ 		acceptableValidityDurations[ninetyDays] = true
+ 	}
+ 
++	skipForbiddenDomains := config.CertChecker.SkipForbiddenDomains
++
+ 	// Validate PA config and set defaults if needed.
+ 	cmd.FailOnError(config.PA.CheckChallenges(), "Invalid PA configuration")
+ 
+@@ -412,6 +417,7 @@ func main() {
+ 		pa,
+ 		config.CertChecker.CheckPeriod.Duration,
+ 		acceptableValidityDurations,
++		skipForbiddenDomains,
+ 	)
+ 	fmt.Fprintf(os.Stderr, "# Getting certificates issued in the last %s\n", config.CertChecker.CheckPeriod)
+ 

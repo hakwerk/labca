@@ -2,7 +2,7 @@
 </div>
 <div class="col-md-6 col-sm-12">
 {{with .CertificateInfo}}
-    <h3>{{ if .IsRoot }}Root{{ else }}Issuer (2nd level){{ end }} Certificate</h3>
+    <h3>{{ if .IsRoot }}<b>Root</b>{{ else }}<b>Issuer</b> (2nd level){{ end }} Certificate</h3>
 
 <ul class="nav nav-tabs">
   <li class="{{ if eq .CreateType "generate" }}active{{ end }}">
@@ -19,7 +19,7 @@
 <div class="tab-content">
   <div class="tab-pane fade {{ if eq .CreateType "generate" }}active in{{ end }}" id="generate">
   <br/>
-<form role="form" action="{{ .RequestBase }}/setup" enctype="multipart/form-data" method="POST">
+<form role="form" class="form-cert" action="{{ .RequestBase }}/setup" enctype="multipart/form-data" method="POST">
   <input type="hidden" name="cert" value="{{ if .IsRoot }}root{{ else }}issuer{{ end }}">
   <input type="hidden" name="createtype" value="generate">
   <div class="form-group">
@@ -73,7 +73,7 @@
 
   <div class="tab-pane fade {{ if eq .CreateType "import" }}active in{{ end }}" id="import">
   <br/>
-<form role="form" action="{{ .RequestBase }}/setup" enctype="multipart/form-data" method="POST">
+<form role="form" class="form-cert" action="{{ .RequestBase }}/setup" enctype="multipart/form-data" method="POST">
   <input type="hidden" name="cert" value="{{ if .IsRoot }}root{{ else }}issuer{{ end }}">
   <input type="hidden" name="createtype" value="import">
   <p>
@@ -101,7 +101,7 @@
 
   <div class="tab-pane fade {{ if eq .CreateType "upload" }}active in{{ end }}" id="upload">
   <br/>
-<form role="form" action="{{ .RequestBase }}/setup" enctype="multipart/form-data" method="POST">
+<form role="form" class="form-cert" action="{{ .RequestBase }}/setup" enctype="multipart/form-data" method="POST">
   <input type="hidden" name="cert" value="{{ if .IsRoot }}root{{ else }}issuer{{ end }}">
   <input type="hidden" name="createtype" value="upload">
   <div class="form-group">
@@ -137,6 +137,8 @@
 </form>
   </div>
 </div>
+<p id="processing" class="hidden"><br/>Setting up LabCA and applying configuration. This will take a minute...<br/>
+<img id="restart-spinner" src="static/img/spinner.gif" height="36"></p>
 {{end}}
 {{ template "partials/progress.tmpl" . }}
 {{end}}
@@ -149,6 +151,12 @@
                     $(window).resize();
                 }, 250);
             });
+{{ if not .CertificateInfo.IsRoot }}
+
+            $(".form-cert").submit(function() {
+                $("#processing").removeClass("hidden");
+            });
+{{end}}
         });
     </script>
 {{end}}

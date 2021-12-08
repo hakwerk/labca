@@ -25,14 +25,14 @@
     {{ with .Errors.DomainMode }}
     <span class="error">{{ . }}</span><br/>
     {{ end }}
-    <input type="radio" id="lockdown" name="domain_mode" value="lockdown" {{ if eq .DomainMode "lockdown"}}checked{{ end }}/> Lockdown to only this domain:<br/>
-    <input class="form-control non-fluid" type="text" id="lockdown_domains" name="lockdown_domains" value="{{ .LockdownDomains }}"/><br/>
+    <input type="radio" id="lockdown" name="domain_mode" value="lockdown" {{ if eq .DomainMode "lockdown"}}checked{{ end }}/> Lockdown to only these domains (one per line):<br/>
+    <textarea class="form-control non-fluid" rows="3" cols="24" id="lockdown_domains" name="lockdown_domains">{{ .LockdownDomains }}</textarea><br/>
     {{ with .Errors.LockdownDomains }}
     <span class="error">{{ . }}</span><br/>
     {{ end }}
 
-    <input type="radio" id="whitelist" name="domain_mode" value="whitelist" {{ if eq .DomainMode "whitelist"}}checked{{ end }}/> Next to all official domains, also allow this domain (whitelist):<br/>
-    <input class="form-control non-fluid" type="text" id="whitelist_domains" name="whitelist_domains" value="{{ .WhitelistDomains }}"/><br/>
+    <input type="radio" id="whitelist" name="domain_mode" value="whitelist" {{ if eq .DomainMode "whitelist"}}checked{{ end }}/> Next to all official domains, also allow these domains (whitelist; one per line):<br/>
+    <textarea class="form-control non-fluid" rows="3" cols="24" id="whitelist_domains" name="whitelist_domains">{{ .WhitelistDomains }}</textarea><br/>
     {{ with .Errors.WhitelistDomains }}
     <span class="error">{{ . }}</span><br/>
     {{ end }}

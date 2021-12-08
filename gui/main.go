@@ -2405,7 +2405,7 @@ func init() {
 		if key == nil {
 			panic(fmt.Errorf("fatal error random key"))
 		}
-		viper.Set("keys.auth", key)
+		viper.Set("keys.auth", base64.StdEncoding.EncodeToString(key))
 		viper.WriteConfig()
 	}
 	if viper.Get("keys.enc") == nil {
@@ -2413,7 +2413,7 @@ func init() {
 		if key == nil {
 			panic(fmt.Errorf("fatal error random key"))
 		}
-		viper.Set("keys.enc", key)
+		viper.Set("keys.enc", base64.StdEncoding.EncodeToString(key))
 		viper.WriteConfig()
 	}
 

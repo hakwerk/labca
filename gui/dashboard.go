@@ -106,6 +106,12 @@ func _parseLine(line string, loc *time.Location) Activity {
 			message = message[0:idx]
 		}
 	}
+	if strings.Index(message, "failed to complete security handshake") > -1 {
+		activity.Class = "warning"
+	}
+	if strings.Index(message, "failed to receive the preface from client") > -1 {
+		activity.Class = "warning"
+	}
 	activity.Message = message
 
 	return activity
