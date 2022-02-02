@@ -1,5 +1,5 @@
 diff --git a/ra/ra.go b/ra/ra.go
-index 275e64a95..873d5c943 100644
+index 1ea20982..937f2859 100644
 --- a/ra/ra.go
 +++ b/ra/ra.go
 @@ -31,7 +31,6 @@ import (
@@ -10,12 +10,12 @@ index 275e64a95..873d5c943 100644
  	"github.com/letsencrypt/boulder/probs"
  	pubpb "github.com/letsencrypt/boulder/publisher/proto"
  	rapb "github.com/letsencrypt/boulder/ra/proto"
-@@ -448,7 +447,7 @@ func (ra *RegistrationAuthorityImpl) validateContacts(ctx context.Context, conta
+@@ -454,7 +453,7 @@ func (ra *RegistrationAuthorityImpl) validateContacts(ctx context.Context, conta
  				contact,
  			)
  		}
--		if err := policy.ValidEmail(parsed.Opaque); err != nil {
-+		if err := ra.PA.ValidEmail(parsed.Opaque); err != nil {
+-		err = policy.ValidEmail(parsed.Opaque)
++		err = ra.PA.ValidEmail(parsed.Opaque)
+ 		if err != nil {
  			return err
  		}
- 	}

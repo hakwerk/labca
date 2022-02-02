@@ -11,7 +11,7 @@ index c1d54f23..2b6de7cb 100644
      # Use sd-test-srv as a backup to Docker's embedded DNS server
      # (https://docs.docker.com/config/containers/container-networking/#dns-services).
      # If there's a name Docker's DNS server doesn't know about, it will
-@@ -36,7 +34,6 @@ services:
+@@ -34,7 +32,6 @@ services:
        - 8055:8055 # dns-test-srv updates
      depends_on:
        - bmysql
@@ -19,7 +19,7 @@ index c1d54f23..2b6de7cb 100644
      entrypoint: labca/entrypoint.sh
      working_dir: &boulder_working_dir /go/src/github.com/letsencrypt/boulder
      logging:
-@@ -69,78 +66,6 @@ services:
+@@ -67,78 +64,6 @@ services:
          max-file: "5"
      restart: always
  
@@ -98,7 +98,7 @@ index c1d54f23..2b6de7cb 100644
  
    labca:
      image: *boulder_image
-@@ -181,10 +106,3 @@ networks:
+@@ -179,10 +104,3 @@ networks:
        driver: default
        config:
          - subnet: 10.88.88.0/24

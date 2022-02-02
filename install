@@ -24,7 +24,7 @@ dockerComposeVersion="1.28.5"
 
 labcaUrl="https://github.com/hakwerk/labca/"
 boulderUrl="https://github.com/letsencrypt/boulder/"
-boulderTag="release-2021-12-06"
+boulderTag="release-2022-02-01"
 
 # Feature flags
 flag_skip_redis=true
@@ -588,6 +588,9 @@ config_boulder() {
     sudo -u labca -H patch -p1 -o "$boulderLabCADir/config/bad-key-revoker.json" < $cloneDir/patches/config_bad-key-revoker.patch &>>$installLog
     sudo -u labca -H patch -p1 -o "$boulderLabCADir/config/ocsp-responder.json" < $cloneDir/patches/config_ocsp-responder.patch &>>$installLog
     sudo -u labca -H patch -p1 -o "$boulderLabCADir/config/publisher.json" < $cloneDir/patches/config_publisher.patch &>>$installLog
+    sudo -u labca -H patch -p1 -o "$boulderLabCADir/config/wfe2.json" < $cloneDir/patches/config_wfe2.patch &>>$installLog
+    sudo -u labca -H patch -p1 -o "$boulderLabCADir/config/rocsp-tool.json" < $cloneDir/patches/config_rocsp-tool.patch &>>$installLog
+    sudo -u labca -H patch -p1 -o "$boulderLabCADir/config/orphan-finder.json" < $cloneDir/patches/config_orphan-finder.patch &>>$installLog
 
     sed -i -e "s|https://letsencrypt.org/docs/rate-limits/|http://$LABCA_FQDN/rate-limits|" errors/errors.go &>>$installLog
     cp errors/errors.go "$boulderLabCADir/.backup/"
@@ -619,7 +622,15 @@ config_boulder() {
     sed -i -e "s|/hierarchy/intermediate-cert-rsa-a.pem|labca/test-ca.pem|" config/ra.json
     sed -i -e "s|/hierarchy/intermediate-cert-rsa-a.pem|labca/test-ca.pem|" config/wfe.json
     sed -i -e "s|/hierarchy/intermediate-cert-rsa-a.pem|labca/test-ca.pem|" config/wfe2.json
+    sed -i -e "s|.hierarchy/intermediate-cert-rsa-a.pem|labca/test-ca.pem|" config/rocsp-tool.json
+    sed -i -e "s|/hierarchy/intermediate-cert-rsa-a.pem|labca/test-ca.pem|" config/orphan-finder.json
+    sed -i -e "s|/hierarchy/intermediate-cert-rsa-a.pem|labca/test-ca.pem|" issuer-ocsp-responder.json
+    sed -i -e "s|/hierarchy/intermediate-cert-rsa-a.pem|labca/test-ca.pem|" cert-ceremonies/intermediate-ocsp-rsa.yaml
+    sed -i -e "s|/hierarchy/root-cert-rsa.pem|labca/test-root.pem|" cert-ceremonies/root-ceremony-rsa.yaml
+    sed -i -e "s|/hierarchy/root-cert-rsa.pem|labca/test-root.pem|" cert-ceremonies/intermediate-ocsp-rsa.yaml
+    sed -i -e "s|/hierarchy/root-cert-rsa.pem|labca/test-root.pem|" cert-ceremonies/intermediate-ceremony-rsa.yaml
     sed -i -e "s|/hierarchy/root-cert-rsa.pem|labca/test-root.pem|" config/publisher.json
+    sed -i -e "s|/hierarchy/root-cert-rsa.pem|labca/test-root.pem|" config/wfe2.json
     sed -i -e "s|/hierarchy/root-cert-rsa.pem|labca/test-root.pem|" integration-test.py
     sed -i -e "s|/hierarchy/root-cert-rsa.pem|labca/test-root.pem|" helpers.py
     sed -i -e "s|/hierarchy/root-cert-rsa.pem|labca/test-root.pem|" v1_integration.py
@@ -746,6 +757,7 @@ startup() {
     fi
     msg_info "$msg (this will take a while!!)"
 
+    docker-compose pull -q &>>$installLog
     docker-compose stop &>>$installLog || true
     for ct in boulder_bhsm_1 boulder_bredis_1 boulder_bredis_2 boulder_bredis_3 boulder_bredis_4 boulder_bredis_5 boulder_bredis_6; do
         [ -z "$(docker ps | grep $ct)" ] || docker stop $ct &>>$installLog

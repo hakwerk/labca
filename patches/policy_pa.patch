@@ -1,5 +1,5 @@
 diff --git a/policy/pa.go b/policy/pa.go
-index 7dd9c37cd..43410e3f9 100644
+index d3494495..184f7186 100644
 --- a/policy/pa.go
 +++ b/policy/pa.go
 @@ -31,6 +31,8 @@ type AuthorityImpl struct {
@@ -79,28 +79,29 @@ index 7dd9c37cd..43410e3f9 100644
  	}
  	splitEmail := strings.SplitN(email.Address, "@", -1)
  	domain := strings.ToLower(splitEmail[len(splitEmail)-1])
--	if err := ValidDomain(domain); err != nil {
-+	if err := pa.ValidDomain(domain); err != nil {
+-	err = ValidDomain(domain)
++	err = pa.ValidDomain(domain)
+ 	if err != nil {
  		return berrors.InvalidEmailError(
  			"contact email %q has invalid domain : %s",
- 			email.Address, err)
-@@ -365,10 +388,14 @@ func (pa *AuthorityImpl) WillingToIssue(id identifier.ACMEIdentifier) error {
+@@ -369,11 +392,15 @@ func (pa *AuthorityImpl) WillingToIssue(id identifier.ACMEIdentifier) error {
  	}
  	domain := id.Value
  
--	if err := ValidDomain(domain); err != nil {
-+	if err := pa.ValidDomain(domain); err != nil {
+-	err := ValidDomain(domain)
++	err := pa.ValidDomain(domain)
+ 	if err != nil {
  		return err
  	}
  
 +	if ok, _ := pa.checkWhitelist(domain); ok {
-+		return nil
-+	}
++ 		return nil
++ 	}
 +
  	// Require no match against hostname block lists
- 	if err := pa.checkHostLists(domain); err != nil {
- 		return err
-@@ -377,6 +404,31 @@ func (pa *AuthorityImpl) WillingToIssue(id identifier.ACMEIdentifier) error {
+ 	err = pa.checkHostLists(domain)
+ 	if err != nil {
+@@ -383,6 +410,31 @@ func (pa *AuthorityImpl) WillingToIssue(id identifier.ACMEIdentifier) error {
  	return nil
  }
  

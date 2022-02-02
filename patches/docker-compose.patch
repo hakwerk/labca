@@ -3,7 +3,7 @@ index f515225e4..c1d54f235 100644
 --- a/docker-compose.yml
 +++ b/docker-compose.yml
 @@ -4,10 +4,11 @@ services:
-     image: &boulder_image letsencrypt/boulder-tools:${BOULDER_TOOLS_TAG:-go1.17_2021-10-22}
+     image: &boulder_image letsencrypt/boulder-tools:${BOULDER_TOOLS_TAG:-go1.17.5_2022-01-13}
      environment:
        FAKE_DNS: 10.77.77.77
 -      BOULDER_CONFIG_DIR: test/config
@@ -15,7 +15,7 @@ index f515225e4..c1d54f235 100644
        - ./.gocache:/root/.cache/go-build:cached
        - ./.hierarchy:/hierarchy/:cached
        - ./.softhsm-tokens/:/var/lib/softhsm/tokens/:cached
-@@ -36,11 +37,19 @@ services:
+@@ -34,11 +35,19 @@ services:
      depends_on:
        - bmysql
        - bredis_clusterer
@@ -36,7 +36,7 @@ index f515225e4..c1d54f235 100644
      networks:
        bluenet:
          aliases:
-@@ -54,7 +63,11 @@ services:
+@@ -52,7 +61,11 @@ services:
      # small.
      command: mysqld --bind-address=0.0.0.0 --slow-query-log --log-output=TABLE --log-queries-not-using-indexes=ON
      logging:
@@ -49,7 +49,7 @@ index f515225e4..c1d54f235 100644
  
    bredis_1:
      image: redis:latest
-@@ -129,18 +142,31 @@ services:
+@@ -127,18 +140,31 @@ services:
            aliases:
              - boulder-redis-clusterer
  
