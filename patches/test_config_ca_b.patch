@@ -1,5 +1,5 @@
 diff --git a/test/config/ca-b.json b/test/config/ca-b.json
-index baf5483..0aa6fd4 100644
+index c61ac87e..fb1db942 100644
 --- a/test/config/ca-b.json
 +++ b/test/config/ca-b.json
 @@ -60,19 +60,7 @@
@@ -13,7 +13,7 @@ index baf5483..0aa6fd4 100644
 -        {
 -          "useForRSALeaves": false,
 -          "useForECDSALeaves": false,
--          "issuerURL": "http://127.0.0.1:4000/acme/issuer-cert",
+-          "issuerURL": "http://127.0.0.1:4001/aia/issuer/41127673797486028",
 -          "ocspURL": "http://127.0.0.1:4002/",
 -          "crlURL": "http://example.com/crl",
 -          "location": {

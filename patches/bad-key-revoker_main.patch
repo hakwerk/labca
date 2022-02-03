@@ -1,5 +1,5 @@
 diff --git a/cmd/bad-key-revoker/main.go b/cmd/bad-key-revoker/main.go
-index 3f3a953d3..c02b4dfc1 100644
+index 8ae11c24..ce24a792 100644
 --- a/cmd/bad-key-revoker/main.go
 +++ b/cmd/bad-key-revoker/main.go
 @@ -15,6 +15,7 @@ import (
@@ -10,30 +10,30 @@ index 3f3a953d3..c02b4dfc1 100644
  	"github.com/letsencrypt/boulder/cmd"
  	"github.com/letsencrypt/boulder/core"
  	"github.com/letsencrypt/boulder/db"
-@@ -352,6 +353,9 @@ func main() {
- 			TLS       cmd.TLSConfig
- 			RAService *cmd.GRPCClientConfig
+@@ -351,6 +352,9 @@ type Config struct {
+ 		TLS       cmd.TLSConfig
+ 		RAService *cmd.GRPCClientConfig
  
-+			DNSTries     int
-+			DNSResolvers []string
++		DNSTries     int
++		DNSResolvers []string
 +
- 			// MaximumRevocations specifies the maximum number of certificates associated with
- 			// a key hash that bad-key-revoker will attempt to revoke. If the number of certificates
- 			// is higher than MaximumRevocations bad-key-revoker will error out and refuse to
-@@ -385,6 +389,12 @@ func main() {
+ 		// MaximumRevocations specifies the maximum number of certificates associated with
+ 		// a key hash that bad-key-revoker will attempt to revoke. If the number of certificates
+ 		// is higher than MaximumRevocations bad-key-revoker will error out and refuse to
+@@ -384,6 +388,12 @@ type Config struct {
  
- 		Syslog  cmd.SyslogConfig
- 		Beeline cmd.BeelineConfig
+ 	Syslog  cmd.SyslogConfig
+ 	Beeline cmd.BeelineConfig
 +
-+		Common struct {
-+			DNSResolver               string
-+			DNSTimeout                string
-+			DNSAllowLoopbackAddresses bool
-+		}
- 	}
- 	configPath := flag.String("config", "", "File path to the configuration file for this service")
- 	flag.Parse()
-@@ -434,6 +444,32 @@ func main() {
++	Common struct {
++		DNSResolver               string
++		DNSTimeout                string
++		DNSAllowLoopbackAddresses bool
++	}
+ }
+ 
+ func main() {
+@@ -421,6 +431,32 @@ func main() {
  	cmd.FailOnError(err, "Failed to load credentials and create gRPC connection to RA")
  	rac := rapb.NewRegistrationAuthorityClient(conn)
  
@@ -66,7 +66,7 @@ index 3f3a953d3..c02b4dfc1 100644
  	var smtpRoots *x509.CertPool
  	if config.BadKeyRevoker.Mailer.SMTPTrustedRootFile != "" {
  		pem, err := ioutil.ReadFile(config.BadKeyRevoker.Mailer.SMTPTrustedRootFile)
-@@ -455,6 +491,7 @@ func main() {
+@@ -442,6 +478,7 @@ func main() {
  		config.BadKeyRevoker.Mailer.Username,
  		smtpPassword,
  		smtpRoots,

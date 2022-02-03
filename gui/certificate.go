@@ -324,8 +324,19 @@ func (ci *CertificateInfo) Upload(path string, certBase string, tmpKey string, t
 		return reportError(err)
 	}
 
-	err := ioutil.WriteFile(tmpCert, []byte(ci.Certificate), 0644)
-	return err
+	if err := ioutil.WriteFile(tmpCert, []byte(ci.Certificate), 0644); err != nil {
+		return err
+	}
+
+	if _, err := exeCmd("openssl x509 -in " + tmpCert + " -out " + tmpCert + "-out"); err != nil {
+		return reportError(err)
+	}
+
+	if _, err := exeCmd("mv " + tmpCert + "-out " + tmpCert); err != nil {
+		return reportError(err)
+	}
+
+	return nil
 }
 
 // ImportCerts imports both the root and the issuer certificates

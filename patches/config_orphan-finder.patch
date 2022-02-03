@@ -1,0 +1,15 @@
+diff --git a/test/config/orphan-finder.json b/test/config/orphan-finder.json
+index 9ed90276..7c9158d0 100644
+--- a/test/config/orphan-finder.json
++++ b/test/config/orphan-finder.json
+@@ -1,9 +1,7 @@
+ {
+   "backdate": "1h",
+   "issuerCerts": [
+-    "/hierarchy/intermediate-cert-rsa-a.pem",
+-    "/hierarchy/intermediate-cert-rsa-b.pem",
+-    "/hierarchy/intermediate-cert-ecdsa-a.pem"
++    "/hierarchy/intermediate-cert-rsa-a.pem"
+   ],
+ 
+ 
