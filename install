@@ -768,7 +768,7 @@ startup() {
     for ct in boulder_bhsm_1 boulder_bredis_1 boulder_bredis_2 boulder_bredis_3 boulder_bredis_4 boulder_bredis_5 boulder_bredis_6; do
         [ -z "$(docker ps -a | grep -e "$ct\$")" ] || docker rm -f $ct &>>$installLog
     done
-    docker-compose up -d &>>$installLog
+    COMPOSE_HTTP_TIMEOUT=120 docker-compose up -d &>>$installLog
 
     [ -h "/etc/init.d/labca" ] || ln -s "$cloneDir/init_d" /etc/init.d/labca
     update-rc.d labca defaults &>>$installLog
