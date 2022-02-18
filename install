@@ -24,7 +24,7 @@ dockerComposeVersion="1.28.5"
 
 labcaUrl="https://github.com/hakwerk/labca/"
 boulderUrl="https://github.com/letsencrypt/boulder/"
-boulderTag="release-2022-02-01"
+boulderTag="release-2022-02-14"
 
 # Feature flags
 flag_skip_redis=true
@@ -613,19 +613,18 @@ config_boulder() {
     sed -i -e "s/test-ca2.pem/test-ca.pem/" config/ocsp-updater.json
     sed -i -e "s/test-ca2.pem/test-ca.pem/" config/publisher.json
     sed -i -e "s/test-ca2.pem/test-ca.pem/" config/ra.json
-    sed -i -e "s/test-ca2.pem/test-ca.pem/" config/wfe.json
     sed -i -e "s/test-ca2.pem/test-ca.pem/" config/wfe2.json
     sed -i -e "s|/hierarchy/intermediate-cert-rsa-a.pem|labca/test-ca.pem|" config/akamai-purger.json
     sed -i -e "s|/hierarchy/intermediate-cert-rsa-a.pem|labca/test-ca.pem|" config/ocsp-responder.json
     sed -i -e "s|/hierarchy/intermediate-cert-rsa-a.pem|labca/test-ca.pem|" config/ocsp-updater.json
     sed -i -e "s|/hierarchy/intermediate-cert-rsa-a.pem|labca/test-ca.pem|" config/publisher.json
     sed -i -e "s|/hierarchy/intermediate-cert-rsa-a.pem|labca/test-ca.pem|" config/ra.json
-    sed -i -e "s|/hierarchy/intermediate-cert-rsa-a.pem|labca/test-ca.pem|" config/wfe.json
     sed -i -e "s|/hierarchy/intermediate-cert-rsa-a.pem|labca/test-ca.pem|" config/wfe2.json
     sed -i -e "s|.hierarchy/intermediate-cert-rsa-a.pem|labca/test-ca.pem|" config/rocsp-tool.json
     sed -i -e "s|/hierarchy/intermediate-cert-rsa-a.pem|labca/test-ca.pem|" config/orphan-finder.json
     sed -i -e "s|/hierarchy/intermediate-cert-rsa-a.pem|labca/test-ca.pem|" issuer-ocsp-responder.json
     sed -i -e "s|/hierarchy/intermediate-cert-rsa-a.pem|labca/test-ca.pem|" cert-ceremonies/intermediate-ocsp-rsa.yaml
+    sed -i -e "s|/hierarchy/intermediate-cert-rsa-a.pem|labca/test-ca.pem|" v2_integration.py
     sed -i -e "s|/hierarchy/root-cert-rsa.pem|labca/test-root.pem|" cert-ceremonies/root-ceremony-rsa.yaml
     sed -i -e "s|/hierarchy/root-cert-rsa.pem|labca/test-root.pem|" cert-ceremonies/intermediate-ocsp-rsa.yaml
     sed -i -e "s|/hierarchy/root-cert-rsa.pem|labca/test-root.pem|" cert-ceremonies/intermediate-ceremony-rsa.yaml
@@ -633,14 +632,12 @@ config_boulder() {
     sed -i -e "s|/hierarchy/root-cert-rsa.pem|labca/test-root.pem|" config/wfe2.json
     sed -i -e "s|/hierarchy/root-cert-rsa.pem|labca/test-root.pem|" integration-test.py
     sed -i -e "s|/hierarchy/root-cert-rsa.pem|labca/test-root.pem|" helpers.py
-    sed -i -e "s|/hierarchy/root-cert-rsa.pem|labca/test-root.pem|" v1_integration.py
     sed -i -e "s/5001/443/g" config/va.json
     sed -i -e "s/5002/80/g" config/va.json
     sed -i -e "s/5001/443/g" config/va-remote-a.json
     sed -i -e "s/5002/80/g" config/va-remote-a.json
     sed -i -e "s/5001/443/g" config/va-remote-b.json
     sed -i -e "s/5002/80/g" config/va-remote-b.json
-    sed -i -e "s|http://boulder:4000/terms/v1|http://$LABCA_FQDN/terms/v1|" config/wfe.json
     sed -i -e "s|https://boulder:4431/terms/v7|https://$LABCA_FQDN/terms/v1|" config/wfe2.json
     sed -i -e "s|http://boulder:4430/acme/issuer-cert|http://$LABCA_FQDN/certs/ca-int.der|" config/ca-a.json
     sed -i -e "s|http://boulder:4430/acme/issuer-cert|http://$LABCA_FQDN/certs/ca-int.der|" config/ca-b.json
@@ -648,7 +645,6 @@ config_boulder() {
     sed -i -e "s|http://127.0.0.1:4000/acme/issuer-cert|http://$LABCA_FQDN/certs/ca-int.der|" config/ca-b.json
     sed -i -e "s|http://boulder:4430/acme/issuer-cert|http://$LABCA_FQDN/acme/issuer-cert|" config/wfe2.json
     sed -i -e "s|http://127.0.0.1:4000/acme/issuer-cert|https://$LABCA_FQDN/acme/issuer-cert|" config/wfe2.json
-    sed -i -e "s|letsencrypt/boulder|hakwerk/labca|" config/wfe.json
     sed -i -e "s|letsencrypt/boulder|hakwerk/labca|" config/wfe2.json
     sed -i -e "s|http://127.0.0.1:4002/|http://$LABCA_FQDN/ocsp/|g" config/ca-a.json
     sed -i -e "s|http://127.0.0.1:4002/|http://$LABCA_FQDN/ocsp/|g" config/ca-b.json
@@ -768,7 +764,7 @@ startup() {
     for ct in boulder_bhsm_1 boulder_bredis_1 boulder_bredis_2 boulder_bredis_3 boulder_bredis_4 boulder_bredis_5 boulder_bredis_6; do
         [ -z "$(docker ps -a | grep -e "$ct\$")" ] || docker rm -f $ct &>>$installLog
     done
-    docker-compose up -d &>>$installLog
+    COMPOSE_HTTP_TIMEOUT=120 docker-compose up -d &>>$installLog
 
     [ -h "/etc/init.d/labca" ] || ln -s "$cloneDir/init_d" /etc/init.d/labca
     update-rc.d labca defaults &>>$installLog
