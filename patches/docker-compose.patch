@@ -3,7 +3,7 @@ index f515225e4..c1d54f235 100644
 --- a/docker-compose.yml
 +++ b/docker-compose.yml
 @@ -4,10 +4,11 @@ services:
-     image: &boulder_image letsencrypt/boulder-tools:${BOULDER_TOOLS_TAG:-go1.17.5_2022-01-13}
+     image: &boulder_image letsencrypt/boulder-tools:${BOULDER_TOOLS_TAG:-go1.17.7_2022-02-10}
      environment:
        FAKE_DNS: 10.77.77.77
 -      BOULDER_CONFIG_DIR: test/config
