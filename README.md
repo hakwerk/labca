@@ -11,6 +11,7 @@
 - [Background](#background)
 - [Install](#install)
 - [Usage](#usage)
+- [Troubleshooting](#troubleshooting)
 - [Contributing](#contributing)
 - [License](#license)
 
@@ -93,9 +94,9 @@ The end users in your organization / lab can visit the public pages of you LabCA
 
 <img src="https://user-images.githubusercontent.com/44847421/48658731-f727ef80-ea46-11e8-985c-1ea64f340220.jpg" width="300"> <img src="https://user-images.githubusercontent.com/44847421/48658733-fa22e000-ea46-11e8-9fb1-901fddc9ee12.jpg" width="300">
 
-### Troubleshooting
+## Troubleshooting
 
-Some log files to check in case of issues are:
+After installing sometimes the application is not starting up properly and it can be quite hard to figure out why. Some log files to check in case of issues are:
 * /etc/nginx/ssl/acme_tiny.log
 * /home/labca/logs/commander.log
 * cd /home/labca/boulder; docker-compose logs labca
@@ -103,9 +104,11 @@ Some log files to check in case of issues are:
 * /var/log/labca.err
 * possibly /var/log/nginx/error.log
 
-If you get "No valid IP addresses found for <hostname>" in /etc/nginx/ssl/acme_tiny.log, solve it by entering the hostname in your local DNS. Same for "Could not resolve host: <hostname>" in /var/log/labca.err.
+### Common error messages
 
-When issuing a certificate, LabCA/boulder checks for CAA (Certification Authority Authorization) records in DNS, which specify what CAs are allowed to issue certificates for the domain. If you get an error like "SERVFAIL looking up CAA for internal" or "CAA record for ca01.foo.internal prevents issuance", you can try to add something like this to your DNS domain:
+If you get "**No valid IP addresses found for <hostname>**" in /etc/nginx/ssl/acme_tiny.log, solve it by entering the hostname in your local DNS. Same for "**Could not resolve host: <hostname>**" in /var/log/labca.err.
+
+When issuing a certificate, LabCA/boulder checks for CAA (Certification Authority Authorization) records in DNS, which specify what CAs are allowed to issue certificates for the domain. If you get an error like "**SERVFAIL looking up CAA for internal**" or "**CAA record for ca01.foo.internal prevents issuance**", you can try to add something like this to your DNS domain:
 ```
 foo.internal. CAA 0 issue "foo.internal"
 ```
