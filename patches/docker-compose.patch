@@ -1,27 +1,31 @@
 diff --git a/docker-compose.yml b/docker-compose.yml
-index f515225e4..c1d54f235 100644
+index b0c235a91..d72c08883 100644
 --- a/docker-compose.yml
 +++ b/docker-compose.yml
-@@ -4,10 +4,11 @@ services:
+@@ -8,7 +8,7 @@ services:
      image: &boulder_image letsencrypt/boulder-tools:${BOULDER_TOOLS_TAG:-go1.17.7_2022-02-10}
      environment:
        FAKE_DNS: 10.77.77.77
 -      BOULDER_CONFIG_DIR: test/config
 +      BOULDER_CONFIG_DIR: labca/config
        GOFLAGS: -mod=vendor
+       # Go 1.18 turns off SHA-1 validation on CSRs (and certs, but that doesn't
+       # affect us). It also turns off TLS 1.0 and TLS 1.1. Temporarily go back
+@@ -17,6 +17,7 @@ services:
+       GODEBUG: x509sha1=1,tls10default=1
      volumes:
-       - .:/go/src/github.com/letsencrypt/boulder:cached
-+      - /home/labca/boulder_labca:/go/src/github.com/letsencrypt/boulder/labca
+       - .:/boulder:cached
++      - /home/labca/boulder_labca:/boulder/labca
        - ./.gocache:/root/.cache/go-build:cached
        - ./.hierarchy:/hierarchy/:cached
        - ./.softhsm-tokens/:/var/lib/softhsm/tokens/:cached
-@@ -34,11 +35,19 @@ services:
+@@ -41,11 +42,19 @@ services:
      depends_on:
        - bmysql
        - bredis_clusterer
 -    entrypoint: test/entrypoint.sh
 +    entrypoint: labca/entrypoint.sh
-     working_dir: &boulder_working_dir /go/src/github.com/letsencrypt/boulder
+     working_dir: &boulder_working_dir /boulder
 +    logging:
 +      driver: "json-file"
 +      options:
@@ -36,7 +40,7 @@ index f515225e4..c1d54f235 100644
      networks:
        bluenet:
          aliases:
-@@ -52,7 +61,11 @@ services:
+@@ -59,7 +68,11 @@ services:
      # small.
      command: mysqld --bind-address=0.0.0.0 --slow-query-log --log-output=TABLE --log-queries-not-using-indexes=ON
      logging:
@@ -49,7 +53,7 @@ index f515225e4..c1d54f235 100644
  
    bredis_1:
      image: redis:latest
-@@ -127,18 +140,31 @@ services:
+@@ -134,18 +147,31 @@ services:
            aliases:
              - boulder-redis-clusterer
  
@@ -63,13 +67,12 @@ index f515225e4..c1d54f235 100644
      networks:
        - bluenet
      volumes:
--      - .:/go/src/github.com/letsencrypt/boulder
--    working_dir: *boulder_working_dir
--    entrypoint: test/entrypoint-netaccess.sh
 +      - /home/labca/admin:/go/src/labca
 +      - ./.gocache:/root/.cache/go-build
 +      - /var/www/html:/wwwstatic
-+      - .:/boulder
+       - .:/boulder
+-    working_dir: *boulder_working_dir
+-    entrypoint: test/entrypoint-netaccess.sh
 +      - /home/labca/boulder_labca:/boulder/labca
 +    ports:
 +      - 3000:3000

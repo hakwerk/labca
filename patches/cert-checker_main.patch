@@ -58,7 +58,7 @@ index cfc72632..de4b01ca 100644
  	// Validate PA config and set defaults if needed.
  	cmd.FailOnError(config.PA.CheckChallenges(), "Invalid PA configuration")
  
-@@ -421,6 +426,7 @@ func main() {
+@@ -420,6 +425,7 @@ func main() {
  		kp,
  		config.CertChecker.CheckPeriod.Duration,
  		acceptableValidityDurations,
