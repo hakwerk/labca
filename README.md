@@ -112,6 +112,7 @@ When issuing a certificate, LabCA/boulder checks for CAA (Certification Authorit
 ```
 foo.internal. CAA 0 issue "foo.internal"
 ```
+The value in the issue field should be the domain of your LabCA instance, not the hostname. This value can be found in the issuerDomain property in the /home/labca/boulder_labca/config/va.json file.
 See also the [Let's Encrypt&trade; page on CAA](https://letsencrypt.org/docs/caa/).
 
 ### NOTE
