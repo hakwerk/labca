@@ -24,7 +24,7 @@ dockerComposeVersion="1.28.5"
 
 labcaUrl="https://github.com/hakwerk/labca/"
 boulderUrl="https://github.com/letsencrypt/boulder/"
-boulderTag="release-2022-02-14"
+boulderTag="release-2022-03-22"
 
 # Feature flags
 flag_skip_redis=true

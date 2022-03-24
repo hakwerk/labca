@@ -12,5 +12,5 @@ index 9b0a1d13..eace2cf9 100644
 -      ".hierarchy/intermediate-cert-rsa-b.pem": 4
 +      ".hierarchy/intermediate-cert-rsa-a.pem": 1
      }
-   }
- }
+   },
+   "syslog": {
