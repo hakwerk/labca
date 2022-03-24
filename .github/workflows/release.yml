@@ -1,0 +1,27 @@
+name: Create Release
+
+on:
+  push:
+    tags:
+      - '*'
+
+jobs:
+  create-release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Create changelog text
+        id: changelog
+        uses: loopwerk/tag-changelog@v1
+        with:
+          token: ${{ secrets.ACTION_PAT }}
+
+      - name: Create release
+        uses: ncipollo/release-action@v1
+        with:
+          body: ${{ steps.changelog.outputs.changes }}
+          draft: true
+          token: ${{ secrets.ACTION_PAT }}
