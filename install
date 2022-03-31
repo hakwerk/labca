@@ -534,10 +534,10 @@ config_boulder() {
     msg_info "$msg"
 
     cd "$boulderDir"
-    sudo -u labca -H patch -p1 < $cloneDir/patches/docker-compose.patch &>>$installLog
     if [ "$flag_skip_redis" == true ]; then
         sudo -u labca -H patch -p1 < $cloneDir/patches/docker-compose-redis.patch &>>$installLog
     fi
+    sudo -u labca -H patch -p1 < $cloneDir/patches/docker-compose.patch &>>$installLog
     cp docker-compose.yml "$boulderLabCADir/.backup/"
 
     sudo -u labca -H patch -p1 < $cloneDir/patches/cmd_shell.patch &>>$installLog

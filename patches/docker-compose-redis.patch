@@ -1,8 +1,8 @@
 diff --git a/docker-compose.yml b/docker-compose.yml
-index e88f7c19f..d771aa011 100644
+index b0c235a91..b7e5656c5 100644
 --- a/docker-compose.yml
 +++ b/docker-compose.yml
-@@ -26,8 +26,6 @@ services:
+@@ -25,8 +25,6 @@ services:
          ipv4_address: 10.77.77.77
        rednet:
          ipv4_address: 10.88.88.88
@@ -11,17 +11,17 @@ index e88f7c19f..d771aa011 100644
      # Use sd-test-srv as a backup to Docker's embedded DNS server
      # (https://docs.docker.com/config/containers/container-networking/#dns-services).
      # If there's a name Docker's DNS server doesn't know about, it will
-@@ -41,7 +39,6 @@ services:
+@@ -40,7 +38,6 @@ services:
        - 4003:4003 # OCSP
      depends_on:
        - bmysql
 -      - bredis_clusterer
-     entrypoint: labca/entrypoint.sh
+     entrypoint: test/entrypoint.sh
      working_dir: &boulder_working_dir /boulder
+ 
+@@ -61,78 +58,6 @@ services:
      logging:
-@@ -74,78 +71,6 @@ services:
-         max-file: "5"
-     restart: always
+         driver: none
  
 -  bredis_1:
 -    image: redis:latest
@@ -96,9 +96,9 @@ index e88f7c19f..d771aa011 100644
 -          aliases:
 -            - boulder-redis-clusterer
  
-   labca:
+   netaccess:
      image: *boulder_image
-@@ -186,10 +111,3 @@ networks:
+@@ -160,10 +85,3 @@ networks:
        driver: default
        config:
          - subnet: 10.88.88.0/24
