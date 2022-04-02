@@ -129,7 +129,7 @@ case $txt in
     nginx=$(ps -eo lstart,args | grep nginx | grep master | grep -v grep | cut -c 5-24)
     svc=$(ps -eo lstart,args | grep tcpserver | grep sudo | grep -v grep | cut -c 5-24)
     boulder=$(ps -eo lstart,args | grep bin/boulder-wfe2 | grep -v grep | cut -c 5-24)
-    labca=$(ps -eo lstart,args | grep -- "-host-port 3000" | grep -v grep | head -1 | cut -c 5-24)
+    labca=$(ps -eo lstart,args | grep bin/labca | grep -v grep | head -1 | cut -c 5-24)
     echo "$timezone|$nginx|$svc|$boulder|$labca"
     exit 0
     ;;

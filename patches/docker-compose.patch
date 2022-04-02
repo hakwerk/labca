@@ -1,5 +1,5 @@
 diff --git a/docker-compose.yml b/docker-compose.yml
-index b7e5656c5..d771aa011 100644
+index b7e5656c5..51393c181 100644
 --- a/docker-compose.yml
 +++ b/docker-compose.yml
 @@ -8,7 +8,7 @@ services:
@@ -19,8 +19,18 @@ index b7e5656c5..d771aa011 100644
        - ./.gocache:/root/.cache/go-build:cached
        - ./.hierarchy:/hierarchy/:cached
        - ./.softhsm-tokens/:/var/lib/softhsm/tokens/:cached
-@@ -38,11 +39,19 @@ services:
-       - 4003:4003 # OCSP
+@@ -32,17 +33,25 @@ services:
+     # special logic there that will return multiple IP addresses for
+     # service names.
+     dns: 10.77.77.77
+-    ports:
+-      - 4001:4001 # ACMEv2
+-      - 4002:4002 # OCSP
+-      - 4003:4003 # OCSP
++    expose:
++      - 4001 # ACMEv2
++      - 4002 # OCSP
++      - 4003 # OCSP
      depends_on:
        - bmysql
 -    entrypoint: test/entrypoint.sh
@@ -69,8 +79,8 @@ index b7e5656c5..d771aa011 100644
 -    working_dir: *boulder_working_dir
 -    entrypoint: test/entrypoint-netaccess.sh
 +      - /home/labca/boulder_labca:/boulder/labca
-+    ports:
-+      - 3000:3000
++    expose:
++      - 3000
 +    depends_on:
 +      - bmysql
 +    working_dir: /go/src/labca
