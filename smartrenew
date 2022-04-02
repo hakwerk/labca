@@ -5,10 +5,10 @@ set -e
 RENEW=30
 TODAY=`date '+%Y_%m_%d'`
 
-echo $TODAY >> /etc/nginx/ssl/cron.log
+echo $TODAY >> /home/labca/nginx_data/ssl/cron.log
 
-if ! expires=`openssl x509 -checkend $[ 86400 * $RENEW ] -noout -in /etc/nginx/ssl/labca_cert.pem`; then
-    echo "    renewing!" >> /etc/nginx/ssl/cron.log
-    cp /etc/nginx/ssl/labca_cert.pem /etc/nginx/ssl/labca_cert_$TODAY.pem
+if ! expires=`openssl x509 -checkend $[ 86400 * $RENEW ] -noout -in /home/labca/nginx_data/ssl/labca_cert.pem`; then
+    echo "    renewing!" >> /home/labca/nginx_data/ssl/cron.log
+    cp /home/labca/nginx_data/ssl/labca_cert.pem /home/labca/nginx_data/ssl/labca_cert_$TODAY.pem
     ~labca/labca/renew
 fi

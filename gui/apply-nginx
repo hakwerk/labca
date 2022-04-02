@@ -18,5 +18,3 @@ sed -i -e "s|\[PKI_ROOT_FINGERPRINT\]|$PKI_ROOT_FINGERPRINT|g" cps/index.html
 sed -i -e "s|\[PKI_ROOT_VALIDITY\]|$PKI_ROOT_VALIDITY|g" cps/index.html
 
 sed -i -e "s|\[PKI_COMPANY_NAME\]|$PKI_DEFAULT_O|g" terms/v1.html
-
-chown -R www-data:www-data .

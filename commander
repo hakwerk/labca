@@ -38,7 +38,7 @@ function wait_server() {
 read txt
 case $txt in
 "trust-store")
-    cp /etc/nginx/ssl/labca_cert.pem /usr/local/share/ca-certificates/labca_cert.crt
+    cp /home/labca/nginx_data/ssl/labca_cert.pem /usr/local/share/ca-certificates/labca_cert.crt
     cp ~labca/admin/data/root-ca.pem /usr/local/share/ca-certificates/root-ca.crt
     update-ca-certificates &>>$LOGFILE
     echo "Waiting for initial startup of the docker containers..." &>>$LOGFILE
@@ -58,12 +58,11 @@ case $txt in
     wait_up $PS_BOULDER $PS_BOULDER_COUNT &>>$LOGFILE
     ;;
 "acme-request")
-    cd /etc/nginx/ssl
+    cd /home/labca/nginx_data/ssl
     [ -e account.key ] || openssl genrsa 4096 > account.key
     [ -e labca_key.pem ] || openssl genrsa 4096 > labca_key.pem
     san=$(openssl x509 -noout -text -in labca_cert.pem | grep DNS:)
     openssl req -new -sha256 -key labca_key.pem -subj "/" -reqexts SAN -config <(cat /etc/ssl/openssl.cnf <(printf "[SAN]\nsubjectAltName=$san")) > domain.csr
-    chown -R www-data:www-data *
     url=$(grep 'DEFAULT_DIRECTORY_URL =' /home/labca/acme_tiny.py | sed -e 's/.*=[ ]*//' | sed -e 's/\"//g')
     wait_server $url
     sleep 10
@@ -72,16 +71,18 @@ case $txt in
     ln -sf /home/labca/labca/logrotate_d /etc/logrotate.d/labca
     ;;
 "nginx-remove-redirect")
-    perl -i -p0e 's/\n    # BEGIN temporary redirect\n    location = \/ \{\n        return 302 \/admin\/;\n    }\n    # END temporary redirect\n//igs' /etc/nginx/sites-available/labca
+    perl -i -p0e 's/\n    # BEGIN temporary redirect\n    location = \/ \{\n        return 302 \/admin\/;\n    }\n    # END temporary redirect\n//igs' /home/labca/nginx_data/conf.d/labca.conf
     ;;
 "nginx-reload")
-    service nginx reload
+    cd /home/labca/boulder
+    docker-compose exec -T nginx nginx -s reload &>>$LOGFILE
     ;;
 "nginx-restart")
-    service nginx restart
+    cd /home/labca/boulder
+    docker-compose restart nginx &>>$LOGFILE
     ;;
 "log-cert")
-    [ -f /etc/nginx/ssl/acme_tiny.log ] && tail -200 /etc/nginx/ssl/acme_tiny.log || /bin/true
+    [ -f /home/labca/nginx_data/ssl/acme_tiny.log ] && tail -200 /home/labca/nginx_data/ssl/acme_tiny.log || /bin/true
     exit 0
     ;;
 "log-commander")
@@ -120,11 +121,8 @@ case $txt in
     exit 0
     ;;
 "log-web")
-    tail -f -n 50 /var/log/nginx/access.log
-    ;;
-"log-weberr")
-    [ -f /var/log/nginx/error.log ] && tail -200 /var/log/nginx/error.log || /bin/true
-    exit 0
+    cd /home/labca/boulder
+    docker-compose logs -f --no-color --tail=50 nginx
     ;;
 "log-components")
     timezone=$(cat /etc/timezone)

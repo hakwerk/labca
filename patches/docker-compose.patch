@@ -40,7 +40,7 @@ index b7e5656c5..d771aa011 100644
      networks:
        bluenet:
          aliases:
-@@ -56,21 +65,38 @@ services:
+@@ -56,21 +65,51 @@ services:
      # small.
      command: mysqld --bind-address=0.0.0.0 --slow-query-log --log-output=TABLE --log-queries-not-using-indexes=ON
      logging:
@@ -64,7 +64,7 @@ index b7e5656c5..d771aa011 100644
      volumes:
 +      - /home/labca/admin:/go/src/labca
 +      - ./.gocache:/root/.cache/go-build
-+      - /var/www/html:/wwwstatic
++      - /home/labca/nginx_data/static:/wwwstatic
        - .:/boulder
 -    working_dir: *boulder_working_dir
 -    entrypoint: test/entrypoint-netaccess.sh
@@ -81,6 +81,19 @@ index b7e5656c5..d771aa011 100644
 +        max-size: "500k"
 +        max-file: "5"
 +    restart: always
++
++  nginx:
++    image: nginx:1.21.6
++    restart: always
++    networks:
++      - bluenet
++    ports:
++      - 80:80
++      - 443:443
++    volumes:
++      - /home/labca/nginx_data/conf.d:/etc/nginx/conf.d
++      - /home/labca/nginx_data/ssl:/etc/nginx/ssl
++      - /home/labca/nginx_data/static:/var/www/html
 +
 +volumes:
 +  dbdata:

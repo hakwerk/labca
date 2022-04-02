@@ -1,4 +1,4 @@
-/etc/nginx/ssl/*.log
+/home/labca/nginx_data/ssl/*.log
 /home/labca/logs/cron-*.log
 {
     rotate 4

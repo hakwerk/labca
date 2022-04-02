@@ -202,7 +202,7 @@ if __name__ == "__main__": # pragma: no cover
 ## openssl genrsa 4096 > account.key
 ## openssl genrsa 4096 > domain.key
 ## openssl req -new -sha256 -key domain.key -subj "/" -reqexts SAN -config <(cat /etc/ssl/openssl.cnf <(printf "[SAN]\nsubjectAltName=DNS:tessie.hakwerk.local")) > domain.csr
-## python acme_tiny.py --account-key ./account.key --csr ./domain.csr --acme-dir /var/www/html/.well-known/acme-challenge/ > domain_chain.crt
+## python acme_tiny.py --account-key ./account.key --csr ./domain.csr --acme-dir /home/labca/nginx_data/static/.well-known/acme-challenge/ > domain_chain.crt
 ## cp domain_chain.crt ~/boulder/test/
 
 ## docker exec -ti boulder_boulder_1 /bin/bash

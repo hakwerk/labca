@@ -16,8 +16,6 @@ cp $PKI_ROOT_CERT_BASE.der certs/
 cp $PKI_INT_CERT_BASE.pem certs/
 cp $PKI_INT_CERT_BASE.der certs/
 
-chown -R www-data:www-data .
-
 
 cd /boulder/labca
 $PKI_PWD/apply-boulder

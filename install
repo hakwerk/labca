@@ -203,7 +203,7 @@ clone_or_pull() {
 # Checkout the latest release tag
 checkout_release() {
     local branch="$1"
-    if [ "$branch" == "" ] || [ "$branch" == "master" ]; then
+    if [ "$branch" == "" ] || [ "$branch" == "master" ] || [ "$branch" == "main" ]; then
         cd "$cloneDir"
         TAG=$(git describe --tags $(git rev-list --tags --max-count=1))
         sudo -u labca -H git reset --hard $TAG &>>$installLog
@@ -393,7 +393,7 @@ install_pkg() {
 }
 
 install_extra() {
-    local packages=(apt-transport-https ca-certificates curl gnupg2 net-tools nginx software-properties-common tzdata ucspi-tcp zip python)
+    local packages=(apt-transport-https ca-certificates curl gnupg2 net-tools software-properties-common tzdata ucspi-tcp zip python)
     for package in "${packages[@]}"; do
         install_pkg "$package"
     done
@@ -425,11 +425,22 @@ static_web() {
 
     local msg="Static web pages"
     msg_info "$msg"
-    [ -e /etc/nginx/sites-available/labca ] || cp $cloneDir/nginx.conf /etc/nginx/sites-available/labca
-    [ -e /etc/nginx/sites-enabled/labca ] || ln -s ../sites-available/labca /etc/nginx/sites-enabled/
-    rm -f /etc/nginx/sites-enabled/default
+    if [ -d /etc/nginx ]; then
+        # Migrate cert from host nginx to dockerized nginx
+        [ -d /home/labca/nginx_data/ssl ] || mkdir -p /home/labca/nginx_data/ssl
+        mv /etc/nginx/ssl/* /home/labca/nginx_data/ssl/
+        mv /etc/nginx /etc/nginx.backup
+    fi
 
-    cd /var/www/html
+    [ -d /home/labca/nginx_data/conf.d ] || mkdir -p /home/labca/nginx_data/conf.d
+    [ -d /home/labca/nginx_data/ssl ] || mkdir -p /home/labca/nginx_data/ssl
+    cp $cloneDir/nginx.conf /home/labca/nginx_data/conf.d/labca.conf
+    if [ -f "$boulderLabCADir/setup_complete" ]; then
+        perl -i -p0e 's/\n    # BEGIN temporary redirect\n    location = \/ \{\n        return 302 \/admin\/;\n    }\n    # END temporary redirect\n//igs' /home/labca/nginx_data/conf.d/labca.conf
+    fi
+
+    [ -d /home/labca/nginx_data/static ] || mkdir /home/labca/nginx_data/static
+    cd /home/labca/nginx_data/static
     git status --short &> /dev/null || rc=$?
     if [ $rc -gt 0 ]; then
         git init >>$installLog
@@ -438,9 +449,10 @@ static_web() {
     git commit --all --quiet -m "LabCA before update $runId" &>>$installLog && { msg_ok "Commit existing modifications of $adminDir"; msg_info "$msg"; } || true
 
     mkdir -p .well-known/acme-challenge
+    find .well-known/acme-challenge/ -mtime +10 -exec rm {} \;  # Clean up files older than 10 days
     mkdir -p crl
     [ -e cert ] || ln -s certs cert
-    cp -rp $cloneDir/www/* .
+    cp -rp $cloneDir/static/* .
     sed -i -e "s|\[LABCA_CPS_LOCATION\]|http://$LABCA_FQDN/cps/|g" cps/index.html
     sed -i -e "s|\[LABCA_CERTS_LOCATION\]|http://$LABCA_FQDN/certs/|g" cps/index.html
 
@@ -451,8 +463,6 @@ static_web() {
         export PKI_DEFAULT_O=$(grep organization $adminDir/data/config.json | sed -e 's/.*:[ ]*//' | sed -e 's/\",//g' | sed -e 's/\"//g')
 
         $adminDir/apply-nginx
-    else
-        chown -R www-data:www-data .
     fi
 
     git add --all &>/dev/null || true
@@ -463,19 +473,16 @@ static_web() {
 
 # Create a temporary self-signed certificate if there is no certificate yet
 selfsigned_cert() {
-    if [ -e /etc/nginx/ssl/labca_cert.pem ]; then
+    if [ -e /home/labca/nginx_data/ssl/labca_cert.pem ]; then
         msg_ok "Certificate is present"
     else
         local msg="Create self-signed certificate"
         msg_info "$msg"
-        mkdir -p /etc/nginx/ssl
-        cd /etc/nginx/ssl
+        mkdir -p /home/labca/nginx_data/ssl
+        cd /home/labca/nginx_data/ssl
         openssl req -x509 -nodes -sha256 -newkey rsa:2048 -keyout labca_key.pem -out labca_cert.pem -days 7 \
             -subj "/O=LabCA/CN=$LABCA_FQDN" -reqexts SAN -extensions SAN \
             -config <(cat /etc/ssl/openssl.cnf <(printf "\n[SAN]\nbasicConstraints=CA:FALSE\nnsCertType=server\nsubjectAltName=DNS:$LABCA_FQDN")) &>>$installLog
-        chown -R www-data:www-data labca_*
-
-        service nginx restart &>>$installLog
         msg_ok "$msg"
     fi
 }
@@ -720,13 +727,15 @@ cleanup() {
     local msg="Cleaning up obsolete files"
     msg_info "$msg"
 
-    rm -f /var/www/html/css/skeleton.css
-    rm -f /var/www/html/css/skeleton-tabs.css
-    rm -f /var/www/html/css/normalize.css
-    rm -f /var/www/html/css/font.css
-    rm -f /var/www/html/img/favicon.ico
-    rm -f /var/www/html/js/jquery-3.3.1.min.js
-    rm -f /var/www/html/js/skeleton-tabs.js
+    if [ -d /var/www/html ]; then
+        rm -f /var/www/html/css/skeleton.css
+        rm -f /var/www/html/css/skeleton-tabs.css
+        rm -f /var/www/html/css/normalize.css
+        rm -f /var/www/html/css/font.css
+        rm -f /var/www/html/img/favicon.ico
+        rm -f /var/www/html/js/jquery-3.3.1.min.js
+        rm -f /var/www/html/js/skeleton-tabs.js
+    fi
     rm -f $adminDir/templates/cert.tmpl
     rm -f $adminDir/templates/error.tmpl
     rm -f $adminDir/templates/final.tmpl
@@ -738,6 +747,11 @@ cleanup() {
     rm -f $adminDir/templates/register.tmpl
     rm -f $adminDir/templates/setup.tmpl
     rm -f $adminDir/templates/wrapup.tmpl
+
+    # Remove host nginx if installed, as we are now using the docker container
+    systemctl stop nginx &>>$installLog || true
+    systemctl disable nginx &>>$installLog || true
+    apt remove -y nginx &>>$installLog
 
     msg_ok "$msg"
 }
@@ -784,7 +798,7 @@ startup() {
 
 # If the nginx certificate is self-signed then show extra text
 first_time() {
-    local certFile="/etc/nginx/ssl/labca_cert.pem"
+    local certFile="/home/labca/nginx_data/ssl/labca_cert.pem"
     [ -e "$certFile" ] || msg_fatal "The SSL certificate $certFile does not exist"
 
     local subject=$(openssl x509 -noout -in "$certFile" -subject_hash)

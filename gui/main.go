@@ -232,7 +232,7 @@ func errorHandler(w http.ResponseWriter, r *http.Request, err error, status int)
 			var FileErrors []interface{}
 			data := getLog(w, r, "cert")
 			if data != "" {
-				FileErrors = append(FileErrors, map[string]interface{}{"FileName": "/etc/nginx/ssl/acme_tiny.log", "Content": data})
+				FileErrors = append(FileErrors, map[string]interface{}{"FileName": "/home/labca/nginx_data/ssl/acme_tiny.log", "Content": data})
 			}
 			data = getLog(w, r, "commander")
 			if data != "" {
@@ -1006,7 +1006,7 @@ func _manageGet(w http.ResponseWriter, r *http.Request) {
 	components := _parseComponents(getLog(w, r, "components"))
 	for i := 0; i < len(components); i++ {
 		if components[i].Name == "NGINX Webserver" {
-			components[i].LogURL = r.Header.Get("X-Request-Base") + "/logs/weberr"
+			components[i].LogURL = r.Header.Get("X-Request-Base") + "/logs/web"
 			components[i].LogTitle = "Web Error Log"
 
 			btn := make(map[string]interface{})
@@ -1185,11 +1185,6 @@ func logsHandler(w http.ResponseWriter, r *http.Request) {
 	case "web":
 		name = "Web Access Log"
 		message = "Live view on the NGINX web server access log."
-	case "weberr":
-		name = "Web Error Log"
-		message = "Log file for the NGINX web server error log."
-		wsurl = ""
-		data = getLog(w, r, logType)
 	default:
 		errorHandler(w, r, fmt.Errorf("unknown log type '%s'", logType), http.StatusBadRequest)
 		return
@@ -2272,19 +2267,11 @@ func activeNav(active string, uri string, requestBase string) []navItem {
 		},
 	}
 	web := navItem{
-		Name: "Web Access",
+		Name: "Web Server",
 		Icon: "fa-globe",
 		Attrs: map[template.HTMLAttr]string{
 			"href":  requestBase + "/logs/web",
 			"title": "Live view on the NGINX web server access log",
-		},
-	}
-	weberr := navItem{
-		Name: "Web Error",
-		Icon: "fa-times",
-		Attrs: map[template.HTMLAttr]string{
-			"href":  requestBase + "/logs/weberr",
-			"title": "Log file for the NGINX web server error log",
 		},
 	}
 	logs := navItem{
@@ -2295,7 +2282,7 @@ func activeNav(active string, uri string, requestBase string) []navItem {
 			"title": "Log Files",
 		},
 		IsActive: strings.HasPrefix(uri, "/logs/"),
-		SubMenu:  []navItem{cert, boulder, audit, labca, web, weberr},
+		SubMenu:  []navItem{cert, boulder, audit, labca, web},
 	}
 	manage := navItem{
 		Name: "Manage",
@@ -2491,13 +2478,13 @@ func main() {
 
 	r.NotFoundHandler = http.HandlerFunc(notFoundHandler)
 	if isDev {
-		r.PathPrefix("/accounts/static/").Handler(http.StripPrefix("/accounts/static/", http.FileServer(http.Dir("../www"))))
-		r.PathPrefix("/authz/static/").Handler(http.StripPrefix("/authz/static/", http.FileServer(http.Dir("../www"))))
-		r.PathPrefix("/challenges/static/").Handler(http.StripPrefix("/challenges/static/", http.FileServer(http.Dir("../www"))))
-		r.PathPrefix("/certificates/static/").Handler(http.StripPrefix("/certificates/static/", http.FileServer(http.Dir("../www"))))
-		r.PathPrefix("/orders/static/").Handler(http.StripPrefix("/orders/static/", http.FileServer(http.Dir("../www"))))
-		r.PathPrefix("/logs/static/").Handler(http.StripPrefix("/logs/static/", http.FileServer(http.Dir("../www"))))
-		r.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("../www"))))
+		r.PathPrefix("/accounts/static/").Handler(http.StripPrefix("/accounts/static/", http.FileServer(http.Dir("../static"))))
+		r.PathPrefix("/authz/static/").Handler(http.StripPrefix("/authz/static/", http.FileServer(http.Dir("../static"))))
+		r.PathPrefix("/challenges/static/").Handler(http.StripPrefix("/challenges/static/", http.FileServer(http.Dir("../static"))))
+		r.PathPrefix("/certificates/static/").Handler(http.StripPrefix("/certificates/static/", http.FileServer(http.Dir("../static"))))
+		r.PathPrefix("/orders/static/").Handler(http.StripPrefix("/orders/static/", http.FileServer(http.Dir("../static"))))
+		r.PathPrefix("/logs/static/").Handler(http.StripPrefix("/logs/static/", http.FileServer(http.Dir("../static"))))
+		r.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("../static"))))
 	}
 	r.Use(authorized)
 
