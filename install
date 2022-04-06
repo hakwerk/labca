@@ -205,6 +205,9 @@ checkout_release() {
     local branch="$1"
     if [ "$branch" == "" ] || [ "$branch" == "master" ] || [ "$branch" == "main" ]; then
         cd "$cloneDir"
+        if [ "$curChecksum" == "" ]; then
+            curChecksum=$(md5sum $cloneDir/install 2>/dev/null | cut -d' ' -f1)
+        fi
         TAG=$(git describe --tags $(git rev-list --tags --max-count=1))
         sudo -u labca -H git reset --hard $TAG &>>$installLog
     fi
@@ -212,7 +215,6 @@ checkout_release() {
 
 # Restart the script if it was updated itself
 restart_if_updated() {
-    local curChecksum="$1"
     local gitRev=$(cd $cloneDir && git describe --always --tags)
     echo "=== version $gitRev ($curChecksum) ===" >>$installLog
 
@@ -831,14 +833,14 @@ main() {
 
     this=$0
     [ -e $this ] || this="$curdir/$0"
-    local checksum=$(md5sum $this 2>/dev/null | cut -d' ' -f1)
+    curChecksum=$(md5sum $this 2>/dev/null | cut -d' ' -f1)
     [ ! -e "$cloneDir/cron_d" ] || chown labca:labca "$cloneDir/cron_d"
 
     parse_cmdline "$@"
     if [ $keepLocal -eq 0 ]; then
         clone_or_pull "$cloneDir" "$labcaUrl" "$cmdlineBranch"
         checkout_release "$cmdlineBranch"
-        restart_if_updated "$checksum"
+        restart_if_updated
     fi
 
     get_fqdn
