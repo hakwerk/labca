@@ -37,7 +37,7 @@ COL_LIGHT_GREEN='\e[1;32m'
 COL_LIGHT_RED='\e[1;31m'
 TICK="[${COL_LIGHT_GREEN}✓${COL_NC}]"
 CROSS="[${COL_LIGHT_RED}✗${COL_NC}]"
-INFO="[i]"
+INFO="[.]"
 DONE="${COL_LIGHT_GREEN} done!${COL_NC}"
 OVER="\\r\\033[K"
 
@@ -342,7 +342,7 @@ copy_admin() {
     cd "$adminDir"
     git status --short &> /dev/null || rc=$?
     if [ $rc -gt 0 ]; then
-        git init >>$installLog
+        git init &>>$installLog
     fi
     git add --all &>/dev/null || true
     git commit --all --quiet -m "LabCA before update $runId" &>>$installLog && { msg_ok "Commit existing modifications of $adminDir"; msg_info "$msg"; } || true
@@ -445,7 +445,7 @@ static_web() {
     cd /home/labca/nginx_data/static
     git status --short &> /dev/null || rc=$?
     if [ $rc -gt 0 ]; then
-        git init >>$installLog
+        git init &>>$installLog
     fi
     git add --all &>/dev/null || true
     git commit --all --quiet -m "LabCA before update $runId" &>>$installLog && { msg_ok "Commit existing modifications of $adminDir"; msg_info "$msg"; } || true
@@ -524,7 +524,7 @@ config_boulder() {
     local rc=0
     git status --short &> /dev/null || rc=$?
     if [ $rc -gt 0 ]; then
-        git init >>$installLog
+        git init &>>$installLog
     fi
     [ -d ".backup" ] || mkdir -p ".backup"
 

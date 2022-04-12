@@ -62,7 +62,7 @@ case $txt in
     [ -e account.key ] || openssl genrsa 4096 > account.key
     [ -e labca_key.pem ] || openssl genrsa 4096 > labca_key.pem
     san=$(openssl x509 -noout -text -in labca_cert.pem | grep DNS:)
-    openssl req -new -sha256 -key labca_key.pem -subj "/" -reqexts SAN -config <(cat /etc/ssl/openssl.cnf <(printf "[SAN]\nsubjectAltName=$san")) > domain.csr
+    openssl req -new -utf8 -sha256 -key labca_key.pem -subj "/" -reqexts SAN -config <(cat /etc/ssl/openssl.cnf <(printf "[SAN]\nsubjectAltName=$san")) > domain.csr
     url=$(grep 'DEFAULT_DIRECTORY_URL =' /home/labca/acme_tiny.py | sed -e 's/.*=[ ]*//' | sed -e 's/\"//g')
     wait_server $url
     sleep 10

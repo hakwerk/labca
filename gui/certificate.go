@@ -187,11 +187,11 @@ func (ci *CertificateInfo) Generate(path string, certBase string) error {
 	subject = strings.Replace(subject, " ", "\\\\", -1)
 
 	if ci.IsRoot {
-		if _, err := exeCmd("openssl req -config " + path + "openssl.cnf -days 3650 -new -x509 -extensions v3_ca -subj " + subject + " -key " + path + certBase + ".key -out " + path + certBase + ".pem"); err != nil {
+		if _, err := exeCmd("openssl req -config " + path + "openssl.cnf -days 3650 -new -utf8 -x509 -extensions v3_ca -subj " + subject + " -key " + path + certBase + ".key -out " + path + certBase + ".pem"); err != nil {
 			return reportError(err)
 		}
 	} else {
-		if _, err := exeCmd("openssl req -config " + path + "openssl.cnf -new -subj " + subject + " -key " + path + certBase + ".key -out " + path + certBase + ".csr"); err != nil {
+		if _, err := exeCmd("openssl req -config " + path + "openssl.cnf -new -utf8 -subj " + subject + " -key " + path + certBase + ".key -out " + path + certBase + ".csr"); err != nil {
 			return reportError(err)
 		}
 		if _, err := exeCmd("openssl ca -config " + path + "../openssl.cnf -extensions v3_intermediate_ca -days 3600 -md sha384 -notext -batch -in " + path + certBase + ".csr -out " + path + certBase + ".pem"); err != nil {

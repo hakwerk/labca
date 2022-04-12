@@ -1101,8 +1101,8 @@ func _manageGet(w http.ResponseWriter, r *http.Request) {
 	backupFiles = backupFiles[:len(backupFiles)-1]
 	manageData["BackupFiles"] = backupFiles
 
-	manageData["RootDetails"] = _doCmdOutput(w, r, "openssl x509 -noout -text -in data/root-ca.pem")
-	manageData["IssuerDetails"] = _doCmdOutput(w, r, "openssl x509 -noout -text -in data/issuer/ca-int.pem")
+	manageData["RootDetails"] = _doCmdOutput(w, r, "openssl x509 -noout -text -nameopt utf8 -in data/root-ca.pem")
+	manageData["IssuerDetails"] = _doCmdOutput(w, r, "openssl x509 -noout -text -nameopt utf8 -in data/issuer/ca-int.pem")
 
 	manageData["Fqdn"] = viper.GetString("labca.fqdn")
 	manageData["Organization"] = viper.GetString("labca.organization")
