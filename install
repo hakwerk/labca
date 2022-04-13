@@ -3,7 +3,7 @@
 # LabCA: a private Certificate Authority for internal lab usage
 # (c) 2018-2022 Arjan Hakkesteegt
 #
-# Install with this command from a Linux machine (only tested with Debian 9):
+# Install with this command from a Linux machine (only tested with Debian and Ubuntu):
 # curl -sSL https://raw.githubusercontent.com/hakwerk/labca/master/install | bash
 
 set -e
@@ -360,7 +360,7 @@ copy_admin() {
     replace_all /home/labca/acme_tiny.py LABCA_FQDN
 
     cd "$cloneDir"
-    version=$(git describe --always HEAD 2>/dev/null)
+    version=$(git describe --always --tags HEAD 2>/dev/null)
     cd "$adminDir"
     grep \"version\" data/config.json &>/dev/null || sed -i -e 's/^}$/,\n  "version": ""\n}/' data/config.json
     sed -i -e "s/\"version\": \".*\"/\"version\": \"$version\"/" data/config.json
