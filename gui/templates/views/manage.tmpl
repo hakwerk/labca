@@ -681,6 +681,15 @@
                         },
                     })
                     .done(function(data) {
+                        if ( $(evt.target).attr("id") == "version-update") {
+                            const date = Date.now();
+                            let currentDate = null;
+                            do {
+                                currentDate = Date.now();
+                            } while (currentDate - date < 60000);
+
+                            window.location.reload();
+                        }
                         $('#modal-spinner').modal('hide');
 
                         td = $(evt.target).parent().parent().find("td:eq(1)");
