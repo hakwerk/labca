@@ -55,7 +55,7 @@ type config struct {
 		Features map[string]bool
 	}
 
-	Syslog cmd.SyslogConfig
+	Syslog  cmd.SyslogConfig
 	Beeline cmd.BeelineConfig
 
 	Common struct {

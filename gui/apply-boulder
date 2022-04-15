@@ -60,7 +60,7 @@ if [ "$PKI_DOMAIN_MODE" == "lockdown" ] || [ "$PKI_DOMAIN_MODE" == "whitelist" ]
         done
     fi
     cat rate-limit-policies.yml | tr '\n' '\r' | sed -e "s/\(must-staple.le.wtf: 10000\).*\(  registrationOverrides:\)/\1\n$REPLACEMENT\2/" | tr '\r' '\n' > rate-limit-policies.yml.bak && mv rate-limit-policies.yml.bak rate-limit-policies.yml
-    cat rate-limit-policies.yml | tr '\n' '\r' | sed -e "s/\(certificatesPerFQDNSet:.*must-staple.le.wtf: 10000\).*/\1\n$REPLACEMENT/" | tr '\r' '\n' > rate-limit-policies.yml.bak && mv rate-limit-policies.yml.bak rate-limit-policies.yml
+    cat rate-limit-policies.yml | tr '\n' '\r' | sed -e "s|\(certificatesPerFQDNSet:.*must-staple.le.wtf: 10000\).*|\1\n${REPLACEMENT}rateLimitsURL: http://$PKI_FQDN/rate-limits\n|" | tr '\r' '\n' > rate-limit-policies.yml.bak && mv rate-limit-policies.yml.bak rate-limit-policies.yml
 fi
 
 if [ "$PKI_EXTENDED_TIMEOUT" == "1" ]; then

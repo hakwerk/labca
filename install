@@ -543,51 +543,29 @@ config_boulder() {
     msg_info "$msg"
 
     cd "$boulderDir"
-    if [ "$flag_skip_redis" == true ]; then
-        sudo -u labca -H patch -p1 < $cloneDir/patches/docker-compose-redis.patch &>>$installLog
-    fi
-    sudo -u labca -H patch -p1 < $cloneDir/patches/docker-compose.patch &>>$installLog
+    $cloneDir/patch.sh "sudo -u labca -H" &>>$installLog
+
     cp docker-compose.yml "$boulderLabCADir/.backup/"
-
-    sudo -u labca -H patch -p1 < $cloneDir/patches/cmd_shell.patch &>>$installLog
     cp cmd/shell.go "$boulderLabCADir/.backup/"
-
-    sudo -u labca -H patch -p1 < $cloneDir/patches/core_interfaces.patch &>>$installLog
     cp core/interfaces.go "$boulderLabCADir/.backup/"
-
-    sudo -u labca -H patch -p1 < $cloneDir/patches/policy_pa.patch &>>$installLog
     cp policy/pa.go "$boulderLabCADir/.backup/"
-
-    sudo -u labca -H patch -p1 < $cloneDir/patches/ra_ra.patch &>>$installLog
     cp ra/ra.go "$boulderLabCADir/.backup/"
-
-    sudo -u labca -H patch -p1 < $cloneDir/patches/reloader_reloader.patch &>>$installLog
     cp reloader/reloader.go "$boulderLabCADir/.backup/"
-
-    sudo -u labca -H patch -p1 < $cloneDir/patches/mail_mailer.patch &>>$installLog
     cp mail/mailer.go "$boulderLabCADir/.backup/"
-
-    sudo -u labca -H patch -p1 < $cloneDir/patches/expiration-mailer_main.patch &>>$installLog
     cp cmd/expiration-mailer/main.go "$boulderLabCADir/.backup/"
-
-    sudo -u labca -H patch -p1 < $cloneDir/patches/notify-mailer_main.patch &>>$installLog
     cp cmd/notify-mailer/main.go "$boulderLabCADir/.backup/"
-
-    sudo -u labca -H patch -p1 < $cloneDir/patches/contact-auditor_main.patch &>>$installLog
     cp cmd/contact-auditor/main.go "$boulderLabCADir/.backup/"
-
-    sudo -u labca -H patch -p1 < $cloneDir/patches/bad-key-revoker_main.patch &>>$installLog
     cp cmd/bad-key-revoker/main.go "$boulderLabCADir/.backup/"
-
-    sudo -u labca -H patch -p1 < $cloneDir/patches/cert-checker_main.patch &>>$installLog
     cp cmd/cert-checker/main.go "$boulderLabCADir/.backup/"
-
-    sudo -u labca -H patch -p1 < $cloneDir/patches/log-validator_main.patch &>>$installLog
     cp cmd/log-validator/main.go "$boulderLabCADir/.backup/"
+    cp cmd/boulder/main.go "$boulderLabCADir/.backup/"
+    cp ratelimit/rate-limits.go "$boulderLabCADir/.backup/"
+    cp errors/errors.go "$boulderLabCADir/.backup/"
+    cp log/log.go "$boulderLabCADir/.backup/"
+    cp sa/_db/migrations/20210223140000_CombinedSchema.sql "$boulderLabCADir/.backup/"
 
     sudo -u labca -H patch -p1 -o "$boulderLabCADir/entrypoint.sh" < $cloneDir/patches/entrypoint.patch &>>$installLog
-    sudo -u labca -H patch -p1 -o "$boulderLabCADir/startservers.py" < $cloneDir/patches/startservers.patch &>>$installLog
-    sudo -u labca -H patch -p1 < $cloneDir/patches/startservers.patch &>>$installLog
+    cp test/startservers.py "$boulderLabCADir/startservers.py" &>>$installLog
 
     sudo -u labca -H patch -p1 -o "$boulderLabCADir/config/ca-a.json" < $cloneDir/patches/test_config_ca_a.patch &>>$installLog
     sudo -u labca -H patch -p1 -o "$boulderLabCADir/config/ca-b.json" < $cloneDir/patches/test_config_ca_b.patch &>>$installLog
@@ -600,19 +578,6 @@ config_boulder() {
     sudo -u labca -H patch -p1 -o "$boulderLabCADir/config/wfe2.json" < $cloneDir/patches/config_wfe2.patch &>>$installLog
     sudo -u labca -H patch -p1 -o "$boulderLabCADir/config/rocsp-tool.json" < $cloneDir/patches/config_rocsp-tool.patch &>>$installLog
     sudo -u labca -H patch -p1 -o "$boulderLabCADir/config/orphan-finder.json" < $cloneDir/patches/config_orphan-finder.patch &>>$installLog
-
-    sed -i -e "s|https://letsencrypt.org/docs/rate-limits/|http://$LABCA_FQDN/rate-limits|" errors/errors.go &>>$installLog
-    cp errors/errors.go "$boulderLabCADir/.backup/"
-
-    sed -i -e "s/\"150405/\"060102150405/" log/log.go &>>$installLog
-    cp log/log.go "$boulderLabCADir/.backup/"
-
-    mkdir -p "cmd/mail-tester"
-    cp $cloneDir/mail-tester.go cmd/mail-tester/main.go
-    perl -i -p0e "s/(\n\t\"github.com\/letsencrypt\/boulder\/cmd\")/\t_ \"github.com\/letsencrypt\/boulder\/cmd\/mail-tester\"\n\t\1/igs"  cmd/boulder/main.go &>>$installLog
-
-    sudo -u labca -H patch -p1 < $cloneDir/patches/db_migrations.patch &>>$installLog
-    cp sa/_db/migrations/20210223140000_CombinedSchema.sql "$boulderLabCADir/.backup/"
 
     mkdir -p $baseDir/backup
     [ -z "$(docker ps | grep boulder_bmysql_1)" ] || docker exec -i boulder_bmysql_1 mysqldump boulder_sa_integration >$baseDir/backup/dbdata-${runId}.sql
@@ -690,7 +655,8 @@ config_boulder() {
         export PKI_ROOT_CERT_BASE="$adminDir/data/root-ca"
         export PKI_INT_CERT_BASE="$adminDir/data/issuer/ca-int"
         export PKI_DNS=$(grep dns $adminDir/data/config.json | perl -p0e 's/.*?:\s+(.*)/\1/' | sed -e 's/\",//g' | sed -e 's/\"//g')
-        export PKI_DOMAIN=$(grep fqdn $adminDir/data/config.json | sed -e 's/.*:[ ]*//' | sed -e 's/\",//g' | sed -e 's/\"//g' | perl -p0e 's/.*?\.//')
+        export PKI_FQDN=$(grep fqdn $adminDir/data/config.json | sed -e 's/.*:[ ]*//' | sed -e 's/\",//g' | sed -e 's/\"//g')
+        export PKI_DOMAIN=$(echo $PKI_FQDN | perl -p0e 's/.*?\.//')
         export PKI_DOMAIN_MODE=$(grep domain_mode $adminDir/data/config.json | sed -e 's/.*:[ ]*//' | sed -e 's/\",//g' | sed -e 's/\"//g')
         export PKI_LOCKDOWN_DOMAINS=$(grep lockdown $adminDir/data/config.json | grep -v domain_mode | sed -e 's/.*:[ ]*//' | sed -e 's/\",//g' | sed -e 's/\"//g')
         export PKI_WHITELIST_DOMAINS=$(grep whitelist $adminDir/data/config.json | grep -v domain_mode | sed -e 's/.*:[ ]*//' | sed -e 's/\",//g' | sed -e 's/\"//g')
