@@ -70,6 +70,16 @@ case $txt in
     ln -sf /home/labca/labca/cron_d /etc/cron.d/labca
     ln -sf /home/labca/labca/logrotate_d /etc/logrotate.d/labca
     ;;
+"acme-change")
+    read fqdn
+    cd /home/labca/nginx_data/ssl
+    openssl genrsa 4096 > labca_key.pem
+    openssl req -new -utf8 -sha256 -key labca_key.pem -subj "/" -reqexts SAN -config <(cat /etc/ssl/openssl.cnf <(printf "[SAN]\nsubjectAltName=DNS:$fqdn")) > domain.csr
+    url=$(grep 'DEFAULT_DIRECTORY_URL =' /home/labca/acme_tiny.py | sed -e 's/.*=[ ]*//' | sed -e 's/\"//g')
+    wait_server $url
+    sleep 10
+    /home/labca/labca/renew
+    ;;
 "nginx-remove-redirect")
     perl -i -p0e 's/\n    # BEGIN temporary redirect\n    location = \/ \{\n        return 302 \/admin\/;\n    }\n    # END temporary redirect\n//igs' /home/labca/nginx_data/conf.d/labca.conf
     ;;

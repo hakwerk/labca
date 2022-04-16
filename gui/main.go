@@ -519,9 +519,11 @@ func _configUpdateHandler(w http.ResponseWriter, r *http.Request) {
 
 	if cfg.Validate(true) {
 		delta := false
+		deltaFQDN := false
 
 		if cfg.Fqdn != viper.GetString("labca.fqdn") {
 			delta = true
+			deltaFQDN = true
 			viper.Set("labca.fqdn", cfg.Fqdn)
 		}
 
@@ -573,6 +575,12 @@ func _configUpdateHandler(w http.ResponseWriter, r *http.Request) {
 				res.Success = false
 				res.Errors = cfg.Errors
 				res.Errors["ConfigUpdate"] = "Config apply error: '" + err.Error() + "'"
+			} else if deltaFQDN {
+				if !_hostCommand(w, r, "acme-change", viper.GetString("labca.fqdn")) {
+					res.Success = false
+					res.Errors = cfg.Errors
+					res.Errors["ConfigUpdate"] = "Error requesting certificate for new fqdn"
+				}
 			}
 		} else {
 			res.Success = false
