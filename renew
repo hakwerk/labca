@@ -2,10 +2,10 @@
 
 set -e
 
-cd /home/labca/nginx_data/ssl
+cd /etc/nginx/ssl
 date >> acme_tiny.log
-python ~labca/acme_tiny.py --account-key ./account.key --csr ./domain.csr --acme-dir /home/labca/nginx_data/static/.well-known/acme-challenge/ > domain_chain.crt 2>> acme_tiny.log || exit 1
+python3 /labca/acme_tiny.py --account-key ./account.key --csr ./domain.csr --acme-dir /var/www/html/.well-known/acme-challenge/ > domain_chain.crt 2>> acme_tiny.log || exit 1
 mv domain_chain.crt labca_cert.pem
 
-cd /home/labca/boulder
+cd /boulder
 docker-compose restart nginx

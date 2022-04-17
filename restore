@@ -2,7 +2,7 @@
 
 set -e
 
-FILE=/home/labca/backup/$1
+FILE=/backup/$1
 
 [ "$1" != "" ] || (echo "You must provide a backup file name to restore"; exit 1)
 [ -f $FILE ] || (echo "Backup file '$FILE' not found"; exit 1)
@@ -13,11 +13,11 @@ TMPDIR=/tmp/$BASE
 cd /tmp
 tar xzf $FILE
 
-cd /home/labca/boulder
+cd /boulder
 docker-compose exec -T bmysql mysql boulder_sa_integration <$TMPDIR/boulder_sa_integration.sql
 
-mv -f $TMPDIR/*key* $TMPDIR/*cert.pem $TMPDIR/*.csr /home/labca/nginx_data/ssl/
+mv -f $TMPDIR/*key* $TMPDIR/*cert.pem $TMPDIR/*.csr /etc/nginx/ssl/
 
-rm -rf /home/labca/admin/data && mv $TMPDIR/data /home/labca/admin/
+rm -rf /admin/data && mv $TMPDIR/data /admin/
 
 rm -rf $TMPDIR

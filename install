@@ -369,6 +369,9 @@ copy_admin() {
     chown -R labca:labca $baseDir
     chown root:root "$cloneDir/cron_d"
 
+    [ -e /etc/cron.d/labca ] && rm /etc/cron.d/labca || true
+    [ -e /etc/logrotate.d/labca ] && rm /etc/logrotate.d/labca || true
+
     git add --all &>/dev/null || true
     git commit --all --quiet -m "LabCA after update $runId" &>>$installLog || true
 
@@ -746,15 +749,12 @@ startup() {
     for ct in boulder_bhsm_1 boulder_bredis_1 boulder_bredis_2 boulder_bredis_3 boulder_bredis_4 boulder_bredis_5 boulder_bredis_6; do
         [ -z "$(docker ps -a | grep -e "$ct\$")" ] || docker rm -f $ct &>>$installLog
     done
-    COMPOSE_HTTP_TIMEOUT=120 docker-compose up -d &>>$installLog
 
-    [ -h "/etc/init.d/labca" ] || ln -s "$cloneDir/init_d" /etc/init.d/labca
-    update-rc.d labca defaults &>>$installLog
-    update-rc.d labca enable &>>$installLog
     service labca stop &>>$installLog || true
-    wait_down $PS_SERVICE &>>$installLog
-    service labca start &>>$installLog
-    wait_up $PS_SERVICE &>>$installLog
+    update-rc.d labca disable &>>$installLog || true
+    [ -e "/etc/init.d/labca" ] && rm /etc/init.d/labca || true
+
+    COMPOSE_HTTP_TIMEOUT=120 docker-compose up -d &>>$installLog
 
     wait_up $PS_MYSQL &>>$installLog
     wait_up $PS_LABCA &>>$installLog

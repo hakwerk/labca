@@ -6,8 +6,8 @@ try:
 except ImportError: # pragma: no cover
     from urllib2 import urlopen, Request # Python 2
 
-DEFAULT_CA = "https://LABCA_FQDN" # DEPRECATED! USE DEFAULT_DIRECTORY_URL INSTEAD
-DEFAULT_DIRECTORY_URL = "https://LABCA_FQDN/directory"
+DEFAULT_CA = "http://boulder:4001" # DEPRECATED! USE DEFAULT_DIRECTORY_URL INSTEAD
+DEFAULT_DIRECTORY_URL = "http://boulder:4001/directory"
 
 LOGGER = logging.getLogger(__name__)
 LOGGER.addHandler(logging.StreamHandler())

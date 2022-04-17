@@ -122,6 +122,9 @@ func _parseActivity(data string) []Activity {
 
 	lines := strings.Split(data, "\n")
 
+	if lines[0] == "/UTC" {
+		lines[0] = "Etc/UTC"
+	}
 	loc, err := time.LoadLocation(lines[0])
 	if err != nil {
 		log.Printf("Could not determine location: %s\n", err)
@@ -155,13 +158,7 @@ func _parseComponents(data string) []Component {
 
 	parts := strings.Split(data, "|")
 
-	loc, err := time.LoadLocation(parts[0])
-	if err != nil {
-		log.Printf("Could not determine location: %s\n", err)
-		loc = time.Local
-	}
-
-	nginx, err := time.ParseInLocation("Jan _2 15:04:05 2006", parts[1], loc)
+	nginx, err := time.Parse("2006-01-02 15:04:05 -0700 MST", parts[0])
 	nginxReal := ""
 	nginxNice := "stopped"
 	nginxClass := "error"
@@ -171,7 +168,7 @@ func _parseComponents(data string) []Component {
 		nginxClass = ""
 	}
 
-	svc, err := time.ParseInLocation("Jan _2 15:04:05 2006", parts[2], loc)
+	svc, err := time.Parse("2006-01-02 15:04:05 -0700 MST", parts[1])
 	svcReal := ""
 	svcNice := "stopped"
 	svcClass := "error"
@@ -181,7 +178,7 @@ func _parseComponents(data string) []Component {
 		svcClass = ""
 	}
 
-	boulder, err := time.ParseInLocation("Jan _2 15:04:05 2006", parts[3], loc)
+	boulder, err := time.Parse("2006-01-02 15:04:05 -0700 MST", parts[2])
 	boulderReal := ""
 	boulderNice := "stopped"
 	boulderClass := "error"
@@ -191,7 +188,7 @@ func _parseComponents(data string) []Component {
 		boulderClass = ""
 	}
 
-	labca, err := time.ParseInLocation("Jan _2 15:04:05 2006", parts[4], loc)
+	labca, err := time.Parse("2006-01-02 15:04:05 -0700 MST", parts[3])
 	labcaReal := ""
 	labcaNice := "stopped"
 	labcaClass := "error"
@@ -226,6 +223,9 @@ func _parseStats(data string) []Stat {
 
 	parts := strings.Split(data, "|")
 
+	if parts[0] == "/UTC" {
+		parts[0] = "Etc/UTC"
+	}
 	loc, err := time.LoadLocation(parts[0])
 	if err != nil {
 		log.Printf("Could not determine location: %s\n", err)

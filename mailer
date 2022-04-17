@@ -3,7 +3,7 @@
 set -e
 
 TODAY=`date '+%Y_%m_%d'`
-LOGFILE=/home/labca/logs/cron-mailer.log
+LOGFILE=/logs/cron-mailer.log
 echo $TODAY >>$LOGFILE
 
 cd /home/labca/boulder

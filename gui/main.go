@@ -1207,13 +1207,7 @@ func logsHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func getLog(w http.ResponseWriter, r *http.Request, logType string) string {
-	ip, err := _discoverGateway()
-	if err != nil {
-		errorHandler(w, r, err, http.StatusInternalServerError)
-		return ""
-	}
-
-	conn, err := net.Dial("tcp", ip.String()+":3030")
+	conn, err := net.Dial("tcp", "control:3030")
 	if err != nil {
 		errorHandler(w, r, err, http.StatusInternalServerError)
 		return ""
@@ -1245,13 +1239,7 @@ func wsErrorHandler(err error) {
 }
 
 func showLog(ws *websocket.Conn, logType string) {
-	ip, err := _discoverGateway()
-	if err != nil {
-		wsErrorHandler(err)
-		return
-	}
-
-	conn, err := net.Dial("tcp", ip.String()+":3030")
+	conn, err := net.Dial("tcp", "control:3030")
 	if err != nil {
 		wsErrorHandler(err)
 		return
@@ -1482,31 +1470,8 @@ func _parseLinuxIPRouteShow(output []byte) (net.IP, error) {
 	return nil, errors.New("no gateway found")
 }
 
-func _discoverGateway() (net.IP, error) {
-	if isDev {
-		ip := net.ParseIP("127.0.0.1")
-		if ip != nil {
-			return ip, nil
-		}
-	}
-
-	routeCmd := exec.Command("ip", "route", "show")
-	output, err := routeCmd.CombinedOutput()
-	if err != nil {
-		return nil, err
-	}
-
-	return _parseLinuxIPRouteShow(output)
-}
-
 func _hostCommand(w http.ResponseWriter, r *http.Request, command string, params ...string) bool {
-	ip, err := _discoverGateway()
-	if err != nil {
-		errorHandler(w, r, err, http.StatusInternalServerError)
-		return false
-	}
-
-	conn, err := net.Dial("tcp", ip.String()+":3030")
+	conn, err := net.Dial("tcp", "control:3030")
 	if err != nil {
 		errorHandler(w, r, err, http.StatusInternalServerError)
 		return false
