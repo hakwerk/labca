@@ -37,33 +37,22 @@ function wait_server() {
 
 read txt
 case $txt in
-"trust-store")
-    cp /etc/nginx/ssl/labca_cert.pem /usr/local/share/ca-certificates/labca_cert.crt
-    cp ~labca/admin/data/root-ca.pem /usr/local/share/ca-certificates/root-ca.crt
-    update-ca-certificates &>>$LOGFILE
-    echo "Waiting for initial startup of the docker containers..." &>>$LOGFILE
-    wait_up $PS_MYSQL &>>$LOGFILE
-    wait_up $PS_LABCA &>>$LOGFILE
-    wait_up $PS_BOULDER $PS_BOULDER_COUNT &>>$LOGFILE
-    ;;
 "docker-restart")
     cd /boulder
-    docker-compose stop &>>$LOGFILE
-    wait_down $PS_MYSQL &>>$LOGFILE
-    wait_down $PS_LABCA &>>$LOGFILE
-    wait_down $PS_BOULDER &>>$LOGFILE
-    COMPOSE_HTTP_TIMEOUT=120 docker-compose up -d &>>$LOGFILE
+    COMPOSE_HTTP_TIMEOUT=120 docker-compose restart boulder bmysql labca nginx &>>$LOGFILE
+    sleep 45
     wait_up $PS_MYSQL &>>$LOGFILE
     wait_up $PS_LABCA &>>$LOGFILE
     wait_up $PS_BOULDER $PS_BOULDER_COUNT &>>$LOGFILE
     ;;
 "acme-request")
+    wait_up $PS_BOULDER $PS_BOULDER_COUNT &>>$LOGFILE
     cd /etc/nginx/ssl
     [ -e account.key ] || openssl genrsa 4096 > account.key
     [ -e labca_key.pem ] || openssl genrsa 4096 > labca_key.pem
     san=$(openssl x509 -noout -text -in labca_cert.pem | grep DNS:)
     openssl req -new -utf8 -sha256 -key labca_key.pem -subj "/" -reqexts SAN -config <(cat /etc/ssl/openssl.cnf <(printf "[SAN]\nsubjectAltName=$san")) > domain.csr
-    url=$(grep 'DEFAULT_DIRECTORY_URL =' /acme_tiny.py | sed -e 's/.*=[ ]*//' | sed -e 's/\"//g')
+    url=$(grep 'DEFAULT_DIRECTORY_URL =' /labca/acme_tiny.py | sed -e 's/.*=[ ]*//' | sed -e 's/\"//g')
     wait_server $url
     sleep 10
     /labca/renew
@@ -135,10 +124,10 @@ case $txt in
     docker-compose logs -f --no-color --tail=50 nginx
     ;;
 "log-components")
-    nginx=$(docker ps --format "{{.CreatedAt}}|{{.Names}}" | grep _nginx_ | grep -v grep | cut -d "|" -f1)
-    svc=$(docker ps --format "{{.CreatedAt}}|{{.Names}}" | grep _control_ | grep -v grep | cut -d "|" -f1)
-    boulder=$(docker ps --format "{{.CreatedAt}}|{{.Names}}" | grep _boulder_ | grep -v grep | cut -d "|" -f1)
-    labca=$(docker ps --format "{{.CreatedAt}}|{{.Names}}" | grep _labca_ | grep -v grep | cut -d "|" -f1)
+    nginx=$(docker inspect $(docker ps --format "{{.Names}}" | grep _nginx_) | grep -i started | sed -e "s/[^:]*:\(.*\)/\1/" | sed -e "s/.*\"\(.*\)\".*/\1/")
+    svc=$(docker inspect $(docker ps --format "{{.Names}}" | grep _control_) | grep -i started | sed -e "s/[^:]*:\(.*\)/\1/" | sed -e "s/.*\"\(.*\)\".*/\1/")
+    boulder=$(docker inspect $(docker ps --format "{{.Names}}" | grep _boulder_) | grep -i started | sed -e "s/[^:]*:\(.*\)/\1/" | sed -e "s/.*\"\(.*\)\".*/\1/")
+    labca=$(docker inspect $(docker ps --format "{{.Names}}" | grep _labca_) | grep -i started | sed -e "s/[^:]*:\(.*\)/\1/" | sed -e "s/.*\"\(.*\)\".*/\1/")
     echo "$nginx|$svc|$boulder|$labca"
     exit 0
     ;;
@@ -166,8 +155,8 @@ case $txt in
 "boulder-start")
     cd /boulder
     COMPOSE_HTTP_TIMEOUT=120 docker-compose up -d bmysql
-    COMPOSE_HTTP_TIMEOUT=120 docker-compose up -d boulder
     wait_up $PS_MYSQL &>>$LOGFILE
+    COMPOSE_HTTP_TIMEOUT=120 docker-compose up -d boulder
     wait_up $PS_BOULDER $PS_BOULDER_COUNT &>>$LOGFILE
     ;;
 "boulder-stop")
@@ -179,26 +168,21 @@ case $txt in
     ;;
 "boulder-restart")
     cd /boulder
-    docker-compose stop boulder
-    docker-compose stop bmysql
-    wait_down $PS_MYSQL &>>$LOGFILE
-    wait_down $PS_BOULDER &>>$LOGFILE
-    COMPOSE_HTTP_TIMEOUT=120 docker-compose up -d bmysql
-    COMPOSE_HTTP_TIMEOUT=120 docker-compose up -d boulder
+    COMPOSE_HTTP_TIMEOUT=120 docker-compose restart boulder bmysql &>>$LOGFILE
+    sleep 30
     wait_up $PS_MYSQL &>>$LOGFILE
     wait_up $PS_BOULDER $PS_BOULDER_COUNT &>>$LOGFILE
     ;;
 "labca-restart")
     cd /boulder
-    docker-compose stop labca
-    wait_down $PS_LABCA &>>$LOGFILE
-    COMPOSE_HTTP_TIMEOUT=120 docker-compose up -d labca
+    COMPOSE_HTTP_TIMEOUT=120 docker-compose restart labca
+    sleep 15
     wait_up $PS_LABCA &>>$LOGFILE
     ;;
 "svc-restart")
     cd /boulder
     set +e
-    docker-compose restart control
+    COMPOSE_HTTP_TIMEOUT=120 docker-compose restart control
     set -e
     ;;
 "log-backups")
@@ -218,10 +202,12 @@ case $txt in
     /labca/restore $backup
     ;;
 "server-restart")
-    reboot
-    ;;
-"server-shutdown")
-    halt
+    cd /boulder
+    nohup docker-compose restart labca & >/dev/null
+    nohup docker-compose restart nginx & >/dev/null
+    set +e
+    nohup docker-compose restart control & >/dev/null
+    set -e
     ;;
 "version-update")
     cd $dn

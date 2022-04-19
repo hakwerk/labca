@@ -58,16 +58,6 @@
               </td>
             </tr>
             {{ end }}
-            <tr>
-              <td class="vmiddle">Server</td>
-              <td class="vmiddle" title="{{ .ServerTimestamp }}">Up {{ .ServerTimestampRel }}</td>
-              <td class="vmiddle"></td>
-              <td class="vmiddle">
-                <button class="btn btn-outline btn-wide btn-warning mb5" type="button" id="server-restart" title="Restart the whole server">Restart Server</button>
-                <br/>
-                <button class="btn btn-outline btn-wide btn-danger" type="button" id="server-shutdown" title="Shutdown the whole server">Shutdown Server</button>
-              </td>
-            </tr>
           </tbody>
         </table>
       </div>
@@ -97,7 +87,7 @@
       <div class="col-lg-6 col-md-9 col-sm-12">
         <div class="well">
           Backups are automatically created once a week. Here you can manually create extra backups, delete
-          backups or restore a selected backup. After restoring the server will be automatically restarted.<br/>
+          backups or restore a selected backup.<br/> After restoring the services will be <b>automatically restarted</b>.<br/>
           Automatic backups are removed after one month, manual backups are kept until manually deleted.
         </div>
       </div>
@@ -361,13 +351,11 @@
                         },
                     })
                     .done(function(data) {
-                        $('#modal-spinner').modal('hide');
-
                         if (data.Success) {
                             var msg = "Successfully restored backup, restarting server now...";
                             setTimeout(function() {
                                 window.location.reload();
-                            }, 5000);
+                            }, 10000);
                             $("#backup-result").removeClass("hidden").removeClass("error").show().text(msg).addClass("success");
 
                         } else {

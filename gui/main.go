@@ -875,7 +875,7 @@ func (res *Result) ManageComponents(w http.ResponseWriter, r *http.Request, acti
 	components := _parseComponents(getLog(w, r, "components"))
 	for i := 0; i < len(components); i++ {
 		if (components[i].Name == "NGINX Webserver" && (action == "nginx-reload" || action == "nginx-restart")) ||
-			(components[i].Name == "Host Service" && action == "svc-restart") ||
+			(components[i].Name == "Controller" && action == "svc-restart") ||
 			(components[i].Name == "Boulder (ACME)" && (action == "boulder-start" || action == "boulder-stop" || action == "boulder-restart")) ||
 			(components[i].Name == "LabCA Application" && action == "labca-restart") {
 			res.Timestamp = components[i].Timestamp
@@ -967,7 +967,6 @@ func _managePost(w http.ResponseWriter, r *http.Request) {
 		"boulder-restart",
 		"labca-restart",
 		"server-restart",
-		"server-shutdown",
 		"update-account",
 		"update-config",
 		"update-email",
@@ -994,7 +993,7 @@ func _managePost(w http.ResponseWriter, r *http.Request) {
 		res.Message = "Command failed - see LabCA log for any details"
 	}
 
-	if action != "server-restart" && action != "server-shutdown" && action != "version-update" {
+	if action != "server-restart" && action != "version-update" {
 		res.ManageComponents(w, r, action)
 	}
 
@@ -1013,37 +1012,6 @@ func _manageGet(w http.ResponseWriter, r *http.Request) {
 
 	components := _parseComponents(getLog(w, r, "components"))
 	for i := 0; i < len(components); i++ {
-		if components[i].Name == "NGINX Webserver" {
-			components[i].LogURL = r.Header.Get("X-Request-Base") + "/logs/web"
-			components[i].LogTitle = "Web Error Log"
-
-			btn := make(map[string]interface{})
-			btn["Class"] = "btn-info"
-			btn["Id"] = "nginx-reload"
-			btn["Title"] = "Reload web server configuration with minimal impact to the users"
-			btn["Label"] = "Reload"
-			components[i].Buttons = append(components[i].Buttons, btn)
-
-			btn = make(map[string]interface{})
-			btn["Class"] = "btn-warning"
-			btn["Id"] = "nginx-restart"
-			btn["Title"] = "Restart the web server with some downtime for the users"
-			btn["Label"] = "Restart"
-			components[i].Buttons = append(components[i].Buttons, btn)
-		}
-
-		if components[i].Name == "Host Service" {
-			components[i].LogURL = ""
-			components[i].LogTitle = ""
-
-			btn := make(map[string]interface{})
-			btn["Class"] = "btn-warning"
-			btn["Id"] = "svc-restart"
-			btn["Title"] = "Restart the host service"
-			btn["Label"] = "Restart"
-			components[i].Buttons = append(components[i].Buttons, btn)
-		}
-
 		if components[i].Name == "Boulder (ACME)" {
 			components[i].LogURL = r.Header.Get("X-Request-Base") + "/logs/boulder"
 			components[i].LogTitle = "ACME Log"
@@ -1082,6 +1050,18 @@ func _manageGet(w http.ResponseWriter, r *http.Request) {
 			components[i].Buttons = append(components[i].Buttons, btn)
 		}
 
+		if components[i].Name == "Controller" {
+			components[i].LogURL = ""
+			components[i].LogTitle = ""
+
+			btn := make(map[string]interface{})
+			btn["Class"] = "btn-warning"
+			btn["Id"] = "svc-restart"
+			btn["Title"] = "Restart the host service"
+			btn["Label"] = "Restart"
+			components[i].Buttons = append(components[i].Buttons, btn)
+		}
+
 		if components[i].Name == "LabCA Application" {
 			components[i].LogURL = r.Header.Get("X-Request-Base") + "/logs/labca"
 			components[i].LogTitle = "LabCA Log"
@@ -1090,6 +1070,25 @@ func _manageGet(w http.ResponseWriter, r *http.Request) {
 			btn["Class"] = "btn-warning"
 			btn["Id"] = "labca-restart"
 			btn["Title"] = "Stop and restart this LabCA admin application"
+			btn["Label"] = "Restart"
+			components[i].Buttons = append(components[i].Buttons, btn)
+		}
+
+		if components[i].Name == "NGINX Webserver" {
+			components[i].LogURL = r.Header.Get("X-Request-Base") + "/logs/web"
+			components[i].LogTitle = "Web Error Log"
+
+			btn := make(map[string]interface{})
+			btn["Class"] = "btn-info"
+			btn["Id"] = "nginx-reload"
+			btn["Title"] = "Reload web server configuration with minimal impact to the users"
+			btn["Label"] = "Reload"
+			components[i].Buttons = append(components[i].Buttons, btn)
+
+			btn = make(map[string]interface{})
+			btn["Class"] = "btn-warning"
+			btn["Id"] = "nginx-restart"
+			btn["Title"] = "Restart the web server with some downtime for the users"
 			btn["Label"] = "Restart"
 			components[i].Buttons = append(components[i].Buttons, btn)
 		}
@@ -1209,6 +1208,7 @@ func logsHandler(w http.ResponseWriter, r *http.Request) {
 func getLog(w http.ResponseWriter, r *http.Request, logType string) string {
 	conn, err := net.Dial("tcp", "control:3030")
 	if err != nil {
+		_, _ = exeCmd("sleep 5")
 		errorHandler(w, r, err, http.StatusInternalServerError)
 		return ""
 	}
@@ -1241,6 +1241,7 @@ func wsErrorHandler(err error) {
 func showLog(ws *websocket.Conn, logType string) {
 	conn, err := net.Dial("tcp", "control:3030")
 	if err != nil {
+		_, _ = exeCmd("sleep 5")
 		wsErrorHandler(err)
 		return
 	}
@@ -1473,6 +1474,7 @@ func _parseLinuxIPRouteShow(output []byte) (net.IP, error) {
 func _hostCommand(w http.ResponseWriter, r *http.Request, command string, params ...string) bool {
 	conn, err := net.Dial("tcp", "control:3030")
 	if err != nil {
+		_, _ = exeCmd("sleep 5")
 		errorHandler(w, r, err, http.StatusInternalServerError)
 		return false
 	}
@@ -1793,13 +1795,9 @@ func setupHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if !viper.GetBool("config.restarted") {
-		// 6. Trust the new certs
-		if !_hostCommand(w, r, "trust-store") {
-			return
-		}
-
 		// Don't let the retry mechanism generate new restartSecret!
 		if r.Header.Get("X-Requested-With") == "XMLHttpRequest" {
+		    _, _ = exeCmd("sleep 5")
 			render(w, r, "index", map[string]interface{}{"Message": "Retry OK"})
 		} else {
 			// 8. Restart application

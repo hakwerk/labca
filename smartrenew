@@ -5,10 +5,10 @@ set -e
 RENEW=30
 TODAY=`date '+%Y_%m_%d'`
 
-echo $TODAY >> /etc/nginx/ssl/cron.log
+echo "Running cron-smartrenew for ${TODAY}..."
 
 if ! expires=`openssl x509 -checkend $[ 86400 * $RENEW ] -noout -in /etc/nginx/ssl/labca_cert.pem`; then
-    echo "    renewing!" >> /etc/nginx/ssl/cron.log
-    cp /etc/nginx/ssl/labca_cert.pem /etc/nginx/ssl/labca_cert_$TODAY.pem
+    echo "    renewing!"
+    cp -p /etc/nginx/ssl/labca_cert.pem /etc/nginx/ssl/labca_cert_$TODAY.pem
     /labca/renew
 fi

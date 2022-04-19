@@ -50,7 +50,7 @@ index b7e5656c5..3b82e8651 100644
      networks:
        bluenet:
          aliases:
-@@ -56,21 +65,71 @@ services:
+@@ -56,21 +65,72 @@ services:
      # small.
      command: mysqld --bind-address=0.0.0.0 --slow-query-log --log-output=TABLE --log-queries-not-using-indexes=ON
      logging:
@@ -111,6 +111,7 @@ index b7e5656c5..3b82e8651 100644
 +      - /var/run/docker.sock:/var/run/docker.sock
 +      - /home/labca/admin:/admin
 +      - /home/labca/labca:/labca
++      - /home/labca/backup:/backup
        - .:/boulder
 -    working_dir: *boulder_working_dir
 -    entrypoint: test/entrypoint-netaccess.sh

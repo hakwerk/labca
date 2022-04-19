@@ -64,6 +64,7 @@ renew_near_expiry() {
 start_cron() {
     apt update
     apt install -y cron
+    [ -e /boulder/labca/setup_complete ] && [ ! -e /etc/cron.d/labca ] && ln -sf /labca/cron_d /etc/cron.d/labca || true
     service cron start
 }
 
@@ -76,14 +77,14 @@ serve_commander() {
 }
 
 main() {
+    mkdir -p /logs
+
     get_fqdn
 
     docker ps >/dev/null || install_docker
 
     [ -e /etc/nginx/ssl/labca_cert.pem ] || selfsigned_cert
     renew_near_expiry
-
-    mkdir -p /logs
 
     start_cron
 

@@ -3,8 +3,7 @@
 set -e
 
 TODAY=`date '+%Y_%m_%d'`
-LOGFILE=/logs/cron-mailer.log
-echo $TODAY >>$LOGFILE
+echo "Running cron-mailer for ${TODAY}..."
 
 cd /home/labca/boulder
-docker-compose exec -T boulder bin/expiration-mailer --config labca/config/expiration-mailer.json >>$LOGFILE 2>&1
+docker-compose exec -T boulder bin/expiration-mailer --config labca/config/expiration-mailer.json 2>&1

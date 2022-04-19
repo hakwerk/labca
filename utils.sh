@@ -4,16 +4,31 @@ set -e
 
 export PS_LABCA="bin/labca"
 export PS_BOULDER="bin/boulder"
-export PS_BOULDER_COUNT=12
+export PS_BOULDER_COUNT=13
 export PS_MYSQL="mysqld"
-export PS_SERVICE="sudo___tcpserver"
+export PS_SERVICE="tcpserver"
 
 LOOPCOUNT=120
 
 count() {
-    local pattern="${1/___/ }"
+    local pattern="${1/___/ }"  # escape spaces, e.g. PS_SERVICE="sudo___tcpserver"
 
-    local res=$(ps -eo pid,cmd | grep "$pattern" | grep -v grep | wc -l)
+    local prefix=""
+    case $pattern in
+        $PS_LABCA)
+            prefix="docker exec $(docker ps --format "{{.Names}}" | grep _labca_) "
+            ;;
+        $PS_BOULDER)
+            prefix="docker exec $(docker ps --format "{{.Names}}" | grep _boulder_) "
+            ;;
+        $PS_MYSQL)
+            prefix="docker exec $(docker ps --format "{{.Names}}" | grep _bmysql_) "
+            ;;
+        *)
+            ;;
+    esac
+
+    local res=$(${prefix}ps -eo pid,cmd 2>/dev/null | grep "$pattern" | grep -v grep | wc -l)
     echo $res
 }
 

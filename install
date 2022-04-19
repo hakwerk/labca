@@ -739,13 +739,13 @@ startup() {
     msg_info "$msg (this will take a while!!)"
 
     docker-compose pull -q &>>$installLog
-    docker-compose stop &>>$installLog || true
+    docker-compose stop boulder bmysql labca nginx &>>$installLog || true
     for ct in boulder_bhsm_1 boulder_bredis_1 boulder_bredis_2 boulder_bredis_3 boulder_bredis_4 boulder_bredis_5 boulder_bredis_6; do
         [ -z "$(docker ps | grep $ct)" ] || docker stop $ct &>>$installLog
     done
-    wait_down $PS_MYSQL &>>$installLog
-    wait_down $PS_LABCA &>>$installLog
-    wait_down $PS_BOULDER &>>$installLog
+    wait_down $PS_MYSQL &>>$installLog || true
+    wait_down $PS_LABCA &>>$installLog || true
+    wait_down $PS_BOULDER &>>$installLog || true
     for ct in boulder_bhsm_1 boulder_bredis_1 boulder_bredis_2 boulder_bredis_3 boulder_bredis_4 boulder_bredis_5 boulder_bredis_6; do
         [ -z "$(docker ps -a | grep -e "$ct\$")" ] || docker rm -f $ct &>>$installLog
     done
@@ -756,8 +756,9 @@ startup() {
 
     COMPOSE_HTTP_TIMEOUT=120 docker-compose up -d &>>$installLog
 
-    wait_up $PS_MYSQL &>>$installLog
-    wait_up $PS_LABCA &>>$installLog
+    wait_up $PS_MYSQL &>>$installLog || true
+    wait_up $PS_LABCA &>>$installLog || true
+    wait_up $PS_SERVICE &>>$installLog || true
     docker exec -i boulder_bmysql_1 mysql_upgrade &>>$installLog
     [ -f "$boulderLabCADir/setup_complete" ] && wait_up $PS_BOULDER $PS_BOULDER_COUNT &>>$installLog || /bin/true
 

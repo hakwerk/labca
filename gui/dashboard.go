@@ -158,7 +158,7 @@ func _parseComponents(data string) []Component {
 
 	parts := strings.Split(data, "|")
 
-	nginx, err := time.Parse("2006-01-02 15:04:05 -0700 MST", parts[0])
+	nginx, err := time.Parse(time.RFC3339Nano, parts[0])
 	nginxReal := ""
 	nginxNice := "stopped"
 	nginxClass := "error"
@@ -168,7 +168,7 @@ func _parseComponents(data string) []Component {
 		nginxClass = ""
 	}
 
-	svc, err := time.Parse("2006-01-02 15:04:05 -0700 MST", parts[1])
+	svc, err := time.Parse(time.RFC3339Nano, parts[1])
 	svcReal := ""
 	svcNice := "stopped"
 	svcClass := "error"
@@ -178,7 +178,7 @@ func _parseComponents(data string) []Component {
 		svcClass = ""
 	}
 
-	boulder, err := time.Parse("2006-01-02 15:04:05 -0700 MST", parts[2])
+	boulder, err := time.Parse(time.RFC3339Nano, parts[2])
 	boulderReal := ""
 	boulderNice := "stopped"
 	boulderClass := "error"
@@ -188,7 +188,7 @@ func _parseComponents(data string) []Component {
 		boulderClass = ""
 	}
 
-	labca, err := time.Parse("2006-01-02 15:04:05 -0700 MST", parts[3])
+	labca, err := time.Parse(time.RFC3339Nano, parts[3])
 	labcaReal := ""
 	labcaNice := "stopped"
 	labcaClass := "error"
@@ -198,10 +198,10 @@ func _parseComponents(data string) []Component {
 		labcaClass = ""
 	}
 
-	components = append(components, Component{Name: "NGINX Webserver", Timestamp: nginxReal, TimestampRel: nginxNice, Class: nginxClass})
-	components = append(components, Component{Name: "Host Service", Timestamp: svcReal, TimestampRel: svcNice, Class: svcClass})
 	components = append(components, Component{Name: "Boulder (ACME)", Timestamp: boulderReal, TimestampRel: boulderNice, Class: boulderClass})
+	components = append(components, Component{Name: "Controller", Timestamp: svcReal, TimestampRel: svcNice, Class: svcClass})
 	components = append(components, Component{Name: "LabCA Application", Timestamp: labcaReal, TimestampRel: labcaNice, Class: labcaClass})
+	components = append(components, Component{Name: "NGINX Webserver", Timestamp: nginxReal, TimestampRel: nginxNice, Class: nginxClass})
 
 	return components
 }
@@ -240,12 +240,6 @@ func _parseStats(data string) []Stat {
 		sinceNice = humanize.RelTime(since, time.Now(), "", "")
 	}
 	stats = append(stats, Stat{Name: "System Uptime", Hint: sinceReal, Value: sinceNice})
-
-	numProcs, err := strconv.Atoi(parts[2])
-	if err != nil {
-		numProcs = 0
-	}
-	stats = append(stats, Stat{Name: "Process Count", Value: strconv.Itoa(numProcs)})
 
 	memUsed, err := strconv.ParseUint(parts[3], 10, 64)
 	if err != nil {
