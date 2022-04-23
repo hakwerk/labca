@@ -88,6 +88,10 @@ case $txt in
     [ -f $LOGFILE ] && tail -200 $LOGFILE || /bin/true
     exit 0
     ;;
+"log-cron")
+    [ -f /logs/cron.log ] && tail -n200 -f /logs/cron.log || /bin/true
+    exit 0
+    ;;
 "log-boulder")
     cd /boulder
     docker-compose logs -f --no-color --tail=50 boulder

@@ -7,7 +7,7 @@ CRON=""
 if [ "$1" == "cron" ]; then
     CRON="${1}_"
     TODAY=`date '+%Y_%m_%d'`
-    echo "Running cron-backup for ${TODAY}..."
+    echo "Running cron-$(basename $0) for ${TODAY}..."
 fi
 BASE=${HOSTNAME}_${CRON}${NOW}
 TMPDIR=/tmp/$BASE

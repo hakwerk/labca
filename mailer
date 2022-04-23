@@ -3,7 +3,7 @@
 set -e
 
 TODAY=`date '+%Y_%m_%d'`
-echo "Running cron-mailer for ${TODAY}..."
+echo "Running cron-$(basename $0) for ${TODAY}..."
 
-cd /home/labca/boulder
+cd /boulder
 docker-compose exec -T boulder bin/expiration-mailer --config labca/config/expiration-mailer.json 2>&1

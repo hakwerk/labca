@@ -1186,6 +1186,9 @@ func logsHandler(w http.ResponseWriter, r *http.Request) {
 	case "audit":
 		name = "ACME Audit Log"
 		message = "Live view on only the audit messages in the backend ACME application (Boulder) logs."
+        case "cron":
+                name = "Cron Log"
+                message = "Live view on the logs for the cron jobs for LabCA."
 	case "labca":
 		name = "LabCA Log"
 		message = "Live view on the logs for this LabCA web application."
@@ -1315,6 +1318,7 @@ func wsHandler(w http.ResponseWriter, r *http.Request) {
 	case "boulder":
 	case "audit":
 	case "labca":
+	case "cron":
 	case "web":
 	default:
 		errorHandler(w, r, fmt.Errorf("unknown log type '%s'", logType), http.StatusBadRequest)
@@ -2237,6 +2241,14 @@ func activeNav(active string, uri string, requestBase string) []navItem {
 			"title": "Live view on the logs for this LabCA web application",
 		},
 	}
+        cron := navItem{
+                Name: "Cron Log",
+                Icon: "fa-clock",
+                Attrs: map[template.HTMLAttr]string{
+                        "href":  requestBase + "/logs/cron",
+                        "title": "Live view on the logs for the cron jobs for LabCA",
+                },
+        }
 	web := navItem{
 		Name: "Web Server",
 		Icon: "fa-globe",
@@ -2253,7 +2265,7 @@ func activeNav(active string, uri string, requestBase string) []navItem {
 			"title": "Log Files",
 		},
 		IsActive: strings.HasPrefix(uri, "/logs/"),
-		SubMenu:  []navItem{cert, boulder, audit, labca, web},
+		SubMenu:  []navItem{boulder, audit, cron, labca, cert, web},
 	}
 	manage := navItem{
 		Name: "Manage",
