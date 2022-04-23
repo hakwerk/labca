@@ -72,7 +72,7 @@
           <tbody id="backups-tbody">
             {{ range .BackupFiles }}
             <tr>
-              <td class="vmiddle">{{ . }}</td>
+              <td class="vmiddle"><a href="/admin/backup/{{.}}" class="backupdl">{{.}}</a></td>
               <td class="vmiddle">
                 <button class="btn btn-outline btn-warning backup-restore" type="button" title="Restore this backup">Restore</button>
                 <button class="btn btn-outline btn-danger backup-delete" type="button" title="Delete this backup">Delete</button>
@@ -86,8 +86,8 @@
       </div>
       <div class="col-lg-6 col-md-9 col-sm-12">
         <div class="well">
-          Backups are automatically created once a week. Here you can manually create extra backups, delete
-          backups or restore a selected backup.<br/> After restoring the services will be <b>automatically restarted</b>.<br/>
+          Backups are automatically created once a week. Here you can manually create extra backups and download, delete
+          or restore a selected backup.<br/> After restoring the services will be <b>automatically restarted</b>.<br/>
           Automatic backups are removed after one month, manual backups are kept until manually deleted.
         </div>
       </div>
@@ -294,6 +294,13 @@
                 }, 250);
             });
 
+            $(".backupdl").click(function(evt) {
+                if (!window.confirm("WARNING: this backup file contains the private keys and other sensitive data in unprotected form. You should be very careful where you store it. Do you want to continue?")) {
+                    return false;
+                }
+            });
+
+
             $(".btn").click(function(evt) {
                 $('#modal-spinner').modal('show');
                 if ($(evt.target).hasClass('btn-warning') || $(evt.target).hasClass('btn-danger')) {
@@ -329,7 +336,7 @@
                             var msg = "Successfully created backup";
                             $("#backup-result").removeClass("hidden").removeClass("error").show().text(msg).addClass("success");
 
-                            $("#backups-tbody").append('<tr><td class="vmiddle">' + data.Message + '</td><td class="vmiddle"></td></tr>');
+                            $("#backups-tbody").append('<tr><td class="vmiddle"><a href="/admin/backup/' + data.Message + '" class="backupdl">' + data.Message + '</a></td><td class="vmiddle"></td></tr>');
 
                         } else {
                             $("#backup-result").removeClass("hidden").removeClass("success").show().text(data.Message).addClass("error");

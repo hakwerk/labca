@@ -50,7 +50,7 @@ index b7e5656c5..3b82e8651 100644
      networks:
        bluenet:
          aliases:
-@@ -56,21 +65,72 @@ services:
+@@ -56,21 +65,73 @@ services:
      # small.
      command: mysqld --bind-address=0.0.0.0 --slow-query-log --log-output=TABLE --log-queries-not-using-indexes=ON
      logging:
@@ -71,6 +71,7 @@ index b7e5656c5..3b82e8651 100644
 +      - /home/labca/admin:/go/src/labca
 +      - ./.gocache:/root/.cache/go-build
 +      - /home/labca/nginx_data/static:/wwwstatic
++      - /home/labca/backup:/backup
 +      - .:/boulder
 +      - /home/labca/boulder_labca:/boulder/labca
 +    expose:

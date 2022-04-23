@@ -2,14 +2,14 @@
 
 set -e
 
-NOW=$(date +%y%m%d%H%M%S)
+NOW=$(date +%y%m%d-%H%M%S)
 CRON=""
 if [ "$1" == "cron" ]; then
-    CRON="${1}_"
+    CRON="_${1}"
     TODAY=`date '+%Y_%m_%d'`
     echo "Running cron-$(basename $0) for ${TODAY}..."
 fi
-BASE=${HOSTNAME}_${CRON}${NOW}
+BASE=${NOW}_${HOSTNAME}${CRON}
 TMPDIR=/tmp/$BASE
 mkdir -p $TMPDIR
 mkdir -p /backup

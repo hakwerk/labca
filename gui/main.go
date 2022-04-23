@@ -2459,6 +2459,8 @@ func main() {
 	r.HandleFunc("/certificates/{id}", certificateHandler).Methods("GET")
 	r.HandleFunc("/certificates/{id}", certRevokeHandler).Methods("POST")
 
+	r.PathPrefix("/backup/").Handler(http.StripPrefix("/backup/", http.FileServer(http.Dir("/backup"))))
+
 	r.NotFoundHandler = http.HandlerFunc(notFoundHandler)
 	if isDev {
 		r.PathPrefix("/accounts/static/").Handler(http.StripPrefix("/accounts/static/", http.FileServer(http.Dir("../static"))))
