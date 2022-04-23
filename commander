@@ -88,6 +88,10 @@ case $txt in
     [ -f $LOGFILE ] && tail -200 $LOGFILE || /bin/true
     exit 0
     ;;
+"log-control-notail")
+    cd /boulder
+    docker-compose logs --no-color --tail=50 control
+    ;;
 "log-cron")
     [ -f /logs/cron.log ] && tail -n200 -f /logs/cron.log || /bin/true
     exit 0
@@ -118,10 +122,6 @@ case $txt in
 "log-labca-notail")
     cd /boulder
     docker-compose logs --no-color --tail=50 labca
-    ;;
-"log-labca-err")
-    [ -f /var/log/labca.err ] && tail -200 /var/log/labca.err || /bin/true
-    exit 0
     ;;
 "log-web")
     cd /boulder

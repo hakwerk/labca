@@ -98,15 +98,15 @@ The end users in your organization / lab can visit the public pages of you LabCA
 
 After installing sometimes the application is not starting up properly and it can be quite hard to figure out why. Some log files to check in case of issues are:
 * /home/labca/nginx_data/ssl/acme_tiny.log
-* /home/labca/logs/commander.log
-* cd /home/labca/boulder; docker-compose logs labca
+* cd /home/labca/boulder; docker-compose exec control cat /logs/commander.log (if it exists)
+* cd /home/labca/boulder; docker-compose logs control
 * cd /home/labca/boulder; docker-compose logs boulder
-* /var/log/labca.err
-* possibly /var/log/nginx/error.log
+* cd /home/labca/boulder; docker-compose logs labca
+* possibly cd /home/labca/boulder; docker-compose logs nginx
 
 ### Common error messages
 
-If you get "**No valid IP addresses found for <hostname>**" in /home/labca/nginx_data/ssl/acme_tiny.log, solve it by entering the hostname in your local DNS. Same for "**Could not resolve host: <hostname>**" in /var/log/labca.err.
+If you get "**No valid IP addresses found for <hostname>**" in /home/labca/nginx_data/ssl/acme_tiny.log, solve it by entering the hostname in your local DNS. Same for "**Could not resolve host: <hostname>**" in one of those docker-compose logs.
 
 When issuing a certificate, LabCA/boulder checks for CAA (Certification Authority Authorization) records in DNS, which specify what CAs are allowed to issue certificates for the domain. If you get an error like "**SERVFAIL looking up CAA for internal**" or "**CAA record for ca01.foo.internal prevents issuance**", you can try to add something like this to your DNS domain:
 ```

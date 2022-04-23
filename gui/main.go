@@ -236,19 +236,19 @@ func errorHandler(w http.ResponseWriter, r *http.Request, err error, status int)
 			}
 			data = getLog(w, r, "commander")
 			if data != "" {
-				FileErrors = append(FileErrors, map[string]interface{}{"FileName": "/home/labca/logs/commander.log", "Content": data})
+				FileErrors = append(FileErrors, map[string]interface{}{"FileName": "(control)/logs/commander.log", "Content": data})
 			}
-			data = getLog(w, r, "labca-notail")
+			data = getLog(w, r, "control-notail")
 			if data != "" {
-				FileErrors = append(FileErrors, map[string]interface{}{"FileName": "docker-compose logs labca", "Content": data})
+				FileErrors = append(FileErrors, map[string]interface{}{"FileName": "docker-compose logs control", "Content": data})
 			}
 			data = getLog(w, r, "boulder-notail")
 			if data != "" {
 				FileErrors = append(FileErrors, map[string]interface{}{"FileName": "docker-compose logs boulder", "Content": data})
 			}
-			data = getLog(w, r, "labca-err")
+			data = getLog(w, r, "labca-notail")
 			if data != "" {
-				FileErrors = append(FileErrors, map[string]interface{}{"FileName": "/var/log/labca.err", "Content": data})
+				FileErrors = append(FileErrors, map[string]interface{}{"FileName": "docker-compose logs labca", "Content": data})
 			}
 
 			render(w, r, "error", map[string]interface{}{"Message": "Some unexpected error occurred!", "FileErrors": FileErrors})
