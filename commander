@@ -139,8 +139,8 @@ case $txt in
     timezone=$(cat /etc/timezone)
     uptime=$(uptime -s)
     procs=$(ps -ef --no-headers | wc -l)
-    total=$(free -b --si | grep 'Mem:' | perl -p0e 's/.*?\s+(\d+)\s+.*/$1/')
-    avail=$(free -b --si | grep 'Mem:' | perl -p0e 's/.*\s+(\d+)$/$1/')
+    total=$(free -b --si | grep ":" | head -1 | perl -p0e 's/.*?\s+(\d+)\s+.*/$1/')
+    avail=$(free -b --si | grep ":" | head -1 | perl -p0e 's/.*\s+(\d+)$/$1/')
     let used=$total-$avail
     echo "$timezone|$uptime|$procs|$used|$avail"
     exit 0
