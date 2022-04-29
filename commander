@@ -203,7 +203,7 @@ case $txt in
     ;;
 "backup-restore")
     read backup
-    /labca/restore $backup
+    /labca/restore "$backup"
     ;;
 "server-restart")
     cd /boulder

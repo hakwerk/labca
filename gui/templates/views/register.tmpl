@@ -1,10 +1,11 @@
 {{ define "body" }}
 </div>
 <div class="col-md-6 col-sm-12">
-    <h3>Create admin account</h3>
+    <h3 class="form-register">Create admin account</h3>
+    <h3 class="form-restore" style="display: none;">Restore LabCA</h3>
 
 {{with .User}}
-<form role="form" action="{{ .RequestBase }}/setup" method="POST">
+<form role="form" action="{{ .RequestBase }}/setup" method="POST" class="form-register">
   <div class="form-group">
     <label>User name:</label>
     <input class="form-control non-fluid" type="text" name="username" id="username" value="{{ .Name }}" required>
@@ -42,6 +43,20 @@
     <input class="btn btn-default" type="submit" value="Create">
   </div>
 </form>
+<form role="form" action="{{ .RequestBase }}/setup" method="POST" class="form-restore" style="display: none;" enctype="multipart/form-data">
+  <div class="form-group">
+    <label for="file">File to restore:</label>
+    <input class="form-control non-fluid" type="file" id="file" name="file" required>
+    {{ with .Errors.File }}
+    <span class="error" id="file-error">{{ . }}</span>
+    {{ end }}
+  </div>
+  <div class="form-group">
+    <input class="btn btn-default" type="submit" value="Restore">
+  </div>
+</form>
+<p id="processing" class="hidden"><br/>Applying configuration...<br/>
+<img id="restart-spinner" src="static/img/spinner.gif" height="36"></p>
 {{end}}
 {{ template "partials/progress.tmpl" . }}
 {{end}}
@@ -53,6 +68,30 @@
         $(function() {
             pwduxInit('#password-strength', '#password');
             pwduxHandlers('#password-strength', '#password', ['#username', '#email']);
+
+            if ($("#file-error").text() == "") {
+                $(".form-register").show();
+                $(".form-restore").hide();
+            } else {
+                $(".form-restore").show();
+                $(".form-register").hide();
+            }
+
+            $(".toggle-restore").click(function() {
+                $(".form-restore").show();
+                $(".form-register").hide();
+                positionFooter();
+            });
+
+            $(".toggle-register").click(function() {
+                $(".form-register").show();
+                $(".form-restore").hide();
+                positionFooter();
+            });
+
+            $(".form-restore").submit(function() {
+                $("#processing").removeClass("hidden");
+            });
         });
     </script>
 {{ end }}

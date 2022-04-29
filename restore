@@ -11,13 +11,15 @@ BASE=$(echo "$FILE" | perl -p0e "s/.*\/(.*).tgz/\1/")
 TMPDIR=/tmp/$BASE
 
 cd /tmp
-tar xzf $FILE
+tar xzf $FILE 2>&1
 
 cd /boulder
+[ -f $TMPDIR/boulder_sa_integration.sql ] || (echo "MySQL backup file not found"; exit 1)
 docker-compose exec -T bmysql mysql boulder_sa_integration <$TMPDIR/boulder_sa_integration.sql
 
 mv -f $TMPDIR/*key* $TMPDIR/*cert.pem $TMPDIR/*.csr /etc/nginx/ssl/
 
+[ -d  $TMPDIR/data ] || (echo "Data folder backup not found"; exit 1)
 rm -rf /admin/data && mv $TMPDIR/data /admin/
 
 rm -rf $TMPDIR

@@ -1610,9 +1610,15 @@ func _progress(stage string) int {
 
 func _helptext(stage string) template.HTML {
 	if stage == "register" {
-		return template.HTML(fmt.Sprint("<p>You need to create an admin account for managing this instance of\n",
-			"LabCA. There can only be one admin account, but you can configure all its attributes once the\n",
-			"initial setup has completed.</p>"))
+		return template.HTML(fmt.Sprint("<p class=\"form-register\">You need to create an admin account for\n",
+			"managing this instance of LabCA. There can only be one admin account, but you can configure all\n",
+			"its attributes once the initial setup has completed.<br><br>Instead, you can also\n",
+			"<a href=\"#\" onclick=\"false\" class=\"toggle-restore\">restore from a backup file</a> of a\n",
+			"previous LabCA installation.</p>\n",
+			"<p class=\"form-restore\">If you have a backup file from a previous LabCA installation and want to\n",
+			"restore this instance with the exact same configuration, use that backup file here.\n",
+			"<br><br>Otherwise you should follow the <a href=\"#\" onclick=\"false\"\n",
+			"class=\"toggle-register\">standard setup</a>.</p>"))
 	} else if stage == "setup" {
 		return template.HTML(fmt.Sprint("<p>The fully qualified domain name (FQDN) is what end users will use\n",
 			"to connect to this server. It was provided in the initial setup and is shown here for reference.</p>\n",
@@ -1652,11 +1658,114 @@ func _setupAdminUser(w http.ResponseWriter, r *http.Request) bool {
 		render(w, r, "register:manage", map[string]interface{}{"User": reg, "IsLogin": true, "Progress": _progress("register"), "HelpText": _helptext("register")})
 		return false
 	} else if r.Method == "POST" {
-		if err := r.ParseForm(); err != nil {
-			errorHandler(w, r, err, http.StatusInternalServerError)
+		isMultipart := true
+		if err := r.ParseMultipartForm(1 * 1024 * 1024); err != nil {
+			isMultipart = false
+			if err != http.ErrNotMultipart {
+				errorHandler(w, r, err, http.StatusInternalServerError)
+				return false
+			} else if err := r.ParseForm(); err != nil {
+				errorHandler(w, r, err, http.StatusInternalServerError)
+				return false
+			}
+		}
+
+		// Restore a backup file
+		if isMultipart {
+			reg := &User{
+				Errors: make(map[string]string),
+				RequestBase: r.Header.Get("X-Request-Base"),
+			}
+			file, header, err := r.FormFile("file")
+			if err != nil {
+				fmt.Println(err)
+				reg.Errors["File"] = "Could not read uploaded file"
+				render(w, r, "register:manage", map[string]interface{}{"User": reg, "IsLogin": true, "Progress": _progress("register"), "HelpText": _helptext("register")})
+				return false
+			}
+			defer file.Close()
+
+			out, err := os.Create("/backup/" + header.Filename)
+			if err != nil {
+				fmt.Println(err)
+				reg.Errors["File"] = "Could not create local file"
+				render(w, r, "register:manage", map[string]interface{}{"User": reg, "IsLogin": true, "Progress": _progress("register"), "HelpText": _helptext("register")})
+				return false
+			}
+			defer out.Close()
+
+			_, copyError := io.Copy(out, file)
+			if copyError != nil {
+				fmt.Println(err)
+				reg.Errors["File"] = "Could not store uploaded file"
+				render(w, r, "register:manage", map[string]interface{}{"User": reg, "IsLogin": true, "Progress": _progress("register"), "HelpText": _helptext("register")})
+				return false
+			}
+
+			// Cannot use _hostCommand() as we need different error handling
+			conn, err := net.Dial("tcp", "control:3030")
+			if err != nil {
+				fmt.Println(err)
+				reg.Errors["File"] = "Could not import backup file: error communicating with control"
+				render(w, r, "register:manage", map[string]interface{}{"User": reg, "IsLogin": true, "Progress": _progress("register"), "HelpText": _helptext("register")})
+				return false
+			}
+			defer conn.Close()
+
+			fmt.Fprintf(conn, "backup-restore\n"+header.Filename+"\n")
+			reader := bufio.NewReader(conn)
+			message, err := ioutil.ReadAll(reader)
+			if err != nil {
+				fmt.Println(err)
+				reg.Errors["File"] = "Could not import backup file: error reading control response"
+				render(w, r, "register:manage", map[string]interface{}{"User": reg, "IsLogin": true, "Progress": _progress("register"), "HelpText": _helptext("register")})
+				return false
+			}
+
+			if strings.Compare(string(message), "ok\n") == 0 {
+				if err := viper.ReadInConfig(); err != nil {
+					fmt.Println(err)
+					reg.Errors["File"] = "Could not read config after importing backup"
+					render(w, r, "register:manage", map[string]interface{}{"User": reg, "IsLogin": true, "Progress": _progress("register"), "HelpText": _helptext("register")})
+					return false
+				}
+
+				viper.Set("config.complete", false)
+				viper.WriteConfig()
+
+				err = _applyConfig()
+				if err != nil {
+					fmt.Println(err)
+					reg.Errors["File"] = "Could not apply config after importing backup"
+					render(w, r, "register:manage", map[string]interface{}{"User": reg, "IsLogin": true, "Progress": _progress("register"), "HelpText": _helptext("register")})
+					return false
+				}
+
+				defer _hostCommand(w, r, "docker-restart")
+				http.Redirect(w, r, r.Header.Get("X-Request-Base")+"/final", http.StatusFound)
+				return true
+			}
+
+			if len(message) >= 4 {
+				tail := message[len(message)-4:]
+				if strings.Compare(string(tail), "\nok\n") == 0 {
+					msg := message[0 : len(message)-4]
+					log.Printf("Message from server: '%s'", msg)
+					lines := strings.Split(strings.TrimSpace(string(msg)), "\n")
+					reg.Errors["File"] = "Could not import backup file: " + lines[0]
+					render(w, r, "register:manage", map[string]interface{}{"User": reg, "IsLogin": true, "Progress": _progress("register"), "HelpText": _helptext("register")})
+					return false
+				}
+			}
+
+			log.Printf("ERROR: Message from server: '%s'", message)
+			lines := strings.Split(strings.TrimSpace(string(message)), "\n")
+			reg.Errors["File"] = "Could not import backup file: " + lines[0]
+			render(w, r, "register:manage", map[string]interface{}{"User": reg, "IsLogin": true, "Progress": _progress("register"), "HelpText": _helptext("register")})
 			return false
 		}
 
+		// Regular setup form handling
 		reg := &User{
 			Name:        r.Form.Get("username"),
 			Email:       r.Form.Get("email"),
