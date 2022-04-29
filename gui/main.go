@@ -1186,9 +1186,9 @@ func logsHandler(w http.ResponseWriter, r *http.Request) {
 	case "audit":
 		name = "ACME Audit Log"
 		message = "Live view on only the audit messages in the backend ACME application (Boulder) logs."
-        case "cron":
-                name = "Cron Log"
-                message = "Live view on the logs for the cron jobs for LabCA."
+	case "cron":
+		name = "Cron Log"
+		message = "Live view on the logs for the cron jobs for LabCA."
 	case "labca":
 		name = "LabCA Log"
 		message = "Live view on the logs for this LabCA web application."
@@ -1801,7 +1801,7 @@ func setupHandler(w http.ResponseWriter, r *http.Request) {
 	if !viper.GetBool("config.restarted") {
 		// Don't let the retry mechanism generate new restartSecret!
 		if r.Header.Get("X-Requested-With") == "XMLHttpRequest" {
-		    _, _ = exeCmd("sleep 5")
+			_, _ = exeCmd("sleep 5")
 			render(w, r, "index", map[string]interface{}{"Message": "Retry OK"})
 		} else {
 			// 8. Restart application
@@ -2241,14 +2241,14 @@ func activeNav(active string, uri string, requestBase string) []navItem {
 			"title": "Live view on the logs for this LabCA web application",
 		},
 	}
-        cron := navItem{
-                Name: "Cron Log",
-                Icon: "fa-clock",
-                Attrs: map[template.HTMLAttr]string{
-                        "href":  requestBase + "/logs/cron",
-                        "title": "Live view on the logs for the cron jobs for LabCA",
-                },
-        }
+	cron := navItem{
+		Name: "Cron Log",
+		Icon: "fa-clock-o",
+		Attrs: map[template.HTMLAttr]string{
+			"href":  requestBase + "/logs/cron",
+			"title": "Live view on the logs for the cron jobs for LabCA",
+		},
+	}
 	web := navItem{
 		Name: "Web Server",
 		Icon: "fa-globe",
