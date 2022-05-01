@@ -459,7 +459,7 @@ static_web() {
     git commit --all --quiet -m "LabCA before update $runId" &>>$installLog && { msg_ok "Commit existing modifications of $adminDir"; msg_info "$msg"; } || true
 
     mkdir -p .well-known/acme-challenge
-    find .well-known/acme-challenge/ -mtime +10 -exec rm {} \;  # Clean up files older than 10 days
+    find .well-known/acme-challenge/ -type f -mtime +10 -exec rm {} \;  # Clean up files older than 10 days
     mkdir -p crl
     [ -e cert ] || ln -s certs cert
     cp -rp $cloneDir/static/* .
@@ -589,6 +589,10 @@ config_boulder() {
 
     mkdir -p $baseDir/backup
     [ -z "$(docker ps | grep boulder-bmysql-1)" ] || docker exec -i boulder-bmysql-1 mysqldump boulder_sa_integration >$baseDir/backup/dbdata-${runId}.sql
+    # housekeeping
+    for file in `ls -1t $baseDir/backup/dbdata-*.sql 2>&1 | tail -n +3 || true`; do
+        rm $file
+    done
 
     cd "$boulderLabCADir"
     sed -i -e "s/test-ca2.pem/test-ca.pem/" config/ocsp-responder.json
