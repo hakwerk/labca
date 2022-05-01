@@ -100,13 +100,12 @@ After installing sometimes the application is not starting up properly and it ca
 First, make sure that all five containers are running:
 ```
 root@testpki:/home/labca/boulder# docker-compose ps -a
-      Name                     Command               State                    Ports
------------------------------------------------------------------------------------------------------
-boulder_bmysql_1    docker-entrypoint.sh mysql ...   Up      3306/tcp
-boulder_boulder_1   labca/entrypoint.sh              Up      4001/tcp, 4002/tcp, 4003/tcp
-boulder_control_1   ./control.sh                     Up      3030/tcp
-boulder_labca_1     ./setup.sh                       Up      3000/tcp
-boulder_nginx_1     /docker-entrypoint.sh ngin ...   Up      0.0.0.0:443->443/tcp, 0.0.0.0:80->80/tcp
+NAME                COMMAND                  SERVICE             STATUS              PORTS
+boulder-bmysql-1    "docker-entrypoint.s…"   bmysql              running             3306/tcp
+boulder-boulder-1   "labca/entrypoint.sh"    boulder             running             4001-4003/tcp
+boulder-control-1   "./control.sh"           control             running             3030/tcp
+boulder-labca-1     "./setup.sh"             labca               running             3000/tcp
+boulder-nginx-1     "/docker-entrypoint.…"   nginx               running             0.0.0.0:80->80/tcp, 0.0.0.0:443->443/tcp, :::80->80/tcp, :::443->443/tcp
 ```
 
 Some log files to check in case of issues are:

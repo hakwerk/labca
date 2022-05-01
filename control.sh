@@ -27,12 +27,20 @@ install_docker() {
     curl -fsSL https://download.docker.com/linux/ubuntu/gpg | apt-key add -
     add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu focal stable"
     apt install -y docker-ce
+}
 
-    dockerComposeVersion="1.28.5"
+# TODO: install docker-compose should be done in pre-baked image
+install_docker_compose() {
+    dockerComposeVersion="v2.5.0"
     local dcver=""
     [ -x /usr/local/bin/docker-compose ] && dcver="`/usr/local/bin/docker-compose --version`"
     local vercmp=${dcver/$dockerComposeVersion/}
     if [ "$dcver" == "" ] || [ "$dcver" == "$vercmp" ]; then
+        local v1test=${dcver/version 1./}
+        if [ "$dcver" != "$v1test" ] && [ "$dcver" != "" ]; then
+            mv /usr/local/bin/docker-compose /usr/local/bin/docker-compose-v1
+        fi
+
         curl -sSL https://github.com/docker/compose/releases/download/$dockerComposeVersion/docker-compose-`uname -s`-`uname -m` -o /usr/local/bin/docker-compose
         chmod +x /usr/local/bin/docker-compose
     fi
@@ -85,6 +93,7 @@ main() {
     get_fqdn
 
     docker ps >/dev/null || install_docker
+    install_docker_compose
 
     [ -e /etc/nginx/ssl/labca_cert.pem ] || selfsigned_cert
     renew_near_expiry

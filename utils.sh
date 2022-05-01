@@ -16,13 +16,13 @@ count() {
     local prefix=""
     case $pattern in
         $PS_LABCA)
-            prefix="docker exec $(docker ps --format "{{.Names}}" | grep _labca_) "
+            prefix="docker exec $(docker ps --format "{{.Names}}" | grep -- -labca-) "
             ;;
         $PS_BOULDER)
-            prefix="docker exec $(docker ps --format "{{.Names}}" | grep _boulder_) "
+            prefix="docker exec $(docker ps --format "{{.Names}}" | grep -- -boulder-) "
             ;;
         $PS_MYSQL)
-            prefix="docker exec $(docker ps --format "{{.Names}}" | grep _bmysql_) "
+            prefix="docker exec $(docker ps --format "{{.Names}}" | grep -- -bmysql-) "
             ;;
         *)
             ;;

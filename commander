@@ -128,10 +128,10 @@ case $txt in
     docker-compose logs -f --no-color --tail=50 nginx
     ;;
 "log-components")
-    nginx=$(docker inspect $(docker ps --format "{{.Names}}" | grep _nginx_) | grep -i started | sed -e "s/[^:]*:\(.*\)/\1/" | sed -e "s/.*\"\(.*\)\".*/\1/")
-    svc=$(docker inspect $(docker ps --format "{{.Names}}" | grep _control_) | grep -i started | sed -e "s/[^:]*:\(.*\)/\1/" | sed -e "s/.*\"\(.*\)\".*/\1/")
-    boulder=$(docker inspect $(docker ps --format "{{.Names}}" | grep _boulder_) | grep -i started | sed -e "s/[^:]*:\(.*\)/\1/" | sed -e "s/.*\"\(.*\)\".*/\1/")
-    labca=$(docker inspect $(docker ps --format "{{.Names}}" | grep _labca_) | grep -i started | sed -e "s/[^:]*:\(.*\)/\1/" | sed -e "s/.*\"\(.*\)\".*/\1/")
+    nginx=$(docker inspect $(docker ps --format "{{.Names}}" | grep -- -nginx-) | grep -i started | sed -e "s/[^:]*:\(.*\)/\1/" | sed -e "s/.*\"\(.*\)\".*/\1/")
+    svc=$(docker inspect $(docker ps --format "{{.Names}}" | grep -- -control-) | grep -i started | sed -e "s/[^:]*:\(.*\)/\1/" | sed -e "s/.*\"\(.*\)\".*/\1/")
+    boulder=$(docker inspect $(docker ps --format "{{.Names}}" | grep -- -boulder-) | grep -i started | grep -v depends_on | sed -e "s/[^:]*:\(.*\)/\1/" | sed -e "s/.*\"\(.*\)\".*/\1/")
+    labca=$(docker inspect $(docker ps --format "{{.Names}}" | grep -- -labca-) | grep -i started | grep -v depends_on | sed -e "s/[^:]*:\(.*\)/\1/" | sed -e "s/.*\"\(.*\)\".*/\1/")
     echo "$nginx|$svc|$boulder|$labca"
     exit 0
     ;;

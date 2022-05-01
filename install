@@ -20,7 +20,7 @@ cloneDir="$baseDir/labca"
 adminDir="$baseDir/admin"
 boulderDir="$baseDir/boulder"
 boulderLabCADir="${boulderDir}_labca"
-dockerComposeVersion="1.28.5"
+dockerComposeVersion="v2.5.0"
 
 labcaUrl="https://github.com/hakwerk/labca/"
 boulderUrl="https://github.com/letsencrypt/boulder/"
@@ -417,7 +417,12 @@ install_extra() {
     local dcver=""
     [ -x /usr/local/bin/docker-compose ] && dcver="`/usr/local/bin/docker-compose --version`"
     local vercmp=${dcver/$dockerComposeVersion/}
-    if [ "$dcver" == "$vercmp" ]; then
+    if [ "$dcver" == "" ] || [ "$dcver" == "$vercmp" ]; then
+        local v1test=${dcver/version 1./}
+        if [ "$dcver" != "$v1test" ] && [ "$dcver" != "" ]; then
+            mv /usr/local/bin/docker-compose /usr/local/bin/docker-compose-v1
+        fi
+
         curl -sSL https://github.com/docker/compose/releases/download/$dockerComposeVersion/docker-compose-`uname -s`-`uname -m` -o /usr/local/bin/docker-compose &>>$installLog || msg_fatal "Could not download docker-compose"
         chmod +x /usr/local/bin/docker-compose
     fi
@@ -583,7 +588,7 @@ config_boulder() {
     sudo -u labca -H patch -p1 -o "$boulderLabCADir/config/orphan-finder.json" < $cloneDir/patches/config_orphan-finder.patch &>>$installLog
 
     mkdir -p $baseDir/backup
-    [ -z "$(docker ps | grep boulder_bmysql_1)" ] || docker exec -i boulder_bmysql_1 mysqldump boulder_sa_integration >$baseDir/backup/dbdata-${runId}.sql
+    [ -z "$(docker ps | grep boulder-bmysql-1)" ] || docker exec -i boulder-bmysql-1 mysqldump boulder_sa_integration >$baseDir/backup/dbdata-${runId}.sql
 
     cd "$boulderLabCADir"
     sed -i -e "s/test-ca2.pem/test-ca.pem/" config/ocsp-responder.json
@@ -759,8 +764,10 @@ startup() {
     wait_up $PS_MYSQL &>>$installLog || true
     wait_up $PS_LABCA &>>$installLog || true
     wait_up $PS_SERVICE &>>$installLog || true
-    docker exec -i boulder_bmysql_1 mysql_upgrade &>>$installLog
+    docker exec -i boulder-bmysql-1 mysql_upgrade &>>$installLog
     [ -f "$boulderLabCADir/setup_complete" ] && wait_up $PS_BOULDER $PS_BOULDER_COUNT &>>$installLog || /bin/true
+
+    COMPOSE_HTTP_TIMEOUT=120 docker-compose restart control &>>$installLog
 
     msg_ok "$msg"
 }
