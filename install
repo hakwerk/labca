@@ -24,7 +24,7 @@ dockerComposeVersion="v2.5.0"
 
 labcaUrl="https://github.com/hakwerk/labca/"
 boulderUrl="https://github.com/letsencrypt/boulder/"
-boulderTag="release-2022-04-04"
+boulderTag="release-2022-05-02"
 
 # Feature flags
 flag_skip_redis=true
@@ -586,6 +586,8 @@ config_boulder() {
     sudo -u labca -H patch -p1 -o "$boulderLabCADir/config/wfe2.json" < $cloneDir/patches/config_wfe2.patch &>>$installLog
     sudo -u labca -H patch -p1 -o "$boulderLabCADir/config/rocsp-tool.json" < $cloneDir/patches/config_rocsp-tool.patch &>>$installLog
     sudo -u labca -H patch -p1 -o "$boulderLabCADir/config/orphan-finder.json" < $cloneDir/patches/config_orphan-finder.patch &>>$installLog
+    sudo -u labca -H patch -p1 -o "$boulderLabCADir/config/ra.json" < $cloneDir/patches/config_ra.patch &>>$installLog
+    sudo -u labca -H patch -p1 -o "$boulderLabCADir/config/va.json" < $cloneDir/patches/config_va.patch &>>$installLog
 
     mkdir -p $baseDir/backup
     [ -z "$(docker ps | grep boulder-bmysql-1)" ] || docker exec -i boulder-bmysql-1 mysqldump boulder_sa_integration >$baseDir/backup/dbdata-${runId}.sql
@@ -608,6 +610,7 @@ config_boulder() {
     sed -i -e "s|/hierarchy/intermediate-cert-rsa-a.pem|labca/test-ca.pem|" config/wfe2.json
     sed -i -e "s|.hierarchy/intermediate-cert-rsa-a.pem|labca/test-ca.pem|" config/rocsp-tool.json
     sed -i -e "s|/hierarchy/intermediate-cert-rsa-a.pem|labca/test-ca.pem|" config/orphan-finder.json
+    sed -i -e "s|/hierarchy/intermediate-cert-rsa-a.pem|labca/test-ca.pem|" config/ra.json
     sed -i -e "s|/hierarchy/intermediate-cert-rsa-a.pem|labca/test-ca.pem|" issuer-ocsp-responder.json
     sed -i -e "s|/hierarchy/intermediate-cert-rsa-a.pem|labca/test-ca.pem|" cert-ceremonies/intermediate-ocsp-rsa.yaml
     sed -i -e "s|/hierarchy/intermediate-cert-rsa-a.pem|labca/test-ca.pem|" v2_integration.py

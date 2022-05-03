@@ -1,9 +1,9 @@
 diff --git a/docker-compose.yml b/docker-compose.yml
-index b7e5656c5..3b82e8651 100644
+index 0cd8c8dd..36619190 100644
 --- a/docker-compose.yml
 +++ b/docker-compose.yml
 @@ -8,7 +8,7 @@ services:
-     image: &boulder_image letsencrypt/boulder-tools:${BOULDER_TOOLS_TAG:-go1.17.7_2022-02-10}
+     image: &boulder_image letsencrypt/boulder-tools:${BOULDER_TOOLS_TAG:-go1.17.9_2022-04-12}
      environment:
        FAKE_DNS: 10.77.77.77
 -      BOULDER_CONFIG_DIR: test/config
@@ -19,7 +19,7 @@ index b7e5656c5..3b82e8651 100644
        - ./.gocache:/root/.cache/go-build:cached
        - ./.hierarchy:/hierarchy/:cached
        - ./.softhsm-tokens/:/var/lib/softhsm/tokens/:cached
-@@ -32,17 +33,25 @@ services:
+@@ -36,17 +37,25 @@ services:
      # special logic there that will return multiple IP addresses for
      # service names.
      dns: 10.77.77.77
@@ -50,7 +50,7 @@ index b7e5656c5..3b82e8651 100644
      networks:
        bluenet:
          aliases:
-@@ -56,21 +65,73 @@ services:
+@@ -60,21 +69,73 @@ services:
      # small.
      command: mysqld --bind-address=0.0.0.0 --slow-query-log --log-output=TABLE --log-queries-not-using-indexes=ON
      logging:

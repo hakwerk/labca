@@ -1,5 +1,5 @@
 diff --git a/docker-compose.yml b/docker-compose.yml
-index b0c235a91..b7e5656c5 100644
+index b290d358..0cd8c8dd 100644
 --- a/docker-compose.yml
 +++ b/docker-compose.yml
 @@ -25,8 +25,6 @@ services:
@@ -8,10 +8,10 @@ index b0c235a91..b7e5656c5 100644
          ipv4_address: 10.88.88.88
 -      redisnet:
 -        ipv4_address: 10.33.33.33
-     # Use sd-test-srv as a backup to Docker's embedded DNS server
-     # (https://docs.docker.com/config/containers/container-networking/#dns-services).
-     # If there's a name Docker's DNS server doesn't know about, it will
-@@ -40,7 +38,6 @@ services:
+     extra_hosts:
+       # This is used by TestOldTLS in va/http_test.go
+       # TODO(#6011): Remove once TLS 1.0 and 1.1 support is gone.
+@@ -44,7 +42,6 @@ services:
        - 4003:4003 # OCSP
      depends_on:
        - bmysql
@@ -19,12 +19,12 @@ index b0c235a91..b7e5656c5 100644
      entrypoint: test/entrypoint.sh
      working_dir: &boulder_working_dir /boulder
  
-@@ -61,78 +58,6 @@ services:
+@@ -65,78 +62,6 @@ services:
      logging:
          driver: none
  
 -  bredis_1:
--    image: redis:latest
+-    image: redis:6.2.7
 -    volumes:
 -      - ./test/:/test/:cached
 -    command: redis-server /test/redis.config
@@ -33,7 +33,7 @@ index b0c235a91..b7e5656c5 100644
 -          ipv4_address: 10.33.33.2
 -
 -  bredis_2:
--    image: redis:latest
+-    image: redis:6.2.7
 -    volumes:
 -      - ./test/:/test/:cached
 -    command: redis-server /test/redis.config
@@ -42,7 +42,7 @@ index b0c235a91..b7e5656c5 100644
 -          ipv4_address: 10.33.33.3
 -
 -  bredis_3:
--    image: redis:latest
+-    image: redis:6.2.7
 -    volumes:
 -      - ./test/:/test/:cached
 -    command: redis-server /test/redis.config
@@ -51,7 +51,7 @@ index b0c235a91..b7e5656c5 100644
 -          ipv4_address: 10.33.33.4
 -
 -  bredis_4:
--    image: redis:latest
+-    image: redis:6.2.7
 -    volumes:
 -      - ./test/:/test/:cached
 -    command: redis-server /test/redis.config
@@ -60,7 +60,7 @@ index b0c235a91..b7e5656c5 100644
 -          ipv4_address: 10.33.33.5
 -
 -  bredis_5:
--    image: redis:latest
+-    image: redis:6.2.7
 -    volumes:
 -      - ./test/:/test/:cached
 -    command: redis-server /test/redis.config
@@ -69,7 +69,7 @@ index b0c235a91..b7e5656c5 100644
 -          ipv4_address: 10.33.33.6
 -
 -  bredis_6:
--    image: redis:latest
+-    image: redis:6.2.7
 -    volumes:
 -      - ./test/:/test/:cached
 -    command: redis-server /test/redis.config
@@ -78,7 +78,7 @@ index b0c235a91..b7e5656c5 100644
 -          ipv4_address: 10.33.33.7
 -
 -  bredis_clusterer:
--    image: redis:latest
+-    image: redis:6.2.7
 -    volumes:
 -      - ./test/:/test/:cached
 -      - ./cluster/:/cluster/:cached
@@ -98,7 +98,7 @@ index b0c235a91..b7e5656c5 100644
  
    netaccess:
      image: *boulder_image
-@@ -160,10 +85,3 @@ networks:
+@@ -164,10 +89,3 @@ networks:
        driver: default
        config:
          - subnet: 10.88.88.0/24

@@ -1,0 +1,15 @@
+diff --git a/test/config/ra.json b/test/config/ra.json
+index 6f0baae9..6ad0f08c 100644
+--- a/test/config/ra.json
++++ b/test/config/ra.json
+@@ -15,9 +15,7 @@
+     },
+     "orderLifetime": "168h",
+     "issuerCerts": [
+-      "/hierarchy/intermediate-cert-rsa-a.pem",
+-      "/hierarchy/intermediate-cert-rsa-b.pem",
+-      "/hierarchy/intermediate-cert-ecdsa-a.pem"
++      "/hierarchy/intermediate-cert-rsa-a.pem"
+     ],
+     "tls": {
+       "caCertFile": "test/grpc-creds/minica.pem",

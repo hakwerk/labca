@@ -7,8 +7,9 @@ perl -i -p0e "s/(\"dnsResolvers\": \[\n).*?(\s+\],)/\1      \"$PKI_DNS\"\2/igs" 
 perl -i -p0e "s/(\"dnsResolvers\": \[\n).*?(\s+\],)/\1      \"$PKI_DNS\"\2/igs" config/va-remote-b.json
 perl -i -p0e "s/(\"dnsResolvers\": \[\n).*?(\s+\],)/\1      \"$PKI_DNS\"\2/igs" config/bad-key-revoker.json
 perl -i -p0e "s/(\"dnsResolvers\": \[\n).*?(\s+\],)/\1      \"$PKI_DNS\"\2/igs" config/expiration-mailer.json
-perl -i -p0e "s/(\s+\"maxConnectionAge\":[^\n]+)//igs" config/ca-a.json
-perl -i -p0e "s/(\s+\"maxConnectionAge\":[^\n]+)//igs" config/ca-b.json
+for fl in $(grep -Rl maxConnectionAge config/); do
+    perl -i -p0e "s/(\s+\"maxConnectionAge\":[^\n]+)//igs" $fl
+done
 sed -i -e "s/\"issuerDomain\": \".*\"/\"issuerDomain\": \"$PKI_DOMAIN\"/" config/va.json
 sed -i -e "s/\"issuerDomain\": \".*\"/\"issuerDomain\": \"$PKI_DOMAIN\"/" config/va-remote-a.json
 sed -i -e "s/\"issuerDomain\": \".*\"/\"issuerDomain\": \"$PKI_DOMAIN\"/" config/va-remote-b.json
