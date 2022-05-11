@@ -32,7 +32,7 @@ if [ "$PKI_DOMAIN_MODE" == "lockdown" ] && [ "$PKI_LOCKDOWN_DOMAINS" != "" ]; th
     echo >> hostname-policy.yaml
     echo "# Lockdown are the domains that this LabCA instance can issue certificates for" >> hostname-policy.yaml
     echo "Lockdown:" >> hostname-policy.yaml
-    for d in $(echo $PKI_LOCKDOWN_DOMAINS | sed -e "s/\\\r/ /g" | sed -e "s/\\\n/ /g"); do
+    for d in $(echo $PKI_LOCKDOWN_DOMAINS | sed -e "s/\\\r/ /g" | sed -e "s/\\\n/ /g" | tr '\r' ' '); do
         echo "  - \"$d\"" >> hostname-policy.yaml
     done
 fi
@@ -41,7 +41,7 @@ if [ "$PKI_DOMAIN_MODE" == "whitelist" ] && [ "$PKI_WHITELIST_DOMAINS" != "" ]; 
     echo "# Whitelist are the domains that this LabCA instance can issue certificates for" >> hostname-policy.yaml
     echo "# in *addition* to all normal public domains" >> hostname-policy.yaml
     echo "Whitelist:" >> hostname-policy.yaml
-    for d in $(echo $PKI_WHITELIST_DOMAINS | sed -e "s/\\\r/ /g" | sed -e "s/\\\n/ /g"); do
+    for d in $(echo $PKI_WHITELIST_DOMAINS | sed -e "s/\\\r/ /g" | sed -e "s/\\\n/ /g" | tr '\r' ' '); do
         echo "  - \"$d\"" >> hostname-policy.yaml
     done
 fi
@@ -51,12 +51,12 @@ if [ "$PKI_DOMAIN_MODE" == "lockdown" ] || [ "$PKI_DOMAIN_MODE" == "whitelist" ]
 
     REPLACEMENT=""
     if [ "$PKI_DOMAIN_MODE" == "lockdown" ] && [ "$PKI_LOCKDOWN_DOMAINS" != "" ]; then
-        for d in $(echo $PKI_LOCKDOWN_DOMAINS | sed -e "s/\\\r/ /g" | sed -e "s/\\\n/ /g"); do
+        for d in $(echo $PKI_LOCKDOWN_DOMAINS | sed -e "s/\\\r/ /g" | sed -e "s/\\\n/ /g" | tr '\r' ' '); do
             REPLACEMENT+="    $d: 10000\r"
         done
     fi
     if [ "$PKI_DOMAIN_MODE" == "whitelist" ] && [ "$PKI_WHITELIST_DOMAINS" != "" ]; then
-        for d in $(echo $PKI_WHITELIST_DOMAINS | sed -e "s/\\\r/ /g" | sed -e "s/\\\n/ /g"); do
+        for d in $(echo $PKI_WHITELIST_DOMAINS | sed -e "s/\\\r/ /g" | sed -e "s/\\\n/ /g" | tr '\r' ' '); do
             REPLACEMENT+="    $d: 10000\r"
         done
     fi
