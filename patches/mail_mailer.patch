@@ -1,5 +1,5 @@
 diff --git a/mail/mailer.go b/mail/mailer.go
-index 4249108e..ee8b6fb4 100644
+index b20de949..91979e9c 100644
 --- a/mail/mailer.go
 +++ b/mail/mailer.go
 @@ -21,10 +21,14 @@ import (
@@ -17,7 +17,7 @@ index 4249108e..ee8b6fb4 100644
  )
  
  type idGenerator interface {
-@@ -139,6 +143,7 @@ func New(
+@@ -122,6 +126,7 @@ func New(
  	username,
  	password string,
  	rootCAs *x509.CertPool,
@@ -25,24 +25,34 @@ index 4249108e..ee8b6fb4 100644
  	from mail.Address,
  	logger blog.Logger,
  	stats prometheus.Registerer,
-@@ -159,6 +164,7 @@ func New(
- 				server:   server,
- 				port:     port,
- 				rootCAs:  rootCAs,
-+				dnsClient: resolver,
- 			},
- 			log:              logger,
- 			from:             from,
-@@ -202,7 +208,7 @@ func (c config) generateMessage(to []string, subject, body string) ([]byte, erro
+@@ -136,11 +141,12 @@ func New(
+ 
+ 	return &MailerImpl{
+ 		dialer: &dialerImpl{
+-			username: username,
+-			password: password,
+-			server:   server,
+-			port:     port,
+-			rootCAs:  rootCAs,
++			username:  username,
++			password:  password,
++			server:    server,
++			port:      port,
++			rootCAs:   rootCAs,
++			dnsClient: resolver,
+ 		},
+ 		log:              logger,
+ 		from:             from,
+@@ -181,7 +187,7 @@ func (m *MailerImpl) generateMessage(to []string, subject, body string) ([]byte,
  		fmt.Sprintf("To: %s", strings.Join(addrs, ", ")),
- 		fmt.Sprintf("From: %s", c.from.String()),
+ 		fmt.Sprintf("From: %s", m.from.String()),
  		fmt.Sprintf("Subject: %s", subject),
 -		fmt.Sprintf("Date: %s", now.Format(time.RFC822)),
 +		fmt.Sprintf("Date: %s", now.Format(time.RFC1123Z)),
- 		fmt.Sprintf("Message-Id: <%s.%s.%s>", now.Format("20060102T150405"), mid.String(), c.from.Address),
+ 		fmt.Sprintf("Message-Id: <%s.%s.%s>", now.Format("20060102T150405"), mid.String(), m.from.Address),
  		"MIME-Version: 1.0",
  		"Content-Type: text/plain; charset=UTF-8",
-@@ -259,23 +265,32 @@ func (m *mailerImpl) Connect() (Conn, error) {
+@@ -238,23 +244,32 @@ func (m *MailerImpl) Connect() error {
  type dialerImpl struct {
  	username, password, server, port string
  	rootCAs                          *x509.CertPool

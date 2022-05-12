@@ -1,0 +1,13 @@
+diff --git a/Makefile b/Makefile
+index 6427367f..54055e74 100644
+--- a/Makefile
++++ b/Makefile
+@@ -37,7 +37,7 @@ $(CMD_BINS): build_cmds
+ 
+ build_cmds: | $(OBJDIR)
+ 	echo $(OBJECTS)
+-	GOBIN=$(OBJDIR) GO111MODULE=on go install -mod=vendor $(GO_BUILD_FLAGS) ./...
++	GOBIN=$(OBJDIR) GO111MODULE=on go install -mod=vendor -buildvcs=false $(GO_BUILD_FLAGS) ./...
+ 	./link.sh
+ 
+ # Building an RPM requires `fpm` from https://github.com/jordansissel/fpm

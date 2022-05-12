@@ -24,7 +24,7 @@ dockerComposeVersion="v2.5.0"
 
 labcaUrl="https://github.com/hakwerk/labca/"
 boulderUrl="https://github.com/letsencrypt/boulder/"
-boulderTag="release-2022-05-02"
+boulderTag="release-2022-05-09"
 
 # Feature flags
 flag_skip_redis=true
@@ -571,6 +571,7 @@ config_boulder() {
     cp errors/errors.go "$boulderLabCADir/.backup/"
     cp log/log.go "$boulderLabCADir/.backup/"
     cp sa/_db/migrations/20210223140000_CombinedSchema.sql "$boulderLabCADir/.backup/"
+    cp Makefile "$boulderLabCADir/.backup/"
 
     sudo -u labca -H patch -p1 -o "$boulderLabCADir/entrypoint.sh" < $cloneDir/patches/entrypoint.patch &>>$installLog
     cp test/startservers.py "$boulderLabCADir/startservers.py" &>>$installLog

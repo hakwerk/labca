@@ -39,3 +39,5 @@ cp $cloneDir/mail-tester.go cmd/mail-tester/main.go
 perl -i -p0e "s/(\n\t\"github.com\/letsencrypt\/boulder\/cmd\")/\t_ \"github.com\/letsencrypt\/boulder\/cmd\/mail-tester\"\n\1/igs"  cmd/boulder/main.go
 
 $SUDO patch -p1 < $cloneDir/patches/db_migrations.patch
+
+$SUDO patch -p1 < $cloneDir/patches/makefile.patch
