@@ -45,10 +45,8 @@ func (ci *CertificateInfo) Initialize() {
 	ci.KeyTypes["rsa4096"] = "RSA-4096"
 	ci.KeyTypes["rsa3072"] = "RSA-3072"
 	ci.KeyTypes["rsa2048"] = "RSA-2048"
-	if ci.IsRoot {
-		ci.KeyTypes["ecdsa384"] = "ECDSA-384"
-		ci.KeyTypes["ecdsa256"] = "ECDSA-256"
-	}
+	ci.KeyTypes["ecdsa384"] = "ECDSA-384"
+	ci.KeyTypes["ecdsa256"] = "ECDSA-256"
 
 	ci.KeyType = "rsa4096"
 }
