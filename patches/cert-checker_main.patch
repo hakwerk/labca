@@ -1,8 +1,8 @@
 diff --git a/cmd/cert-checker/main.go b/cmd/cert-checker/main.go
-index 725c5d08..f2f730cc 100644
+index b1fccdbd..8b64cfa2 100644
 --- a/cmd/cert-checker/main.go
 +++ b/cmd/cert-checker/main.go
-@@ -95,9 +95,10 @@ type certChecker struct {
+@@ -97,9 +97,10 @@ type certChecker struct {
  	issuedReport                report
  	checkPeriod                 time.Duration
  	acceptableValidityDurations map[time.Duration]bool
@@ -14,7 +14,7 @@ index 725c5d08..f2f730cc 100644
  	return certChecker{
  		pa:                          pa,
  		kp:                          kp,
-@@ -108,6 +109,7 @@ func newChecker(saDbMap certDB, clk clock.Clock, pa core.PolicyAuthority, kp goo
+@@ -110,6 +111,7 @@ func newChecker(saDbMap certDB, clk clock.Clock, pa core.PolicyAuthority, kp goo
  		issuedReport:                report{Entries: make(map[string]reportEntry)},
  		checkPeriod:                 period,
  		acceptableValidityDurations: avd,
@@ -22,7 +22,7 @@ index 725c5d08..f2f730cc 100644
  	}
  }
  
-@@ -283,7 +285,7 @@ func (c *certChecker) checkCert(cert core.Certificate, ignoredLints map[string]b
+@@ -285,7 +287,7 @@ func (c *certChecker) checkCert(cert core.Certificate, ignoredLints map[string]b
  			err = c.pa.WillingToIssueWildcards([]identifier.ACMEIdentifier{id})
  			if err != nil {
  				problems = append(problems, fmt.Sprintf("Policy Authority isn't willing to issue for '%s': %s", name, err))
@@ -31,7 +31,7 @@ index 725c5d08..f2f730cc 100644
  				// For defense-in-depth, even if the PA was willing to issue for a name
  				// we double check it against a list of forbidden domains. This way even
  				// if the hostnamePolicyFile malfunctions we will flag the forbidden
-@@ -334,11 +336,12 @@ type Config struct {
+@@ -336,11 +338,12 @@ type Config struct {
  		DB cmd.DBConfig
  		cmd.HostnamePolicyConfig
  
@@ -49,7 +49,7 @@ index 725c5d08..f2f730cc 100644
  
  		// AcceptableValidityDurations is a list of durations which are
  		// acceptable for certificates we issue.
-@@ -398,6 +401,8 @@ func main() {
+@@ -406,6 +409,8 @@ func main() {
  		acceptableValidityDurations[ninetyDays] = true
  	}
  
@@ -58,7 +58,7 @@ index 725c5d08..f2f730cc 100644
  	// Validate PA config and set defaults if needed.
  	cmd.FailOnError(config.PA.CheckChallenges(), "Invalid PA configuration")
  
-@@ -432,6 +437,7 @@ func main() {
+@@ -445,6 +450,7 @@ func main() {
  		kp,
  		config.CertChecker.CheckPeriod.Duration,
  		acceptableValidityDurations,

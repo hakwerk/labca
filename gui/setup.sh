@@ -8,7 +8,7 @@ set -e
 if [ ! -e bin/labca ]; then
     go mod download
 
-    go build -o bin/labca
+    go build -buildvcs=false -o bin/labca
 fi
 
 [ -e /bin/ip ] || (apt update && apt install -y iproute2)

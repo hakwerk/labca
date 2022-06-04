@@ -1,8 +1,8 @@
 diff --git a/cmd/expiration-mailer/main.go b/cmd/expiration-mailer/main.go
-index 0ea463a8..1c7c6931 100644
+index df8adaf4..000b1c03 100644
 --- a/cmd/expiration-mailer/main.go
 +++ b/cmd/expiration-mailer/main.go
-@@ -22,6 +22,7 @@ import (
+@@ -23,6 +23,7 @@ import (
  	"github.com/jmhodges/clock"
  	"google.golang.org/grpc"
  
@@ -11,15 +11,15 @@ index 0ea463a8..1c7c6931 100644
  	"github.com/letsencrypt/boulder/core"
  	corepb "github.com/letsencrypt/boulder/core/proto"
 @@ -38,7 +39,7 @@ import (
+ )
  
  const (
- 	defaultNagCheckInterval  = 24 * time.Hour
 -	defaultExpirationSubject = "Let's Encrypt certificate expiration notice for domain {{.ExpirationSubject}}"
 +	defaultExpirationSubject = "LabCA certificate expiration notice for domain {{.ExpirationSubject}}"
  )
  
  type regStore interface {
-@@ -415,6 +416,9 @@ type Config struct {
+@@ -495,6 +496,9 @@ type Config struct {
  		TLS       cmd.TLSConfig
  		SAService *cmd.GRPCClientConfig
  
@@ -29,7 +29,7 @@ index 0ea463a8..1c7c6931 100644
  		// Path to a file containing a list of trusted root certificates for use
  		// during the SMTP connection (as opposed to the gRPC connections).
  		SMTPTrustedRootFile string
-@@ -424,6 +428,12 @@ type Config struct {
+@@ -504,6 +508,12 @@ type Config struct {
  
  	Syslog  cmd.SyslogConfig
  	Beeline cmd.BeelineConfig
@@ -42,7 +42,7 @@ index 0ea463a8..1c7c6931 100644
  }
  
  func initStats(stats prometheus.Registerer) mailerStats {
-@@ -542,6 +552,32 @@ func main() {
+@@ -631,6 +641,32 @@ func main() {
  	cmd.FailOnError(err, "Failed to load credentials and create gRPC connection to SA")
  	sac := sapb.NewStorageAuthorityClient(conn)
  
@@ -75,7 +75,7 @@ index 0ea463a8..1c7c6931 100644
  	var smtpRoots *x509.CertPool
  	if c.Mailer.SMTPTrustedRootFile != "" {
  		pem, err := ioutil.ReadFile(c.Mailer.SMTPTrustedRootFile)
-@@ -577,6 +613,7 @@ func main() {
+@@ -666,6 +702,7 @@ func main() {
  		c.Mailer.Username,
  		smtpPassword,
  		smtpRoots,

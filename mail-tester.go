@@ -136,13 +136,14 @@ func main() {
 		1*time.Second,
 		5*60*time.Second)
 
-	mailClient.Connect()
-	defer mailClient.Close()
+	conn, err := mailClient.Connect()
+	cmd.FailOnError(err, "mail-tester failed to connect")
+	defer conn.Close()
 
 	recipients := []string{}
 	recipients = append(recipients, recipient)
 
-	err = mailClient.SendMail(recipients, "Test Email from LabCA", "Test sending email from the LabCA server")
+	err = conn.SendMail(recipients, "Test Email from LabCA", "Test sending email from the LabCA server")
 	cmd.FailOnError(err, "mail-tester has failed")
 }
 
