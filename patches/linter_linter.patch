@@ -1,0 +1,21 @@
+diff --git a/linter/linter.go b/linter/linter.go
+index 59066e3f8..8cf143227 100644
+--- a/linter/linter.go
++++ b/linter/linter.go
+@@ -136,7 +136,15 @@ func makeIssuer(realIssuer *x509.Certificate, lintSigner crypto.Signer) (*x509.C
+ 	}
+ 	lintIssuerBytes, err := x509.CreateCertificate(rand.Reader, lintIssuerTBS, lintIssuerTBS, lintSigner.Public(), lintSigner)
+ 	if err != nil {
+-		return nil, fmt.Errorf("failed to create lint issuer: %w", err)
++		if strings.Contains(fmt.Sprint(err), "requested SignatureAlgorithm does not match private key type") {
++			lintIssuerTBS.SignatureAlgorithm = 0
++			lintIssuerBytes, err = x509.CreateCertificate(rand.Reader, lintIssuerTBS, lintIssuerTBS, lintSigner.Public(), lintSigner)
++			if err != nil {
++				return nil, fmt.Errorf("failed to create lint issuer (without SignatureAlgorithm): %w", err)
++			}
++		} else {
++			return nil, fmt.Errorf("failed to create lint issuer: %w", err)
++		}
+ 	}
+ 	lintIssuer, err := x509.ParseCertificate(lintIssuerBytes)
+ 	if err != nil {
