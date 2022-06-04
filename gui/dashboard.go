@@ -100,6 +100,14 @@ func _parseLine(line string, loc *time.Location) Activity {
 	if idx > -1 {
 		message = message[0:idx]
 	}
+	idx = strings.Index(message, " precert=[")
+	if idx > -1 {
+		message = message[0:idx]
+	}
+	idx = strings.Index(message, " precertificate=[")
+	if idx > -1 {
+		message = message[0:idx]
+	}
 	if strings.Index(message, "Certificate request - ") > -1 {
 		idx = strings.Index(message, " JSON={")
 		if idx > -1 {

@@ -107,7 +107,7 @@
                 <div class="panel-body">
                     <div class="list-group mb0">
                     {{ range $item := .Activity }}
-                        <div class="list-group-item{{ if $item.Class }} {{ $item.Class }}{{ end }}" title="{{ $item.Title }}">
+                        <div class="list-group-item{{ if $item.Class }} {{ $item.Class }}{{ end }} hide-overflow" title="{{ $item.Title }}">
                             {{ $item.Message }}
                             <span class="pull-right text-muted small" title="{{ $item.Timestamp }}"><em>{{ $item.TimestampRel }}</em></span>
                         </div>
