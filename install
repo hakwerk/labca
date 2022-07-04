@@ -184,10 +184,20 @@ clone_or_pull() {
     local parentdir=$(dirname "$dir")
     local dirbase=$(basename "$dir")
 
+    local found=0
+    for sd in $(git config --global --get-all safe.directory); do
+        if [ "$sd" == "$dir" ]; then
+            found=1
+        fi
+    done
+    if [ $found -eq 0 ]; then
+        git config --global --add safe.directory $dir
+    fi
+
     if [ -d "$dir" ]; then
         local rc=0
         cd "$dir"
-        git status --short &> /dev/null || rc=$?
+        sudo -u labca -H git status --short &> /dev/null || rc=$?
         if [ $rc -gt 0 ]; then
             cd "$parentdir"
             mv "$dirbase" "${dirbase}_${runId}" && msg_ok "Backup existing non-git directory '$dir'"
@@ -208,14 +218,14 @@ checkout_release() {
         if [ "$curChecksum" == "" ]; then
             curChecksum=$(md5sum $cloneDir/install 2>/dev/null | cut -d' ' -f1)
         fi
-        TAG=$(git describe --tags $(git rev-list --tags --max-count=1))
+        TAG=$(sudo -u labca -H git describe --tags $(sudo -u labca -H git rev-list --tags --max-count=1))
         sudo -u labca -H git reset --hard $TAG &>>$installLog
     fi
 }
 
 # Restart the script if it was updated itself
 restart_if_updated() {
-    local gitRev=$(cd $cloneDir && git describe --always --tags)
+    local gitRev=$(cd $cloneDir && sudo -u labca -H git describe --always --tags)
     echo "=== version $gitRev ($curChecksum) ===" >>$installLog
 
     if [ "$curChecksum" != "" ]; then
@@ -360,7 +370,7 @@ copy_admin() {
     replace_all /home/labca/acme_tiny.py LABCA_FQDN
 
     cd "$cloneDir"
-    version=$(git describe --always --tags HEAD 2>/dev/null)
+    version=$(sudo -u labca -H git describe --always --tags HEAD 2>/dev/null)
     cd "$adminDir"
     grep \"version\" data/config.json &>/dev/null || sed -i -e 's/^}$/,\n  "version": ""\n}/' data/config.json
     sed -i -e "s/\"version\": \".*\"/\"version\": \"$version\"/" data/config.json
@@ -505,8 +515,8 @@ get_boulder() {
 
     if [ -e "$boulderDir" ]; then
         cd "$boulderDir"
-        git checkout -- docker-compose.yml errors/errors.go policy/pa.go
-        git reset --hard &>>$installLog
+        sudo -u labca -H git checkout -- docker-compose.yml errors/errors.go policy/pa.go
+        sudo -u labca -H git reset --hard &>>$installLog
     fi
 
     clone_or_pull "$GOPATH/src/github.com/letsencrypt/boulder" "$boulderUrl"
