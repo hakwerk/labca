@@ -1,5 +1,5 @@
 diff --git a/cmd/expiration-mailer/main.go b/cmd/expiration-mailer/main.go
-index df8adaf4..000b1c03 100644
+index 32155fd73..62f5a7359 100644
 --- a/cmd/expiration-mailer/main.go
 +++ b/cmd/expiration-mailer/main.go
 @@ -23,6 +23,7 @@ import (
@@ -19,7 +19,7 @@ index df8adaf4..000b1c03 100644
  )
  
  type regStore interface {
-@@ -495,6 +496,9 @@ type Config struct {
+@@ -497,6 +498,9 @@ type Config struct {
  		TLS       cmd.TLSConfig
  		SAService *cmd.GRPCClientConfig
  
@@ -29,7 +29,7 @@ index df8adaf4..000b1c03 100644
  		// Path to a file containing a list of trusted root certificates for use
  		// during the SMTP connection (as opposed to the gRPC connections).
  		SMTPTrustedRootFile string
-@@ -504,6 +508,12 @@ type Config struct {
+@@ -506,6 +510,12 @@ type Config struct {
  
  	Syslog  cmd.SyslogConfig
  	Beeline cmd.BeelineConfig
@@ -42,7 +42,7 @@ index df8adaf4..000b1c03 100644
  }
  
  func initStats(stats prometheus.Registerer) mailerStats {
-@@ -631,6 +641,32 @@ func main() {
+@@ -633,6 +643,32 @@ func main() {
  	cmd.FailOnError(err, "Failed to load credentials and create gRPC connection to SA")
  	sac := sapb.NewStorageAuthorityClient(conn)
  
@@ -75,7 +75,7 @@ index df8adaf4..000b1c03 100644
  	var smtpRoots *x509.CertPool
  	if c.Mailer.SMTPTrustedRootFile != "" {
  		pem, err := ioutil.ReadFile(c.Mailer.SMTPTrustedRootFile)
-@@ -666,6 +702,7 @@ func main() {
+@@ -668,6 +704,7 @@ func main() {
  		c.Mailer.Username,
  		smtpPassword,
  		smtpRoots,

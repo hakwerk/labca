@@ -4,7 +4,7 @@ index 4519fe4d..f52a408c 100644
 +++ b/test/config/expiration-mailer.json
 @@ -14,6 +14,11 @@
      "nagCheckInterval": "24h",
-     "emailTemplate": "test/example-expiration-template",
+     "emailTemplate": "test/config/expiration-mailer.gotmpl",
      "debugAddr": ":8008",
 +    "dnsTries": 3,
 +    "dnsResolvers": [
