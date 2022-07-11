@@ -670,7 +670,7 @@ config_boulder() {
         sed -i -e "s|test/|labca/|g" $file
     done
 
-    sed -i -e "s/names/name\(s\)/" example-expiration-template
+    sed -i -e "s/names/name\(s\)/" config/expiration-mailer.gotmpl
 
     rm test-ca2.pem
     ([ -e mock-vendor.go ] && rm mock-vendor.go) || /bin/true
