@@ -54,6 +54,7 @@ var (
 	sessionStore    *sessions.CookieStore
 	tmpls           *templates.Templates
 	version         string
+	webTitle        string
 	dbConn          string
 	dbType          string
 	isDev           bool
@@ -152,6 +153,7 @@ func (reg *User) Validate(isNew bool, isChange bool) bool {
 type SetupConfig struct {
 	Fqdn             string
 	Organization     string
+	WebTitle         string
 	DNS              string
 	DomainMode       string
 	LockdownDomains  string
@@ -505,6 +507,7 @@ func _configUpdateHandler(w http.ResponseWriter, r *http.Request) {
 	cfg := &SetupConfig{
 		Fqdn:             r.Form.Get("fqdn"),
 		Organization:     r.Form.Get("organization"),
+		WebTitle:         r.Form.Get("webtitle"),
 		DNS:              r.Form.Get("dns"),
 		DomainMode:       r.Form.Get("domain_mode"),
 		LockdownDomains:  r.Form.Get("lockdown_domains"),
@@ -530,6 +533,11 @@ func _configUpdateHandler(w http.ResponseWriter, r *http.Request) {
 		if cfg.Organization != viper.GetString("labca.organization") {
 			delta = true
 			viper.Set("labca.organization", cfg.Organization)
+		}
+
+		if cfg.WebTitle != viper.GetString("labca.web_title") {
+			delta = true
+			viper.Set("labca.web_title", cfg.WebTitle)
 		}
 
 		matched, err := regexp.MatchString(":\\d+$", cfg.DNS)
@@ -569,6 +577,11 @@ func _configUpdateHandler(w http.ResponseWriter, r *http.Request) {
 
 		if delta {
 			viper.WriteConfig()
+
+			webTitle = viper.GetString("labca.web_title")
+			if webTitle == "" {
+				webTitle = "LabCA"
+			}
 
 			err := _applyConfig()
 			if err != nil {
@@ -1113,6 +1126,11 @@ func _manageGet(w http.ResponseWriter, r *http.Request) {
 
 	manageData["Fqdn"] = viper.GetString("labca.fqdn")
 	manageData["Organization"] = viper.GetString("labca.organization")
+	if viper.Get("labca.web_title") == nil || viper.GetString("labca.web_title") == "" {
+		manageData["WebTitle"] = "LabCA"
+	} else {
+		manageData["WebTitle"] = viper.GetString("labca.web_title")
+	}
 	manageData["DNS"] = viper.GetString("labca.dns")
 	domainMode := viper.GetString("labca.domain_mode")
 	manageData["DomainMode"] = domainMode
@@ -1142,6 +1160,8 @@ func _manageGet(w http.ResponseWriter, r *http.Request) {
 
 	manageData["Name"] = viper.GetString("user.name")
 	manageData["Email"] = viper.GetString("user.email")
+
+	manageData["Title"] = "Manage"
 
 	render(w, r, "manage", manageData)
 }
@@ -1205,6 +1225,7 @@ func logsHandler(w http.ResponseWriter, r *http.Request) {
 		"Message": message,
 		"Data":    data,
 		"WsUrl":   wsurl,
+		"Title":   "Logs",
 	})
 }
 
@@ -1525,6 +1546,11 @@ func _applyConfig() error {
 	os.Setenv("PKI_ROOT_CERT_BASE", "data/root-ca")
 	os.Setenv("PKI_INT_CERT_BASE", "data/issuer/ca-int")
 	os.Setenv("PKI_DEFAULT_O", viper.GetString("labca.organization"))
+	if viper.GetString("labca.web_title") == "" {
+		os.Setenv("PKI_WEB_TITLE", "LabCA")
+	} else {
+		os.Setenv("PKI_WEB_TITLE", viper.GetString("labca.web_title"))
+	}
 	os.Setenv("PKI_DNS", viper.GetString("labca.dns"))
 	domain := viper.GetString("labca.fqdn")
 	os.Setenv("PKI_FQDN", domain)
@@ -2053,7 +2079,7 @@ func accountsHandler(w http.ResponseWriter, r *http.Request) {
 
 	Accounts, err := GetAccounts(w, r)
 	if err == nil {
-		render(w, r, "list:accounts", map[string]interface{}{"List": Accounts})
+        render(w, r, "list:accounts", map[string]interface{}{"List": Accounts, "Title": "ACME"})
 	}
 }
 
@@ -2072,7 +2098,7 @@ func accountHandler(w http.ResponseWriter, r *http.Request) {
 
 	AccountDetails, err := GetAccount(w, r, id)
 	if err == nil {
-		render(w, r, "show:accounts", map[string]interface{}{"Details": AccountDetails})
+		render(w, r, "show:accounts", map[string]interface{}{"Details": AccountDetails, "Title": "ACME"})
 	}
 }
 
@@ -2084,7 +2110,7 @@ func ordersHandler(w http.ResponseWriter, r *http.Request) {
 
 	Orders, err := GetOrders(w, r)
 	if err == nil {
-		render(w, r, "list:orders", map[string]interface{}{"List": Orders})
+		render(w, r, "list:orders", map[string]interface{}{"List": Orders, "Title": "ACME"})
 	}
 }
 
@@ -2103,7 +2129,7 @@ func orderHandler(w http.ResponseWriter, r *http.Request) {
 
 	OrderDetails, err := GetOrder(w, r, id)
 	if err == nil {
-		render(w, r, "show:orders", map[string]interface{}{"Details": OrderDetails})
+		render(w, r, "show:orders", map[string]interface{}{"Details": OrderDetails, "Title": "ACME"})
 	}
 }
 
@@ -2115,7 +2141,7 @@ func authzHandler(w http.ResponseWriter, r *http.Request) {
 
 	Authz, err := GetAuthz(w, r)
 	if err == nil {
-		render(w, r, "list:authz", map[string]interface{}{"List": Authz})
+		render(w, r, "list:authz", map[string]interface{}{"List": Authz, "Title": "ACME"})
 	}
 }
 
@@ -2130,7 +2156,7 @@ func authHandler(w http.ResponseWriter, r *http.Request) {
 
 	AuthDetails, err := GetAuth(w, r, id)
 	if err == nil {
-		render(w, r, "show:authz", map[string]interface{}{"Details": AuthDetails})
+		render(w, r, "show:authz", map[string]interface{}{"Details": AuthDetails, "Title": "ACME"})
 	}
 }
 
@@ -2142,7 +2168,7 @@ func challengesHandler(w http.ResponseWriter, r *http.Request) {
 
 	Challenges, err := GetChallenges(w, r)
 	if err == nil {
-		render(w, r, "list:challenges", map[string]interface{}{"List": Challenges})
+		render(w, r, "list:challenges", map[string]interface{}{"List": Challenges, "Title": "ACME"})
 	}
 }
 
@@ -2161,7 +2187,7 @@ func challengeHandler(w http.ResponseWriter, r *http.Request) {
 
 	ChallengeDetails, err := GetChallenge(w, r, id)
 	if err == nil {
-		render(w, r, "show:challenges", map[string]interface{}{"Details": ChallengeDetails})
+		render(w, r, "show:challenges", map[string]interface{}{"Details": ChallengeDetails, "Title": "ACME"})
 	}
 }
 
@@ -2173,7 +2199,7 @@ func certificatesHandler(w http.ResponseWriter, r *http.Request) {
 
 	Certificates, err := GetCertificates(w, r)
 	if err == nil {
-		render(w, r, "list:certificates", map[string]interface{}{"List": Certificates})
+		render(w, r, "list:certificates", map[string]interface{}{"List": Certificates, "Title": "ACME"})
 	}
 }
 
@@ -2192,7 +2218,7 @@ func certificateHandler(w http.ResponseWriter, r *http.Request) {
 
 	CertificateDetails, err := GetCertificate(w, r, id, serial)
 	if err == nil {
-		render(w, r, "show:certificates", map[string]interface{}{"Details": CertificateDetails})
+		render(w, r, "show:certificates", map[string]interface{}{"Details": CertificateDetails, "Title": "ACME"})
 	}
 }
 
@@ -2425,6 +2451,10 @@ func render(w http.ResponseWriter, r *http.Request, view string, data map[string
 		data["Version"] = version
 	}
 
+	if webTitle != "" {
+		data["WebTitle"] = webTitle
+	}
+
 	b, err := tmpls.Render("base.tmpl", "views/"+viewSlice[0]+".tmpl", data)
 	if err != nil {
 		errorHandler(w, r, err, http.StatusInternalServerError)
@@ -2519,6 +2549,11 @@ func init() {
 	dbType = viper.GetString("db.type")
 
 	version = viper.GetString("version")
+
+	webTitle = viper.GetString("labca.web_title")
+	if webTitle == "" {
+		webTitle = "LabCA"
+	}
 
 	updateAvailable = false
 }

@@ -1,5 +1,5 @@
 {{ define "body" }}
-    <h3>Manage LabCA</h3>
+    <h3>Manage</h3>
     <p>Here you can manage your LabCA instance. Be careful!</p>
 
 <ul class="nav nav-tabs nav-tabs-sticky">
@@ -140,9 +140,14 @@
         <span class="error config-error hidden" id="fqdn-error"></span>
       </div>
       <div class="form-group">
-        <label for="fqdn">Organization name:</label>
+        <label for="organization">Organization name:</label>
         <input class="form-control non-fluid" type="text" id="organization" name="organization" value="{{ .Organization }}" required>
         <span class="error config-error hidden" id="organization-error"></span>
+      </div>
+      <div class="form-group">
+        <label for="webtitle">Title on web pages (e.g. 'Internal ACME CA'):</label>
+        <input class="form-control non-fluid" type="text" id="webtitle" name="webtitle" value="{{ .WebTitle }}">
+        <span class="error config-error hidden" id="webtitle-error"></span>
       </div>
       <div class="form-group">
         <label for="dns">Internal DNS server to use:</label>
@@ -504,6 +509,7 @@
                             action: $(evt.target).attr("id"),
                             fqdn: $("#fqdn").val(),
                             organization: $("#organization").val(),
+                            webtitle: $("#webtitle").val(),
                             dns: $("#dns").val(),
                             domain_mode: ($("#standard").prop('checked') ? 'standard' : ($("#whitelist").prop('checked') ? 'whitelist' : 'lockdown')),
                             lockdown_domains: $("#lockdown_domains").val(),

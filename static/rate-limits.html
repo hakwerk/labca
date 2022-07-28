@@ -8,7 +8,7 @@
   <meta name="keywords" content="LabCA PKI CA Certificate Authority ACME Boulder">
   <meta name="author" content="Arjan Hakkesteegt">
 
-  <title>LabCA</title>
+  <title>Rate Limits | LabCA</title>
 
   <link href="css/bootstrap.min.css" rel="stylesheet">
   <link href="css/sb-admin-2.min.css" rel="stylesheet">
@@ -27,7 +27,7 @@
           <span class="icon-bar"></span>
           <span class="icon-bar"></span>
         </button>
-        <a class="navbar-brand" href="/">LabCA</a>
+        <a class="navbar-brand" href="/"><!-- BEGIN WEBTITLE -->LabCA<!-- END WEBTITLE --></a>
       </div>
 
       <ul class="nav navbar-top-links navbar-right">
@@ -59,10 +59,10 @@
           <h1 class="page-header">Rate Limits</h1>
 
           <p>
-            It is unlikely that you hit the rate limit mechanism for your selected domain, as it is set to allow 10,000 certificates in LabCA.
+            It is unlikely that you hit the rate limit mechanism for your selected domain, as it is set to allow 10,000 certificates in <!-- BEGIN WEBTITLE -->LabCA<!-- END WEBTITLE -->.
           </p>
           <p>
-            If your LabCA instance is set up to (also) allow official domains (not recommended), then for the other domains the main limit is
+            If <!-- BEGIN WEBTITLE_X2 -->this LabCA instance<!-- END WEBTITLE_X2 --> is set up to (also) allow official domains (not recommended), then for the other domains the main limit is
             <b>Certificates per Registered Domain</b>: 5 per 24 hours. As per the
             <a class="public" href="https://letsencrypt.org/docs/rate-limits/">Let's Encrypt&trade; rate limits page <i class="fa fa-external-link fa-fw ext-link"></i></a>,
             a registered domain is, generally speaking, the part of the domain you purchased from your domain name registrar. For instance,

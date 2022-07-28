@@ -27,7 +27,7 @@
           <span class="icon-bar"></span>
           <span class="icon-bar"></span>
         </button>
-        <a class="navbar-brand" href="/">LabCA</a>
+        <a class="navbar-brand" href="/"><!-- BEGIN WEBTITLE -->LabCA<!-- END WEBTITLE --></a>
       </div>
 
       <ul class="nav navbar-top-links navbar-right">
@@ -59,7 +59,7 @@
           <p>
             This Certification Practice Statement ("CPS") document outlines the certification services practices for this
             particular instance running the LabCA software. PKI (Public Key Infrastructure) services include, but are not limited to, issuing, managing,
-            validating, revoking, and renewing Certificates. The services are provided for [PKI_COMPANY_NAME] internal use only.
+            validating, revoking, and renewing Certificates. The services are provided for <!-- BEGIN PKI_COMPANY_NAME -->PKI_COMPANY_NAME<!-- END PKI_COMPANY_NAME --> internal use only.
           </p>
           <p>The following Certification Authorities are covered under this CPS:</p>
           <table class="table table-striped table-bordered">
@@ -71,9 +71,9 @@
             </tr></thead>
             <tbody><tr>
               <td>Root CA</td>
-              <td>[PKI_ROOT_DN]</td>
-              <td>[PKI_ROOT_FINGERPRINT]</td>
-              <td>[PKI_ROOT_VALIDITY]</td>
+              <td><!-- BEGIN PKI_ROOT_DN -->PKI_ROOT_DN<!-- END PKI_ROOT_DN --></td>
+              <td><!-- BEGIN PKI_ROOT_FINGERPRINT -->PKI_ROOT_FINGERPRINT<!-- END PKI_ROOT_FINGERPRINT --></td>
+              <td><!-- BEGIN PKI_ROOT_VALIDITY -->PKI_ROOT_VALIDITY<!-- END PKI_ROOT_VALIDITY --></td>
             </tr></tbody>
           </table>
           <p>
@@ -91,29 +91,29 @@
           </p>
 
           <p class="caption"><strong>2. Publication and Repository</strong></p>
-          <p>This CPS is published at <a class="public" href="[LABCA_CPS_LOCATION]">[LABCA_CPS_LOCATION]</a></p>
+          <p>This CPS is published at <!-- BEGIN LABCA_CPS_LOCATION --><a class="public" href="[LABCA_CPS_LOCATION]">[LABCA_CPS_LOCATION]</a><!-- END LABCA_CPS_LOCATION --></p>
           <p>
             Records of root and intermediate certificates, including those that have been revoked, are available at
-            <a class="public" href="[LABCA_CERTS_LOCATION]">[LABCA_CERTS_LOCATION]</a>
+            <!-- BEGIN LABCA_CERTS_LOCATION --><a class="public" href="[LABCA_CERTS_LOCATION]">[LABCA_CERTS_LOCATION]</a><!-- END LABCA_CERTS_LOCATION -->
           </p>
           <p>
-            LabCA certificates contain URLs to locations where certificate-related information is published, including
+            <!-- BEGIN WEBTITLE -->LabCA<!-- END WEBTITLE --> certificates contain URLs to locations where certificate-related information is published, including
             revocation information via OCSP and/or CRLs.
           </p>
 
           <p class="caption"><strong>3. Identification and Authentication</strong></p>
           <p>
-            LabCA certificates include a "Subject" field which identifies the subject entity (i.e. organization or domain). The
+            <!-- BEGIN WEBTITLE -->LabCA<!-- END WEBTITLE --> certificates include a "Subject" field which identifies the subject entity (i.e. organization or domain). The
             subject entity is identified using a distinguished name.
           </p>
           <p>
-            LabCA certificates include an "Issuer" field which identifies the issuing entity. The issuing entity is identified
+            <!-- BEGIN WEBTITLE -->LabCA<!-- END WEBTITLE --> certificates include an "Issuer" field which identifies the issuing entity. The issuing entity is identified
             using a distinguished name.
           </p>
 
           <p class="caption"><strong>4. Certificate Life-Cycle Operational Requirements</strong></p>
           <p>
-            Anyone associated with [PKI_COMPANY_NAME] may submit an application for a certificate via the ACME protocol. Issuance
+            Anyone associated with <!-- BEGIN PKI_COMPANY_NAME -->PKI_COMPANY_NAME<!-- END PKI_COMPANY_NAME --> may submit an application for a certificate via the ACME protocol. Issuance
             will depend on proper validation and compliance with this PKI's policies. End-entity certificates are made available
             to Subscribers via the ACME protocol as soon after issuance as reasonably possible.
           </p>
@@ -134,17 +134,17 @@
           <p>Certificate revocation permanently ends the certificate's operational period prior to its stated validity period.</p>
 
           <p class="caption"><strong>5. Facilities, Management, and Operational Controls</strong></p>
-          <p>Operating this PKI is under full responsibility of [PKI_COMPANY_NAME].</p>
+          <p>Operating this PKI is under full responsibility of <!-- BEGIN PKI_COMPANY_NAME -->PKI_COMPANY_NAME<!-- END PKI_COMPANY_NAME -->.</p>
 
           <p class="caption"><strong>6. Technical Security Controls</strong></p>
           <p>
-            LabCA is <strong>not</strong> using a Hardware Security Module (HSM) for storing CA private keys. LabCA is intended
-            to be used in a lab or intranet environment with sufficient protection against bad actors. It may not be used as
-            publicly accessible PKI instance.
+            <!-- BEGIN WEBTITLE -->LabCA<!-- END WEBTITLE --> is <strong>not</strong> using a Hardware Security Module (HSM) for storing CA private keys.
+            <!-- BEGIN WEBTITLE -->LabCA<!-- END WEBTITLE --> is intended to be used in a lab or intranet environment with sufficient protection against
+            bad actors. It may not be used as publicly accessible PKI instance.
           </p>
 
           <p class="caption"><strong>7. Certificate, CRL, and OCSP Profile</strong></p>
-          <p>Any requirements or policies regarding Certificates, CRLs and OCSP are at full discretion of [PKI_COMPANY_NAME].</p>
+          <p>Any requirements or policies regarding Certificates, CRLs and OCSP are at full discretion of <!-- BEGIN PKI_COMPANY_NAME -->PKI_COMPANY_NAME<!-- END PKI_COMPANY_NAME -->.</p>
 
           <p class="caption"><strong>8. Compliance audit</strong></p>
           <p>Not applicable.</p>

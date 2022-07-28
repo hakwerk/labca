@@ -2,19 +2,53 @@
 
 set -e
 
+sed -i -e "s|<title>.*</title>|<title>$PKI_WEB_TITLE</title>|g" 502.html
+sed -i -e "s|<\!-- BEGIN WEBTITLE -->.*<\!-- END WEBTITLE -->|<\!-- BEGIN WEBTITLE -->$PKI_WEB_TITLE<\!-- END WEBTITLE -->|g" 502.html
+
 PKI_ROOT_DN=$(openssl x509 -noout -in $PKI_ROOT_CERT_BASE.pem -subject | sed -e "s/subject= //")
-sed -i -e "s|\[PKI_ROOT_DN\]|$PKI_ROOT_DN|g" certs/index.html
+sed -i -e "s|<\!-- BEGIN PKI_ROOT_DN -->.*<\!-- END PKI_ROOT_DN -->|<\!-- BEGIN PKI_ROOT_DN -->$PKI_ROOT_DN<\!-- END PKI_ROOT_DN -->|g" certs/index.html
 PKI_ROOT_VALIDITY="$(openssl x509 -noout -in $PKI_ROOT_CERT_BASE.pem -startdate | sed -e "s/.*=/Not Before: /")<br/> $(openssl x509 -noout -in $PKI_ROOT_CERT_BASE.pem -enddate | sed -e "s/.*=/Not After: /")"
-sed -i -e "s|\[PKI_ROOT_VALIDITY\]|$PKI_ROOT_VALIDITY|g" certs/index.html
+sed -i -e "s|<\!-- BEGIN PKI_ROOT_VALIDITY -->.*<\!-- END PKI_ROOT_VALIDITY -->|<\!-- BEGIN PKI_ROOT_VALIDITY -->$PKI_ROOT_VALIDITY<\!-- END PKI_ROOT_VALIDITY -->|g" certs/index.html
 PKI_INT_DN=$(openssl x509 -noout -in $PKI_INT_CERT_BASE.pem -subject | sed -e "s/subject= //")
-sed -i -e "s|\[PKI_INT_DN\]|$PKI_INT_DN|g" certs/index.html
+sed -i -e "s|<\!-- BEGIN PKI_INT_DN -->.*<\!-- END PKI_INT_DN -->|<\!-- BEGIN PKI_INT_DN -->$PKI_INT_DN<\!-- END PKI_INT_DN -->|g" certs/index.html
 PKI_INT_VALIDITY="$(openssl x509 -noout -in $PKI_INT_CERT_BASE.pem -startdate | sed -e "s/.*=/Not Before: /")<br/> $(openssl x509 -noout -in $PKI_INT_CERT_BASE.pem -enddate | sed -e "s/.*=/Not After: /")"
-sed -i -e "s|\[PKI_INT_VALIDITY\]|$PKI_INT_VALIDITY|g" certs/index.html
+sed -i -e "s|<\!-- BEGIN PKI_INT_VALIDITY -->.*<\!-- END PKI_INT_VALIDITY -->|<\!-- BEGIN PKI_INT_VALIDITY -->$PKI_INT_VALIDITY<\!-- END PKI_INT_VALIDITY -->|g" certs/index.html
 
-sed -i -e "s|\[PKI_COMPANY_NAME\]|$PKI_DEFAULT_O|g" cps/index.html
-sed -i -e "s|\[PKI_ROOT_DN\]|$PKI_ROOT_DN|g" cps/index.html
+sed -i -e "s|<title>.*</title>|<title>Certificates \| $PKI_WEB_TITLE</title>|g" certs/index.html
+sed -i -e "s|<\!-- BEGIN WEBTITLE -->.*<\!-- END WEBTITLE -->|<\!-- BEGIN WEBTITLE -->$PKI_WEB_TITLE<\!-- END WEBTITLE -->|g" certs/index.html
+
+sed -i -e "s|<\!-- BEGIN PKI_COMPANY_NAME -->.*<\!-- END PKI_COMPANY_NAME -->|<\!-- BEGIN PKI_COMPANY_NAME -->$PKI_DEFAULT_O<\!-- END PKI_COMPANY_NAME -->|g" cps/index.html
+sed -i -e "s|<\!-- BEGIN PKI_ROOT_DN -->.*<\!-- END PKI_ROOT_DN -->|<\!-- BEGIN PKI_ROOT_DN -->$PKI_ROOT_DN<\!-- END PKI_ROOT_DN -->|g" cps/index.html
 PKI_ROOT_FINGERPRINT="$(openssl x509 -noout -in $PKI_ROOT_CERT_BASE.pem -fingerprint | sed -e "s/.*=//" | sed -e "s/.\{21\}/&\\\n/g")"
-sed -i -e "s|\[PKI_ROOT_FINGERPRINT\]|$PKI_ROOT_FINGERPRINT|g" cps/index.html
-sed -i -e "s|\[PKI_ROOT_VALIDITY\]|$PKI_ROOT_VALIDITY|g" cps/index.html
+sed -i -e "s|<\!-- BEGIN PKI_ROOT_FINGERPRINT -->.*<\!-- END PKI_ROOT_FINGERPRINT -->|<\!-- BEGIN PKI_ROOT_FINGERPRINT -->$PKI_ROOT_FINGERPRINT<\!-- END PKI_ROOT_FINGERPRINT -->|g" cps/index.html
+sed -i -e "s|<\!-- BEGIN PKI_ROOT_VALIDITY -->.*<\!-- END PKI_ROOT_VALIDITY -->|<\!-- BEGIN PKI_ROOT_VALIDITY -->$PKI_ROOT_VALIDITY<\!-- END PKI_ROOT_VALIDITY -->|g" cps/index.html
 
-sed -i -e "s|\[PKI_COMPANY_NAME\]|$PKI_DEFAULT_O|g" terms/v1.html
+sed -i -e "s|<title>.*</title>|<title>CPS \| $PKI_WEB_TITLE</title>|g" cps/index.html
+sed -i -e "s|<\!-- BEGIN WEBTITLE -->.*<\!-- END WEBTITLE -->|<\!-- BEGIN WEBTITLE -->$PKI_WEB_TITLE<\!-- END WEBTITLE -->|g" cps/index.html
+
+sed -i -e "s|<\!-- BEGIN LABCA_CPS_LOCATION -->.*<\!-- END LABCA_CPS_LOCATION -->|<\!-- BEGIN LABCA_CPS_LOCATION --><a class=\"public\" href=\"http://$PKI_FQDN/cps/\">http://$PKI_FQDN/cps/</a><\!-- END LABCA_CPS_LOCATION -->|g" cps/index.html
+sed -i -e "s|<\!-- BEGIN LABCA_CERTS_LOCATION -->.*<\!-- END LABCA_CERTS_LOCATION -->|<\!-- BEGIN LABCA_CERTS_LOCATION --><a class=\"public\" href=\"http://$PKI_FQDN/certs/\">http://$PKI_FQDN/certs/</a><\!-- END LABCA_CERTS_LOCATION -->|g" cps/index.html
+
+sed -i -e "s|<title>.*</title>|<title>$PKI_WEB_TITLE</title>|g" index.html
+sed -i -e "s|<\!-- BEGIN WEBTITLE -->.*<\!-- END WEBTITLE -->|<\!-- BEGIN WEBTITLE -->$PKI_WEB_TITLE<\!-- END WEBTITLE -->|g" index.html
+if [ "$PKI_WEB_TITLE" == "LabCA" ]; then
+    sed -i -e "s|<\!-- BEGIN WEBTITLE_X1 -->.*<\!-- END WEBTITLE_X1 -->|<\!-- BEGIN WEBTITLE_X1 -->$PKI_WEB_TITLE<\!-- END WEBTITLE_X1 -->|g" index.html
+    sed -i -e "s|<\!-- BEGIN WEBTITLE_X2 -->.*<\!-- END WEBTITLE_X2 -->|<\!-- BEGIN WEBTITLE_X2 -->this $PKI_WEB_TITLE instance<\!-- END WEBTITLE_X2 -->|g" index.html
+else
+    sed -i -e "s|<\!-- BEGIN WEBTITLE_X1 -->.*<\!-- END WEBTITLE_X1 -->|<\!-- BEGIN WEBTITLE_X1 -->$PKI_WEB_TITLE is running LabCA, which<\!-- END WEBTITLE_X1 -->|g" index.html
+    sed -i -e "s|<\!-- BEGIN WEBTITLE_X2 -->.*<\!-- END WEBTITLE_X2 -->|<\!-- BEGIN WEBTITLE_X2 -->$PKI_WEB_TITLE<\!-- END WEBTITLE_X2 -->|g" index.html
+fi
+
+sed -i -e "s|<title>.*</title>|<title>Rate Limits \| $PKI_WEB_TITLE</title>|g" rate-limits.html
+sed -i -e "s|<\!-- BEGIN WEBTITLE -->.*<\!-- END WEBTITLE -->|<\!-- BEGIN WEBTITLE -->$PKI_WEB_TITLE<\!-- END WEBTITLE -->|g" rate-limits.html
+if [ "$PKI_WEB_TITLE" == "LabCA" ]; then
+    sed -i -e "s|<\!-- BEGIN WEBTITLE_X2 -->.*<\!-- END WEBTITLE_X2 -->|<\!-- BEGIN WEBTITLE_X2 -->this $PKI_WEB_TITLE instance<\!-- END WEBTITLE_X2 -->|g" rate-limits.html
+else
+    sed -i -e "s|<\!-- BEGIN WEBTITLE_X2 -->.*<\!-- END WEBTITLE_X2 -->|<\!-- BEGIN WEBTITLE_X2 -->$PKI_WEB_TITLE<\!-- END WEBTITLE_X2 -->|g" rate-limits.html
+fi
+
+sed -i -e "s|<\!-- BEGIN PKI_COMPANY_NAME -->.*<\!-- END PKI_COMPANY_NAME -->|<\!-- BEGIN PKI_COMPANY_NAME -->$PKI_DEFAULT_O<\!-- END PKI_COMPANY_NAME -->|g" terms/v1.html
+
+sed -i -e "s|<title>.*</title>|<title>Terms \| $PKI_WEB_TITLE</title>|g" terms/v1.html
+sed -i -e "s|<\!-- BEGIN WEBTITLE -->.*<\!-- END WEBTITLE -->|<\!-- BEGIN WEBTITLE -->$PKI_WEB_TITLE<\!-- END WEBTITLE -->|g" terms/v1.html
+

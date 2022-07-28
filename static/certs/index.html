@@ -27,7 +27,7 @@
           <span class="icon-bar"></span>
           <span class="icon-bar"></span>
         </button>
-        <a class="navbar-brand" href="/">LabCA</a>
+        <a class="navbar-brand" href="/"><!-- BEGIN WEBTITLE -->LabCA<!-- END WEBTITLE --></a>
       </div>
 
       <ul class="nav navbar-top-links navbar-right">
@@ -67,23 +67,23 @@
             <tbody>
               <tr>
                 <td>Root CA</td>
-                <td>[PKI_ROOT_DN]</td>
+                <td><!-- BEGIN PKI_ROOT_DN -->PKI_ROOT_DN<!-- END PKI_ROOT_DN --></td>
                 <td><a class="public" href="root-ca.der">root-ca.der</a></td>
                 <td><a class="public" href="root-ca.pem">root-ca.pem</a></td>
-                <td>[PKI_ROOT_VALIDITY]</td>
+                <td><!-- BEGIN PKI_ROOT_VALIDITY -->PKI_ROOT_VALIDITY<!-- END PKI_ROOT_VALIDITY --></td>
               </tr>
               <tr>
                 <td>Issuing CA</td>
-                <td>[PKI_INT_DN]</td>
+                <td><!-- BEGIN PKI_INT_DN -->PKI_INT_DN<!-- END PKI_INT_DN --></td>
                 <td><a class="public" href="ca-int.der">ca-int.der</a></td>
                 <td><a class="public" href="ca-int.pem">ca-int.pem</a></td>
-                <td>[PKI_INT_VALIDITY]</td>
+                <td><!-- BEGIN PKI_INT_VALIDITY -->PKI_INT_VALIDITY<!-- END PKI_INT_VALIDITY --></td>
               </tr>
             </tbody>
           </table>
 
           <p>
-            To trust the certificates provided by LabCA, all your client devices should install the root certificate in their
+            To trust the certificates provided by <!-- BEGIN WEBTITLE -->LabCA<!-- END WEBTITLE -->, all your client devices should install the root certificate in their
             <b>Trusted Root Certification Authorities</b> store. You may choose to download the format best suited for your
             Operating System: DER format for Windows machines or PEM format for Linux/unix machines and Android phones.
           </p>
