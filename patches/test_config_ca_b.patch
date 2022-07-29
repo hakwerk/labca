@@ -1,8 +1,23 @@
 diff --git a/test/config/ca-b.json b/test/config/ca-b.json
-index c61ac87e..fb1db942 100644
+index 122bcfa7..54b25dd8 100644
 --- a/test/config/ca-b.json
 +++ b/test/config/ca-b.json
-@@ -60,19 +60,7 @@
+@@ -24,6 +24,14 @@
+         "orphan-finder.boulder"
+       ]
+     },
++    "grpcCRLGenerator": {
++      "maxConnectionAge": "30s",
++      "address": ":9106",
++      "clientNames": [
++        "health-checker.boulder",
++        "crl-updater.boulder"
++      ]
++    },
+     "saService": {
+       "serverAddress": "sa.boulder:9095",
+       "timeout": "15s"
+@@ -60,19 +68,7 @@
            "crlURL": "http://example.com/crl",
            "location": {
              "configFile": "test/test-ca.key-pkcs11.json",

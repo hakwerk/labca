@@ -1,5 +1,5 @@
 diff --git a/test/config/orphan-finder.json b/test/config/orphan-finder.json
-index 9ed90276..7c9158d0 100644
+index 5497f8f1..8f91fd59 100644
 --- a/test/config/orphan-finder.json
 +++ b/test/config/orphan-finder.json
 @@ -1,9 +1,7 @@

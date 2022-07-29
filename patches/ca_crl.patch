@@ -1,0 +1,17 @@
+diff --git a/ca/crl.go b/ca/crl.go
+index 8b4ca6ba..da2b8992 100644
+--- a/ca/crl.go
++++ b/ca/crl.go
+@@ -126,8 +126,10 @@ func (ci *crlImpl) GenerateCRL(stream capb.CRLGenerator_GenerateCRLServer) error
+ 			builder = strings.Builder{}
+ 		}
+ 	}
+-	fmt.Fprint(&builder, "]")
+-	ci.log.AuditInfo(builder.String())
++	if builder.Len() > 0 {
++		fmt.Fprint(&builder, "]")
++		ci.log.AuditInfo(builder.String())
++	}
+ 
+ 	template.RevokedCertificates = rcs
+ 

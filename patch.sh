@@ -14,6 +14,7 @@ if [ "$flag_skip_redis" == true ]; then
 fi
 $SUDO patch -p1 < $cloneDir/patches/docker-compose.patch
 
+$SUDO patch -p1 < $cloneDir/patches/ca_crl.patch
 $SUDO patch -p1 < $cloneDir/patches/cmd_shell.patch
 $SUDO patch -p1 < $cloneDir/patches/core_interfaces.patch
 $SUDO patch -p1 < $cloneDir/patches/policy_pa.patch

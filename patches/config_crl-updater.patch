@@ -1,0 +1,22 @@
+diff --git a/test/config/crl-updater.json b/test/config/crl-updater.json
+index 02a57b25..a5752dec 100644
+--- a/test/config/crl-updater.json
++++ b/test/config/crl-updater.json
+@@ -15,14 +15,12 @@
+       "timeout": "15s"
+     },
+     "issuerCerts": [
+-      "/hierarchy/intermediate-cert-rsa-a.pem",
+-      "/hierarchy/intermediate-cert-rsa-b.pem",
+-      "/hierarchy/intermediate-cert-ecdsa-a.pem"
++      "/hierarchy/intermediate-cert-rsa-a.pem"
+     ],
+-    "numShards": 10,
++    "numShards": 1,
+     "certificateLifetime": "2160h",
+     "updatePeriod": "6h",
+-    "maxParallelism": 10
++    "maxParallelism": 1
+   },
+ 
+   "syslog": {

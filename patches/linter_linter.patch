@@ -1,8 +1,8 @@
 diff --git a/linter/linter.go b/linter/linter.go
-index 59066e3f8..8cf143227 100644
+index c6c1fda3..234e7ae5 100644
 --- a/linter/linter.go
 +++ b/linter/linter.go
-@@ -136,7 +136,15 @@ func makeIssuer(realIssuer *x509.Certificate, lintSigner crypto.Signer) (*x509.C
+@@ -152,7 +152,15 @@ func makeIssuer(realIssuer *x509.Certificate, lintSigner crypto.Signer) (*x509.C
  	}
  	lintIssuerBytes, err := x509.CreateCertificate(rand.Reader, lintIssuerTBS, lintIssuerTBS, lintSigner.Public(), lintSigner)
  	if err != nil {
