@@ -1917,11 +1917,15 @@ func setupHandler(w http.ResponseWriter, r *http.Request) {
 
 	// 3. Setup root CA certificate
 	if !_certCreate(w, r, "root-ca", true) {
+		// Cleanup the cert (if it even exists) so we will retry on the next run
+		_ := os.Remove("data/root-ca.pem")
 		return
 	}
 
 	// 4. Setup issuer certificate
 	if !_certCreate(w, r, "ca-int", false) {
+		// Cleanup the cert (if it even exists) so we will retry on the next run
+		_ := os.Remove("data/issuer/ca-int.pem")
 		return
 	}
 
