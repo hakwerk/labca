@@ -86,10 +86,10 @@ func _parseLine(line string, loc *time.Location) Activity {
 	if idx > -1 {
 		message = message[0:idx]
 	}
-	if strings.Index(message, "Checked CAA records for") > -1 {
+	if strings.Contains(message, "Checked CAA records for") {
 		message = message[0:strings.Index(message, ",")]
 	}
-	if strings.Index(message, "Validation result") > -1 {
+	if strings.Contains(message, "Validation result") {
 		message = message[0:30]
 	}
 	idx = strings.Index(message, " csr=[")
@@ -108,16 +108,16 @@ func _parseLine(line string, loc *time.Location) Activity {
 	if idx > -1 {
 		message = message[0:idx]
 	}
-	if strings.Index(message, "Certificate request - ") > -1 {
+	if strings.Contains(message, "Certificate request - ") {
 		idx = strings.Index(message, " JSON={")
 		if idx > -1 {
 			message = message[0:idx]
 		}
 	}
-	if strings.Index(message, "failed to complete security handshake") > -1 {
+	if strings.Contains(message, "failed to complete security handshake") {
 		activity.Class = "warning"
 	}
-	if strings.Index(message, "failed to receive the preface from client") > -1 {
+	if strings.Contains(message, "failed to receive the preface from client") {
 		activity.Class = "warning"
 	}
 	activity.Message = message

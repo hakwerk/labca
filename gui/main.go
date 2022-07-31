@@ -4,11 +4,14 @@ import (
 	"bufio"
 	"bytes"
 	"context"
+	"crypto"
 	"crypto/aes"
 	"crypto/cipher"
 	"crypto/rand"
+	"crypto/x509"
 	"encoding/base64"
 	"encoding/json"
+	"encoding/pem"
 	"errors"
 	"fmt"
 	"html/template"
@@ -16,6 +19,7 @@ import (
 	"io/ioutil"
 	"log"
 	"math"
+	"math/big"
 	"net"
 	"net/http"
 	"os"
@@ -137,9 +141,9 @@ func (reg *User) Validate(isNew bool, isChange bool) bool {
 	}
 
 	if isNew || isChange {
-		re := regexp.MustCompile(".+@.+\\..+")
+		re := regexp.MustCompile(`.+@.+\..+`)
 		matched := re.Match([]byte(reg.Email))
-		if matched == false {
+		if !matched {
 			reg.Errors["Email"] = "Please enter a valid email address"
 		}
 	}
@@ -1386,6 +1390,27 @@ func _buildCI(r *http.Request, session *sessions.Session, isRoot bool) *Certific
 	return ci
 }
 
+func issuerNameID(certfile string) (int64, error) {
+	cf, err := ioutil.ReadFile(certfile)
+	if err != nil {
+		log.Printf("issuerNameID: could not read cert file: %v", err)
+		return 0, err
+	}
+
+	cpb, _ := pem.Decode(cf)
+	crt, err := x509.ParseCertificate(cpb.Bytes)
+	if err != nil {
+		log.Printf("issuerNameID: could not parse x509 file: %v", err)
+		return 0, err
+	}
+
+	// From issuance/issuance.go : func truncatedHash
+	h := crypto.SHA1.New()
+	h.Write(crt.RawSubject)
+	s := h.Sum(nil)
+	return int64(big.NewInt(0).SetBytes(s[:7]).Int64()), nil
+}
+
 func _certCreate(w http.ResponseWriter, r *http.Request, certBase string, isRoot bool) bool {
 	path := "data/"
 	if !isRoot {
@@ -1452,6 +1477,16 @@ func _certCreate(w http.ResponseWriter, r *http.Request, certBase string, isRoot
 				return false
 			}
 
+			if !ci.IsRoot {
+				nameID, err := issuerNameID(path + certBase + ".pem")
+				if err == nil {
+					viper.Set("issuer_name_id", nameID)
+					viper.WriteConfig()
+				} else {
+					log.Printf("_certCreate: could not calculate IssuerNameID: %v", err)
+				}
+			}
+
 			if viper.Get("labca.organization") == nil {
 				viper.Set("labca.organization", ci.Organization)
 				viper.WriteConfig()
@@ -1476,24 +1511,6 @@ func _certCreate(w http.ResponseWriter, r *http.Request, certBase string, isRoot
 	}
 
 	return true
-}
-
-func _parseLinuxIPRouteShow(output []byte) (net.IP, error) {
-	// Linux '/usr/bin/ip route show' format looks like this:
-	// default via 192.168.178.1 dev wlp3s0  metric 303
-	// 192.168.178.0/24 dev wlp3s0  proto kernel  scope link  src 192.168.178.76  metric 303
-	lines := strings.Split(string(output), "\n")
-	for _, line := range lines {
-		fields := strings.Fields(line)
-		if len(fields) >= 3 && fields[0] == "default" {
-			ip := net.ParseIP(fields[2])
-			if ip != nil {
-				return ip, nil
-			}
-		}
-	}
-
-	return nil, errors.New("no gateway found")
 }
 
 func _hostCommand(w http.ResponseWriter, r *http.Request, command string, params ...string) bool {
@@ -1563,6 +1580,7 @@ func _applyConfig() error {
 	os.Setenv("PKI_DOMAIN_MODE", viper.GetString("labca.domain_mode"))
 	os.Setenv("PKI_LOCKDOWN_DOMAINS", viper.GetString("labca.lockdown"))
 	os.Setenv("PKI_WHITELIST_DOMAINS", viper.GetString("labca.whitelist"))
+	os.Setenv("PKI_ISSUER_NAME_ID", viper.GetString("issuer_name_id"))
 	if viper.GetBool("labca.extended_timeout") {
 		os.Setenv("PKI_EXTENDED_TIMEOUT", "1")
 	} else {
@@ -1698,7 +1716,7 @@ func _setupAdminUser(w http.ResponseWriter, r *http.Request) bool {
 		// Restore a backup file
 		if isMultipart {
 			reg := &User{
-				Errors: make(map[string]string),
+				Errors:      make(map[string]string),
 				RequestBase: r.Header.Get("X-Request-Base"),
 			}
 			file, header, err := r.FormFile("file")
@@ -1918,14 +1936,14 @@ func setupHandler(w http.ResponseWriter, r *http.Request) {
 	// 3. Setup root CA certificate
 	if !_certCreate(w, r, "root-ca", true) {
 		// Cleanup the cert (if it even exists) so we will retry on the next run
-		_ := os.Remove("data/root-ca.pem")
+		os.Remove("data/root-ca.pem")
 		return
 	}
 
 	// 4. Setup issuer certificate
 	if !_certCreate(w, r, "ca-int", false) {
 		// Cleanup the cert (if it even exists) so we will retry on the next run
-		_ := os.Remove("data/issuer/ca-int.pem")
+		os.Remove("data/issuer/ca-int.pem")
 		return
 	}
 
@@ -2083,7 +2101,7 @@ func accountsHandler(w http.ResponseWriter, r *http.Request) {
 
 	Accounts, err := GetAccounts(w, r)
 	if err == nil {
-        render(w, r, "list:accounts", map[string]interface{}{"List": Accounts, "Title": "ACME"})
+		render(w, r, "list:accounts", map[string]interface{}{"List": Accounts, "Title": "ACME"})
 	}
 }
 

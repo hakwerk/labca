@@ -455,6 +455,7 @@ static_web() {
     [ -d /home/labca/nginx_data/conf.d ] || mkdir -p /home/labca/nginx_data/conf.d
     [ -d /home/labca/nginx_data/ssl ] || mkdir -p /home/labca/nginx_data/ssl
     cp $cloneDir/nginx.conf /home/labca/nginx_data/conf.d/labca.conf
+    cp $cloneDir/proxy.conf /home/labca/nginx_data/conf.d/proxy.conf
     if [ -f "$boulderLabCADir/setup_complete" ]; then
         perl -i -p0e 's/\n    # BEGIN temporary redirect\n    location = \/ \{\n        return 302 \/admin\/;\n    }\n    # END temporary redirect\n//igs' /home/labca/nginx_data/conf.d/labca.conf
     fi
@@ -646,10 +647,6 @@ config_boulder() {
     sed -i -e "s/5001/443/g" config/va-remote-b.json
     sed -i -e "s/5002/80/g" config/va-remote-b.json
     sed -i -e "s|https://boulder:4431/terms/v7|https://$LABCA_FQDN/terms/v1|" config/wfe2.json
-    sed -i -e "s|http://boulder:4430/acme/issuer-cert|http://$LABCA_FQDN/certs/ca-int.der|" config/ca-a.json
-    sed -i -e "s|http://boulder:4430/acme/issuer-cert|http://$LABCA_FQDN/certs/ca-int.der|" config/ca-b.json
-    sed -i -e "s|http://127.0.0.1:4000/acme/issuer-cert|http://$LABCA_FQDN/certs/ca-int.der|" config/ca-a.json
-    sed -i -e "s|http://127.0.0.1:4000/acme/issuer-cert|http://$LABCA_FQDN/certs/ca-int.der|" config/ca-b.json
     sed -i -e "s|http://boulder:4430/acme/issuer-cert|http://$LABCA_FQDN/acme/issuer-cert|" config/wfe2.json
     sed -i -e "s|http://127.0.0.1:4000/acme/issuer-cert|https://$LABCA_FQDN/acme/issuer-cert|" config/wfe2.json
     sed -i -e "s|letsencrypt/boulder|hakwerk/labca|" config/wfe2.json
@@ -661,8 +658,6 @@ config_boulder() {
     sed -i -e "s|1.2.3.4|1.3.6.1.4.1.44947.1.1.1|g" config/ca-b.json
     perl -i -p0e "s/(\s+\"crlURL\":[^\n]*)//igs" config/ca-a.json
     perl -i -p0e "s/(\s+\"crlURL\":[^\n]*)//igs" config/ca-b.json
-    sed -i -e "s/Do What Thou Wilt/This PKI is only meant for internal (lab) usage; do NOT use this on the open internet\!/g" config/ca-a.json
-    sed -i -e "s/Do What Thou Wilt/This PKI is only meant for internal (lab) usage; do NOT use this on the open internet\!/g" config/ca-b.json
     sed -i -e "s/ocspURL.Path = encodedReq/ocspURL.Path += encodedReq/" ocsp/helper/helper.go
     sed -i -e "s/\"dnsTimeout\": \".*\"/\"dnsTimeout\": \"3s\"/" config/ra.json
     sed -i -e "s/\"dnsTimeout\": \".*\"/\"dnsTimeout\": \"3s\"/" config/va.json
@@ -693,6 +688,16 @@ config_boulder() {
         export PKI_DOMAIN_MODE=$(grep domain_mode $adminDir/data/config.json | sed -e 's/.*:[ ]*//' | sed -e 's/\",//g' | sed -e 's/\"//g')
         export PKI_LOCKDOWN_DOMAINS=$(grep lockdown $adminDir/data/config.json | grep -v domain_mode | sed -e 's/.*:[ ]*//' | sed -e 's/\",//g' | sed -e 's/\"//g')
         export PKI_WHITELIST_DOMAINS=$(grep whitelist $adminDir/data/config.json | grep -v domain_mode | sed -e 's/.*:[ ]*//' | sed -e 's/\",//g' | sed -e 's/\"//g')
+        export PKI_ISSUER_NAME_ID=$(grep issuer_name_id $adminDir/data/config.json | sed -e 's/.*:[ ]*//' | sed -e 's/\",//g' | sed -e 's/\"//g')
+        if [ -z "$PKI_ISSUER_NAME_ID" ] && [ -e "$adminDir/data/issuer/ca-int.pem" ]; then
+            local img=$(grep "&boulder_image" $boulderDir/docker-compose.yml | sed -e "s/.*boulder_image \(.*\)/\1/")
+            eval img=$img
+            docker run --rm -v $cloneDir/utils:/utils -w /utils $img go build nameidtool.go &>>$installLog
+            nmid=$($cloneDir/utils/nameidtool $adminDir/data/issuer/ca-int.pem)
+            if [ $? == 0 ]; then
+                export PKI_ISSUER_NAME_ID=$nmid
+            fi
+        fi
 
         enabled=$(grep "email\": {" $adminDir/data/config.json -A1 | grep enable | head -1 | perl -p0e 's/.*?:\s+(.*)/\1/' | sed -e 's/\",//g' | sed -e 's/\"//g')
         if [ "$enabled" == "true," ]; then

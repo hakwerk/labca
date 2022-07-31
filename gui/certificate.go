@@ -102,7 +102,7 @@ func reportError(err error) error {
 
 	stop := len(lines)
 	for i := 0; i < len(lines); i++ {
-		if strings.Index(lines[i], ".ServeHTTP(") >= 0 {
+		if strings.Contains(lines[i], ".ServeHTTP(") {
 			stop = i
 			break
 		}
@@ -218,14 +218,14 @@ func (ci *CertificateInfo) ImportPkcs12(tmpFile string, tmpKey string, tmpCert s
 	}
 
 	if out, err := exeCmd("openssl pkcs12 -in " + strings.Replace(tmpFile, " ", "\\\\", -1) + " -password " + pwd + " -nocerts -nodes -out " + tmpKey); err != nil {
-		if strings.Index(string(out), "invalid password") >= 0 {
+		if strings.Contains(string(out), "invalid password") {
 			return errors.New("incorrect password")
 		}
 
 		return reportError(err)
 	}
 	if out, err := exeCmd("openssl pkcs12 -in " + strings.Replace(tmpFile, " ", "\\\\", -1) + " -password " + pwd + " -nokeys -out " + tmpCert); err != nil {
-		if strings.Index(string(out), "invalid password") >= 0 {
+		if strings.Contains(string(out), "invalid password") {
 			return errors.New("incorrect password")
 		}
 
@@ -311,7 +311,7 @@ func (ci *CertificateInfo) Upload(path string, certBase string, tmpKey string, t
 	}
 
 	if out, err := exeCmd("openssl pkey -passin " + pwd + " -in " + tmpKey + " -out " + tmpKey + "-out"); err != nil {
-		if strings.Index(string(out), ":bad decrypt:") >= 0 {
+		if strings.Contains(string(out), ":bad decrypt:") {
 			return errors.New("incorrect password")
 		}
 
@@ -349,7 +349,7 @@ func (ci *CertificateInfo) ImportCerts(path string, rootCert string, rootKey str
 		rootSubject = string(r[0 : len(r)-1])
 		fmt.Printf("Import root with subject '%s'\n", rootSubject)
 
-		r, err = exeCmd("openssl pkey -noout -in " + rootKey)
+		_, err = exeCmd("openssl pkey -noout -in " + rootKey)
 		if err != nil {
 			return reportError(err)
 		}
@@ -394,7 +394,7 @@ func (ci *CertificateInfo) ImportCerts(path string, rootCert string, rootKey str
 			return errors.New("issuer not issued by our Root CA")
 		}
 
-		r, err = exeCmd("openssl pkey -noout -in " + issuerKey)
+		_, err = exeCmd("openssl pkey -noout -in " + issuerKey)
 		if err != nil {
 			return reportError(err)
 		}
@@ -577,8 +577,6 @@ func exeCmd(cmd string) ([]byte, error) {
 	out, err := exec.Command(head, parts...).CombinedOutput()
 	if err != nil {
 		fmt.Print(fmt.Sprint(err) + ": " + string(out))
-	} else {
-		//fmt.Println(string(out))
 	}
 	return out, err
 }
