@@ -343,6 +343,10 @@
 
                             $("#backups-tbody").append('<tr><td class="vmiddle"><a href="/admin/backup/' + data.Message + '" class="backupdl">' + data.Message + '</a></td><td class="vmiddle"></td></tr>');
 
+                            setTimeout(function() {
+                                window.location.reload();
+                            }, 2000);
+
                         } else {
                             $("#backup-result").removeClass("hidden").removeClass("success").show().text(data.Message).addClass("error");
                         }
@@ -523,6 +527,10 @@
                         if (data.Success) {
                             var msg = "Successfully updated configuration.<br/>";
                             $("#update-config-result").removeClass("hidden").removeClass("error").show().html(msg).addClass("success");
+
+                            setTimeout(function() {
+                                window.location.reload();
+                            }, 2000);
 
                         } else {
                             jQuery.each(data.Errors, function(nm, val) {
