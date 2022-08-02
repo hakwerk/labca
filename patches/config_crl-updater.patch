@@ -2,7 +2,7 @@ diff --git a/test/config/crl-updater.json b/test/config/crl-updater.json
 index 02a57b25..a5752dec 100644
 --- a/test/config/crl-updater.json
 +++ b/test/config/crl-updater.json
-@@ -15,14 +15,12 @@
+@@ -15,15 +15,13 @@
        "timeout": "15s"
      },
      "issuerCerts": [
@@ -15,8 +15,9 @@ index 02a57b25..a5752dec 100644
 +    "numShards": 1,
      "certificateLifetime": "2160h",
      "updatePeriod": "6h",
+     "updateOffset": "9120s",
 -    "maxParallelism": 10
 +    "maxParallelism": 1
    },
- 
+
    "syslog": {

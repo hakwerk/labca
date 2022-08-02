@@ -11,5 +11,5 @@ index ed874d3..a1a78f3 100644
 -      "/hierarchy/intermediate-cert-ecdsa-a.pem"
 +      "/hierarchy/intermediate-cert-rsa-a.pem"
      ],
-     "maxAge": "10s",
      "timeout": "4.9s",
+     "shutdownStopTimeout": "10s",

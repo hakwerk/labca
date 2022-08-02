@@ -18,12 +18,12 @@ index dc8c7da5..8f65f3a0 100644
          },
          "maximumRevocations": 15,
          "findCertificatesBatchSize": 10,
--        "interval": "1s"
-+        "interval": "5m"
+-        "interval": "1s",
++        "interval": "5m",
+         "backoffIntervalMax": "2s"
      },
      "syslog": {
-         "stdoutlevel": 4,
-@@ -35,5 +40,9 @@
+@@ -36,5 +41,9 @@
      "beeline": {
          "mute": true,
          "dataset": "Test"
