@@ -476,6 +476,11 @@ static_web() {
     cp -rp $cloneDir/static/* .
     sed -i -e "s|<\!-- BEGIN LABCA_CPS_LOCATION -->.*<\!-- END LABCA_CPS_LOCATION -->|<\!-- BEGIN LABCA_CPS_LOCATION --><a class=\"public\" href=\"http://$LABCA_FQDN/cps/\">http://$LABCA_FQDN/cps/</a><\!-- END LABCA_CPS_LOCATION -->|g" cps/index.html
     sed -i -e "s|<\!-- BEGIN LABCA_CERTS_LOCATION -->.*<\!-- END LABCA_CERTS_LOCATION -->|<\!-- BEGIN LABCA_CERTS_LOCATION --><a class=\"public\" href=\"http://$LABCA_FQDN/certs/\">http://$LABCA_FQDN/certs/</a><\!-- END LABCA_CERTS_LOCATION -->|g" cps/index.html
+    [ -e $adminDir/data/root-ca.crl ] && cp $adminDir/data/root-ca.crl crl/ || true
+    [ -e $adminDir/data/root-ca.pem ] && cp $adminDir/data/root-ca.pem certs/ || true
+    [ -e $adminDir/data/root-ca.der ] && cp $adminDir/data/root-ca.der certs/ || true
+    [ -e $adminDir/data/issuer/ca-int.pem ] && cp $adminDir/data/issuer/ca-int.pem certs/ || true
+    [ -e $adminDir/data/issuer/ca-int.pem ] && cp $adminDir/data/issuer/ca-int.der certs/ || true
 
     local have_config=$(grep restarted $adminDir/data/config.json | grep true)
     if [ "$have_config" != "" ]; then
