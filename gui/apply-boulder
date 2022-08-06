@@ -97,6 +97,10 @@ sed -i -e "s/\"username\": \".*\"/\"username\": \"$PKI_EMAIL_USER\"/" config/not
 sed -i -e "s/\"from\": \".*\"/\"from\": \"$PKI_EMAIL_FROM\"/" config/notify-mailer.json
 sed -i -e "s/\"purgeInterval\": \".*\"/\"purgeInterval\": \"1s\"/" config/akamai-purger.json
 
+for fl in $(grep -Rl maxOpenConns config/); do
+    perl -i -p0e "s/( +)(\"maxOpenConns\": .*)/\1\2,\n\1\"connMaxIdleTime\": \"30s\"/g" $fl
+done
+
 if [ "$PKI_EMAIL_PASS" != "" ]; then
     sed -i -e "s/.*/$PKI_EMAIL_PASS/" secrets/smtp_password
 fi
