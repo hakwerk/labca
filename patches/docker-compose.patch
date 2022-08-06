@@ -50,7 +50,7 @@ index 0cd8c8dd..36619190 100644
      networks:
        bluenet:
          aliases:
-@@ -60,21 +69,74 @@ services:
+@@ -60,21 +69,75 @@ services:
      # small.
      command: mysqld --bind-address=0.0.0.0 --slow-query-log --log-output=TABLE --log-queries-not-using-indexes=ON
      logging:
@@ -113,6 +113,7 @@ index 0cd8c8dd..36619190 100644
 +      - /home/labca/admin:/admin
 +      - /home/labca/labca:/labca
 +      - /home/labca/backup:/backup
++      - /home/labca/control_logs:/logs
        - .:/boulder
 -    working_dir: *boulder_working_dir
 -    entrypoint: test/entrypoint-netaccess.sh

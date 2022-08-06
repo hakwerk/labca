@@ -802,6 +802,7 @@ startup() {
     docker exec -i boulder-bmysql-1 mysql_upgrade &>>$installLog
     [ -f "$boulderLabCADir/setup_complete" ] && wait_up $PS_BOULDER $PS_BOULDER_COUNT &>>$installLog || /bin/true
 
+    [ -d /home/labca/control_logs ] || mkdir -p /home/labca/control_logs
     COMPOSE_HTTP_TIMEOUT=120 docker-compose restart control &>>$installLog
 
     msg_ok "$msg"
