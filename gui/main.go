@@ -2511,6 +2511,10 @@ func authorized(next http.Handler) http.Handler {
 		} else {
 			session, _ := sessionStore.Get(r, "labca")
 			if session.Values["user"] != nil || (r.RequestURI == "/setup" && viper.Get("user.password") == nil) {
+				// Keep setting the cookie so the expiration / max-age keeps renewing
+				if err := session.Save(r, w); err != nil {
+					log.Printf("cannot save session: %s\n", err)
+				}
 				next.ServeHTTP(w, r)
 			} else {
 				session.Values["bounce"] = r.RequestURI
