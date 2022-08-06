@@ -166,6 +166,15 @@ func _parseComponents(data string) []Component {
 
 	parts := strings.Split(data, "|")
 
+	if len(parts) < 5 {
+		components = append(components, Component{Name: "Boulder (ACME)"})
+		components = append(components, Component{Name: "Controller"})
+		components = append(components, Component{Name: "LabCA Application"})
+		components = append(components, Component{Name: "MySQL Database"})
+		components = append(components, Component{Name: "NGINX Webserver"})
+		return components
+	}
+
 	nginx, err := time.Parse(time.RFC3339Nano, parts[0])
 	nginxReal := ""
 	nginxNice := "stopped"
@@ -206,9 +215,20 @@ func _parseComponents(data string) []Component {
 		labcaClass = ""
 	}
 
+	mysql, err := time.Parse(time.RFC3339Nano, parts[4])
+	mysqlReal := ""
+	mysqlNice := "stopped"
+	mysqlClass := "error"
+	if err == nil {
+		mysqlReal = mysql.Format("02-Jan-2006 15:04:05 MST")
+		mysqlNice = humanize.RelTime(mysql, time.Now(), "", "")
+		mysqlClass = ""
+	}
+
 	components = append(components, Component{Name: "Boulder (ACME)", Timestamp: boulderReal, TimestampRel: boulderNice, Class: boulderClass})
 	components = append(components, Component{Name: "Controller", Timestamp: svcReal, TimestampRel: svcNice, Class: svcClass})
 	components = append(components, Component{Name: "LabCA Application", Timestamp: labcaReal, TimestampRel: labcaNice, Class: labcaClass})
+	components = append(components, Component{Name: "MySQL Database", Timestamp: mysqlReal, TimestampRel: mysqlNice, Class: mysqlClass})
 	components = append(components, Component{Name: "NGINX Webserver", Timestamp: nginxReal, TimestampRel: nginxNice, Class: nginxClass})
 
 	return components
@@ -222,7 +242,16 @@ type Stat struct {
 	Class string
 }
 
-func _parseStats(data string) []Stat {
+// The stats as reported by docker
+type DockerStat struct {
+	Name     string
+	MemUsage uint64
+	MemLimit uint64
+	MemPerc  float64
+	Pids     uint64
+}
+
+func _parseStats(data string, components []Component) []Stat {
 	var stats []Stat
 
 	if data[len(data)-1:] == "\n" {
@@ -249,24 +278,99 @@ func _parseStats(data string) []Stat {
 	}
 	stats = append(stats, Stat{Name: "System Uptime", Hint: sinceReal, Value: sinceNice})
 
-	memUsed, err := strconv.ParseUint(parts[3], 10, 64)
-	if err != nil {
-		memUsed = 0
+	if components == nil {
+		return stats
 	}
-	memAvail, err := strconv.ParseUint(parts[4], 10, 64)
-	if err != nil {
-		memAvail = 0
+
+	stats = append(stats, Stat{Name: "Memory Limit", Value: ""})
+	stats = append(stats, Stat{Name: "Memory Used", Value: ""})
+	stats = append(stats, Stat{Name: "Memory Used [%]", Value: ""})
+
+	return stats
+}
+
+// What we return as json
+type AjaxStat struct {
+	Stat
+	MemoryUsed string
+	MemoryPerc string
+	NumPids    int
+}
+
+func parseDockerStats(data string) []AjaxStat {
+	var stats []AjaxStat
+
+	dockerStats := []DockerStat{}
+	rawStats := strings.Split(data, "\n")
+	for _, rawStat := range rawStats {
+		if len(rawStat) > 0 {
+			elms := strings.Fields(rawStat)
+			if len(elms) > 13 {
+				stat := DockerStat{}
+				// CONTAINER ID   NAME                CPU %     MEM USAGE / LIMIT   MEM %     NET I/O           BLOCK I/O   PIDS
+				// 817bdaec6daf   boulder-boulder-1   0.07%     255.3MiB / 1GiB     24.93%    1.18MB / 339kB    0B / 0B     158
+				stat.Name = elms[1]
+				x, err := humanize.ParseBigBytes(elms[3])
+				if err == nil {
+					stat.MemUsage = x.Uint64()
+				}
+				x, err = humanize.ParseBigBytes(elms[5])
+				if err == nil {
+					stat.MemLimit = x.Uint64()
+				}
+				y, err := strconv.ParseFloat(strings.Replace(elms[6], "%", "", -1), 64)
+				if err == nil {
+					stat.MemPerc = y
+				}
+				p, err := strconv.ParseUint(elms[13], 10, 64)
+				if err == nil {
+					stat.Pids = p
+				}
+				dockerStats = append(dockerStats, stat)
+			}
+		}
+	}
+
+	// Update the component stats
+	totalMemUsage := uint64(0)
+	for _, docker := range dockerStats {
+		stat := AjaxStat{}
+		if strings.Contains(docker.Name, "-boulder-") {
+			stat.Name = "Boulder (ACME)"
+		}
+		if strings.Contains(docker.Name, "-control-") {
+			stat.Name = "Controller"
+		}
+		if strings.Contains(docker.Name, "-labca-") {
+			stat.Name = "LabCA Application"
+		}
+		if strings.Contains(docker.Name, "-nginx-") {
+			stat.Name = "NGINX Webserver"
+		}
+		if strings.Contains(docker.Name, "-bmysql-") {
+			stat.Name = "MySQL Database"
+		}
+
+		stat.MemoryUsed = humanize.IBytes(docker.MemUsage)
+		stat.MemoryPerc = fmt.Sprintf("%s%%", humanize.FtoaWithDigits(docker.MemPerc, 1))
+		stat.NumPids = int(docker.Pids)
+
+		stats = append(stats, stat)
+
+		totalMemUsage += docker.MemUsage
 	}
 
 	percMem := float64(0)
-	if (memUsed + memAvail) > 0 {
-		percMem = float64(100) * float64(memUsed) / float64(memUsed+memAvail)
+	if (dockerStats[0].MemLimit) > 0 {
+		percMem = float64(100) * float64(totalMemUsage) / float64(dockerStats[0].MemLimit)
 	}
 
-	usedHuman := humanize.IBytes(memUsed)
-	availHuman := humanize.IBytes(memAvail)
-	percHuman := fmt.Sprintf("%s %%", humanize.FtoaWithDigits(percMem, 1))
+	usedHuman := humanize.IBytes(totalMemUsage)
+	limitHuman := humanize.IBytes(dockerStats[0].MemLimit)
+	percHuman := fmt.Sprintf("%s%%", humanize.FtoaWithDigits(percMem, 1))
 
+	stats = append(stats, AjaxStat{Stat: Stat{Name: "Memory Limit", Value: limitHuman}})
+	stats = append(stats, AjaxStat{Stat: Stat{Name: "Memory Used", Value: usedHuman}})
 	class := ""
 	if percMem > 75 {
 		class = "warning"
@@ -274,16 +378,7 @@ func _parseStats(data string) []Stat {
 	if percMem > 90 {
 		class = "error"
 	}
-	stats = append(stats, Stat{Name: "Memory Usage", Value: percHuman, Class: class})
-	stats = append(stats, Stat{Name: "Memory Used", Value: usedHuman})
-	class = ""
-	if memAvail < 250000000 {
-		class = "warning"
-	}
-	if memAvail < 100000000 {
-		class = "error"
-	}
-	stats = append(stats, Stat{Name: "Memory Available", Value: availHuman, Class: class})
+	stats = append(stats, AjaxStat{Stat: Stat{Name: "Memory Used [%]", Value: percHuman, Class: class}})
 
 	return stats
 }
@@ -369,11 +464,10 @@ func CollectDashboardData(w http.ResponseWriter, r *http.Request) (map[string]in
 	activity := getLog(w, r, "activity")
 	dashboardData["Activity"] = _parseActivity(activity)
 
-	components := getLog(w, r, "components")
-	dashboardData["Components"] = _parseComponents(components)
-
-	stats := getLog(w, r, "stats")
-	dashboardData["Stats"] = _parseStats(stats)
+	components := _parseComponents(getLog(w, r, "components"))
+	uptime := getLog(w, r, "uptime")
+	dashboardData["Stats"] = _parseStats(uptime, components)
+	dashboardData["Components"] = components
 
 	return dashboardData, nil
 }

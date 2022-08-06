@@ -95,6 +95,19 @@ p.caption {
     padding: 4px 8px;
 }
 
+td.pad-low-bottom {
+    padding-bottom: 4px !important;
+}
+
+td.pad-low {
+    padding-top: 4px !important;
+    padding-bottom: 4px !important;
+}
+
+td.pad-low-top {
+    padding-top: 4px !important;
+}
+
 .btn-reg {
     width: 5em;
 }

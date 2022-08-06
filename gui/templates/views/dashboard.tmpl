@@ -136,17 +136,26 @@
                     <div class="clearfix"></div>
                 </div>
                 <div class="panel-body">
-                    <div class="table-responsive">
+                    <div class="table-responsive" id="dashboard-stats">
                         <table class="table table-bordered mb15">
                             <tbody>
                             {{ range $item := .Components }}
                                 <tr>
-                                    <td>{{ $item.Name }}</td>
-                                    <td title="{{ $item.Timestamp }}">
+                                    <td rowspan="3">{{ $item.Name }}</td>
+                                    <td class="pad-low-bottom">Uptime</td>
+                                    <td class="pad-low-bottom" title="{{ $item.Timestamp }}">
                                         <span class="pull-right{{ if $item.Class }} {{ $item.Class }}{{ end }}">{{ $item.TimestampRel }}
                                             {{ if $item.Class }}<i class="fa fa-fw fa-warning"></i>{{ end }}
                                         </span>
                                     </td>
+                                </tr>
+                                <tr>
+                                    <td class="pad-low">Memory</td>
+                                    <td class="pad-low"><span class="pull-right"><img height="12px" src="/img/spinner.gif"></span></td>
+                                </tr>
+                                <tr>
+                                    <td class="pad-low-top">Processes</td>
+                                    <td class="pad-low-top"><span class="pull-right"><img height="12px" src="/img/spinner.gif"></span></td>
                                 </tr>
                             {{ end }}
                             </tbody>
@@ -158,7 +167,8 @@
                                 <tr>
                                     <td>{{ $item.Name }}</td>
                                     <td{{ if $item.Hint }} title="{{ $item.Hint }}"{{ end }}>
-                                        <span class="pull-right{{ if $item.Class }} {{ $item.Class }}{{ end }}">{{ $item.Value }}
+                                        <span class="pull-right{{ if $item.Class }} {{ $item.Class }}{{ end }}">
+                                            {{ if $item.Value }}{{ $item.Value }}{{ else }}<img height="12px" src="/img/spinner.gif">{{ end }}
                                             {{ if $item.Class }}<i class="fa fa-fw fa-warning"></i>{{ end }}
                                         </span>
                                     </td>
@@ -177,4 +187,54 @@
                 </a>
             </div>
 
+{{ end }}
+
+{{ define "tail" }}
+    <script>
+        (function() {
+            $.ajax(window.location.href + "/stats", {
+                timeout: 30000
+            })
+            .done(function(data) {
+                for (var i = 0; i < data.length; i++) {
+                    children = $("#dashboard-stats td").filter(function() {
+                        return $(this).text() == data[i].Name;
+                    }).parent().children();
+
+                    if (children.length == 2) {
+                        // a .Stats table row
+                        td = children[1];
+                        $(td).prop('title', data[i].Hint);
+                        span = $(td).children()[0];
+                        $(span).attr("class","pull-right");
+                        val = data[i].Value
+                        if (data[i].Class != "") {
+                            $(span).addClass(data[i].Class);
+                            val += '<i class="fa fa-fw fa-warning"></i>';
+                        }
+                        $(span).html(val);
+                    } else {
+                        // a .Components table row
+                        nextRows = $(children).parent().nextAll("tr");
+
+                        memSpan = $($(nextRows[0]).children()[1]).children()[0];
+                        $(memSpan).text(data[i].MemoryUsed + " (" + data[i].MemoryPerc + ")");
+
+                        procSpan = $($(nextRows[1]).children()[1]).children()[0];
+                        $(procSpan).text(data[i].NumPids);
+                    }
+                }
+
+                // Delete any remaining spinners when one or more dockers is down
+                $('img').each(function() {
+                    if ($(this).attr('height') == '12px' && $(this).attr('src') == '/img/spinner.gif') {
+                        $(this).remove();
+                    }
+                });
+            })
+            .fail(function(xhr, status, err) {
+                console.log("ajax ERROR:", err);
+            });
+        })();
+    </script>
 {{ end }}

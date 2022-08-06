@@ -132,18 +132,18 @@ case $txt in
     svc=$(docker inspect $(docker ps --format "{{.Names}}" | grep -- -control-) | grep -i started | sed -e "s/[^:]*:\(.*\)/\1/" | sed -e "s/.*\"\(.*\)\".*/\1/")
     boulder=$(docker inspect $(docker ps --format "{{.Names}}" | grep -- -boulder-) | grep -i started | grep -v depends_on | sed -e "s/[^:]*:\(.*\)/\1/" | sed -e "s/.*\"\(.*\)\".*/\1/")
     labca=$(docker inspect $(docker ps --format "{{.Names}}" | grep -- -labca-) | grep -i started | grep -v depends_on | sed -e "s/[^:]*:\(.*\)/\1/" | sed -e "s/.*\"\(.*\)\".*/\1/")
-    echo "$nginx|$svc|$boulder|$labca"
+    mysql=$(docker inspect $(docker ps --format "{{.Names}}" | grep -- -bmysql-) | grep -i started | grep -v depends_on | sed -e "s/[^:]*:\(.*\)/\1/" | sed -e "s/.*\"\(.*\)\".*/\1/")
+    echo "$nginx|$svc|$boulder|$labca|$mysql"
+    exit 0
+    ;;
+"log-uptime")
+    timezone=$(cat /etc/timezone)
+    uptime=$(uptime -s)
+    echo "$timezone|$uptime"
     exit 0
     ;;
 "log-stats")
-    timezone=$(cat /etc/timezone)
-    uptime=$(uptime -s)
-    procs=$(ps -ef --no-headers | wc -l)
-    total=$(free -b --si | grep ":" | head -1 | perl -p0e 's/.*?\s+(\d+)\s+.*/$1/')
-    avail=$(free -b --si | grep ":" | head -1 | perl -p0e 's/.*\s+(\d+)$/$1/')
-    let used=$total-$avail
-    echo "$timezone|$uptime|$procs|$used|$avail"
-    exit 0
+    docker stats --no-stream -a | grep " boulder-"
     ;;
 "revoke-cert")
     read serial
@@ -182,6 +182,12 @@ case $txt in
     COMPOSE_HTTP_TIMEOUT=120 docker-compose restart labca
     sleep 15
     wait_up $PS_LABCA &>>$LOGFILE
+    ;;
+"mysql-restart")
+    cd /boulder
+    set +e
+    COMPOSE_HTTP_TIMEOUT=120 docker-compose restart bmysql
+    set -e
     ;;
 "svc-restart")
     cd /boulder

@@ -894,7 +894,8 @@ func (res *Result) ManageComponents(w http.ResponseWriter, r *http.Request, acti
 		if (components[i].Name == "NGINX Webserver" && (action == "nginx-reload" || action == "nginx-restart")) ||
 			(components[i].Name == "Controller" && action == "svc-restart") ||
 			(components[i].Name == "Boulder (ACME)" && (action == "boulder-start" || action == "boulder-stop" || action == "boulder-restart")) ||
-			(components[i].Name == "LabCA Application" && action == "labca-restart") {
+			(components[i].Name == "LabCA Application" && action == "labca-restart") ||
+			(components[i].Name == "MySQL Database" && action == "mysql-restart") {
 			res.Timestamp = components[i].Timestamp
 			res.TimestampRel = components[i].TimestampRel
 			res.Class = components[i].Class
@@ -976,6 +977,7 @@ func _managePost(w http.ResponseWriter, r *http.Request) {
 		"backup-delete",
 		"backup-now",
 		"cert-export",
+		"mysql-restart",
 		"nginx-reload",
 		"nginx-restart",
 		"svc-restart",
@@ -1109,17 +1111,20 @@ func _manageGet(w http.ResponseWriter, r *http.Request) {
 			btn["Label"] = "Restart"
 			components[i].Buttons = append(components[i].Buttons, btn)
 		}
-	}
-	manageData["Components"] = components
 
-	stats := _parseStats(getLog(w, r, "stats"))
-	for _, stat := range stats {
-		if stat.Name == "System Uptime" {
-			manageData["ServerTimestamp"] = stat.Hint
-			manageData["ServerTimestampRel"] = stat.Value
-			break
+		if components[i].Name == "MySQL Database" {
+			components[i].LogURL = ""
+			components[i].LogTitle = ""
+
+			btn := make(map[string]interface{})
+			btn["Class"] = "btn-warning"
+			btn["Id"] = "mysql-restart"
+			btn["Title"] = "Restart the MySQL database server"
+			btn["Label"] = "Restart"
+			components[i].Buttons = append(components[i].Buttons, btn)
 		}
 	}
+	manageData["Components"] = components
 
 	backupFiles := strings.Split(getLog(w, r, "backups"), "\n")
 	backupFiles = backupFiles[:len(backupFiles)-1]
@@ -2269,6 +2274,13 @@ func certRevokeHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func statsHandler(w http.ResponseWriter, r *http.Request) {
+	res := parseDockerStats(getLog(w, r, "stats"))
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(res)
+}
+
 type navItem struct {
 	Name     string
 	Icon     string
@@ -2600,6 +2612,7 @@ func main() {
 
 	r := mux.NewRouter()
 	r.HandleFunc("/", rootHandler).Methods("GET")
+	r.HandleFunc("/stats", statsHandler).Methods("GET")
 	r.HandleFunc("/about", aboutHandler).Methods("GET")
 	r.HandleFunc("/manage", manageHandler).Methods("GET", "POST")
 	r.HandleFunc("/final", finalHandler).Methods("GET")
