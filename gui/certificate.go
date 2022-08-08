@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"mime/multipart"
 	"os"
 	"os/exec"
@@ -124,12 +123,12 @@ func preCreateTasks(path string) error {
 	}
 
 	if _, err := os.Stat(path + "serial"); os.IsNotExist(err) {
-		if err := ioutil.WriteFile(path+"serial", []byte("1000\n"), 0644); err != nil {
+		if err := os.WriteFile(path+"serial", []byte("1000\n"), 0644); err != nil {
 			return err
 		}
 	}
 	if _, err := os.Stat(path + "crlnumber"); os.IsNotExist(err) {
-		if err = ioutil.WriteFile(path+"crlnumber", []byte("1000\n"), 0644); err != nil {
+		if err = os.WriteFile(path+"crlnumber", []byte("1000\n"), 0644); err != nil {
 			return err
 		}
 	}
@@ -301,7 +300,7 @@ func (ci *CertificateInfo) Import(path string, certBase string, tmpDir string, t
 
 // Upload a certificate and key file
 func (ci *CertificateInfo) Upload(path string, certBase string, tmpKey string, tmpCert string) error {
-	if err := ioutil.WriteFile(tmpKey, []byte(ci.Key), 0644); err != nil {
+	if err := os.WriteFile(tmpKey, []byte(ci.Key), 0644); err != nil {
 		return err
 	}
 
@@ -322,7 +321,7 @@ func (ci *CertificateInfo) Upload(path string, certBase string, tmpKey string, t
 		return reportError(err)
 	}
 
-	if err := ioutil.WriteFile(tmpCert, []byte(ci.Certificate), 0644); err != nil {
+	if err := os.WriteFile(tmpCert, []byte(ci.Certificate), 0644); err != nil {
 		return err
 	}
 
@@ -494,7 +493,7 @@ func (ci *CertificateInfo) Create(path string, certBase string) error {
 		return err
 	}
 
-	tmpDir, err := ioutil.TempDir("", "labca")
+	tmpDir, err := os.MkdirTemp("", "labca")
 	if err != nil {
 		return err
 	}

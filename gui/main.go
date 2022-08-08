@@ -16,7 +16,6 @@ import (
 	"fmt"
 	"html/template"
 	"io"
-	"io/ioutil"
 	"log"
 	"math"
 	"math/big"
@@ -1250,7 +1249,7 @@ func getLog(w http.ResponseWriter, r *http.Request, logType string) string {
 
 	fmt.Fprintf(conn, "log-"+logType+"\n")
 	reader := bufio.NewReader(conn)
-	contents, err := ioutil.ReadAll(reader)
+	contents, err := io.ReadAll(reader)
 	if err != nil {
 		errorHandler(w, r, err, http.StatusInternalServerError)
 		return ""
@@ -1321,14 +1320,11 @@ func writer(ws *websocket.Conn, logType string) {
 
 	go showLog(ws, logType)
 
-	for {
-		select {
-		case <-pingTicker.C:
-			ws.SetWriteDeadline(time.Now().Add(writeWait))
-			if err := ws.WriteMessage(websocket.PingMessage, []byte{}); err != nil {
-				// Probably "websocket: close sent"
-				return
-			}
+	for range pingTicker.C {
+		ws.SetWriteDeadline(time.Now().Add(writeWait))
+		if err := ws.WriteMessage(websocket.PingMessage, []byte{}); err != nil {
+			// Probably "websocket: close sent"
+			return
 		}
 	}
 }
@@ -1396,7 +1392,7 @@ func _buildCI(r *http.Request, session *sessions.Session, isRoot bool) *Certific
 }
 
 func issuerNameID(certfile string) (int64, error) {
-	cf, err := ioutil.ReadFile(certfile)
+	cf, err := os.ReadFile(certfile)
 	if err != nil {
 		log.Printf("issuerNameID: could not read cert file: %v", err)
 		return 0, err
@@ -1534,7 +1530,7 @@ func _hostCommand(w http.ResponseWriter, r *http.Request, command string, params
 	}
 
 	reader := bufio.NewReader(conn)
-	message, err := ioutil.ReadAll(reader)
+	message, err := io.ReadAll(reader)
 	if err != nil {
 		errorHandler(w, r, err, http.StatusInternalServerError)
 		return false
@@ -1762,7 +1758,7 @@ func _setupAdminUser(w http.ResponseWriter, r *http.Request) bool {
 
 			fmt.Fprintf(conn, "backup-restore\n"+header.Filename+"\n")
 			reader := bufio.NewReader(conn)
-			message, err := ioutil.ReadAll(reader)
+			message, err := io.ReadAll(reader)
 			if err != nil {
 				fmt.Println(err)
 				reg.Errors["File"] = "Could not import backup file: error reading control response"

@@ -45,7 +45,7 @@ func _parseLine(line string, loc *time.Location) Activity {
 
 	line = _removeAnsiColors(line)
 
-	re := regexp.MustCompile("^.*\\|\\s*(\\S)(\\S+) (\\S+) (\\S+) (.*)$")
+	re := regexp.MustCompile(`^.*\|\s*(\S)(\S+) (\S+) (\S+) (.*)$`)
 	result := re.FindStringSubmatch(line)
 	if len(result) == 0 {
 		return activity
