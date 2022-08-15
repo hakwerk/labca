@@ -1,9 +1,11 @@
 package main
 
 import (
+	"crypto/rand"
 	"errors"
 	"fmt"
 	"io"
+	"math/big"
 	"mime/multipart"
 	"os"
 	"os/exec"
@@ -114,6 +116,21 @@ func reportError(err error) error {
 	return errors.New("Error (" + err.Error() + ")! See LabCA logs for details")
 }
 
+func getRandomSerial() (string, error) {
+	// from ca.generateSerialNumberAndValidity()
+	const randBits = 136
+	serialBytes := make([]byte, randBits/8+1)
+	serialBytes[0] = 0xee
+	if _, err := rand.Read(serialBytes[1:]); err != nil {
+		return "", reportError(err)
+	}
+
+	serialBigInt := big.NewInt(0)
+	serialBigInt.SetBytes(serialBytes)
+
+	return fmt.Sprintf("%x", serialBigInt), nil
+}
+
 func preCreateTasks(path string) error {
 	if _, err := exeCmd("touch " + path + "index.txt"); err != nil {
 		return reportError(err)
@@ -123,7 +140,11 @@ func preCreateTasks(path string) error {
 	}
 
 	if _, err := os.Stat(path + "serial"); os.IsNotExist(err) {
-		if err := os.WriteFile(path+"serial", []byte("1000\n"), 0644); err != nil {
+		s, err := getRandomSerial()
+		if err != nil {
+			return err
+		}
+		if err := os.WriteFile(path+"serial", []byte(s+"\n"), 0644); err != nil {
 			return err
 		}
 	}
