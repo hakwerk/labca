@@ -43,6 +43,8 @@ import (
 	"github.com/nbutton23/zxcvbn-go"
 	"github.com/spf13/viper"
 	"golang.org/x/crypto/bcrypt"
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
 )
 
 const (
@@ -1472,7 +1474,7 @@ func _certCreate(w http.ResponseWriter, r *http.Request, certBase string, isRoot
 			}
 
 			if err := ci.Create(path, certBase); err != nil {
-				ci.Errors[strings.Title(ci.CreateType)] = err.Error()
+				ci.Errors[cases.Title(language.Und).String(ci.CreateType)] = err.Error()
 				log.Printf("_certCreate: create failed: %v", err)
 				render(w, r, "cert:manage", map[string]interface{}{"CertificateInfo": ci, "Progress": _progress(certBase), "HelpText": _helptext(certBase)})
 				return false
