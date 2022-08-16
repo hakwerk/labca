@@ -1,5 +1,5 @@
 diff --git a/cmd/notify-mailer/main.go b/cmd/notify-mailer/main.go
-index f281d85c..449845dc 100644
+index 34f07a9b..ed957946 100644
 --- a/cmd/notify-mailer/main.go
 +++ b/cmd/notify-mailer/main.go
 @@ -36,6 +36,7 @@ type mailer struct {
@@ -7,19 +7,19 @@ index f281d85c..449845dc 100644
  	targetRange   interval
  	sleepInterval time.Duration
 +	pa            *policy.AuthorityImpl
+ 	parallelSends uint
  }
  
- // interval defines a range of email addresses to send to in alphabetical order.
-@@ -171,7 +172,7 @@ func (m *mailer) run() error {
- 			continue
- 		}
+@@ -200,7 +201,7 @@ func (m *mailer) run() error {
+ 					continue
+ 				}
  
--		err := policy.ValidEmail(address)
-+		err := m.pa.ValidEmail(address)
- 		if err != nil {
- 			m.log.Infof("Skipping %q due to policy violation: %s", address, err)
- 			continue
-@@ -472,7 +473,9 @@ type Config struct {
+-				err := policy.ValidEmail(w.address)
++				err := m.pa.ValidEmail(w.address)
+ 				if err != nil {
+ 					m.log.Infof("Skipping %q due to policy violation: %s", w.address, err)
+ 					continue
+@@ -501,7 +502,9 @@ type Config struct {
  	NotifyMailer struct {
  		DB cmd.DBConfig
  		cmd.SMTPConfig
@@ -29,7 +29,7 @@ index f281d85c..449845dc 100644
  	Syslog cmd.SyslogConfig
  }
  
-@@ -536,6 +539,14 @@ func main() {
+@@ -569,6 +572,14 @@ func main() {
  		log.Infof("While reading the recipient list file %s", probs)
  	}
  
@@ -44,7 +44,7 @@ index f281d85c..449845dc 100644
  	var mailClient bmail.Mailer
  	if *dryRun {
  		log.Infof("Starting %s in dry-run mode", cmd.VersionString())
-@@ -551,6 +562,7 @@ func main() {
+@@ -584,6 +595,7 @@ func main() {
  			cfg.NotifyMailer.Username,
  			smtpPassword,
  			nil,
@@ -52,11 +52,11 @@ index f281d85c..449845dc 100644
  			*address,
  			log,
  			metrics.NoopRegisterer,
-@@ -571,6 +583,7 @@ func main() {
+@@ -604,6 +616,7 @@ func main() {
  			end:   *end,
  		},
  		sleepInterval: *sleep,
 +		pa:            pa,
+ 		parallelSends: *parallelSends,
  	}
  
- 	err = m.run()

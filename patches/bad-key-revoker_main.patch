@@ -2,7 +2,7 @@ diff --git a/cmd/bad-key-revoker/main.go b/cmd/bad-key-revoker/main.go
 index 4f7a476b5..e907b43a1 100644
 --- a/cmd/bad-key-revoker/main.go
 +++ b/cmd/bad-key-revoker/main.go
-@@ -15,6 +15,7 @@ import (
+@@ -14,6 +14,7 @@ import (
  
  	"github.com/honeycombio/beeline-go"
  	"github.com/jmhodges/clock"
@@ -10,7 +10,7 @@ index 4f7a476b5..e907b43a1 100644
  	"github.com/letsencrypt/boulder/cmd"
  	"github.com/letsencrypt/boulder/core"
  	"github.com/letsencrypt/boulder/db"
-@@ -386,6 +387,9 @@ type Config struct {
+@@ -385,6 +386,9 @@ type Config struct {
  		TLS       cmd.TLSConfig
  		RAService *cmd.GRPCClientConfig
  
@@ -20,7 +20,7 @@ index 4f7a476b5..e907b43a1 100644
  		// MaximumRevocations specifies the maximum number of certificates associated with
  		// a key hash that bad-key-revoker will attempt to revoke. If the number of certificates
  		// is higher than MaximumRevocations bad-key-revoker will error out and refuse to
-@@ -419,6 +423,12 @@ type Config struct {
+@@ -418,6 +422,12 @@ type Config struct {
  
  	Syslog  cmd.SyslogConfig
  	Beeline cmd.BeelineConfig
@@ -33,7 +33,7 @@ index 4f7a476b5..e907b43a1 100644
  }
  
  func main() {
-@@ -456,6 +466,32 @@ func main() {
+@@ -455,6 +465,32 @@ func main() {
  	cmd.FailOnError(err, "Failed to load credentials and create gRPC connection to RA")
  	rac := rapb.NewRegistrationAuthorityClient(conn)
  
@@ -65,8 +65,8 @@ index 4f7a476b5..e907b43a1 100644
 +
  	var smtpRoots *x509.CertPool
  	if config.BadKeyRevoker.Mailer.SMTPTrustedRootFile != "" {
- 		pem, err := ioutil.ReadFile(config.BadKeyRevoker.Mailer.SMTPTrustedRootFile)
-@@ -477,6 +513,7 @@ func main() {
+ 		pem, err := os.ReadFile(config.BadKeyRevoker.Mailer.SMTPTrustedRootFile)
+@@ -476,6 +512,7 @@ func main() {
  		config.BadKeyRevoker.Mailer.Username,
  		smtpPassword,
  		smtpRoots,

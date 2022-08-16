@@ -2,7 +2,7 @@ diff --git a/test/startservers.py b/test/startservers.py
 index 21ca6259..5b8847eb 100644
 --- a/test/startservers.py
 +++ b/test/startservers.py
-@@ -146,6 +146,9 @@ processes = []
+@@ -154,6 +154,9 @@ processes = []
  challSrvProcess = None
  
  def setupHierarchy():

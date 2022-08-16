@@ -77,6 +77,7 @@ if [ "$PKI_EXTENDED_TIMEOUT" == "1" ]; then
     sed -i -e "s/\"timeout\": \"15s\"/\"timeout\": \"30s\"/" config/expiration-mailer.json
     sed -i -e "s/\"timeout\": \"15s\"/\"timeout\": \"30s\"/" config/ra.json
     sed -i -e "s/\"timeout\": \"20s\"/\"timeout\": \"40s\"/" config/ra.json
+    sed -i -e "s/\"timeout\": \"15s\"/\"timeout\": \"30s\"/" config/crl-storer.json
     sed -i -e "s/\"timeout\": \"15s\"/\"timeout\": \"30s\"/" config/crl-updater.json
     sed -i -e "s/\"timeout\": \"15s\"/\"timeout\": \"30s\"/" config/ocsp-updater.json
     sed -i -e "s/\"timeout\": \"15s\"/\"timeout\": \"30s\"/" config/orphan-finder.json

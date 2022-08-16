@@ -1,0 +1,15 @@
+diff --git a/test/config/crl-storer.json b/test/config/crl-storer.json
+index 61f14d795..4896803c4 100644
+--- a/test/config/crl-storer.json
++++ b/test/config/crl-storer.json
+@@ -15,9 +15,7 @@
+       ]
+     },
+     "issuerCerts": [
+-      "/hierarchy/intermediate-cert-rsa-a.pem",
+-      "/hierarchy/intermediate-cert-rsa-b.pem",
+-      "/hierarchy/intermediate-cert-ecdsa-a.pem"
++      "/hierarchy/intermediate-cert-rsa-a.pem"
+     ],
+     "s3Endpoint": "http://localhost:7890",
+     "s3Region": "us-west-1",
