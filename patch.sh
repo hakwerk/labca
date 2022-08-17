@@ -31,6 +31,8 @@ $SUDO patch -p1 < $cloneDir/patches/startservers.patch
 $SUDO patch -p1 < $cloneDir/patches/errors_errors.patch
 $SUDO patch -p1 < $cloneDir/patches/ratelimit_rate-limits.patch
 $SUDO patch -p1 < $cloneDir/patches/linter_linter.patch
+$SUDO patch -p1 < $cloneDir/patches/crl-storer_main.patch
+$SUDO patch -p1 < $cloneDir/patches/storer_storer.patch
 
 sed -i -e "s/berrors.RateLimitError(/berrors.RateLimitError(ra.rlPolicies.RateLimitsURL(), /g" ra/ra.go
 

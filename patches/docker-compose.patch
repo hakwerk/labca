@@ -11,11 +11,12 @@ index 0cd8c8dd..36619190 100644
        GOFLAGS: -mod=vendor
        # Go 1.18 turns off SHA-1 validation on CSRs (and certs, but that doesn't
        # affect us). It also turns off TLS 1.0 and TLS 1.1. Temporarily go back
-@@ -17,6 +17,7 @@ services:
+@@ -17,6 +17,8 @@ services:
        GODEBUG: x509sha1=1,tls10default=1
      volumes:
        - .:/boulder:cached
 +      - /home/labca/boulder_labca:/boulder/labca
++      - /home/labca/nginx_data/static:/wwwstatic
        - ./.gocache:/root/.cache/go-build:cached
        - ./.hierarchy:/hierarchy/:cached
        - ./.softhsm-tokens/:/var/lib/softhsm/tokens/:cached

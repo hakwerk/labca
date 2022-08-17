@@ -1,0 +1,115 @@
+diff --git a/crl/storer/storer.go b/crl/storer/storer.go
+index b2514eb4..77955b0c 100644
+--- a/crl/storer/storer.go
++++ b/crl/storer/storer.go
+@@ -9,6 +9,9 @@ import (
+ 	"fmt"
+ 	"io"
+ 	"math/big"
++	"os"
++	"path/filepath"
++	"sort"
+ 
+ 	"github.com/aws/aws-sdk-go-v2/service/s3"
+ 	"github.com/aws/aws-sdk-go-v2/service/s3/types"
+@@ -32,6 +35,7 @@ type crlStorer struct {
+ 	cspb.UnimplementedCRLStorerServer
+ 	s3Client         s3Putter
+ 	s3Bucket         string
++	localStorePath   string
+ 	issuers          map[issuance.IssuerNameID]*issuance.Certificate
+ 	uploadCount      *prometheus.CounterVec
+ 	sizeHistogram    *prometheus.HistogramVec
+@@ -44,6 +48,7 @@ func New(
+ 	issuers []*issuance.Certificate,
+ 	s3Client s3Putter,
+ 	s3Bucket string,
++	localStorePath string,
+ 	stats prometheus.Registerer,
+ 	log blog.Logger,
+ 	clk clock.Clock,
+@@ -77,6 +82,7 @@ func New(
+ 		issuers:          issuersByNameID,
+ 		s3Client:         s3Client,
+ 		s3Bucket:         s3Bucket,
++		localStorePath:   localStorePath,
+ 		uploadCount:      uploadCount,
+ 		sizeHistogram:    sizeHistogram,
+ 		latencyHistogram: latencyHistogram,
+@@ -153,15 +159,19 @@ func (cs *crlStorer) UploadCRL(stream cspb.CRLStorer_UploadCRLServer) error {
+ 	checksum := sha256.Sum256(crlBytes)
+ 	checksumb64 := base64.StdEncoding.EncodeToString(checksum[:])
+ 	crlContentType := "application/pkix-crl"
+-	_, err = cs.s3Client.PutObject(stream.Context(), &s3.PutObjectInput{
+-		Bucket:            &cs.s3Bucket,
+-		Key:               &filename,
+-		Body:              bytes.NewReader(crlBytes),
+-		ChecksumAlgorithm: types.ChecksumAlgorithmSha256,
+-		ChecksumSHA256:    &checksumb64,
+-		ContentType:       &crlContentType,
+-		Metadata:          map[string]string{"crlNumber": crlNumber.String()},
+-	})
++	if cs.localStorePath == "" {
++		_, err = cs.s3Client.PutObject(stream.Context(), &s3.PutObjectInput{
++			Bucket:            &cs.s3Bucket,
++			Key:               &filename,
++			Body:              bytes.NewReader(crlBytes),
++			ChecksumAlgorithm: types.ChecksumAlgorithmSha256,
++			ChecksumSHA256:    &checksumb64,
++			ContentType:       &crlContentType,
++			Metadata:          map[string]string{"crlNumber": crlNumber.String()},
++		})
++	} else {
++		err = storeLocalFile(cs.localStorePath, issuer.NameID(), crlNumber, shardIdx, bytes.NewReader(crlBytes))
++	}
+ 	if err != nil {
+ 		cs.uploadCount.WithLabelValues(issuer.Subject.CommonName, "failed")
+ 		cs.log.AuditErrf(
+@@ -186,3 +196,46 @@ func (cs *crlStorer) UploadCRL(stream cspb.CRLStorer_UploadCRLServer) error {
+ 
+ 	return stream.SendAndClose(&emptypb.Empty{})
+ }
++
++func storeLocalFile(path string, nameID issuance.IssuerNameID, crlNumber *big.Int, shardIdx int64, crlBytes io.Reader) error {
++	// Write the file
++	fn := fmt.Sprintf("%s%c%d-%d-%d.crl", path, os.PathSeparator, nameID, crlNumber, shardIdx)
++	out, err := os.Create(fn)
++	defer out.Close()
++	if err != nil {
++		return fmt.Errorf("creating local crl file: %w", err)
++	}
++
++	_, err = io.Copy(out, crlBytes)
++	if err != nil {
++		return fmt.Errorf("storing crl locally: %w", err)
++	}
++
++	// Create/update the symlink
++	ln := fmt.Sprintf("%s%c%d.crl", path, os.PathSeparator, nameID)
++	lntmp := ln + ".new"
++	fn = fmt.Sprintf("%d-%d-%d.crl", nameID, crlNumber, shardIdx)
++
++	if err = os.Remove(lntmp); err != nil && !os.IsNotExist(err) {
++		return fmt.Errorf("removing symlink: %w", err)
++	}
++	if err = os.Symlink(fn, lntmp); err != nil {
++		return fmt.Errorf("creating symlink: %w", err)
++	}
++	if err = os.Rename(lntmp, ln); err != nil {
++		return fmt.Errorf("renaming symlink: %w", err)
++	}
++
++	// Remove old files (keep last five)
++	pt := fmt.Sprintf("%s%c%d-*-%d.crl", path, os.PathSeparator, nameID, shardIdx)
++	matches, err := filepath.Glob(pt)
++	sort.Strings(matches)
++	for i := 0; i < len(matches)-5; i++ {
++		err := os.Remove(matches[i])
++		if err != nil {
++			return fmt.Errorf("deleting file %s: %w", matches[i], err)
++		}
++	}
++
++	return nil
++}
+\ No newline at end of file

@@ -1,0 +1,23 @@
+diff --git a/cmd/crl-storer/main.go b/cmd/crl-storer/main.go
+index 74d525c4..6a91ddab 100644
+--- a/cmd/crl-storer/main.go
++++ b/cmd/crl-storer/main.go
+@@ -47,6 +47,9 @@ type Config struct {
+ 		// https://docs.aws.amazon.com/sdkref/latest/guide/file-format.html.
+ 		S3CredsFile string
+ 
++		// If this is set, store the files locally instead of using (fake) S3
++		LocalStorePath string
++
+ 		Features map[string]bool
+ 	}
+ 
+@@ -129,7 +132,7 @@ func main() {
+ 	}
+ 	s3client := s3.NewFromConfig(awsConfig, s3opts...)
+ 
+-	csi, err := storer.New(issuers, s3client, c.CRLStorer.S3Bucket, scope, logger, clk)
++	csi, err := storer.New(issuers, s3client, c.CRLStorer.S3Bucket, c.CRLStorer.LocalStorePath, scope, logger, clk)
+ 	cmd.FailOnError(err, "Failed to create CRLStorer impl")
+ 
+ 	serverMetrics := bgrpc.NewServerMetrics(scope)
