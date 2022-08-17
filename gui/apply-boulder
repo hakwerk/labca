@@ -16,8 +16,8 @@ sed -i -e "s/\"issuerDomain\": \".*\"/\"issuerDomain\": \"$PKI_DOMAIN\"/" config
 sed -i -e "s/\"directoryCAAIdentity\": \".*\"/\"directoryCAAIdentity\": \"$PKI_DOMAIN\"/" config/wfe2.json
 
 if ([ "$PKI_DOMAIN_MODE" == "lockdown" ] && [ "$PKI_LOCKDOWN_DOMAINS" != "" ]) || ([ "$PKI_DOMAIN_MODE" == "whitelist" ] && [ "$PKI_WHITELIST_DOMAINS" != "" ]); then
-    perl -i -p0e "s/(\"badResultsOnly\":.*?\n)/\1    \"skipForbiddenDomains\": true,\n/igs" config/cert-checker.json
-    perl -i -p0e "s/(\s+\"ignoredLints\": \[\n)/\1      \"e_dnsname_not_valid_tld\",\n/igs" config/cert-checker.json
+    perl -i -p0e "s/(\"badResultsOnly\":[^\n]*).*?(\s+)(\"checkPeriod\":)/\1\2\"skipForbiddenDomains\": true,\2\3/igs" config/cert-checker.json
+    perl -i -p0e "s/(\"ignoredLints\": \[).*?(\s+)(\"n_subject_common_name_included\")/\1\2\"e_dnsname_not_valid_tld\",\2\3/igs" config/cert-checker.json
 fi
 
 [ -e ../test/hostname-policy.yaml ] && cp ../test/hostname-policy.yaml ./ || true
@@ -46,8 +46,8 @@ if [ "$PKI_DOMAIN_MODE" == "whitelist" ] && [ "$PKI_WHITELIST_DOMAINS" != "" ]; 
     done
 fi
 if [ "$PKI_DOMAIN_MODE" == "lockdown" ] || [ "$PKI_DOMAIN_MODE" == "whitelist" ]; then
-    sed -i -e "s/\(\"n_subject_common_name_included\"\)/\1,\"e_dnsname_not_valid_tld\"/" config/ca-a.json
-    sed -i -e "s/\(\"n_subject_common_name_included\"\)/\1,\"e_dnsname_not_valid_tld\"/" config/ca-b.json
+    sed -i -e "s/\(\"n_subject_common_name_included\"\).*\]/\1,\"e_dnsname_not_valid_tld\"\]/" config/ca-a.json
+    sed -i -e "s/\(\"n_subject_common_name_included\"\).*\]/\1,\"e_dnsname_not_valid_tld\"\]/" config/ca-b.json
 
     REPLACEMENT=""
     if [ "$PKI_DOMAIN_MODE" == "lockdown" ] && [ "$PKI_LOCKDOWN_DOMAINS" != "" ]; then
