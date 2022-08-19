@@ -1,0 +1,71 @@
+diff --git a/crl/crl_x509/crl.go b/crl/crl_x509/crl.go
+index ba53b813..01ffc0a4 100644
+--- a/crl/crl_x509/crl.go
++++ b/crl/crl_x509/crl.go
+@@ -418,6 +418,9 @@ func CreateRevocationList(rand io.Reader, template *RevocationList, issuer *x509
+ 		return nil, err
+ 	}
+ 
++	// Fix PrintableString / UTF8String before calculating the siugnature / hash
++	fixDirectoryStrings(issuer.RawSubject, &tbsCertListContents)
++
+ 	input := tbsCertListContents
+ 	if hashFunc != 0 {
+ 		h := hashFunc.New()
+@@ -437,11 +440,19 @@ func CreateRevocationList(rand io.Reader, template *RevocationList, issuer *x509
+ 		return nil, err
+ 	}
+ 
+-	return asn1.Marshal(pkix.CertificateList{
++	cl, err := asn1.Marshal(pkix.CertificateList{
+ 		TBSCertList:        tbsCertList,
+ 		SignatureAlgorithm: signatureAlgorithm,
+ 		SignatureValue:     asn1.BitString{Bytes: signature, BitLength: len(signature) * 8},
+ 	})
++	if err != nil {
++		return nil, err
++	}
++
++	// Fix PrintableString / UTF8String again in the final result
++	fixDirectoryStrings(issuer.RawSubject, &cl)
++
++	return cl, nil
+ }
+ 
+ // CheckSignatureFrom verifies that the signature on rl is a valid signature
+@@ -462,3 +473,35 @@ func (rl *RevocationList) CheckSignatureFrom(parent *x509.Certificate) error {
+ 
+ 	return parent.CheckSignature(x509.SignatureAlgorithm(rl.SignatureAlgorithm), rl.RawTBSRevocationList, rl.Signature)
+ }
++
++// The attributes in the Name of the Subject or Issuer mostly are a DirectoryString, primarily
++// PrintableString or UTF8String. In the go crypto packages both get mapped to a string and it is
++// virtually impossible to preserve the UTF8String correctly. But it is necessary for producing
++// correct, usable CRLs (Certificate Revocation Lists).
++// This helper method updates the type byte for those oids in a []byte (the raw crl) by copying
++// them from another []byte (the raw issuer).
++func fixDirectoryStrings(src []byte, dest *[]byte) {
++	ptn := []byte{6, 3, 85, 4, 0}
++	oids := []byte{
++		3,  // common name
++		7,  // locality
++		8,  // province
++		9,  // street address
++		10, // organization
++		11, // organizational unit
++		17, // postal code
++	}
++
++	for oid := 0; oid < len(oids); oid++ {
++		ptn[4] = oids[oid]
++
++		i := bytes.Index(src, ptn)
++		if i > -1 {
++			tp := src[i+len(ptn)]
++			k := bytes.Index(*dest, ptn)
++			if k > -1 {
++				(*dest)[k+len(ptn)] = tp
++			}
++		}
++	}
++}
