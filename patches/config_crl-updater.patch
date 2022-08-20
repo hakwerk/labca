@@ -22,8 +22,8 @@ index 875fc7ab..9c0ea6ed 100644
 -    "updatePeriod": "6h",
 -    "updateOffset": "9120s",
 -    "maxParallelism": 10
-+    "updatePeriod": "1h",
-+    "updateOffset": "120s",
++    "updatePeriod": "24h",
++    "updateOffset": "62m",
 +    "maxParallelism": 1
    },
  
