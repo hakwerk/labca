@@ -1,5 +1,5 @@
 diff --git a/cmd/contact-auditor/main.go b/cmd/contact-auditor/main.go
-index e595af47..b00458c5 100644
+index 90a61d89..b1967e92 100644
 --- a/cmd/contact-auditor/main.go
 +++ b/cmd/contact-auditor/main.go
 @@ -11,6 +11,7 @@ import (
@@ -10,12 +10,13 @@ index e595af47..b00458c5 100644
  	blog "github.com/letsencrypt/boulder/log"
  	"github.com/letsencrypt/boulder/policy"
  	"github.com/letsencrypt/boulder/sa"
-@@ -48,9 +49,12 @@ func validateContacts(id int64, createdAt string, contacts []string) error {
+@@ -48,9 +49,13 @@ func validateContacts(id int64, createdAt string, contacts []string) error {
  		fmt.Fprintf(&probsBuff, "%d\t%s\tvalidation\t%q\t%q\t%q\n", id, createdAt, contact, prob, contacts)
  	}
  
 +	var pa *policy.AuthorityImpl
-+	pa, _ = policy.New(map[core.AcmeChallenge]bool{})
++	logger := cmd.NewLogger(cmd.SyslogConfig{StdoutLevel: 7})
++	pa, _ = policy.New(map[core.AcmeChallenge]bool{}, logger)
 +
  	for _, contact := range contacts {
  		if strings.HasPrefix(contact, "mailto:") {

@@ -1,5 +1,5 @@
 diff --git a/cmd/notify-mailer/main.go b/cmd/notify-mailer/main.go
-index 34f07a9b..ed957946 100644
+index f39ff696..8ab2de84 100644
 --- a/cmd/notify-mailer/main.go
 +++ b/cmd/notify-mailer/main.go
 @@ -36,6 +36,7 @@ type mailer struct {
@@ -29,14 +29,15 @@ index 34f07a9b..ed957946 100644
  	Syslog cmd.SyslogConfig
  }
  
-@@ -569,6 +572,14 @@ func main() {
+@@ -569,6 +572,15 @@ func main() {
  		log.Infof("While reading the recipient list file %s", probs)
  	}
  
 +	// Validate PA config and set defaults if needed
 +	cmd.FailOnError(cfg.PA.CheckChallenges(), "Invalid PA configuration")
 +
-+	pa, err := policy.New(cfg.PA.Challenges)
++	logger := cmd.NewLogger(cmd.SyslogConfig{StdoutLevel: 7})
++	pa, err := policy.New(cfg.PA.Challenges, logger)
 +	cmd.FailOnError(err, "Failed to create PA")
 +	err = pa.SetHostnamePolicyFile(cfg.NotifyMailer.HostnamePolicyFile)
 +	cmd.FailOnError(err, "Failed to load HostnamePolicyFile")
@@ -44,7 +45,7 @@ index 34f07a9b..ed957946 100644
  	var mailClient bmail.Mailer
  	if *dryRun {
  		log.Infof("Starting %s in dry-run mode", cmd.VersionString())
-@@ -584,6 +595,7 @@ func main() {
+@@ -584,6 +596,7 @@ func main() {
  			cfg.NotifyMailer.Username,
  			smtpPassword,
  			nil,
@@ -52,7 +53,7 @@ index 34f07a9b..ed957946 100644
  			*address,
  			log,
  			metrics.NoopRegisterer,
-@@ -604,6 +616,7 @@ func main() {
+@@ -604,6 +617,7 @@ func main() {
  			end:   *end,
  		},
  		sleepInterval: *sleep,

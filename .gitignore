@@ -16,6 +16,9 @@ _site
 # Output of the go coverage tool, specifically when used with LiteIDE
 *.out
 
+# IDE
+*.code-workspace
+
 # Project specific
 gui/data/
 gui/bin/

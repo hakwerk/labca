@@ -24,7 +24,7 @@ dockerComposeVersion="v2.5.0"
 
 labcaUrl="https://github.com/hakwerk/labca/"
 boulderUrl="https://github.com/letsencrypt/boulder/"
-boulderTag="release-2022-08-15"
+boulderTag="release-2022-08-29"
 
 # Feature flags
 flag_skip_redis=true
@@ -606,7 +606,6 @@ config_boulder() {
     sudo -u labca -H patch -p1 -o "$boulderLabCADir/config/ocsp-responder.json" < $cloneDir/patches/config_ocsp-responder.patch &>>$installLog
     sudo -u labca -H patch -p1 -o "$boulderLabCADir/config/publisher.json" < $cloneDir/patches/config_publisher.patch &>>$installLog
     sudo -u labca -H patch -p1 -o "$boulderLabCADir/config/wfe2.json" < $cloneDir/patches/config_wfe2.patch &>>$installLog
-    sudo -u labca -H patch -p1 -o "$boulderLabCADir/config/rocsp-tool.json" < $cloneDir/patches/config_rocsp-tool.patch &>>$installLog
     sudo -u labca -H patch -p1 -o "$boulderLabCADir/config/orphan-finder.json" < $cloneDir/patches/config_orphan-finder.patch &>>$installLog
     sudo -u labca -H patch -p1 -o "$boulderLabCADir/config/crl-storer.json" < $cloneDir/patches/config_crl-storer.patch &>>$installLog
     sudo -u labca -H patch -p1 -o "$boulderLabCADir/config/crl-updater.json" < $cloneDir/patches/config_crl-updater.patch &>>$installLog
@@ -632,7 +631,6 @@ config_boulder() {
     sed -i -e "s|/hierarchy/intermediate-cert-rsa-a.pem|labca/test-ca.pem|" config/publisher.json
     sed -i -e "s|/hierarchy/intermediate-cert-rsa-a.pem|labca/test-ca.pem|" config/ra.json
     sed -i -e "s|/hierarchy/intermediate-cert-rsa-a.pem|labca/test-ca.pem|" config/wfe2.json
-    sed -i -e "s|.hierarchy/intermediate-cert-rsa-a.pem|labca/test-ca.pem|" config/rocsp-tool.json
     sed -i -e "s|/hierarchy/intermediate-cert-rsa-a.pem|labca/test-ca.pem|" config/orphan-finder.json
     sed -i -e "s|/hierarchy/intermediate-cert-rsa-a.pem|labca/test-ca.pem|" config/crl-storer.json
     sed -i -e "s|/hierarchy/intermediate-cert-rsa-a.pem|labca/test-ca.pem|" config/crl-updater.json
