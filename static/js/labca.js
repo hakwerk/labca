@@ -325,15 +325,17 @@ $(function() {
             };
 
             if ( $('.orders_list').length || $('.rel_orders_list').length ) {
+                col = 2;
                 options["columnDefs"] = [ {
-                        targets: 2,
+                        targets: col,
                         render: $.fn.dataTable.render.ellipsis(15)
                     } ];
             }
 
-            if ( $('.rel_certificates_list').length ) {
+            if ( $('.certificates_list').length || $('.rel_certificates_list').length ) {
+                col = 2;
                 options["columnDefs"] = [ {
-                        targets: 2,
+                        targets: col,
                         render: $.fn.dataTable.render.ellipsis(15)
                     } ];
             }
@@ -357,11 +359,7 @@ $(function() {
                     {
                         targets: 5,
                         render: $.fn.dataTable.render.ellipsis(15)
-                    },
-                    {
-                        targets: 6,
-                        visible: false
-                    },
+                    }
                     ];
             }
 
@@ -424,6 +422,36 @@ $(function() {
 
             $(".datatable").on('draw.dt', positionFooter);
         }
+
+        $(".datatable").each(function(idx, val) {
+            var table = $(val).DataTable();
+            classes = $(val).attr('class').split(" ");
+
+            if ( classes.indexOf("accounts_list") > -1  ) {
+                col = 0;
+                table.columns(col).order( 'desc' ).draw();
+            }
+
+            if ( classes.indexOf("certificates_list") > -1 || classes.indexOf("rel_certificates_list") > -1 ) {
+                col = 0;
+                table.columns(col).order( 'desc' ).draw();
+            }
+
+            if ( classes.indexOf("orders_list") > -1 || classes.indexOf("rel_orders_list") > -1 ) {
+                col = 0;
+                table.columns(col).order( 'desc' ).draw();
+            }
+
+            if ( classes.indexOf("authz_list") > -1 || classes.indexOf("rel_authz_list") > -1 ) {
+                col = 0;
+                table.columns(col).order( 'desc' ).draw();
+            }
+
+            if ( classes.indexOf("challenges_list") > -1 || classes.indexOf("rel_challenges_list") > -1 ) {
+                col = 0;
+                table.columns(col).order( 'desc' ).draw();
+            }
+        });
 
         setTimeout(function() {
             $(window).resize();

@@ -2115,11 +2115,7 @@ func accountHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	vars := mux.Vars(r)
-	id, err := strconv.Atoi(vars["id"])
-	if err != nil {
-		errorHandler(w, r, err, http.StatusBadRequest)
-		return
-	}
+	id := vars["id"]
 
 	AccountDetails, err := GetAccount(w, r, id)
 	if err == nil {
@@ -2133,7 +2129,7 @@ func ordersHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	Orders, err := GetOrders(w, r)
+	Orders, err := GetOrders(w, r, "")
 	if err == nil {
 		render(w, r, "list:orders", map[string]interface{}{"List": Orders, "Title": "ACME"})
 	}
@@ -2146,11 +2142,7 @@ func orderHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	vars := mux.Vars(r)
-	id, err := strconv.Atoi(vars["id"])
-	if err != nil {
-		errorHandler(w, r, err, http.StatusBadRequest)
-		return
-	}
+	id := vars["id"]
 
 	OrderDetails, err := GetOrder(w, r, id)
 	if err == nil {
@@ -2164,7 +2156,7 @@ func authzHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	Authz, err := GetAuthz(w, r)
+	Authz, err := GetAuthzs(w, r, "", []string{})
 	if err == nil {
 		render(w, r, "list:authz", map[string]interface{}{"List": Authz, "Title": "ACME"})
 	}
@@ -2179,7 +2171,7 @@ func authHandler(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id := vars["id"]
 
-	AuthDetails, err := GetAuth(w, r, id)
+	AuthDetails, err := GetAuthz(w, r, id)
 	if err == nil {
 		render(w, r, "show:authz", map[string]interface{}{"Details": AuthDetails, "Title": "ACME"})
 	}
@@ -2191,7 +2183,7 @@ func challengesHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	Challenges, err := GetChallenges(w, r)
+	Challenges, err := GetChallenges(w, r, "", []string{})
 	if err == nil {
 		render(w, r, "list:challenges", map[string]interface{}{"List": Challenges, "Title": "ACME"})
 	}
@@ -2204,11 +2196,7 @@ func challengeHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	vars := mux.Vars(r)
-	id, err := strconv.Atoi(vars["id"])
-	if err != nil {
-		errorHandler(w, r, err, http.StatusBadRequest)
-		return
-	}
+	id := vars["id"]
 
 	ChallengeDetails, err := GetChallenge(w, r, id)
 	if err == nil {
@@ -2222,7 +2210,7 @@ func certificatesHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	Certificates, err := GetCertificates(w, r)
+	Certificates, err := GetCertificates(w, r, "")
 	if err == nil {
 		render(w, r, "list:certificates", map[string]interface{}{"List": Certificates, "Title": "ACME"})
 	}
@@ -2236,7 +2224,8 @@ func certificateHandler(w http.ResponseWriter, r *http.Request) {
 
 	var serial string
 	vars := mux.Vars(r)
-	id, err := strconv.Atoi(vars["id"])
+	id := vars["id"]
+	_, err := strconv.Atoi(id)
 	if err != nil {
 		serial = vars["id"]
 	}

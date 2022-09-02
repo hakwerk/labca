@@ -13,7 +13,7 @@
             <tbody>
                 {{ range .Rows }}
                 <tr>
-                {{ range rangeStruct . }}
+                {{ range . }}
                     <td>{{ . }}</td>
                 {{ end }}
                 </tr>

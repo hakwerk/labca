@@ -9,16 +9,32 @@ import (
 	"strings"
 )
 
-// BaseList is the generic base struct for showing lists of data
-type BaseList struct {
+// ListData is a generic struct for storing lists of items with variable number of columns
+type ListData struct {
 	Title      string
 	TableClass string
 	Header     []template.HTML
+	Rows       [][]any
 }
 
-// Account contains the data representing an ACME account
-type Account struct {
-	ID        int
+// NameValue is a pair of a name and a value of any type
+type NameValue struct {
+	Name  string
+	Value any
+}
+
+// A generic struct for storing a single item plus any lists of related items
+type ShowData struct {
+	Title      string
+	TableClass string
+	Rows       []NameValue
+	Extra      []template.HTML
+	Relateds   []ListData
+}
+
+// boulderAccount represents an ACME account in boulder
+type boulderAccount struct {
+	ID        string
 	Status    string
 	Contact   string
 	Agreement string
@@ -26,54 +42,49 @@ type Account struct {
 	CreatedAt string
 }
 
-// AccountList is a list of Account records
-type AccountList struct {
-	BaseList
-	Rows []Account
-}
-
-// GetAccounts returns the list of accounts
-func GetAccounts(w http.ResponseWriter, r *http.Request) (AccountList, error) {
+// GetAccounts returns the list of ACME accounts
+func GetAccounts(w http.ResponseWriter, r *http.Request) (ListData, error) {
 	db, err := sql.Open(dbType, dbConn)
 	if err != nil {
 		errorHandler(w, r, err, http.StatusInternalServerError)
-		return AccountList{}, err
+		return ListData{}, err
 	}
 
 	defer db.Close()
 
-	rows, err := db.Query("SELECT id, status, contact, agreement, initialIP, createdAt FROM registrations")
-	if err != nil {
-		errorHandler(w, r, err, http.StatusInternalServerError)
-		return AccountList{}, err
+	Accounts := ListData{
+		Title:      "Accounts",
+		TableClass: "accounts_list",
 	}
 
-	Accounts := AccountList{
-		BaseList: BaseList{
-			Title:      "Accounts",
-			TableClass: "accounts_list",
-			Header:     []template.HTML{"ID", "Status", "Contact", "Agreement", "Initial IP", "Created"},
-		},
-		Rows: []Account{},
+	var rows *sql.Rows
+	Accounts.Header = []template.HTML{"ID", "Status", "Contact", "Agreement", "Initial IP", "Created"}
+
+	rows, err = db.Query("SELECT id, status, contact, agreement, initialIP, createdAt FROM registrations")
+
+	if err != nil {
+		errorHandler(w, r, err, http.StatusInternalServerError)
+		return ListData{}, err
 	}
 
 	for rows.Next() {
-		row := Account{}
-		err = rows.Scan(&row.ID, &row.Status, &row.Contact, &row.Agreement, &row.InitialIP, &row.CreatedAt)
+		account := boulderAccount{}
+		err = rows.Scan(&account.ID, &account.Status, &account.Contact, &account.Agreement, &account.InitialIP, &account.CreatedAt)
 		if err != nil {
 			errorHandler(w, r, err, http.StatusInternalServerError)
-			return AccountList{}, err
+			return ListData{}, err
 		}
-		Accounts.Rows = append(Accounts.Rows, row)
+
+		Accounts.Rows = append(Accounts.Rows, RangeStructer(account))
 	}
 
 	return Accounts, nil
 }
 
-// Order contains the data representing an ACME order
-type Order struct {
-	ID             int
-	RegistrationID int
+// boulderOrder represents an ACME order in boulder
+type boulderOrder struct {
+	ID             string
+	RegistrationID string
 	CertSerial     string
 	RequestedName  string
 	BeganProc      bool
@@ -81,192 +92,110 @@ type Order struct {
 	Expires        string
 }
 
-// OrderList is a list of Order records
-type OrderList struct {
-	BaseList
-	Rows []Order
-}
-
-// NameValue is a pair of a name and a value
-type NameValue struct {
-	Name  string
-	Value string
-}
-
-// BaseShow is the generic base struct for showing an individual data record
-type BaseShow struct {
-	Title      string
-	TableClass string
-	Rows       []NameValue
-	Links      []NameValHTML
-	Extra      []template.HTML
-}
-
-// AccountShow contains the data of an ACME account and its related data lists
-type AccountShow struct {
-	BaseShow
-	Related  []CertificateList
-	Related2 []OrderList
-}
-
-// GetAccount returns an account
-func GetAccount(w http.ResponseWriter, r *http.Request, id int) (AccountShow, error) {
+// GetAccount returns a specific account
+func GetAccount(w http.ResponseWriter, r *http.Request, id string) (ShowData, error) {
 	db, err := sql.Open(dbType, dbConn)
 	if err != nil {
 		errorHandler(w, r, err, http.StatusInternalServerError)
-		return AccountShow{}, err
+		return ShowData{}, err
 	}
 
 	defer db.Close()
 
-	rows, err := db.Query("SELECT c.id, c.registrationID, c.serial, n.reversedName, CASE WHEN cs.notAfter < NOW() THEN 'expired' ELSE cs.status END AS status, c.issued, c.expires FROM certificates c JOIN certificateStatus cs ON cs.id = c.id JOIN issuedNames n ON n.serial = c.serial WHERE registrationID=?", strconv.Itoa(id))
-	if err != nil {
-		errorHandler(w, r, err, http.StatusInternalServerError)
-		return AccountShow{}, err
+	AccountDetails := ShowData{
+		Title:      "Account",
+		TableClass: "account_show",
 	}
 
-	Certificates := CertificateList{
-		BaseList: BaseList{
-			Title:      "Certificates",
-			TableClass: "rel_certificates_list",
-			Header:     []template.HTML{"ID", "Account ID", "Serial", "Issued Name", "Status", "Issued", "Expires"},
-		},
-		Rows: []Certificate{},
+	Certificates, err := GetCertificates(w, r, id)
+	if err == nil {
+		AccountDetails.Relateds = append(AccountDetails.Relateds, Certificates)
+	}
+
+	Orders, err := GetOrders(w, r, id)
+	if err == nil {
+		AccountDetails.Relateds = append(AccountDetails.Relateds, Orders)
+	}
+
+	var rows *sql.Rows
+	rows, err = db.Query("SELECT id, status, contact, agreement, initialIP, createdAt FROM registrations WHERE id=?", id)
+	if err != nil {
+		errorHandler(w, r, err, http.StatusInternalServerError)
+		return ShowData{}, err
 	}
 
 	for rows.Next() {
-		row := Certificate{}
-		err = rows.Scan(&row.ID, &row.RegistrationID, &row.Serial, &row.IssuedName, &row.Status, &row.Issued, &row.Expires)
+		account := boulderAccount{}
+		err = rows.Scan(&account.ID, &account.Status, &account.Contact, &account.Agreement, &account.InitialIP, &account.CreatedAt)
 		if err != nil {
 			errorHandler(w, r, err, http.StatusInternalServerError)
-			return AccountShow{}, err
+			return ShowData{}, err
 		}
-		row.IssuedName = ReverseName(row.IssuedName)
-		Certificates.Rows = append(Certificates.Rows, row)
-	}
-
-	rows, err = db.Query("SELECT o.id, o.registrationID, o.certificateSerial, n.reversedName, o.beganProcessing, o.created, o.expires FROM orders o JOIN requestedNames n ON n.orderID = o.id WHERE o.registrationID=?", strconv.Itoa(id))
-	if err != nil {
-		errorHandler(w, r, err, http.StatusInternalServerError)
-		return AccountShow{}, err
-	}
-
-	Orders := OrderList{
-		BaseList: BaseList{
-			Title:      "Orders",
-			TableClass: "rel_orders_list",
-			Header:     []template.HTML{"ID", "Account ID", "Certificate Serial", "Requested Name", "Began Processing?", "Created", "Expires"},
-		},
-		Rows: []Order{},
-	}
-
-	for rows.Next() {
-		row := Order{}
-		err = rows.Scan(&row.ID, &row.RegistrationID, &row.CertSerial, &row.RequestedName, &row.BeganProc, &row.Created, &row.Expires)
-		if err != nil {
-			errorHandler(w, r, err, http.StatusInternalServerError)
-			return AccountShow{}, err
-		}
-		row.RequestedName = ReverseName(row.RequestedName)
-		Orders.Rows = append(Orders.Rows, row)
-	}
-
-	rows, err = db.Query("SELECT id, status, contact, agreement, initialIP, createdAt FROM registrations WHERE id=?", strconv.Itoa(id))
-	if err != nil {
-		errorHandler(w, r, err, http.StatusInternalServerError)
-		return AccountShow{}, err
-	}
-
-	AccountDetails := AccountShow{
-		BaseShow: BaseShow{
-			Title:      "Account",
-			TableClass: "account_show",
-			Rows:       []NameValue{},
-		},
-		Related:  []CertificateList{Certificates},
-		Related2: []OrderList{Orders},
-	}
-
-	for rows.Next() {
-		row := Account{}
-		err = rows.Scan(&row.ID, &row.Status, &row.Contact, &row.Agreement, &row.InitialIP, &row.CreatedAt)
-		if err != nil {
-			errorHandler(w, r, err, http.StatusInternalServerError)
-			return AccountShow{}, err
-		}
-		AccountDetails.Rows = append(AccountDetails.Rows, NameValue{"ID", strconv.Itoa(row.ID)})
-		AccountDetails.Rows = append(AccountDetails.Rows, NameValue{"Status", row.Status})
-		AccountDetails.Rows = append(AccountDetails.Rows, NameValue{"Contact", row.Contact})
-		AccountDetails.Rows = append(AccountDetails.Rows, NameValue{"Agreement", row.Agreement})
-		AccountDetails.Rows = append(AccountDetails.Rows, NameValue{"Initial IP", row.InitialIP.String()})
-		AccountDetails.Rows = append(AccountDetails.Rows, NameValue{"Created At", row.CreatedAt})
+		AccountDetails.Rows = append(AccountDetails.Rows, NameValue{"ID", account.ID})
+		AccountDetails.Rows = append(AccountDetails.Rows, NameValue{"Status", account.Status})
+		AccountDetails.Rows = append(AccountDetails.Rows, NameValue{"Contact", account.Contact})
+		AccountDetails.Rows = append(AccountDetails.Rows, NameValue{"Agreement", account.Agreement})
+		AccountDetails.Rows = append(AccountDetails.Rows, NameValue{"Initial IP", account.InitialIP.String()})
+		AccountDetails.Rows = append(AccountDetails.Rows, NameValue{"Created At", account.CreatedAt})
 	}
 
 	return AccountDetails, nil
 }
 
 // GetOrders returns the list of orders
-func GetOrders(w http.ResponseWriter, r *http.Request) (OrderList, error) {
+func GetOrders(w http.ResponseWriter, r *http.Request, forAccount string) (ListData, error) {
 	db, err := sql.Open(dbType, dbConn)
 	if err != nil {
 		errorHandler(w, r, err, http.StatusInternalServerError)
-		return OrderList{}, err
+		return ListData{}, err
 	}
 
 	defer db.Close()
 
-	rows, err := db.Query("SELECT o.id, o.registrationID, o.certificateSerial, n.reversedName, o.beganProcessing, o.created, o.expires FROM orders o JOIN requestedNames n ON n.orderID = o.id")
-	if err != nil {
-		errorHandler(w, r, err, http.StatusInternalServerError)
-		return OrderList{}, err
+	Orders := ListData{
+		Title:      "Orders",
+		TableClass: "orders_list",
+		Header:     []template.HTML{"ID", "Account ID", "Certificate Serial", "Requested Name", "Began Processing?", "Created", "Expires"},
+	}
+	if forAccount != "" {
+		Orders.TableClass = "rel_orders_list"
 	}
 
-	Orders := OrderList{
-		BaseList: BaseList{
-			Title:      "Orders",
-			TableClass: "orders_list",
-			Header:     []template.HTML{"ID", "Account ID", "Certificate Serial", "Requested Name", "Began Processing?", "Created", "Expires"},
-		},
-		Rows: []Order{},
+	var rows *sql.Rows
+	if forAccount == "" {
+		rows, err = db.Query("SELECT o.id, o.registrationID, o.certificateSerial, n.reversedName, o.beganProcessing, o.created, o.expires FROM orders o JOIN requestedNames n ON n.orderID = o.id")
+	} else {
+		rows, err = db.Query("SELECT o.id, o.registrationID, o.certificateSerial, n.reversedName, o.beganProcessing, o.created, o.expires FROM orders o JOIN requestedNames n ON n.orderID = o.id WHERE o.registrationID=?", forAccount)
+	}
+	if err != nil {
+		errorHandler(w, r, err, http.StatusInternalServerError)
+		return ListData{}, err
 	}
 
 	for rows.Next() {
-		row := Order{}
-		err = rows.Scan(&row.ID, &row.RegistrationID, &row.CertSerial, &row.RequestedName, &row.BeganProc, &row.Created, &row.Expires)
+		order := boulderOrder{}
+		err = rows.Scan(&order.ID, &order.RegistrationID, &order.CertSerial, &order.RequestedName, &order.BeganProc, &order.Created, &order.Expires)
 		if err != nil {
 			errorHandler(w, r, err, http.StatusInternalServerError)
-			return OrderList{}, err
+			return ListData{}, err
 		}
-		row.RequestedName = ReverseName(row.RequestedName)
-		Orders.Rows = append(Orders.Rows, row)
+		order.RequestedName = boulderReverseName(order.RequestedName)
+		Orders.Rows = append(Orders.Rows, RangeStructer(order))
 	}
 
 	return Orders, nil
 }
 
-// Auth contains the data representing an ACME auth
-type Auth struct {
+// bolderAuth contains the data representing an ACME authorization in boulder
+type bolderAuth struct {
 	ID             string
 	Identifier     string
-	RegistrationID int
+	RegistrationID string
 	Status         string
 	Expires        string
 }
 
-// AuthList is a list of Auth records
-type AuthList struct {
-	BaseList
-	Rows []Auth
-}
-
-// OrderShow contains the data of an ACME order and its related data lists
-type OrderShow struct {
-	BaseShow
-	Related  []AuthList
-	Related2 []BaseList
-}
-
-// Helper method from sa/model.go
+// Helper method from sa/model.go (boulder)
 var uintToStatus = map[int]string{
 	0: "pending",
 	1: "valid",
@@ -275,129 +204,100 @@ var uintToStatus = map[int]string{
 	4: "revoked",
 }
 
+// Check if a table with the given name exists in the database
+func tableExists(db *sql.DB, tableName string) bool {
+	rows, _ := db.Query("SHOW TABLES LIKE '" + tableName + "'")
+	return rows.Next()
+}
+
+// Check if a given column name exists in the given table
+func columnExists(db *sql.DB, tableName, columnName string) bool {
+	rows, _ := db.Query("SHOW COLUMNS FROM `" + tableName + "` LIKE '" + columnName + "'")
+	return rows.Next()
+}
+
 // GetOrder returns an order with the given id
-func GetOrder(w http.ResponseWriter, r *http.Request, id int) (OrderShow, error) {
+func GetOrder(w http.ResponseWriter, r *http.Request, id string) (ShowData, error) {
 	db, err := sql.Open(dbType, dbConn)
 	if err != nil {
 		errorHandler(w, r, err, http.StatusInternalServerError)
-		return OrderShow{}, err
+		return ShowData{}, err
 	}
 
 	defer db.Close()
 
+	OrderDetails := ShowData{
+		Title:      "Order",
+		TableClass: "order_show",
+	}
+
+	var rows *sql.Rows
+	rows, err = db.Query("SELECT o.id, o.registrationID, o.certificateSerial, n.reversedName, o.beganProcessing, o.created, o.expires FROM orders o JOIN requestedNames n ON n.orderID = o.id WHERE o.id=?", id)
+	if err != nil {
+		errorHandler(w, r, err, http.StatusInternalServerError)
+		return ShowData{}, err
+	}
+
+	for rows.Next() {
+		order := boulderOrder{}
+		err = rows.Scan(&order.ID, &order.RegistrationID, &order.CertSerial, &order.RequestedName, &order.BeganProc, &order.Created, &order.Expires)
+		if err != nil {
+			errorHandler(w, r, err, http.StatusInternalServerError)
+			return ShowData{}, err
+		}
+
+		OrderDetails.Rows = append(OrderDetails.Rows, NameValue{"ID", order.ID})
+		v := "false"
+		if order.BeganProc {
+			v = "true"
+		}
+		OrderDetails.Rows = append(OrderDetails.Rows, NameValue{"Began Processing?", v})
+		OrderDetails.Rows = append(OrderDetails.Rows, NameValue{"Certificate", template.HTML("<a href=\"" + r.Header.Get("X-Request-Base") + "/certificates/" + order.CertSerial + "\">" + order.CertSerial + "</a>")})
+		OrderDetails.Rows = append(OrderDetails.Rows, NameValue{"Requested Name", boulderReverseName(order.RequestedName)})
+		OrderDetails.Rows = append(OrderDetails.Rows, NameValue{"Created", order.Created})
+		OrderDetails.Rows = append(OrderDetails.Rows, NameValue{"Expires", order.Expires})
+		OrderDetails.Rows = append(OrderDetails.Rows, NameValue{"Account", template.HTML("<a href=\"" + r.Header.Get("X-Request-Base") + "/accounts/" + order.RegistrationID + "\">" + order.RegistrationID + "</a>")})
+	}
+
+	Authzs, err := GetAuthzs(w, r, id, []string{})
+	if err == nil {
+		OrderDetails.Relateds = append(OrderDetails.Relateds, Authzs)
+	}
+
+	return OrderDetails, nil
+}
+
+// GetAuthzs returns the list of authorizations
+func GetAuthzs(w http.ResponseWriter, r *http.Request, forOrder string, inList []string) (ListData, error) {
+	db, err := sql.Open(dbType, dbConn)
+	if err != nil {
+		errorHandler(w, r, err, http.StatusInternalServerError)
+		return ListData{}, err
+	}
+
+	defer db.Close()
+
+	Authz := ListData{
+		Title:      "Authorizations",
+		TableClass: "authz_list",
+		Header:     []template.HTML{"ID", "Identifier", "Account ID", "Status", "Expires"},
+	}
+
+	if forOrder != "" || len(inList) > 0 {
+		Authz.TableClass = "rel_authz_list"
+	}
+
+	var rows *sql.Rows
 	query := ""
 	if tableExists(db, "authz") {
 		ident := "identifier"
 		if columnExists(db, "authz", "identifierValue") {
 			ident = "identifierValue"
 		}
-		query = "SELECT id, " + ident + ", registrationID, status, expires FROM authz WHERE id IN (SELECT authzID FROM orderToAuthz WHERE orderID=?)"
-	}
-	if tableExists(db, "authz2") {
-		if query != "" {
-			query = query + " UNION "
-		}
-		query = query + "SELECT id, identifierValue, registrationID, status, expires FROM authz2 WHERE id IN (SELECT authzID FROM orderToAuthz2 WHERE orderID=?)"
-	}
-	var rows *sql.Rows
-	if tableExists(db, "authz") && tableExists(db, "authz2") {
-		rows, err = db.Query(query, strconv.Itoa(id), strconv.Itoa(id))
-	} else {
-		rows, err = db.Query(query, strconv.Itoa(id))
-	}
-	if err != nil {
-		errorHandler(w, r, err, http.StatusInternalServerError)
-		return OrderShow{}, err
-	}
+		query = "SELECT id, " + ident + ", registrationID, status, expires FROM authz"
 
-	Authz := AuthList{
-		BaseList: BaseList{
-			Title:      "Authorizations",
-			TableClass: "rel_authz_list",
-			Header:     []template.HTML{"ID", "Identifier", "Account ID", "Status", "Expires"},
-		},
-		Rows: []Auth{},
-	}
-
-	for rows.Next() {
-		row := Auth{}
-		err = rows.Scan(&row.ID, &row.Identifier, &row.RegistrationID, &row.Status, &row.Expires)
-		if err != nil {
-			errorHandler(w, r, err, http.StatusInternalServerError)
-			return OrderShow{}, err
-		}
-		if s, err := strconv.Atoi(row.Status); err == nil {
-			row.Status = uintToStatus[s]
-		}
-		Authz.Rows = append(Authz.Rows, row)
-	}
-
-	rows, err = db.Query("SELECT o.id, o.registrationID, o.certificateSerial, n.reversedName, o.beganProcessing, o.created, o.expires FROM orders o JOIN requestedNames n ON n.orderID = o.id WHERE o.id=?", strconv.Itoa(id))
-	if err != nil {
-		errorHandler(w, r, err, http.StatusInternalServerError)
-		return OrderShow{}, err
-	}
-
-	OrderDetails := OrderShow{
-		BaseShow: BaseShow{
-			Title:      "Order",
-			TableClass: "order_show",
-			Rows:       []NameValue{},
-			Links:      []NameValHTML{},
-		},
-		Related: []AuthList{Authz},
-	}
-
-	for rows.Next() {
-		row := Order{}
-		err = rows.Scan(&row.ID, &row.RegistrationID, &row.CertSerial, &row.RequestedName, &row.BeganProc, &row.Created, &row.Expires)
-		if err != nil {
-			errorHandler(w, r, err, http.StatusInternalServerError)
-			return OrderShow{}, err
-		}
-		OrderDetails.Rows = append(OrderDetails.Rows, NameValue{"ID", strconv.Itoa(row.ID)})
-		v := "false"
-		if row.BeganProc {
-			v = "true"
-		}
-		OrderDetails.Rows = append(OrderDetails.Rows, NameValue{"Began Processing?", v})
-		OrderDetails.Rows = append(OrderDetails.Rows, NameValue{"Created", row.Created})
-		OrderDetails.Rows = append(OrderDetails.Rows, NameValue{"Expires", row.Expires})
-
-		OrderDetails.Links = append(OrderDetails.Links, NameValHTML{"Certificate", template.HTML("<a href=\"" + r.Header.Get("X-Request-Base") + "/certificates/" + row.CertSerial + "\">" + row.CertSerial + "</a>")})
-		OrderDetails.Rows = append(OrderDetails.Rows, NameValue{"Requested Name", ReverseName(row.RequestedName)})
-		OrderDetails.Links = append(OrderDetails.Links, NameValHTML{"Account", template.HTML("<a href=\"" + r.Header.Get("X-Request-Base") + "/accounts/" + strconv.Itoa(row.RegistrationID) + "\">" + strconv.Itoa(row.RegistrationID) + "</a>")})
-	}
-
-	return OrderDetails, nil
-}
-
-func tableExists(db *sql.DB, tableName string) bool {
-	rows, _ := db.Query("SHOW TABLES LIKE '" + tableName + "'")
-	return rows.Next()
-}
-
-func columnExists(db *sql.DB, tableName, columnName string) bool {
-	rows, _ := db.Query("SHOW COLUMNS FROM `" + tableName + "` LIKE '" + columnName + "'")
-	return rows.Next()
-}
-
-// GetAuthz returns the list of authz
-func GetAuthz(w http.ResponseWriter, r *http.Request) (AuthList, error) {
-	db, err := sql.Open(dbType, dbConn)
-	if err != nil {
-		errorHandler(w, r, err, http.StatusInternalServerError)
-		return AuthList{}, err
-	}
-
-	defer db.Close()
-
-	query := ""
-	if tableExists(db, "authz") {
-		if columnExists(db, "authz", "identifierValue") {
-			query = "SELECT id, identifierValue, registrationID, status, expires FROM authz"
-		} else {
-			query = "SELECT id, identifier, registrationID, status, expires FROM authz"
+		if forOrder != "" {
+			query += " WHERE id IN (SELECT authzID FROM orderToAuthz WHERE orderID=?)"
 		}
 	}
 	if tableExists(db, "authz2") {
@@ -405,103 +305,70 @@ func GetAuthz(w http.ResponseWriter, r *http.Request) (AuthList, error) {
 			query = query + " UNION "
 		}
 		query = query + "SELECT id, identifierValue, registrationID, status, expires FROM authz2"
-	}
-	rows, err := db.Query(query)
-	if err != nil {
-		errorHandler(w, r, err, http.StatusInternalServerError)
-		return AuthList{}, err
+
+		if forOrder != "" {
+			query += " WHERE id IN (SELECT authzID FROM orderToAuthz2 WHERE orderID=?)"
+		}
 	}
 
-	Authz := AuthList{
-		BaseList: BaseList{
-			Title:      "Authorizations",
-			TableClass: "authz_list",
-			Header:     []template.HTML{"ID", "Identifier", "Account ID", "Status", "Expires"},
-		},
-		Rows: []Auth{},
+	if forOrder != "" {
+		if tableExists(db, "authz") && tableExists(db, "authz2") {
+			rows, err = db.Query(query, forOrder, forOrder)
+		} else {
+			rows, err = db.Query(query, forOrder)
+		}
+	} else {
+		rows, err = db.Query(query)
+	}
+	if err != nil {
+		errorHandler(w, r, err, http.StatusInternalServerError)
+		return ListData{}, err
 	}
 
 	for rows.Next() {
-		row := Auth{}
-		err = rows.Scan(&row.ID, &row.Identifier, &row.RegistrationID, &row.Status, &row.Expires)
+		authz := bolderAuth{}
+		err = rows.Scan(&authz.ID, &authz.Identifier, &authz.RegistrationID, &authz.Status, &authz.Expires)
 		if err != nil {
 			errorHandler(w, r, err, http.StatusInternalServerError)
-			return AuthList{}, err
+			return ListData{}, err
 		}
-		if s, err := strconv.Atoi(row.Status); err == nil {
-			row.Status = uintToStatus[s]
+		if s, err := strconv.Atoi(authz.Status); err == nil {
+			authz.Status = uintToStatus[s]
 		}
-		Authz.Rows = append(Authz.Rows, row)
+		Authz.Rows = append(Authz.Rows, RangeStructer(authz))
 	}
 
 	return Authz, nil
 }
 
-// Challenge contains the data representing an ACME challenge
-type Challenge struct {
-	ID        int
+// boulderChallenge contains the data representing an ACME challenge in boulder
+type boulderChallenge struct {
+	ID        string
 	AuthID    string
 	Type      string
 	Status    string
 	Validated string
 	Token     string
-	KeyAuth   string
 }
 
-// ChallengeList is a list of Challenge records
-type ChallengeList struct {
-	BaseList
-	Rows []Challenge
-}
-
-// NameValHTML is a pair of a name and an HTML value
-type NameValHTML struct {
-	Name  string
-	Value template.HTML
-}
-
-// AuthShow contains the data of an ACME auth and its related data lists
-type AuthShow struct {
-	BaseShow
-	Related  []ChallengeList
-	Related2 []BaseList
-}
-
-// GetAuth returns an auth with the given id
-func GetAuth(w http.ResponseWriter, r *http.Request, id string) (AuthShow, error) {
+// GetAuthz returns an auth with the given id
+func GetAuthz(w http.ResponseWriter, r *http.Request, id string) (ShowData, error) {
 	db, err := sql.Open(dbType, dbConn)
 	if err != nil {
 		errorHandler(w, r, err, http.StatusInternalServerError)
-		return AuthShow{}, err
+		return ShowData{}, err
 	}
 
 	defer db.Close()
 
-	rows, err := db.Query("SELECT id, authorizationID, type, status, validated, token, keyAuthorization FROM challenges WHERE authorizationID=?", id)
-	if err != nil {
-		errorHandler(w, r, err, http.StatusInternalServerError)
-		return AuthShow{}, err
+	AuthDetails := ShowData{
+		Title:      "Authorization",
+		TableClass: "auth_show",
 	}
 
-	Challenges := ChallengeList{
-		BaseList: BaseList{
-			Title:      "Challenges",
-			TableClass: "rel_challenges_list",
-			Header:     []template.HTML{"ID", "Authorization ID", "Type", "Status", "Validated", "Token", "Key Authorization"},
-		},
-		Rows: []Challenge{},
-	}
+	var challIDs []string
 
-	for rows.Next() {
-		row := Challenge{}
-		err = rows.Scan(&row.ID, &row.AuthID, &row.Type, &row.Status, &row.Validated, &row.Token, &row.KeyAuth)
-		if err != nil {
-			errorHandler(w, r, err, http.StatusInternalServerError)
-			return AuthShow{}, err
-		}
-		Challenges.Rows = append(Challenges.Rows, row)
-	}
-
+	var rows *sql.Rows
 	query := ""
 	if tableExists(db, "authz") {
 		if columnExists(db, "authz", "identifierValue") {
@@ -523,27 +390,17 @@ func GetAuth(w http.ResponseWriter, r *http.Request, id string) (AuthShow, error
 	}
 	if err != nil {
 		errorHandler(w, r, err, http.StatusInternalServerError)
-		return AuthShow{}, err
-	}
-
-	AuthDetails := AuthShow{
-		BaseShow: BaseShow{
-			Title:      "Authorization",
-			TableClass: "auth_show",
-			Rows:       []NameValue{},
-			Links:      []NameValHTML{},
-		},
-		Related: []ChallengeList{Challenges},
+		return ShowData{}, err
 	}
 
 	for rows.Next() {
-		row := Auth{}
+		row := bolderAuth{}
 		validationError := sql.NullString{}
 		validationRecord := sql.NullString{}
 		err = rows.Scan(&row.ID, &row.Identifier, &row.RegistrationID, &row.Status, &row.Expires, &validationError, &validationRecord)
 		if err != nil {
 			errorHandler(w, r, err, http.StatusInternalServerError)
-			return AuthShow{}, err
+			return ShowData{}, err
 		}
 		AuthDetails.Rows = append(AuthDetails.Rows, NameValue{"ID", row.ID})
 		AuthDetails.Rows = append(AuthDetails.Rows, NameValue{"Identifier", row.Identifier})
@@ -559,109 +416,109 @@ func GetAuth(w http.ResponseWriter, r *http.Request, id string) (AuthShow, error
 			AuthDetails.Rows = append(AuthDetails.Rows, NameValue{"Validation Record", validationRecord.String})
 		}
 
-		Link := NameValHTML{"Account", template.HTML("<a href=\"" + r.Header.Get("X-Request-Base") + "/accounts/" + strconv.Itoa(row.RegistrationID) + "\">" + strconv.Itoa(row.RegistrationID) + "</a>")}
-		AuthDetails.Links = append(AuthDetails.Links, Link)
+		Link := NameValue{"Account", template.HTML("<a href=\"" + r.Header.Get("X-Request-Base") + "/accounts/" + row.RegistrationID + "\">" + row.RegistrationID + "</a>")}
+		AuthDetails.Rows = append(AuthDetails.Rows, Link)
+	}
+
+	Challenges, err := GetChallenges(w, r, id, challIDs)
+	if err == nil {
+		AuthDetails.Relateds = append(AuthDetails.Relateds, Challenges)
 	}
 
 	return AuthDetails, nil
 }
 
 // GetChallenges returns the list of challenges
-func GetChallenges(w http.ResponseWriter, r *http.Request) (ChallengeList, error) {
+func GetChallenges(w http.ResponseWriter, r *http.Request, forAuthz string, inList []string) (ListData, error) {
 	db, err := sql.Open(dbType, dbConn)
 	if err != nil {
 		errorHandler(w, r, err, http.StatusInternalServerError)
-		return ChallengeList{}, err
+		return ListData{}, err
 	}
 
 	defer db.Close()
 
-	rows, err := db.Query("SELECT id, authorizationID, type, status, validated, token, keyAuthorization FROM challenges")
-	if err != nil {
-		errorHandler(w, r, err, http.StatusInternalServerError)
-		return ChallengeList{}, err
+	Challenges := ListData{
+		Title:      "Challenges",
+		TableClass: "challenges_list",
+		Header:     []template.HTML{"ID", "Authorization ID", "Type", "Status", "Validated", "Token"},
 	}
 
-	Challenges := ChallengeList{
-		BaseList: BaseList{
-			Title:      "Challenges",
-			TableClass: "challenges_list",
-			Header:     []template.HTML{"ID", "Authorization ID", "Type", "Status", "Validated", "Token", "Key Authorization"},
-		},
-		Rows: []Challenge{},
+	if forAuthz != "" || len(inList) > 0 {
+		Challenges.TableClass = "rel_challenges_list"
+	}
+
+	var rows *sql.Rows
+	if forAuthz == "" {
+		rows, err = db.Query("SELECT id, authorizationID, type, status, validated, token FROM challenges")
+	} else {
+		rows, err = db.Query("SELECT id, authorizationID, type, status, validated, token FROM challenges WHERE authorizationID=?", forAuthz)
+	}
+	if err != nil {
+		errorHandler(w, r, err, http.StatusInternalServerError)
+		return ListData{}, err
 	}
 
 	for rows.Next() {
-		row := Challenge{}
-		err = rows.Scan(&row.ID, &row.AuthID, &row.Type, &row.Status, &row.Validated, &row.Token, &row.KeyAuth)
+		challenge := boulderChallenge{}
+		err = rows.Scan(&challenge.ID, &challenge.AuthID, &challenge.Type, &challenge.Status, &challenge.Validated, &challenge.Token)
 		if err != nil {
 			errorHandler(w, r, err, http.StatusInternalServerError)
-			return ChallengeList{}, err
+			return ListData{}, err
 		}
-		Challenges.Rows = append(Challenges.Rows, row)
+		Challenges.Rows = append(Challenges.Rows, RangeStructer(challenge))
 	}
 
 	return Challenges, nil
 }
 
-// ChallengeShow contains the data of an ACME challenge and its related data lists
-type ChallengeShow struct {
-	BaseShow
-	Related  []ChallengeList
-	Related2 []BaseList
-}
-
 // GetChallenge returns a challenge with the given id
-func GetChallenge(w http.ResponseWriter, r *http.Request, id int) (ChallengeShow, error) {
+func GetChallenge(w http.ResponseWriter, r *http.Request, id string) (ShowData, error) {
 	db, err := sql.Open(dbType, dbConn)
 	if err != nil {
 		errorHandler(w, r, err, http.StatusInternalServerError)
-		return ChallengeShow{}, err
+		return ShowData{}, err
 	}
 
 	defer db.Close()
 
-	rows, err := db.Query("SELECT id, authorizationID, type, status, validated, token, keyAuthorization FROM challenges WHERE id=?", id)
-	if err != nil {
-		errorHandler(w, r, err, http.StatusInternalServerError)
-		return ChallengeShow{}, err
+	ChallengeDetails := ShowData{
+		Title:      "Challenge",
+		TableClass: "challenge_show",
+		Rows:       []NameValue{},
 	}
 
-	ChallengeDetails := ChallengeShow{
-		BaseShow: BaseShow{
-			Title:      "Challenge",
-			TableClass: "challenge_show",
-			Rows:       []NameValue{},
-			Links:      []NameValHTML{},
-		},
-		Related: []ChallengeList{},
+	var rows *sql.Rows
+	rows, err = db.Query("SELECT id, authorizationID, type, status, validated, token FROM challenges WHERE id=?", id)
+	if err != nil {
+		errorHandler(w, r, err, http.StatusInternalServerError)
+		return ShowData{}, err
 	}
 
 	for rows.Next() {
-		row := Challenge{}
-		err = rows.Scan(&row.ID, &row.AuthID, &row.Type, &row.Status, &row.Validated, &row.Token, &row.KeyAuth)
+		challenge := boulderChallenge{}
+		err = rows.Scan(&challenge.ID, &challenge.AuthID, &challenge.Type, &challenge.Status, &challenge.Validated, &challenge.Token)
 		if err != nil {
 			errorHandler(w, r, err, http.StatusInternalServerError)
-			return ChallengeShow{}, err
+			return ShowData{}, err
 		}
-		ChallengeDetails.Rows = append(ChallengeDetails.Rows, NameValue{"ID", strconv.Itoa(row.ID)})
-		ChallengeDetails.Rows = append(ChallengeDetails.Rows, NameValue{"Type", row.Type})
-		ChallengeDetails.Rows = append(ChallengeDetails.Rows, NameValue{"Status", row.Status})
-		ChallengeDetails.Rows = append(ChallengeDetails.Rows, NameValue{"Validated", row.Validated})
-		ChallengeDetails.Rows = append(ChallengeDetails.Rows, NameValue{"Token", row.Token})
-		ChallengeDetails.Rows = append(ChallengeDetails.Rows, NameValue{"KeyAuth", row.KeyAuth})
+		ChallengeDetails.Rows = append(ChallengeDetails.Rows, NameValue{"ID", challenge.ID})
+		ChallengeDetails.Rows = append(ChallengeDetails.Rows, NameValue{"Type", challenge.Type})
+		ChallengeDetails.Rows = append(ChallengeDetails.Rows, NameValue{"Status", challenge.Status})
+		ChallengeDetails.Rows = append(ChallengeDetails.Rows, NameValue{"Validated", challenge.Validated})
+		ChallengeDetails.Rows = append(ChallengeDetails.Rows, NameValue{"Token", challenge.Token})
 
-		Link := NameValHTML{"Authorization", template.HTML("<a href=\"" + r.Header.Get("X-Request-Base") + "/authz/" + row.AuthID + "\">" + row.AuthID + "</a>")}
-		ChallengeDetails.Links = append(ChallengeDetails.Links, Link)
+		Link := NameValue{"Authorization", template.HTML("<a href=\"" + r.Header.Get("X-Request-Base") + "/authz/" + challenge.AuthID + "\">" + challenge.AuthID + "</a>")}
+		ChallengeDetails.Rows = append(ChallengeDetails.Rows, Link)
 	}
 
 	return ChallengeDetails, nil
 }
 
-// Certificate contains the data representing an ACME certificate
-type Certificate struct {
-	ID             int
-	RegistrationID int
+// boulderCertificate contains the data representing an ACME certificate in boulder
+type boulderCertificate struct {
+	ID             string
+	RegistrationID string
 	Serial         string
 	IssuedName     string
 	Status         string
@@ -669,14 +526,8 @@ type Certificate struct {
 	Expires        string
 }
 
-// CertificateList is a list of Certificate records
-type CertificateList struct {
-	BaseList
-	Rows []Certificate
-}
-
-// ReverseName as domains are stored in reverse order...
-func ReverseName(domain string) string {
+// boulderReverseName as domains are stored in reverse order in boulder...
+func boulderReverseName(domain string) string {
 	labels := strings.Split(domain, ".")
 	for i, j := 0, len(labels)-1; i < j; i, j = i+1, j-1 {
 		labels[i], labels[j] = labels[j], labels[i]
@@ -684,16 +535,27 @@ func ReverseName(domain string) string {
 	return strings.Join(labels, ".")
 }
 
-// GetCertificates returns the list of certificates
-func GetCertificates(w http.ResponseWriter, r *http.Request) (CertificateList, error) {
+// GetCertificates returns the list of certificates, optionally only for a given account ID
+func GetCertificates(w http.ResponseWriter, r *http.Request, forAccount string) (ListData, error) {
 	db, err := sql.Open(dbType, dbConn)
 	if err != nil {
 		errorHandler(w, r, err, http.StatusInternalServerError)
-		return CertificateList{}, err
+		return ListData{}, err
 	}
 
 	defer db.Close()
 
+	Certificates := ListData{
+		Title:      "Certificates",
+		TableClass: "certificates_list",
+		Header:     []template.HTML{"ID", "Account ID", "Serial", "Issued Name", "Status", "Issued", "Expires"},
+	}
+
+	if forAccount != "" {
+		Certificates.TableClass = "rel_certificates_list"
+	}
+
+	var rows *sql.Rows
 	where := ""
 	if r.URL.Query().Get("active") != "" {
 		where = " WHERE cs.revokedDate='0000-00-00 00:00:00' AND cs.notAfter >= NOW()"
@@ -703,44 +565,35 @@ func GetCertificates(w http.ResponseWriter, r *http.Request) (CertificateList, e
 		where = " WHERE cs.revokedDate<>'0000-00-00 00:00:00'"
 	}
 
-	rows, err := db.Query("SELECT c.id, c.registrationID, c.serial, n.reversedName, CASE WHEN cs.notAfter < NOW() THEN CASE WHEN cs.status <> 'good' THEN concat(cs.status, ' / expired') ELSE 'expired' END ELSE cs.status END AS status, c.issued, c.expires FROM certificates c JOIN certificateStatus cs ON cs.id = c.id JOIN issuedNames n ON n.serial = c.serial" + where)
+	if forAccount == "" {
+		rows, err = db.Query("SELECT c.id, c.registrationID, c.serial, n.reversedName, CASE WHEN cs.notAfter < NOW() THEN CASE WHEN cs.status <> 'good' THEN concat(cs.status, ' / expired') ELSE 'expired' END ELSE cs.status END AS status, c.issued, c.expires FROM certificates c JOIN certificateStatus cs ON cs.id = c.id JOIN issuedNames n ON n.serial = c.serial" + where)
+	} else if where == "" {
+		rows, err = db.Query("SELECT c.id, c.registrationID, c.serial, n.reversedName, CASE WHEN cs.notAfter < NOW() THEN CASE WHEN cs.status <> 'good' THEN concat(cs.status, ' / expired') ELSE 'expired' END ELSE cs.status END AS status, c.issued, c.expires FROM certificates c JOIN certificateStatus cs ON cs.id = c.id JOIN issuedNames n ON n.serial = c.serial WHERE registrationID=?", forAccount)
+	} else {
+		rows, err = db.Query("SELECT c.id, c.registrationID, c.serial, n.reversedName, CASE WHEN cs.notAfter < NOW() THEN CASE WHEN cs.status <> 'good' THEN concat(cs.status, ' / expired') ELSE 'expired' END ELSE cs.status END AS status, c.issued, c.expires FROM certificates c JOIN certificateStatus cs ON cs.id = c.id JOIN issuedNames n ON n.serial = c.serial"+where+" AND registrationID=?", forAccount)
+	}
 	if err != nil {
 		errorHandler(w, r, err, http.StatusInternalServerError)
-		return CertificateList{}, err
-	}
-
-	Certificates := CertificateList{
-		BaseList: BaseList{
-			Title:      "Certificates",
-			TableClass: "certificates_list",
-			Header:     []template.HTML{"ID", "Account ID", "Serial", "Issued Name", "Status", "Issued", "Expires"},
-		},
-		Rows: []Certificate{},
+		return ListData{}, err
 	}
 
 	for rows.Next() {
-		row := Certificate{}
-		err = rows.Scan(&row.ID, &row.RegistrationID, &row.Serial, &row.IssuedName, &row.Status, &row.Issued, &row.Expires)
+		certificate := boulderCertificate{}
+		err = rows.Scan(&certificate.ID, &certificate.RegistrationID, &certificate.Serial, &certificate.IssuedName, &certificate.Status, &certificate.Issued, &certificate.Expires)
 		if err != nil {
 			errorHandler(w, r, err, http.StatusInternalServerError)
-			return CertificateList{}, err
+			return ListData{}, err
 		}
-		row.IssuedName = ReverseName(row.IssuedName)
-		Certificates.Rows = append(Certificates.Rows, row)
+		certificate.IssuedName = boulderReverseName(certificate.IssuedName)
+
+		Certificates.Rows = append(Certificates.Rows, RangeStructer(certificate))
 	}
 
 	return Certificates, nil
 }
 
-// CertificateShow contains the data of an ACME certificate and its related data lists
-type CertificateShow struct {
-	BaseShow
-	Related  []BaseList
-	Related2 []BaseList
-}
-
-// CertificateExtra contains more detailed data of an ACME certificate
-type CertificateExtra struct {
+// boulderCertificateExtra contains more detailed data of an ACME certificate in boulder
+type boulderCertificateExtra struct {
 	ID                 int
 	RegistrationID     int
 	Serial             string
@@ -758,7 +611,8 @@ type CertificateExtra struct {
 	IsExpired          bool
 }
 
-func _getReasonText(RevokedReason int, Revoked string) string {
+// getReasonText converts a numeric ACME revoke reason into a string
+func getReasonText(RevokedReason int, Revoked string) string {
 	reasonText := ""
 	switch RevokedReason {
 	case 0:
@@ -783,23 +637,30 @@ func _getReasonText(RevokedReason int, Revoked string) string {
 		reasonText = " - Privilege Withdrawn"
 	case 10:
 		reasonText = " - AA Compromise"
+	default:
+		reasonText = "Unknown reason number: " + strconv.Itoa(RevokedReason)
 	}
 
 	return reasonText
 }
 
 // GetCertificate returns a certificate with the given id or serial
-func GetCertificate(w http.ResponseWriter, r *http.Request, id int, serial string) (CertificateShow, error) {
+func GetCertificate(w http.ResponseWriter, r *http.Request, id string, serial string) (ShowData, error) {
 	db, err := sql.Open(dbType, dbConn)
 	if err != nil {
 		errorHandler(w, r, err, http.StatusInternalServerError)
-		return CertificateShow{}, err
+		return ShowData{}, err
 	}
 
 	defer db.Close()
 
+	CertificateDetails := ShowData{
+		Title:      "Certificate",
+		TableClass: "certificate_show",
+	}
+
 	var rows *sql.Rows
-	selectWhere := "SELECT c.id, c.registrationID, c.serial, n.reversedName, c.digest, c.issued, c.expires, cs.subscriberApproved, CASE WHEN cs.notAfter < NOW() THEN 'expired' ELSE cs.status END AS status, cs.ocspLastUpdated, cs.revokedDate, cs.revokedReason, cs.lastExpirationNagSent, cs.notAfter, cs.isExpired FROM certificates c JOIN certificateStatus cs ON cs.id = c.id JOIN issuedNames n ON n.serial = c.serial WHERE "
+	selectWhere := "SELECT c.id, c.registrationID, c.serial, n.reversedName, c.digest, c.issued, c.expires, cs.subscriberApproved, CASE WHEN cs.notAfter < NOW() THEN CASE WHEN cs.status <> 'good' THEN concat(cs.status, ' / expired') ELSE 'expired' END ELSE cs.status END AS status, cs.ocspLastUpdated, cs.revokedDate, cs.revokedReason, cs.lastExpirationNagSent, cs.notAfter, cs.isExpired FROM certificates c JOIN certificateStatus cs ON cs.id = c.id JOIN issuedNames n ON n.serial = c.serial WHERE "
 
 	if serial != "" {
 		rows, err = db.Query(selectWhere+"c.serial=?", serial)
@@ -808,57 +669,48 @@ func GetCertificate(w http.ResponseWriter, r *http.Request, id int, serial strin
 	}
 	if err != nil {
 		errorHandler(w, r, err, http.StatusInternalServerError)
-		return CertificateShow{}, err
-	}
-
-	CertificateDetails := CertificateShow{
-		BaseShow: BaseShow{
-			Title:      "Certificate",
-			TableClass: "certificate_show",
-			Rows:       []NameValue{},
-			Links:      []NameValHTML{},
-		},
+		return ShowData{}, err
 	}
 
 	for rows.Next() {
-		row := CertificateExtra{}
-		err = rows.Scan(&row.ID, &row.RegistrationID, &row.Serial, &row.IssuedName, &row.Digest, &row.Issued, &row.Expires, &row.SubscriberApproved, &row.Status, &row.OCSPLastUpdate, &row.Revoked, &row.RevokedReason, &row.LastNagSent, &row.NotAfter, &row.IsExpired)
+		certificate := boulderCertificateExtra{}
+		err = rows.Scan(&certificate.ID, &certificate.RegistrationID, &certificate.Serial, &certificate.IssuedName, &certificate.Digest, &certificate.Issued, &certificate.Expires, &certificate.SubscriberApproved, &certificate.Status, &certificate.OCSPLastUpdate, &certificate.Revoked, &certificate.RevokedReason, &certificate.LastNagSent, &certificate.NotAfter, &certificate.IsExpired)
 		if err != nil {
 			errorHandler(w, r, err, http.StatusInternalServerError)
-			return CertificateShow{}, err
+			return ShowData{}, err
 		}
-		CertificateDetails.Rows = append(CertificateDetails.Rows, NameValue{"ID", strconv.Itoa(row.ID)})
-		CertificateDetails.Rows = append(CertificateDetails.Rows, NameValue{"Serial", row.Serial})
-		CertificateDetails.Rows = append(CertificateDetails.Rows, NameValue{"Issued Name", ReverseName(row.IssuedName)})
-		CertificateDetails.Rows = append(CertificateDetails.Rows, NameValue{"Digest", row.Digest})
-		CertificateDetails.Rows = append(CertificateDetails.Rows, NameValue{"Issued", row.Issued})
-		CertificateDetails.Rows = append(CertificateDetails.Rows, NameValue{"Expires", row.Expires})
+		CertificateDetails.Rows = append(CertificateDetails.Rows, NameValue{"ID", strconv.Itoa(certificate.ID)})
+		CertificateDetails.Rows = append(CertificateDetails.Rows, NameValue{"Serial", certificate.Serial})
+		CertificateDetails.Rows = append(CertificateDetails.Rows, NameValue{"Issued Name", boulderReverseName(certificate.IssuedName)})
+		CertificateDetails.Rows = append(CertificateDetails.Rows, NameValue{"Digest", certificate.Digest})
+		CertificateDetails.Rows = append(CertificateDetails.Rows, NameValue{"Issued", certificate.Issued})
+		CertificateDetails.Rows = append(CertificateDetails.Rows, NameValue{"Expires", certificate.Expires})
 		v := "false"
-		if row.SubscriberApproved {
+		if certificate.SubscriberApproved {
 			v = "true"
 		}
 		CertificateDetails.Rows = append(CertificateDetails.Rows, NameValue{"Subscriber Approved", v})
-		CertificateDetails.Rows = append(CertificateDetails.Rows, NameValue{"Status", row.Status})
-		CertificateDetails.Rows = append(CertificateDetails.Rows, NameValue{"OCSP Last Update", row.OCSPLastUpdate})
-		CertificateDetails.Rows = append(CertificateDetails.Rows, NameValue{"Revoked", row.Revoked})
-		reasonText := _getReasonText(row.RevokedReason, row.Revoked)
-		CertificateDetails.Rows = append(CertificateDetails.Rows, NameValue{"Revoked Reason", strconv.Itoa(row.RevokedReason) + reasonText})
-		CertificateDetails.Rows = append(CertificateDetails.Rows, NameValue{"Last Expiration Nag Sent", row.LastNagSent})
-		CertificateDetails.Rows = append(CertificateDetails.Rows, NameValue{"Not After", row.NotAfter})
+		CertificateDetails.Rows = append(CertificateDetails.Rows, NameValue{"Status", certificate.Status})
+		CertificateDetails.Rows = append(CertificateDetails.Rows, NameValue{"OCSP Last Update", certificate.OCSPLastUpdate})
+		CertificateDetails.Rows = append(CertificateDetails.Rows, NameValue{"Revoked", certificate.Revoked})
+		reasonText := getReasonText(certificate.RevokedReason, certificate.Revoked)
+		CertificateDetails.Rows = append(CertificateDetails.Rows, NameValue{"Revoked Reason", strconv.Itoa(certificate.RevokedReason) + reasonText})
+		CertificateDetails.Rows = append(CertificateDetails.Rows, NameValue{"Last Expiration Nag Sent", certificate.LastNagSent})
+		CertificateDetails.Rows = append(CertificateDetails.Rows, NameValue{"Not After", certificate.NotAfter})
 		v = "false"
-		if row.IsExpired {
+		if certificate.IsExpired {
 			v = "true"
 		}
 		CertificateDetails.Rows = append(CertificateDetails.Rows, NameValue{"Is Expired", v})
 
-		Link := NameValHTML{"Account", template.HTML("<a href=\"" + r.Header.Get("X-Request-Base") + "/accounts/" + strconv.Itoa(row.RegistrationID) + "\">" + strconv.Itoa(row.RegistrationID) + "</a>")}
-		CertificateDetails.Links = append(CertificateDetails.Links, Link)
+		Link := NameValue{"Account", template.HTML("<a href=\"" + r.Header.Get("X-Request-Base") + "/accounts/" + strconv.Itoa(certificate.RegistrationID) + "\">" + strconv.Itoa(certificate.RegistrationID) + "</a>")}
+		CertificateDetails.Rows = append(CertificateDetails.Rows, Link)
 
-		if row.Revoked == "0000-00-00 00:00:00" {
-			revokeHTML, err := tmpls.RenderSingle("views/revoke-partial.tmpl", struct{ Serial string }{Serial: row.Serial})
+		if certificate.Revoked == "0000-00-00 00:00:00" {
+			revokeHTML, err := tmpls.RenderSingle("views/revoke-partial.tmpl", struct{ Serial string }{Serial: certificate.Serial})
 			if err != nil {
 				errorHandler(w, r, err, http.StatusInternalServerError)
-				return CertificateShow{}, err
+				return ShowData{}, err
 			}
 			CertificateDetails.Extra = append(CertificateDetails.Extra, template.HTML(revokeHTML))
 		}
