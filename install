@@ -90,7 +90,7 @@ msg_fatal() {
 #
 start_temporary_log() {
     backupLog=$installLog
-    installLog="/tmp/labca-install.log"
+    installLog="/tmp/labca-install-$$.log"
     touch "$installLog"
 }
 
