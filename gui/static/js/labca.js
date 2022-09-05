@@ -318,6 +318,11 @@ $(function() {
         }
     });
 
+    $("#use-https").click(function(evt) {
+        $("#acme-server").prop('readonly', !$(this).prop('checked'));
+    });
+    $("#acme-server").prop('readonly', !$("#use-https").prop('checked'));
+
     $(document).ready(function() {
         if ( $(".datatable").length ) {
             var options = {
@@ -326,6 +331,9 @@ $(function() {
 
             if ( $('.orders_list').length || $('.rel_orders_list').length ) {
                 col = 2;
+                if ( $('.backend_stepca').length ) {
+                    col = 1;
+                }
                 options["columnDefs"] = [ {
                         targets: col,
                         render: $.fn.dataTable.render.ellipsis(15)
@@ -334,6 +342,9 @@ $(function() {
 
             if ( $('.certificates_list').length || $('.rel_certificates_list').length ) {
                 col = 2;
+                if ( $('.backend_stepca').length ) {
+                    col = 1;
+                }
                 options["columnDefs"] = [ {
                         targets: col,
                         render: $.fn.dataTable.render.ellipsis(15)
@@ -341,26 +352,44 @@ $(function() {
             }
 
             if ( $('.authz_list').length || $('.rel_authz_list').length ) {
-                options["columnDefs"] = [
-                    {
-                        targets: 0,
-                        render: $.fn.dataTable.render.ellipsis(15),
-                        type: 'natural'
-                    },
+                if ( $('.backend_stepca').length ) {
+                    options["columnDefs"] = [
+                        {
+                            targets: 1,
+                            render: $.fn.dataTable.render.ellipsis(15),
+                        },
                     ];
+                } else {
+                    options["columnDefs"] = [
+                        {
+                            targets: 0,
+                            render: $.fn.dataTable.render.ellipsis(15),
+                            type: 'natural'
+                        },
+                    ];
+                }
             }
 
             if ( $('.challenges_list').length || $('.rel_challenges_list').length ) {
-                options["columnDefs"] = [
-                    {
-                        targets: 1,
-                        render: $.fn.dataTable.render.ellipsis(15)
-                    },
-                    {
-                        targets: 5,
-                        render: $.fn.dataTable.render.ellipsis(15)
-                    }
+                if ( $('.backend_stepca').length ) {
+                    options["columnDefs"] = [
+                        {
+                            targets: 1,
+                            render: $.fn.dataTable.render.ellipsis(15)
+                        },
                     ];
+                } else {
+                    options["columnDefs"] = [
+                        {
+                            targets: 1,
+                            render: $.fn.dataTable.render.ellipsis(15)
+                        },
+                        {
+                            targets: 5,
+                            render: $.fn.dataTable.render.ellipsis(15)
+                        }
+                    ];
+                }
             }
 
             var table = $(".datatable").DataTable( options );
@@ -429,26 +458,41 @@ $(function() {
 
             if ( classes.indexOf("accounts_list") > -1  ) {
                 col = 0;
+                if ( classes.indexOf("backend_stepca") > -1 ) {
+                    col = 3;
+                }
                 table.columns(col).order( 'desc' ).draw();
             }
 
             if ( classes.indexOf("certificates_list") > -1 || classes.indexOf("rel_certificates_list") > -1 ) {
                 col = 0;
+                if ( classes.indexOf("backend_stepca") > -1 ) {
+                    col = 5;
+                }
                 table.columns(col).order( 'desc' ).draw();
             }
 
             if ( classes.indexOf("orders_list") > -1 || classes.indexOf("rel_orders_list") > -1 ) {
                 col = 0;
+                if ( classes.indexOf("backend_stepca") > -1 ) {
+                    col = 4;
+                }
                 table.columns(col).order( 'desc' ).draw();
             }
 
             if ( classes.indexOf("authz_list") > -1 || classes.indexOf("rel_authz_list") > -1 ) {
                 col = 0;
+                if ( classes.indexOf("backend_stepca") > -1 ) {
+                    col = 4;
+                }
                 table.columns(col).order( 'desc' ).draw();
             }
 
             if ( classes.indexOf("challenges_list") > -1 || classes.indexOf("rel_challenges_list") > -1 ) {
                 col = 0;
+                if ( classes.indexOf("backend_stepca") > -1 ) {
+                    col = 4;
+                }
                 table.columns(col).order( 'desc' ).draw();
             }
         });

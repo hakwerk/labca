@@ -1,0 +1,15 @@
+Source: labca-gui
+Section: utils
+Priority: optional
+Maintainer: hakwerk <github@hakwerk.com>
+Build-Depends: debhelper (>= 10)
+Standards-Version: 4.1.2
+Homepage: https://github.com/hakwerk/labca
+Vcs-Browser: https://github.com/hakwerk/labca.git
+Vcs-Git: https://github.com/hakwerk/labca.git
+
+Package: labca-gui
+Architecture: any
+Depends: ${misc:Depends}
+Description: Standalone ACME GUI
+ Standalone web GUI for ACME servers.

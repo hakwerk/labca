@@ -3,6 +3,11 @@
     <p>Here you can manage your LabCA instance. Be careful!</p>
 
 <ul class="nav nav-tabs nav-tabs-sticky">
+  {{ if .Standalone }}
+  <li class="active">
+    <a data-toggle="tab" href="#backend">{{ .Backend }}</a>
+  </li>
+  {{ else }}
   <li class="active">
     <a data-toggle="tab" href="#system">System</a>
   </li>
@@ -18,12 +23,68 @@
   <li class="">
     <a data-toggle="tab" href="#email">Email</a>
   </li>
+  {{ end }}
   <li class="">
     <a data-toggle="tab" href="#account">Account</a>
   </li>
 </ul>
 
 <div class="tab-content">
+  {{ if .Standalone }}
+  <div class="tab-pane fade active in" id="backend">
+  <br/>
+    <form role="form">
+      <div class="form-group">
+        <label>MySQL server (IP address or hostname):</label>
+        <input class="form-control non-fluid backend-input" type="text" name="mysql_server" id="mysql_server" value="{{ .MySQLServer }}" required>
+        <span class="error backend-error hidden" id="mysqlserver-error"></span>
+      </div>
+      <div class="form-group">
+        <label>MySQL port:</label>
+        <input class="form-control non-fluid backend-input" type="text" name="mysql_port" id="mysql_port" value="{{ .MySQLPort }}" required>
+        <span class="error backend-error hidden" id="mysqlport-error"></span>
+      </div>
+      <div class="form-group">
+        <label>MySQL database name:</label>
+        <input class="form-control non-fluid backend-input" type="text" name="mysql_dbname" id="mysql_dbname" value="{{ .MySQLDBName }}" required>
+        <span class="error backend-error hidden" id="mysqldbname-error"></span>
+      </div>
+      <div class="form-group">
+        <label>MySQL username:</label>
+        <input class="form-control non-fluid backend-input" type="text" name="mysql_user" id="mysql_user" value="{{ .MySQLUser }}" required>
+        <span class="error backend-error hidden" id="mysqluser-error"></span>
+      </div>
+      <div class="form-group">
+        <label>MySQL password:</label>
+        <input class="form-control non-fluid backend-input" type="password" name="mysql_passwd" id="mysql_passwd" value="{{ .MySQLPasswd }}" required>
+        <span class="error backend-error hidden" id="mysqlpasswd-error"></span>
+      </div>
+      <br/>
+
+      <div class="form-group">
+        <label>Use HTTPS:</label>
+        <input type="checkbox" class="use_https" id="use_https" name="use_https" value="https" {{ if .UseHTTPS }}checked{{ end }}></input><br/>
+        <span class="error backend-error hidden" id="usehttps-error"></span>
+      </div>
+      <div class="form-group">
+        <label>Certificate file:</label>
+        <input class="form-control non-fluid backend-input" type="text" name="cert_path" id="cert_path" value="{{ .CertPath }}" required>
+        <span class="error backend-error hidden" id="certpath-error"></span>
+      </div>
+      <div class="form-group">
+        <label>Key file:</label>
+        <input class="form-control non-fluid backend-input" type="text" name="key_path" id="key_path" value="{{ .KeyPath }}" required>
+        <span class="error backend-error hidden" id="keypath-error"></span>
+      </div>
+
+      <div class="form-group">
+        <span class="hidden" id="update-backend-result"></span>
+        <button class="btn btn-default" type="button" id="update-backend" title="Update the backend settings">Update</button>
+      </div>
+    </form>
+  </div>
+
+  {{ else }}
   <div class="tab-pane fade active in" id="system">
     <br/>
     <div class="row">
@@ -225,6 +286,7 @@
       </div>
     </form>
   </div>
+  {{ end }}
 
   <div class="tab-pane fade" id="account">
   <br/>
@@ -320,6 +382,7 @@
                 $("#export-pwd2-err").hide();
                 $("#cert-export-err").hide();
                 $(".account-error").hide();
+                $(".backend-error").hide();
                 $("#update-account-result").hide();
                 $(".config-error").hide();
                 $("#update-config-result").hide();
@@ -504,6 +567,49 @@
                     .fail(function(xhr, status, err) {
                         $('#modal-spinner').modal('hide');
                         $("#update-account-result").removeClass("hidden").removeClass("success").show().text(err).addClass("error");
+                    });
+
+                } else if ( $(evt.target).attr("id") == "update-backend") {
+                    $.ajax(window.location.href, {
+                        method: "POST",
+                        data: {
+                            action: $(evt.target).attr("id"),
+                            backend: "{{ .Backend }}",
+                            mysql_server: $("#mysql_server").val(),
+                            mysql_port: $("#mysql_port").val(),
+                            mysql_dbname: $("#mysql_dbname").val(),
+                            mysql_user: $("#mysql_user").val(),
+                            mysql_passwd: $("#mysql_passwd").val(),
+                            use_https: ($("#use_https").prop("checked") ? "https" : "no"),
+                            cert_path: $("#cert_path").val(),
+                            key_path: $("#key_path").val(),
+                        },
+                    })
+                    .done(function(data) {
+                        $('#modal-spinner').modal('hide');
+
+                        if (data.Success) {
+                            var msg = "Successfully updated configuration.<br/>";
+                            $("#update-backend-result").removeClass("hidden").removeClass("error").show().html(msg).addClass("success");
+
+                            setTimeout(function() {
+                                window.location.reload();
+                            }, 2000);
+
+                        } else {
+                            jQuery.each(data.Errors, function(nm, val) {
+                                nm = nm.toLowerCase();
+                                if (nm == "backendupdate") {
+                                    $("#update-backend-result").removeClass("hidden").removeClass("success").show().html(val + "<br/>").addClass("error");
+                                } else {
+                                    $("#" + nm + "-error").removeClass("hidden").show().text(val);
+                                }
+                            });
+                        }
+                    })
+                    .fail(function(xhr, status, err) {
+                        $('#modal-spinner').modal('hide');
+                        $("#update-backend-result").removeClass("hidden").removeClass("success").show().html(err + "<br/>").addClass("error");
                     });
 
                 } else if ( $(evt.target).attr("id") == "update-config") {

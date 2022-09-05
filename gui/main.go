@@ -9,10 +9,12 @@ import (
 	"crypto/cipher"
 	"crypto/rand"
 	"crypto/x509"
+	"embed"
 	"encoding/base64"
 	"encoding/json"
 	"encoding/pem"
 	"errors"
+	"flag"
 	"fmt"
 	"html/template"
 	"io"
@@ -65,6 +67,16 @@ var (
 	isDev           bool
 	updateAvailable bool
 	updateChecked   time.Time
+	srv             *http.Server
+	configPath      string
+	listenAddress   string
+
+	//go:embed templates
+	embeddedTemplates embed.FS
+	//go:embed static
+	staticFiles embed.FS
+	// Is set by the compiler using -ldflags
+	standaloneVersion string
 
 	upgrader = websocket.Upgrader{
 		ReadBufferSize:  1024,
@@ -207,6 +219,70 @@ func (cfg *SetupConfig) Validate(orgRequired bool) bool {
 	return len(cfg.Errors) == 0
 }
 
+// StandaloneConfig stores the config settings when running standalone.
+type StandaloneConfig struct {
+	Backend     string
+	MySQLServer string
+	MySQLPort   string
+	MySQLDBName string
+	MySQLUser   string
+	MySQLPasswd string
+	UseHTTPS    bool
+	CertPath    string
+	KeyPath     string
+	RequestBase string
+	Errors      map[string]string
+}
+
+// Validate that StandaloneConfig contains all required data.
+func (cfg *StandaloneConfig) Validate() bool {
+	cfg.Errors = make(map[string]string)
+
+	if strings.TrimSpace(cfg.Backend) != "step-ca" {
+		cfg.Errors["Backend"] = "Currently only step-ca is supported as backend"
+	}
+
+	if strings.TrimSpace(cfg.MySQLServer) == "" {
+		cfg.Errors["MySQLServer"] = "Please enter the name or IP address of the MySQL server"
+	}
+	_, err := strconv.Atoi(string(strings.TrimSpace(cfg.MySQLServer)[0]))
+	if err == nil {
+		if ip := net.ParseIP(strings.TrimSpace(cfg.MySQLServer)); ip == nil {
+			cfg.Errors["MySQLServer"] = "Please enter a valid IP address"
+		}
+	}
+
+	if strings.TrimSpace(cfg.MySQLPort) == "" {
+		cfg.Errors["MySQLPort"] = "Please enter the port number of the MySQL server"
+	}
+	p, err := strconv.Atoi(strings.TrimSpace(cfg.MySQLPort))
+	if err != nil || p < 1 || p > 65535 {
+		cfg.Errors["MySQLPort"] = "Please enter a valid port number"
+	}
+
+	if strings.TrimSpace(cfg.MySQLDBName) == "" {
+		cfg.Errors["MySQLDBName"] = "Please enter the name of the MySQL database"
+	}
+
+	if strings.TrimSpace(cfg.MySQLUser) == "" {
+		cfg.Errors["MySQLUser"] = "Please enter the name of the MySQL user"
+	}
+
+	if strings.TrimSpace(cfg.MySQLPasswd) == "" {
+		cfg.Errors["MySQLPasswd"] = "Please enter the password of the MySQL user"
+	}
+
+	if cfg.UseHTTPS && strings.TrimSpace(cfg.CertPath) == "" {
+		cfg.Errors["CertPath"] = "Please enter the location and name of the HTTPS certificate to use"
+	}
+
+	if cfg.UseHTTPS && strings.TrimSpace(cfg.KeyPath) == "" {
+		cfg.Errors["KeyPath"] = "Please enter the location and name of the HTTPS key file to use"
+	}
+
+	return len(cfg.Errors) == 0
+}
+
 func errorHandler(w http.ResponseWriter, r *http.Request, err error, status int) {
 	log.Printf("errorHandler: err=%v\n", err)
 
@@ -312,8 +388,12 @@ func rootHandler(w http.ResponseWriter, r *http.Request) {
 
 	dashboardData, err := CollectDashboardData(w, r)
 	if err == nil {
-		checkUpdates(false)
-		dashboardData["UpdateAvailable"] = updateAvailable
+		if viper.GetBool("standalone") {
+			dashboardData["UpdateAvailable"] = false
+		} else {
+			checkUpdates(false)
+			dashboardData["UpdateAvailable"] = updateAvailable
+		}
 		dashboardData["UpdateChecked"] = strings.Replace(updateChecked.Format("02-Jan-2006 15:04:05 MST"), "+0000", "GMT", -1)
 		dashboardData["UpdateCheckedRel"] = humanize.RelTime(updateChecked, time.Now(), "", "")
 
@@ -323,7 +403,8 @@ func rootHandler(w http.ResponseWriter, r *http.Request) {
 
 func aboutHandler(w http.ResponseWriter, r *http.Request) {
 	render(w, r, "about", map[string]interface{}{
-		"Title": "About",
+		"Title":      "About",
+		"Standalone": viper.GetBool("standalone"),
 	})
 }
 
@@ -502,6 +583,36 @@ func _accountUpdateHandler(w http.ResponseWriter, r *http.Request) {
 	} else {
 		res.Success = false
 		res.Errors = reg.Errors
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(res)
+}
+
+func backendUpdateHandler(w http.ResponseWriter, r *http.Request) {
+	cfg := &StandaloneConfig{
+		Backend:     r.Form.Get("backend"),
+		MySQLServer: r.Form.Get("mysql_server"),
+		MySQLPort:   r.Form.Get("mysql_port"),
+		MySQLDBName: r.Form.Get("mysql_dbname"),
+		MySQLUser:   r.Form.Get("mysql_user"),
+		MySQLPasswd: r.Form.Get("mysql_passwd"),
+		UseHTTPS:    (r.Form.Get("use_https") == "https"),
+		CertPath:    r.Form.Get("cert_path"),
+		KeyPath:     r.Form.Get("key_path"),
+		RequestBase: r.Header.Get("X-Request-Base"),
+	}
+
+	res := struct {
+		Success bool
+		Errors  map[string]string
+	}{Success: true}
+
+	if cfg.Validate() {
+		writeStandaloneConfig(cfg)
+	} else {
+		res.Success = false
+		res.Errors = cfg.Errors
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -942,6 +1053,11 @@ func _managePostDispatch(w http.ResponseWriter, r *http.Request, action string) 
 		return true
 	}
 
+	if action == "update-backend" {
+		backendUpdateHandler(w, r)
+		return true
+	}
+
 	if action == "update-config" {
 		_configUpdateHandler(w, r)
 		return true
@@ -988,6 +1104,7 @@ func _managePost(w http.ResponseWriter, r *http.Request) {
 		"labca-restart",
 		"server-restart",
 		"update-account",
+		"update-backend",
 		"update-config",
 		"update-email",
 		"send-email",
@@ -1008,13 +1125,15 @@ func _managePost(w http.ResponseWriter, r *http.Request) {
 	}
 
 	res := &Result{Success: true}
-	if !_hostCommand(w, r, action) {
-		res.Success = false
-		res.Message = "Command failed - see LabCA log for any details"
-	}
+	if !viper.GetBool("standalone") {
+		if !_hostCommand(w, r, action) {
+			res.Success = false
+			res.Message = "Command failed - see LabCA log for any details"
+		}
 
-	if action != "server-restart" && action != "version-update" {
-		res.ManageComponents(w, r, action)
+		if action != "server-restart" && action != "version-update" {
+			res.ManageComponents(w, r, action)
+		}
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -1025,148 +1144,187 @@ func _manageGet(w http.ResponseWriter, r *http.Request) {
 	manageData := make(map[string]interface{})
 	manageData["RequestBase"] = r.Header.Get("X-Request-Base")
 
-	checkUpdates(false)
-	manageData["UpdateAvailable"] = updateAvailable
-	manageData["UpdateChecked"] = strings.Replace(updateChecked.Format("02-Jan-2006 15:04:05 MST"), "+0000", "GMT", -1)
-	manageData["UpdateCheckedRel"] = humanize.RelTime(updateChecked, time.Now(), "", "")
+	if viper.GetBool("standalone") {
+		manageData["Standalone"] = true
+		manageData["Backend"] = viper.GetString("backend")
 
-	components := _parseComponents(getLog(w, r, "components"))
-	for i := 0; i < len(components); i++ {
-		if components[i].Name == "Boulder (ACME)" {
-			components[i].LogURL = r.Header.Get("X-Request-Base") + "/logs/boulder"
-			components[i].LogTitle = "ACME Log"
-
-			btn := make(map[string]interface{})
-			cls := "btn-success"
-			if components[i].TimestampRel != "stopped" {
-				cls = cls + " hidden"
+		dsn := strings.Split(viper.GetString("db.conn"), "@")
+		if len(dsn) > 0 {
+			up := strings.Split(dsn[0], ":")
+			if len(up) > 0 {
+				manageData["MySQLUser"] = up[0]
 			}
-			btn["Class"] = cls
-			btn["Id"] = "boulder-start"
-			btn["Title"] = "Start the core ACME application"
-			btn["Label"] = "Start"
-			components[i].Buttons = append(components[i].Buttons, btn)
-
-			btn = make(map[string]interface{})
-			cls = "btn-warning"
-			if components[i].TimestampRel == "stopped" {
-				cls = cls + " hidden"
+			if len(up) > 1 {
+				manageData["MySQLPasswd"] = up[1]
 			}
-			btn["Class"] = cls
-			btn["Id"] = "boulder-restart"
-			btn["Title"] = "Stop and restart the core ACME application"
-			btn["Label"] = "Restart"
-			components[i].Buttons = append(components[i].Buttons, btn)
-
-			btn = make(map[string]interface{})
-			cls = "btn-danger"
-			if components[i].TimestampRel == "stopped" {
-				cls = cls + " hidden"
+		}
+		if len(dsn) > 1 {
+			sd := strings.Split(dsn[1], "/")
+			if len(sd) > 0 {
+				if strings.HasPrefix(sd[0], "tcp(") {
+					sd[0] = sd[0][4 : len(sd[0])-1]
+				}
+				sp := strings.Split(sd[0], ":")
+				if len(sp) > 0 {
+					manageData["MySQLServer"] = sp[0]
+				}
+				if len(sp) > 1 {
+					manageData["MySQLPort"] = sp[1]
+				}
 			}
-			btn["Class"] = cls
-			btn["Id"] = "boulder-stop"
-			btn["Title"] = "Stop the core ACME application; users can no longer use ACME clients to interact with this instance"
-			btn["Label"] = "Stop"
-			components[i].Buttons = append(components[i].Buttons, btn)
+			if len(sd) > 1 {
+				manageData["MySQLDBName"] = sd[1]
+			}
 		}
 
-		if components[i].Name == "Controller" {
-			components[i].LogURL = ""
-			components[i].LogTitle = ""
+		manageData["UseHTTPS"] = viper.GetBool("server.https")
+		manageData["CertPath"] = viper.GetString("server.cert")
+		manageData["KeyPath"] = viper.GetString("server.key")
 
-			btn := make(map[string]interface{})
-			btn["Class"] = "btn-warning"
-			btn["Id"] = "svc-restart"
-			btn["Title"] = "Restart the host service"
-			btn["Label"] = "Restart"
-			components[i].Buttons = append(components[i].Buttons, btn)
-		}
-
-		if components[i].Name == "LabCA Application" {
-			components[i].LogURL = r.Header.Get("X-Request-Base") + "/logs/labca"
-			components[i].LogTitle = "LabCA Log"
-
-			btn := make(map[string]interface{})
-			btn["Class"] = "btn-warning"
-			btn["Id"] = "labca-restart"
-			btn["Title"] = "Stop and restart this LabCA admin application"
-			btn["Label"] = "Restart"
-			components[i].Buttons = append(components[i].Buttons, btn)
-		}
-
-		if components[i].Name == "NGINX Webserver" {
-			components[i].LogURL = r.Header.Get("X-Request-Base") + "/logs/web"
-			components[i].LogTitle = "Web Error Log"
-
-			btn := make(map[string]interface{})
-			btn["Class"] = "btn-info"
-			btn["Id"] = "nginx-reload"
-			btn["Title"] = "Reload web server configuration with minimal impact to the users"
-			btn["Label"] = "Reload"
-			components[i].Buttons = append(components[i].Buttons, btn)
-
-			btn = make(map[string]interface{})
-			btn["Class"] = "btn-warning"
-			btn["Id"] = "nginx-restart"
-			btn["Title"] = "Restart the web server with some downtime for the users"
-			btn["Label"] = "Restart"
-			components[i].Buttons = append(components[i].Buttons, btn)
-		}
-
-		if components[i].Name == "MySQL Database" {
-			components[i].LogURL = ""
-			components[i].LogTitle = ""
-
-			btn := make(map[string]interface{})
-			btn["Class"] = "btn-warning"
-			btn["Id"] = "mysql-restart"
-			btn["Title"] = "Restart the MySQL database server"
-			btn["Label"] = "Restart"
-			components[i].Buttons = append(components[i].Buttons, btn)
-		}
-	}
-	manageData["Components"] = components
-
-	backupFiles := strings.Split(getLog(w, r, "backups"), "\n")
-	backupFiles = backupFiles[:len(backupFiles)-1]
-	manageData["BackupFiles"] = backupFiles
-
-	manageData["RootDetails"] = _doCmdOutput(w, r, "openssl x509 -noout -text -nameopt utf8 -in data/root-ca.pem")
-	manageData["IssuerDetails"] = _doCmdOutput(w, r, "openssl x509 -noout -text -nameopt utf8 -in data/issuer/ca-int.pem")
-
-	manageData["Fqdn"] = viper.GetString("labca.fqdn")
-	manageData["Organization"] = viper.GetString("labca.organization")
-	if viper.Get("labca.web_title") == nil || viper.GetString("labca.web_title") == "" {
-		manageData["WebTitle"] = "LabCA"
 	} else {
-		manageData["WebTitle"] = viper.GetString("labca.web_title")
-	}
-	manageData["DNS"] = viper.GetString("labca.dns")
-	domainMode := viper.GetString("labca.domain_mode")
-	manageData["DomainMode"] = domainMode
-	if domainMode == "lockdown" {
-		manageData["LockdownDomains"] = viper.GetString("labca.lockdown")
-	}
-	if domainMode == "whitelist" {
-		manageData["WhitelistDomains"] = viper.GetString("labca.whitelist")
-	}
-	manageData["ExtendedTimeout"] = viper.GetBool("labca.extended_timeout")
+		checkUpdates(false)
+		manageData["UpdateAvailable"] = updateAvailable
+		manageData["UpdateChecked"] = strings.Replace(updateChecked.Format("02-Jan-2006 15:04:05 MST"), "+0000", "GMT", -1)
+		manageData["UpdateCheckedRel"] = humanize.RelTime(updateChecked, time.Now(), "", "")
 
-	manageData["DoEmail"] = viper.GetBool("labca.email.enable")
-	manageData["Server"] = viper.GetString("labca.email.server")
-	manageData["Port"] = viper.GetInt("labca.email.port")
-	manageData["EmailUser"] = viper.GetString("labca.email.user")
-	manageData["EmailPwd"] = ""
-	if viper.Get("labca.email.pass") != nil {
-		pwd := viper.GetString("labca.email.pass")
-		result, err := _decrypt(pwd)
-		if err == nil {
-			manageData["EmailPwd"] = string(result)
-		} else {
-			log.Printf("WARNING: could not decrypt email password: %s!\n", err.Error())
+		components := _parseComponents(getLog(w, r, "components"))
+		for i := 0; i < len(components); i++ {
+			if components[i].Name == "Boulder (ACME)" {
+				components[i].LogURL = r.Header.Get("X-Request-Base") + "/logs/boulder"
+				components[i].LogTitle = "ACME Log"
+
+				btn := make(map[string]interface{})
+				cls := "btn-success"
+				if components[i].TimestampRel != "stopped" {
+					cls = cls + " hidden"
+				}
+				btn["Class"] = cls
+				btn["Id"] = "boulder-start"
+				btn["Title"] = "Start the core ACME application"
+				btn["Label"] = "Start"
+				components[i].Buttons = append(components[i].Buttons, btn)
+
+				btn = make(map[string]interface{})
+				cls = "btn-warning"
+				if components[i].TimestampRel == "stopped" {
+					cls = cls + " hidden"
+				}
+				btn["Class"] = cls
+				btn["Id"] = "boulder-restart"
+				btn["Title"] = "Stop and restart the core ACME application"
+				btn["Label"] = "Restart"
+				components[i].Buttons = append(components[i].Buttons, btn)
+
+				btn = make(map[string]interface{})
+				cls = "btn-danger"
+				if components[i].TimestampRel == "stopped" {
+					cls = cls + " hidden"
+				}
+				btn["Class"] = cls
+				btn["Id"] = "boulder-stop"
+				btn["Title"] = "Stop the core ACME application; users can no longer use ACME clients to interact with this instance"
+				btn["Label"] = "Stop"
+				components[i].Buttons = append(components[i].Buttons, btn)
+			}
+
+			if components[i].Name == "Controller" {
+				components[i].LogURL = ""
+				components[i].LogTitle = ""
+
+				btn := make(map[string]interface{})
+				btn["Class"] = "btn-warning"
+				btn["Id"] = "svc-restart"
+				btn["Title"] = "Restart the host service"
+				btn["Label"] = "Restart"
+				components[i].Buttons = append(components[i].Buttons, btn)
+			}
+
+			if components[i].Name == "LabCA Application" {
+				components[i].LogURL = r.Header.Get("X-Request-Base") + "/logs/labca"
+				components[i].LogTitle = "LabCA Log"
+
+				btn := make(map[string]interface{})
+				btn["Class"] = "btn-warning"
+				btn["Id"] = "labca-restart"
+				btn["Title"] = "Stop and restart this LabCA admin application"
+				btn["Label"] = "Restart"
+				components[i].Buttons = append(components[i].Buttons, btn)
+			}
+
+			if components[i].Name == "NGINX Webserver" {
+				components[i].LogURL = r.Header.Get("X-Request-Base") + "/logs/web"
+				components[i].LogTitle = "Web Error Log"
+
+				btn := make(map[string]interface{})
+				btn["Class"] = "btn-info"
+				btn["Id"] = "nginx-reload"
+				btn["Title"] = "Reload web server configuration with minimal impact to the users"
+				btn["Label"] = "Reload"
+				components[i].Buttons = append(components[i].Buttons, btn)
+
+				btn = make(map[string]interface{})
+				btn["Class"] = "btn-warning"
+				btn["Id"] = "nginx-restart"
+				btn["Title"] = "Restart the web server with some downtime for the users"
+				btn["Label"] = "Restart"
+				components[i].Buttons = append(components[i].Buttons, btn)
+			}
+
+			if components[i].Name == "MySQL Database" {
+				components[i].LogURL = ""
+				components[i].LogTitle = ""
+
+				btn := make(map[string]interface{})
+				btn["Class"] = "btn-warning"
+				btn["Id"] = "mysql-restart"
+				btn["Title"] = "Restart the MySQL database server"
+				btn["Label"] = "Restart"
+				components[i].Buttons = append(components[i].Buttons, btn)
+			}
 		}
+		manageData["Components"] = components
+
+		backupFiles := strings.Split(getLog(w, r, "backups"), "\n")
+		backupFiles = backupFiles[:len(backupFiles)-1]
+		manageData["BackupFiles"] = backupFiles
+
+		manageData["RootDetails"] = _doCmdOutput(w, r, "openssl x509 -noout -text -nameopt utf8 -in data/root-ca.pem")
+		manageData["IssuerDetails"] = _doCmdOutput(w, r, "openssl x509 -noout -text -nameopt utf8 -in data/issuer/ca-int.pem")
+
+		manageData["Fqdn"] = viper.GetString("labca.fqdn")
+		manageData["Organization"] = viper.GetString("labca.organization")
+		if viper.Get("labca.web_title") == nil || viper.GetString("labca.web_title") == "" {
+			manageData["WebTitle"] = "LabCA"
+		} else {
+			manageData["WebTitle"] = viper.GetString("labca.web_title")
+		}
+		manageData["DNS"] = viper.GetString("labca.dns")
+		domainMode := viper.GetString("labca.domain_mode")
+		manageData["DomainMode"] = domainMode
+		if domainMode == "lockdown" {
+			manageData["LockdownDomains"] = viper.GetString("labca.lockdown")
+		}
+		if domainMode == "whitelist" {
+			manageData["WhitelistDomains"] = viper.GetString("labca.whitelist")
+		}
+		manageData["ExtendedTimeout"] = viper.GetBool("labca.extended_timeout")
+
+		manageData["DoEmail"] = viper.GetBool("labca.email.enable")
+		manageData["Server"] = viper.GetString("labca.email.server")
+		manageData["Port"] = viper.GetInt("labca.email.port")
+		manageData["EmailUser"] = viper.GetString("labca.email.user")
+		manageData["EmailPwd"] = ""
+		if viper.Get("labca.email.pass") != nil {
+			pwd := viper.GetString("labca.email.pass")
+			result, err := _decrypt(pwd)
+			if err == nil {
+				manageData["EmailPwd"] = string(result)
+			} else {
+				log.Printf("WARNING: could not decrypt email password: %s!\n", err.Error())
+			}
+		}
+		manageData["From"] = viper.GetString("labca.email.from")
 	}
-	manageData["From"] = viper.GetString("labca.email.from")
 
 	manageData["Name"] = viper.GetString("user.name")
 	manageData["Email"] = viper.GetString("user.email")
@@ -1652,6 +1810,10 @@ func _progress(stage string) int {
 		return int(math.Round(curr / max))
 	}
 
+	if stage == "standalone" {
+		return int(math.Round(0.6 * curr / max))
+	}
+
 	return 0
 }
 
@@ -1691,6 +1853,9 @@ func _helptext(stage string) template.HTML {
 			"<p>If you want to generate a certificate, by default the same key type and strength is selected as\n",
 			"was chosen in the previous step when generating the root, but you may choose a different\n",
 			"one. By default the common name is the same as the CN for the Root CA, minus the word 'Root'.</p>"))
+	} else if stage == "standalone" {
+		return template.HTML(fmt.Sprint("<p>Currently only step-ca is supported, using the MySQL database backend.\n",
+			"Please provide the necessary connectiuon details here."))
 	} else {
 		return template.HTML("")
 	}
@@ -1916,6 +2081,94 @@ func _setupBaseConfig(w http.ResponseWriter, r *http.Request) bool {
 	return true
 }
 
+func writeStandaloneConfig(cfg *StandaloneConfig) {
+	conn := cfg.MySQLUser
+	if cfg.MySQLPasswd != "" {
+		conn += ":" + cfg.MySQLPasswd
+	}
+	conn += "@"
+	_, err := strconv.Atoi(string(strings.TrimSpace(cfg.MySQLServer)[0]))
+	if err == nil {
+		conn += "tcp(" + cfg.MySQLServer + ":" + cfg.MySQLPort + ")"
+	} else {
+		conn += cfg.MySQLServer + ":" + cfg.MySQLPort
+	}
+	conn += "/" + cfg.MySQLDBName
+
+	restart := viper.GetBool("server.https") != cfg.UseHTTPS || viper.GetString("server.cert") != cfg.CertPath || viper.GetString("server.key") != cfg.KeyPath
+	dbConn = conn
+	viper.Set("db.conn", conn)
+	viper.Set("backend", cfg.Backend)
+	viper.Set("server.https", cfg.UseHTTPS)
+	if cfg.UseHTTPS {
+		viper.Set("server.cert", cfg.CertPath)
+		viper.Set("server.key", cfg.KeyPath)
+	}
+	viper.Set("config.complete", true)
+	viper.WriteConfig()
+
+	if restart {
+		if cfg.UseHTTPS {
+			fmt.Println("### Please restart the application to use the HTTPS certificate!")
+		} else {
+			fmt.Println("### Please restart the application!")
+		}
+	}
+}
+
+func setupStandalone(w http.ResponseWriter, r *http.Request) {
+	if r.Method == "GET" {
+		cfg := &StandaloneConfig{
+			RequestBase: r.Header.Get("X-Request-Base"),
+			Backend:     "step-ca",
+			MySQLServer: "127.0.0.1",
+			MySQLPort:   "3306",
+			MySQLDBName: "stepca",
+			UseHTTPS:    false,
+			CertPath:    configPath + string(os.PathSeparator) + "labca.crt",
+			KeyPath:     configPath + string(os.PathSeparator) + "labca.key",
+		}
+
+		render(w, r, "standalone:manage", map[string]interface{}{"SetupConfig": cfg, "Progress": _progress("standalone"), "HelpText": _helptext("standalone")})
+		return
+
+	} else if r.Method == "POST" {
+		if err := r.ParseForm(); err != nil {
+			errorHandler(w, r, err, http.StatusInternalServerError)
+			return
+		}
+
+		cfg := &StandaloneConfig{
+			Backend:     r.Form.Get("backend"),
+			MySQLServer: r.Form.Get("mysql_server"),
+			MySQLPort:   r.Form.Get("mysql_port"),
+			MySQLDBName: r.Form.Get("mysql_dbname"),
+			MySQLUser:   r.Form.Get("mysql_user"),
+			MySQLPasswd: r.Form.Get("mysql_passwd"),
+			UseHTTPS:    (r.Form.Get("use_https") == "https"),
+			CertPath:    r.Form.Get("cert_path"),
+			KeyPath:     r.Form.Get("key_path"),
+			RequestBase: r.Header.Get("X-Request-Base"),
+		}
+
+		if !cfg.Validate() {
+			render(w, r, "standalone:manage", map[string]interface{}{"SetupConfig": cfg, "Progress": _progress("standalone"), "HelpText": _helptext("standalone")})
+			return
+		}
+
+		writeStandaloneConfig(cfg)
+
+		// Fake the method to GET as we need to continue in the setupHandler() function
+		r.Method = "GET"
+
+	} else {
+		http.Redirect(w, r, r.Header.Get("X-Request-Base")+"/setup", http.StatusSeeOther)
+		return
+	}
+
+	http.Redirect(w, r, r.Header.Get("X-Request-Base")+"/", http.StatusFound)
+}
+
 func setupHandler(w http.ResponseWriter, r *http.Request) {
 	if viper.GetBool("config.complete") {
 		render(w, r, "index:manage", map[string]interface{}{"Message": template.HTML("Setup already completed! Go <a href=\"" + r.Header.Get("X-Request-Base") + "/\">home</a>")})
@@ -1927,6 +2180,12 @@ func setupHandler(w http.ResponseWriter, r *http.Request) {
 		if !_setupAdminUser(w, r) {
 			return
 		}
+	}
+
+	// 1a. Go to standalone setup
+	if viper.GetBool("standalone") {
+		setupStandalone(w, r)
+		return
 	}
 
 	// 2. Setup essential configuration
@@ -2225,9 +2484,11 @@ func certificateHandler(w http.ResponseWriter, r *http.Request) {
 	var serial string
 	vars := mux.Vars(r)
 	id := vars["id"]
-	_, err := strconv.Atoi(id)
-	if err != nil {
-		serial = vars["id"]
+	if viper.GetString("backend") != "step-ca" {
+		_, err := strconv.Atoi(vars["id"])
+		if err != nil {
+			serial = vars["id"]
+		}
 	}
 
 	CertificateDetails, err := GetCertificate(w, r, id, serial)
@@ -2457,6 +2718,10 @@ func activeNav(active string, uri string, requestBase string) []navItem {
 		manage.Attrs["class"] = "active"
 	}
 
+	if viper.GetBool("standalone") {
+		return []navItem{home, acme, manage, about}
+	}
+
 	return []navItem{home, acme, logs, manage, about, public}
 }
 
@@ -2519,18 +2784,45 @@ func init() {
 		isDev = true
 	}
 
-	var err error
-	tmpls, err = templates.New().ParseDir("./templates", "templates/")
-	if err != nil {
-		panic(fmt.Errorf("fatal error templates: '%s'", err))
-	}
-	tmpls.AddFunc("rangeStruct", RangeStructer)
+	address := flag.String("address", "", "Address to listen on (default 0.0.0.0 when using init)")
+	configFile := flag.String("config", "", "File path to the configuration file for this application")
+	init := flag.Bool("init", false, "Initialize the application for running standalone, create/update the config file")
+	port := flag.Int("port", 0, "Port to listen on (default 3000 when using init)")
+	versionFlag := flag.Bool("version", false, "Show version number and exit")
+	flag.Parse()
 
-	viper.SetConfigName("config")
-	viper.AddConfigPath("data")
+	if *versionFlag {
+		fmt.Println(standaloneVersion)
+		os.Exit(0)
+	}
+
+	if *configFile == "" {
+		viper.SetConfigName("config")
+		viper.AddConfigPath("data")
+		configPath = "./data"
+	} else {
+		_, err := os.Stat(*configFile)
+		if os.IsNotExist(err) {
+			viper.WriteConfigAs(*configFile)
+		}
+
+		viper.AddConfigPath(filepath.Dir(*configFile))
+		configPath = filepath.Dir(*configFile)
+		viper.SetConfigName(strings.TrimSuffix(filepath.Base(*configFile), filepath.Ext(*configFile)))
+	}
 	viper.SetDefault("config.complete", false)
 	if err := viper.ReadInConfig(); err != nil {
 		panic(fmt.Errorf("fatal error config file: '%s'", err))
+	}
+
+	var err error
+	if viper.GetBool("standalone") {
+		tmpls, err = templates.New().ParseEmbed(embeddedTemplates, "templates/")
+	} else {
+		tmpls, err = templates.New().ParseDir("./templates", "templates/")
+	}
+	if err != nil {
+		panic(fmt.Errorf("fatal error templates: '%s'", err))
 	}
 
 	if viper.Get("keys.auth") == nil {
@@ -2547,6 +2839,17 @@ func init() {
 			panic(fmt.Errorf("fatal error random key"))
 		}
 		viper.Set("keys.enc", base64.StdEncoding.EncodeToString(key))
+		viper.WriteConfig()
+	}
+
+	if *init {
+		if *address != "" {
+			viper.Set("server.addr", *address)
+		}
+		if *port != 0 {
+			viper.Set("server.port", *port)
+		}
+		viper.Set("standalone", true)
 		viper.WriteConfig()
 	}
 
@@ -2573,12 +2876,26 @@ func init() {
 	dbConn = viper.GetString("db.conn")
 	dbType = viper.GetString("db.type")
 
-	version = viper.GetString("version")
+	if viper.GetBool("standalone") {
+		version = standaloneVersion
+	} else {
+		version = viper.GetString("version")
+	}
 
 	webTitle = viper.GetString("labca.web_title")
 	if webTitle == "" {
 		webTitle = "LabCA"
 	}
+
+	a := viper.GetString("server.addr")
+	p := viper.GetInt("server.port")
+	if *address != "" && *address != viper.GetString("server.addr") {
+		a = *address
+	}
+	if *port != 0 && *port != viper.GetInt("server.port") {
+		p = *port
+	}
+	listenAddress = fmt.Sprintf("%s:%d", a, p)
 
 	updateAvailable = false
 }
@@ -2599,6 +2916,7 @@ func main() {
 		Path:     "/",
 		MaxAge:   viper.GetInt("server.session.maxage") * 1,
 		HttpOnly: true,
+		Secure:   viper.GetBool("server.https"),
 	}
 
 	r := mux.NewRouter()
@@ -2631,23 +2949,38 @@ func main() {
 	r.PathPrefix("/backup/").Handler(http.StripPrefix("/backup/", http.FileServer(http.Dir("/backup"))))
 
 	r.NotFoundHandler = http.HandlerFunc(notFoundHandler)
-	if isDev {
-		r.PathPrefix("/accounts/static/").Handler(http.StripPrefix("/accounts/static/", http.FileServer(http.Dir("../static"))))
-		r.PathPrefix("/authz/static/").Handler(http.StripPrefix("/authz/static/", http.FileServer(http.Dir("../static"))))
-		r.PathPrefix("/challenges/static/").Handler(http.StripPrefix("/challenges/static/", http.FileServer(http.Dir("../static"))))
-		r.PathPrefix("/certificates/static/").Handler(http.StripPrefix("/certificates/static/", http.FileServer(http.Dir("../static"))))
-		r.PathPrefix("/orders/static/").Handler(http.StripPrefix("/orders/static/", http.FileServer(http.Dir("../static"))))
-		r.PathPrefix("/logs/static/").Handler(http.StripPrefix("/logs/static/", http.FileServer(http.Dir("../static"))))
-		r.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("../static"))))
+	if viper.GetBool("standalone") || isDev {
+		var sfs http.Handler
+		if viper.GetBool("standalone") {
+			sfs = http.FileServer(http.FS(staticFiles))
+
+			r.PathPrefix("/static/").Handler(sfs)
+		}
+		if isDev {
+			sfs = http.FileServer(http.Dir("static"))
+
+			r.PathPrefix("/accounts/static/").Handler(http.StripPrefix("/accounts/static/", sfs))
+			r.PathPrefix("/authz/static/").Handler(http.StripPrefix("/authz/static/", sfs))
+			r.PathPrefix("/challenges/static/").Handler(http.StripPrefix("/challenges/static/", sfs))
+			r.PathPrefix("/certificates/static/").Handler(http.StripPrefix("/certificates/static/", sfs))
+			r.PathPrefix("/orders/static/").Handler(http.StripPrefix("/orders/static/", sfs))
+			r.PathPrefix("/logs/static/").Handler(http.StripPrefix("/logs/static/", sfs))
+			r.PathPrefix("/static/").Handler(http.StripPrefix("/static/", sfs))
+		}
 	}
 	r.Use(authorized)
 
-	log.Printf("Listening on %s:%d...\n", viper.GetString("server.addr"), viper.GetInt("server.port"))
-	srv := &http.Server{
+	log.Printf("Listening on %s...\n", listenAddress)
+	srv = &http.Server{
 		Handler:      r,
-		Addr:         viper.GetString("server.addr") + ":" + viper.GetString("server.port"),
+		Addr:         listenAddress,
 		WriteTimeout: 15 * time.Second,
 		ReadTimeout:  15 * time.Second,
 	}
-	log.Fatal(srv.ListenAndServe())
+
+	if viper.GetBool("server.https") {
+		log.Fatal(srv.ListenAndServeTLS(viper.GetString("server.cert"), viper.GetString("server.key")))
+	} else {
+		log.Fatal(srv.ListenAndServe())
+	}
 }

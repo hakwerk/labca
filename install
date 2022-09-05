@@ -473,7 +473,7 @@ static_web() {
     find .well-known/acme-challenge/ -type f -mtime +10 -exec rm {} \;  # Clean up files older than 10 days
     mkdir -p crl
     [ -e cert ] || ln -s certs cert
-    cp -rp $cloneDir/static/* .
+    cp -rp $cloneDir/gui/static/* .
     sed -i -e "s|<\!-- BEGIN LABCA_CPS_LOCATION -->.*<\!-- END LABCA_CPS_LOCATION -->|<\!-- BEGIN LABCA_CPS_LOCATION --><a class=\"public\" href=\"http://$LABCA_FQDN/cps/\">http://$LABCA_FQDN/cps/</a><\!-- END LABCA_CPS_LOCATION -->|g" cps/index.html
     sed -i -e "s|<\!-- BEGIN LABCA_CERTS_LOCATION -->.*<\!-- END LABCA_CERTS_LOCATION -->|<\!-- BEGIN LABCA_CERTS_LOCATION --><a class=\"public\" href=\"http://$LABCA_FQDN/certs/\">http://$LABCA_FQDN/certs/</a><\!-- END LABCA_CERTS_LOCATION -->|g" cps/index.html
     [ -e $adminDir/data/root-ca.crl ] && cp $adminDir/data/root-ca.crl crl/ || true

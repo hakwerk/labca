@@ -6,6 +6,10 @@
 
 ![08-dashboard](https://user-images.githubusercontent.com/44847421/48658726-ebd4c400-ea46-11e8-8cb1-43584dbc3719.jpg)
 
+## NEW: standalone version for step-ca [![status-experimental](https://img.shields.io/badge/status-experimental-orange.svg)](README_standalone.md)
+
+See [README_stepca](README_standalone.md)
+
 ## Table of Contents
 
 - [Background](#background)

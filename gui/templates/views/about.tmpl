@@ -1,10 +1,7 @@
 {{ define "body" }}
     <h3>About LabCA</h3>
-    <p>More and more websites and applications are served over HTTPS, where all traffic between your browser and the web server is encrypted. With standard HTTP the (form) data is unencrypted and open to eavesdroppers and hackers listening to communications between the user and the website. Therefore the Chrome browser now even warns about unsafe plain HTTP sites to nudge users towards HTTPS.</p>
 
-    <p>To a lesser extent this also applies to internal applications and sites that are not exposed publicly. Just because the users may have a higher level of trust versus users of a public facing website doesn't mean sensitive content shouldn't be protected as much as possible. Lots of hacking and theft occur from within a company's own walls, virtual or real. Also, no user should get used to ignoring any browser warnings (e.g. about self-signed certificates), even for internal sites.</p>
-
-    <p>For the public internet, <a href="https://letsencrypt.org/">Let's Encrypt&trade;</a> has made a big impact by providing free HTTPS certificates in an easy and automated way. There are many clients available to interact with their so called ACME (Automated Certificate Management Environment). They also have a staging environment that allows you to get things right before issuing trusted certificates and reduce the chance of your running up against rate limits.</p>
+    <p>For the public internet, <a href="https://letsencrypt.org/">Let's Encrypt&trade;</a> is providing free HTTPS certificates in an easy and automated way, without human interaction. There are many clients available to interact with their so called ACME (Automated Certificate Management Environment). They also have a staging environment that allows you to get things right before issuing trusted certificates and reduce the chance of you running up against rate limits.</p>
 
 <blockquote>
     <p>We want to create a more secure and privacy-respecting Web</p>
@@ -17,7 +14,19 @@
 
     <p>Also if you are developing your own client application or integrating one into your own application, a local test ACME can be very handy. There is a lot of information on the internet about setting up your own PKI (Public Key Infrastructure) but those are usually not automated.</p>
 
-    <p>Getting Boulder up and running has quite a learning curve though and that is where <b><a href="https://lab-ca.net/">LabCA</a></b> comes in. It is a self-contained installation with a nice web GUI built on top of Boulder so you can quickly start using it. All regular management tasks can be done from the web interface. It is best installed in a Virtual Machine and uses Debian Linux as a base.</p>
+    <p>Getting Boulder up and running has quite a learning curve though and that is where <b><a href="https://lab-ca.net/">LabCA</a></b> comes in. It is a self-contained installation with a nice web GUI built on top of Boulder so you can quickly start using it. All regular management tasks can be done from the web interface. It is best installed in its own Virtual Machine and uses Debian Linux as a base.</p>
 
     <p>NOTE: although LabCA tries to be as robust as possible, use it at your own risk. If you depend on it, make sure that you know what you are doing!</p>
+
+    {{ if .Standalone }}
+        <p>&nbsp;</p>
+        <h4>Standalone GUI Version</h4>
+        <p>As the ACME protocol is a standard (<a href="https://tools.ietf.org/html/rfc8555">RFC8555</a>) and not limited to boulder, there also are other implementations, e.g. <a href="https://smallstep.com/certificates/">step-ca</a> from Smallstep&trade; that you can run and manage yourself.</p>
+
+        <p>Getting started with step-ca is much easier than starting with boulder. But Smallstep is not providing a self-managed web GUI to easily see what certificates have been issued by step-ca and what their expiry statuses are. In fact they are using a very specific database storage that does not allow you to query the data directly from a normal database client either.</p>
+
+        <p>As the structure of the ACME data is pretty standard anyway, this standalone version of the LabCA GUI was created to work with step-ca (and potentially other ACME implementations in the future). It only works with their MySQL backend, as the BadgerDB backend has several limitations.</p>
+
+        <p>The standalone GUI is distributed as a single binary so that it can be easily installed and started.</p>
+    {{ end }}
 {{ end }}

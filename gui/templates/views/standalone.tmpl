@@ -1,0 +1,62 @@
+{{ define "body" }}
+</div>
+<div class="col-md-6 col-sm-12">
+    <h3>Configuration</h3>
+
+{{with .SetupConfig}}
+<form role="form" action="{{ .RequestBase }}/setup" method="POST">
+  <div class="form-group">
+    <label>Backend:</label><br/>
+    {{ with .Errors.Backend }}
+    <span class="error">{{ . }}</span><br/>
+    {{ end }}
+    <input type="radio" id="stepca" name="backend" value="step-ca" {{ if eq .Backend "step-ca"}}checked{{ end }}/> step-ca<br/>
+    <label class="ml20 mt10" for="mysql_server">MySQL server (IP address or hostname):</label>
+    <input class="form-control non-fluid ml20" type="text" id="mysql_server" name="mysql_server" value="{{ .MySQLServer }}" required>
+    {{ with .Errors.MySQLServer }}
+    <span class="error ml20">{{ . }}</span><br/>
+    {{ end }}
+    <label class="ml20 mt10" for="mysql_port">MySQL port:</label>
+    <input class="form-control non-fluid ml20" type="text" id="mysql_port" name="mysql_port" value="{{ .MySQLPort }}" required>
+    {{ with .Errors.MySQLPort }}
+    <span class="error ml20">{{ . }}</span><br/>
+    {{ end }}
+    <label class="ml20 mt10" for="mysql_dbname">MySQL database name:</label>
+    <input class="form-control non-fluid ml20" type="text" id="mysql_dbname" name="mysql_dbname" value="{{ .MySQLDBName }}" required>
+    {{ with .Errors.MySQLDBName }}
+    <span class="error ml20">{{ . }}</span><br/>
+    {{ end }}
+    <label class="ml20 mt10" for="mysql_user">MySQL username:</label>
+    <input class="form-control non-fluid ml20" type="text" id="mysql_user" name="mysql_user" value="{{ .MySQLUser }}" required>
+    {{ with .Errors.MySQLUser }}
+    <span class="error ml20">{{ . }}</span><br/>
+    {{ end }}
+    <label class="ml20 mt10" for="mysql_passwd">MySQL password:</label>
+    <input class="form-control non-fluid ml20" type="password" id="mysql_passwd" name="mysql_passwd" value="{{ .MySQLPasswd }}" required>
+    {{ with .Errors.MySQLPasswd }}
+    <span class="error ml20">{{ . }}</span><br/>
+    {{ end }}
+    <br/>
+    <label class="ml20 mt10">Use HTTPS:</label>
+    <input type="checkbox" class="use_https" id="use_https" name="use_https" value="https" {{ if .UseHTTPS }}checked{{ end }}></input><br/>
+    <label class="ml20 mt10" for="cert_path">Certificate file:</label>
+    <input class="form-control non-fluid ml20" type="text" id="cert_path" name="cert_path" value="{{ .CertPath }}">
+    {{ with .Errors.CertPath }}
+    <span class="error ml20">{{ . }}</span><br/>
+    {{ end }}
+    <label class="ml20 mt10" for="key_path">Key file:</label>
+    <input class="form-control non-fluid ml20" type="text" id="key_path" name="key_path" value="{{ .KeyPath }}">
+    {{ with .Errors.KeyPath }}
+    <span class="error ml20">{{ . }}</span><br/>
+    {{ end }}
+    <br/>
+    <input type="radio" id="future" name="backend" value="future" disabled/> ...<br/><br/>
+  </div>
+
+  <div class="form-group">
+    <input class="btn btn-default" type="submit" value="Apply">
+  </div>
+</form>
+{{end}}
+{{ template "partials/progress.tmpl" . }}
+{{end}}

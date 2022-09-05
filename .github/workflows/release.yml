@@ -3,15 +3,37 @@ name: Create Release
 on:
   push:
     tags:
-      - '*'
+      - 'v*'
+  workflow_dispatch:
 
 jobs:
-  create-release:
+  build-standalone:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        GO_VERSION:
+          - 1.18.4
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
+        with:
+          persist-credentials: false
+
+      - name: Set up Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: ${{ matrix.GO_VERSION }}
+
+      - name: APT Install
+        id: aptInstall
+        run: sudo apt-get -y install build-essential debhelper fakeroot
+
+      - name: Build Debian package
+        id: make_debian
+        run: |
+          make debian
 
       - name: Create changelog text
         id: changelog
@@ -22,6 +44,7 @@ jobs:
       - name: Create release
         uses: ncipollo/release-action@v1
         with:
+          artifacts: "release/*"
           body: ${{ steps.changelog.outputs.changes }}
           draft: true
           token: ${{ secrets.ACTION_PAT }}

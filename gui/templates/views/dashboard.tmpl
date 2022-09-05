@@ -100,6 +100,7 @@
 
     <div class="row">
         <div class="col-lg-8">
+            {{ if ne .Standalone true }}
             <div class="panel panel-default">
                 <div class="panel-heading">
                     <i class="fa fa-fw fa-tasks"></i> Boulder (ACME) Activity
@@ -122,6 +123,7 @@
                     </div>
                 </a>
             </div>
+            {{ end }}
         </div>
 
         <div class="col-lg-4">
@@ -137,6 +139,7 @@
                 </div>
                 <div class="panel-body">
                     <div class="table-responsive" id="dashboard-stats">
+                        {{ if .Components }}
                         <table class="table table-bordered mb15">
                             <tbody>
                             {{ range $item := .Components }}
@@ -151,15 +154,16 @@
                                 </tr>
                                 <tr>
                                     <td class="pad-low">Memory</td>
-                                    <td class="pad-low"><span class="pull-right"><img height="12px" src="/img/spinner.gif"></span></td>
+                                    <td class="pad-low"><span class="pull-right"><img height="12px" src="static/img/spinner.gif"></span></td>
                                 </tr>
                                 <tr>
                                     <td class="pad-low-top">Processes</td>
-                                    <td class="pad-low-top"><span class="pull-right"><img height="12px" src="/img/spinner.gif"></span></td>
+                                    <td class="pad-low-top"><span class="pull-right"><img height="12px" src="static/img/spinner.gif"></span></td>
                                 </tr>
                             {{ end }}
                             </tbody>
                         </table>
+                        {{ end }}
 
                         <table class="table table-bordered mb0">
                             <tbody>
@@ -168,7 +172,7 @@
                                     <td>{{ $item.Name }}</td>
                                     <td{{ if $item.Hint }} title="{{ $item.Hint }}"{{ end }}>
                                         <span class="pull-right{{ if $item.Class }} {{ $item.Class }}{{ end }}">
-                                            {{ if $item.Value }}{{ $item.Value }}{{ else }}<img height="12px" src="/img/spinner.gif">{{ end }}
+                                            {{ if $item.Value }}{{ $item.Value }}{{ else }}<img height="12px" src="static/img/spinner.gif">{{ end }}
                                             {{ if $item.Class }}<i class="fa fa-fw fa-warning"></i>{{ end }}
                                         </span>
                                     </td>
@@ -191,6 +195,7 @@
 
 {{ define "tail" }}
     <script>
+        {{ if ne .Standalone true }}
         (function() {
             $.ajax(window.location.href + "/stats", {
                 timeout: 30000
@@ -227,7 +232,7 @@
 
                 // Delete any remaining spinners when one or more dockers is down
                 $('img').each(function() {
-                    if ($(this).attr('height') == '12px' && $(this).attr('src') == '/img/spinner.gif') {
+                    if ($(this).attr('height') == '12px' && $(this).attr('src') == 'static/img/spinner.gif') {
                         $(this).remove();
                     }
                 });
@@ -236,5 +241,6 @@
                 console.log("ajax ERROR:", err);
             });
         })();
+        {{ end }}
     </script>
 {{ end }}

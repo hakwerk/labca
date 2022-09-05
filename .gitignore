@@ -22,3 +22,8 @@ _site
 # Project specific
 gui/data/
 gui/bin/
+bin/labca-gui
+debian/.debhelper/
+debian/files
+debian/labca-gui.substvars
+debian/labca-gui/

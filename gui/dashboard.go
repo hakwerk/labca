@@ -1,7 +1,10 @@
 package main
 
 import (
+	"crypto/x509"
 	"database/sql"
+	"encoding/json"
+	"encoding/pem"
 	"fmt"
 	"log"
 	"net/http"
@@ -11,6 +14,8 @@ import (
 	"time"
 
 	"github.com/dustin/go-humanize"
+	"github.com/pkg/errors"
+	"github.com/spf13/viper"
 )
 
 // Activity is a message to be shown on the dashboard, with timestamp and css class
@@ -289,6 +294,100 @@ func _parseStats(data string, components []Component) []Stat {
 	return stats
 }
 
+func getStatsStandalone() []Stat {
+	var stats []Stat
+
+	out, err := exeCmd("cat /etc/timezone")
+	if err != nil || string(out) == "/UTC\n" {
+		out = []byte("Etc/UTC")
+	}
+	if string(out[len(out)-1:]) == "\n" {
+		out = out[0 : len(out)-1]
+	}
+	loc, err := time.LoadLocation(string(out))
+	if err != nil {
+		log.Printf("Could not determine location: %s\n", err)
+		loc = time.Local
+	}
+
+	out, _ = exeCmd("uptime -s")
+	if string(out[len(out)-1:]) == "\n" {
+		out = out[0 : len(out)-1]
+	}
+	since, err := time.ParseInLocation("2006-01-02 15:04:05", string(out), loc)
+	var sinceReal string
+	sinceNice := "??"
+	if err == nil {
+		sinceReal = since.Format("02-Jan-2006 15:04:05 MST")
+		sinceNice = humanize.RelTime(since, time.Now(), "", "")
+	}
+	stats = append(stats, Stat{Name: "System Uptime", Hint: sinceReal, Value: sinceNice})
+
+	total := "0"
+	avail := "0"
+	out, err = exeCmd("free -b --si")
+	if err == nil {
+		lines := strings.Split(string(out), "\n")
+		line := ""
+		for i := 0; i < len(lines); i++ {
+			if strings.Contains(lines[i], ":") {
+				line = lines[i]
+				break
+			}
+		}
+		re := regexp.MustCompile(`.*?\s+(\d+)\s+.*`)
+		segs := re.FindStringSubmatch(line)
+		if len(segs) > 1 {
+			total = segs[1]
+		}
+		re = regexp.MustCompile(`.*\s+(\d+)$`)
+		segs = re.FindStringSubmatch(line)
+		if len(segs) > 1 {
+			avail = segs[1]
+		}
+	}
+	memUsed := uint64(0)
+	memAvail, err := strconv.ParseUint(avail, 10, 64)
+	if err != nil {
+		memAvail = 0
+	}
+	memTotal, err := strconv.ParseUint(total, 10, 64)
+	if err != nil {
+		memUsed = 0
+	} else {
+		memUsed = memTotal - memAvail
+	}
+
+	percMem := float64(0)
+	if (memUsed + memAvail) > 0 {
+		percMem = float64(100) * float64(memUsed) / float64(memUsed+memAvail)
+	}
+
+	usedHuman := humanize.IBytes(memUsed)
+	availHuman := humanize.IBytes(memAvail)
+	percHuman := fmt.Sprintf("%s %%", humanize.FtoaWithDigits(percMem, 1))
+
+	stats = append(stats, Stat{Name: "Memory Used", Value: usedHuman})
+	class := ""
+	if percMem > 75 {
+		class = "warning"
+	}
+	if percMem > 90 {
+		class = "error"
+	}
+	stats = append(stats, Stat{Name: "Memory Used [%]", Value: percHuman, Class: class})
+	class = ""
+	if memAvail < 250000000 {
+		class = "warning"
+	}
+	if memAvail < 100000000 {
+		class = "error"
+	}
+	stats = append(stats, Stat{Name: "Memory Available", Value: availHuman, Class: class})
+
+	return stats
+}
+
 // What we return as json
 type AjaxStat struct {
 	Stat
@@ -396,7 +495,13 @@ func CollectDashboardData(w http.ResponseWriter, r *http.Request) (map[string]in
 	dashboardData := make(map[string]interface{})
 	dashboardData["RequestBase"] = r.Header.Get("X-Request-Base")
 
-	rows, err := db.Query("SELECT count(*) FROM registrations")
+	var rows *sql.Rows
+	if viper.GetString("backend") == "step-ca" {
+		rows, err = db.Query("SELECT count(*) FROM acme_accounts")
+
+	} else {
+		rows, err = db.Query("SELECT count(*) FROM registrations")
+	}
 	if err != nil {
 		errorHandler(w, r, err, http.StatusInternalServerError)
 		return nil, err
@@ -413,39 +518,109 @@ func CollectDashboardData(w http.ResponseWriter, r *http.Request) (map[string]in
 		dashboardData["NumAccounts"] = dbres
 	}
 
-	rows, err = db.Query("SELECT count(*) FROM certificateStatus WHERE revokedDate='0000-00-00 00:00:00' AND notAfter >= NOW()")
-	if err != nil {
-		errorHandler(w, r, err, http.StatusInternalServerError)
-		return nil, err
-	}
+	if viper.GetString("backend") == "step-ca" {
+		var numcerts int
+		var numexpired int
 
-	if rows.Next() {
-		err = rows.Scan(&dbres)
+		revokeds, err := stepcaGetRevokeds(db)
 		if err != nil {
 			errorHandler(w, r, err, http.StatusInternalServerError)
 			return nil, err
 		}
 
-		dashboardData["NumCerts"] = dbres
-	}
-
-	rows, err = db.Query("SELECT count(*) FROM certificateStatus WHERE notAfter < NOW()")
-	if err != nil {
-		errorHandler(w, r, err, http.StatusInternalServerError)
-		return nil, err
-	}
-
-	if rows.Next() {
-		err = rows.Scan(&dbres)
+		rows, err = db.Query("SELECT nvalue FROM acme_certs")
 		if err != nil {
 			errorHandler(w, r, err, http.StatusInternalServerError)
 			return nil, err
 		}
 
-		dashboardData["NumExpired"] = dbres
+		var row []byte
+		var dbcert stepcaCert
+		for rows.Next() {
+			err = rows.Scan(&row)
+			if err != nil {
+				errorHandler(w, r, err, http.StatusInternalServerError)
+				return nil, err
+			}
+
+			err = json.Unmarshal(row, &dbcert)
+			if err != nil {
+				errorHandler(w, r, err, http.StatusInternalServerError)
+				return nil, err
+			}
+
+			var block *pem.Block
+			var crt *x509.Certificate
+			for len(dbcert.Leaf) > 0 {
+				block, dbcert.Leaf = pem.Decode(dbcert.Leaf)
+				if block == nil {
+					break
+				}
+				if block.Type != "CERTIFICATE" {
+					errorHandler(w, r, err, http.StatusInternalServerError)
+					return nil, errors.New("error decoding PEM: data contains block that is not a certificate")
+				}
+				crt, err = x509.ParseCertificate(block.Bytes)
+				if err != nil {
+					errorHandler(w, r, err, http.StatusInternalServerError)
+					return nil, errors.Wrapf(err, "error parsing x509 certificate")
+				}
+			}
+			if len(dbcert.Leaf) > 0 {
+				errorHandler(w, r, err, http.StatusInternalServerError)
+				return nil, errors.New("error decoding PEM: unexpected data")
+			}
+
+			if time.Now().After(crt.NotAfter) {
+				numexpired += 1
+			} else {
+				if _, found := revokeds[crt.SerialNumber.Text(10)]; !found {
+					numcerts += 1
+				}
+			}
+		}
+
+		dashboardData["NumCerts"] = numcerts
+		dashboardData["NumExpired"] = numexpired
+	} else {
+		rows, err = db.Query("SELECT count(*) FROM certificateStatus WHERE revokedDate='0000-00-00 00:00:00' AND notAfter >= NOW()")
+		if err != nil {
+			errorHandler(w, r, err, http.StatusInternalServerError)
+			return nil, err
+		}
+
+		if rows.Next() {
+			err = rows.Scan(&dbres)
+			if err != nil {
+				errorHandler(w, r, err, http.StatusInternalServerError)
+				return nil, err
+			}
+
+			dashboardData["NumCerts"] = dbres
+		}
+
+		rows, err = db.Query("SELECT count(*) FROM certificateStatus WHERE notAfter < NOW()")
+		if err != nil {
+			errorHandler(w, r, err, http.StatusInternalServerError)
+			return nil, err
+		}
+
+		if rows.Next() {
+			err = rows.Scan(&dbres)
+			if err != nil {
+				errorHandler(w, r, err, http.StatusInternalServerError)
+				return nil, err
+			}
+
+			dashboardData["NumExpired"] = dbres
+		}
 	}
 
-	rows, err = db.Query("SELECT count(*) FROM certificateStatus WHERE revokedDate<>'0000-00-00 00:00:00'")
+	if viper.GetString("backend") == "step-ca" {
+		rows, err = db.Query("SELECT count(*) FROM revoked_x509_certs")
+	} else {
+		rows, err = db.Query("SELECT count(*) FROM certificateStatus WHERE revokedDate<>'0000-00-00 00:00:00'")
+	}
 	if err != nil {
 		errorHandler(w, r, err, http.StatusInternalServerError)
 		return nil, err
@@ -461,13 +636,19 @@ func CollectDashboardData(w http.ResponseWriter, r *http.Request) (map[string]in
 		dashboardData["NumRevoked"] = dbres
 	}
 
-	activity := getLog(w, r, "activity")
-	dashboardData["Activity"] = _parseActivity(activity)
+	if viper.GetString("backend") == "step-ca" {
+		dashboardData["Standalone"] = true
+		dashboardData["Components"] = []Component{}
+		dashboardData["Stats"] = getStatsStandalone()
+	} else {
+		activity := getLog(w, r, "activity")
+		dashboardData["Activity"] = _parseActivity(activity)
 
-	components := _parseComponents(getLog(w, r, "components"))
-	uptime := getLog(w, r, "uptime")
-	dashboardData["Stats"] = _parseStats(uptime, components)
-	dashboardData["Components"] = components
+		components := _parseComponents(getLog(w, r, "components"))
+		uptime := getLog(w, r, "uptime")
+		dashboardData["Stats"] = _parseStats(uptime, components)
+		dashboardData["Components"] = components
+	}
 
 	return dashboardData, nil
 }
