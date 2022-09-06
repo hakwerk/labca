@@ -50,21 +50,21 @@ func _parseLine(line string, loc *time.Location) Activity {
 
 	line = _removeAnsiColors(line)
 
-	re := regexp.MustCompile(`^.*\|\s*(\S)(\S+) (\S+) (\S+) (.*)$`)
+	re := regexp.MustCompile(`^.*\|\s*(\S+) (\S) (\S+) (\S+) (.*)$`)
 	result := re.FindStringSubmatch(line)
 	if len(result) == 0 {
 		return activity
 	}
 
 	activity.Class = ""
-	if result[1] == "W" {
+	if result[2] == "4" {
 		activity.Class = "warning"
 	}
-	if result[1] == "E" {
+	if result[2] == "3" {
 		activity.Class = "error"
 	}
 
-	timestamp, err := time.ParseInLocation("060102150405", result[2], loc)
+	timestamp, err := time.ParseInLocation("2006-01-02T15:04:05.999999-07:00", result[1], loc)
 	activity.Timestamp = ""
 	activity.TimestampRel = "??"
 	if err == nil {
@@ -73,17 +73,19 @@ func _parseLine(line string, loc *time.Location) Activity {
 		activity.TimestampRel = humanize.RelTime(timestamp, time.Now(), "", "")
 	}
 
-	tail := result[3][len(result[3])-2:]
 	activity.Title = ""
-	switch tail {
-	case "ca":
-		activity.Title = "Certification Agent"
-	case "ra":
-		activity.Title = "Registration Agent"
-	case "sa":
-		activity.Title = "Storage Agent"
-	case "va":
-		activity.Title = "Validation Agent"
+	if len(result[3]) > 2 {
+		tail := result[3][len(result[3])-2:]
+		switch tail {
+		case "ca":
+			activity.Title = "Certification Agent"
+		case "ra":
+			activity.Title = "Registration Agent"
+		case "sa":
+			activity.Title = "Storage Agent"
+		case "va":
+			activity.Title = "Validation Agent"
+		}
 	}
 
 	message := result[5]

@@ -39,7 +39,7 @@ $SUDO patch -p1 < $cloneDir/patches/storer_storer.patch
 
 sed -i -e "s/berrors.RateLimitError(/berrors.RateLimitError(ra.rlPolicies.RateLimitsURL(), /g" ra/ra.go
 
-sed -i -e "s/\"150405/\"060102150405/" log/log.go
+sed -i -e "s/\+07:/\-07:/" log/log.go
 
 mkdir -p "cmd/mail-tester"
 cp $cloneDir/mail-tester.go cmd/mail-tester/main.go
