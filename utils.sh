@@ -2,7 +2,7 @@
 
 set -e
 
-export PS_LABCA="bin/labca"
+export PS_LABCA="bin/labca-gui"
 export PS_BOULDER="bin/boulder"
 export PS_BOULDER_COUNT=13
 export PS_MYSQL="mysqld"

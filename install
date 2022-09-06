@@ -374,7 +374,7 @@ copy_admin() {
     cd "$adminDir"
     grep \"version\" data/config.json &>/dev/null || sed -i -e 's/^}$/,\n  "version": ""\n}/' data/config.json
     sed -i -e "s/\"version\": \".*\"/\"version\": \"$version\"/" data/config.json
-    [ ! -e bin/labca ] || mv bin/labca bin/labca_prev
+    [ ! -e bin/labca-gui ] || mv bin/labca-gui bin/labca-gui_prev
 
     chown -R labca:labca $baseDir
     chown root:root "$cloneDir/cron_d"
