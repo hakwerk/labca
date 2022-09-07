@@ -104,9 +104,9 @@ index 0cd8c8dd..36619190 100644
 +  control:
      image: *boulder_image
 -    environment:
--        GO111MODULE: "on"
--        GOFLAGS: -mod=vendor
--        BOULDER_CONFIG_DIR: test/config
+-      GO111MODULE: "on"
+-      GOFLAGS: -mod=vendor
+-      BOULDER_CONFIG_DIR: test/config
      networks:
        - bluenet
      volumes:

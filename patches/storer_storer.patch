@@ -63,7 +63,7 @@ index 859abc9f..749b3818 100644
 +		err = storeLocalFile(cs.localStorePath, issuer.NameID(), crlNumber, shardIdx, bytes.NewReader(crlBytes))
 +	}
  	if err != nil {
- 		cs.uploadCount.WithLabelValues(issuer.Subject.CommonName, "failed")
+ 		cs.uploadCount.WithLabelValues(issuer.Subject.CommonName, "failed").Inc()
  		cs.log.AuditErrf("CRL upload failed: id=[%s] err=[%s]", crlId, err)
 @@ -189,3 +199,46 @@ func (cs *crlStorer) UploadCRL(stream cspb.CRLStorer_UploadCRLServer) error {
  

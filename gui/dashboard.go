@@ -50,17 +50,17 @@ func _parseLine(line string, loc *time.Location) Activity {
 
 	line = _removeAnsiColors(line)
 
-	re := regexp.MustCompile(`^.*\|\s*(\S+) (\S) (\S+) (\S+) (.*)$`)
+	re := regexp.MustCompile(`^.*\|\s*(\S+)(.*\:)? (\S) (\S+) (\S+) (.*)$`)
 	result := re.FindStringSubmatch(line)
 	if len(result) == 0 {
 		return activity
 	}
 
 	activity.Class = ""
-	if result[2] == "4" {
+	if result[3] == "4" {
 		activity.Class = "warning"
 	}
-	if result[2] == "3" {
+	if result[3] == "3" {
 		activity.Class = "error"
 	}
 
@@ -74,8 +74,8 @@ func _parseLine(line string, loc *time.Location) Activity {
 	}
 
 	activity.Title = ""
-	if len(result[3]) > 2 {
-		tail := result[3][len(result[3])-2:]
+	if len(result[4]) > 2 {
+		tail := result[4][len(result[4])-2:]
 		switch tail {
 		case "ca":
 			activity.Title = "Certification Agent"
@@ -88,7 +88,7 @@ func _parseLine(line string, loc *time.Location) Activity {
 		}
 	}
 
-	message := result[5]
+	message := result[6]
 	idx := strings.Index(message, ".well-known/acme-challenge")
 	if idx > -1 {
 		message = message[0:idx]
