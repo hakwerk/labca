@@ -1,5 +1,5 @@
 diff --git a/crl/storer/storer.go b/crl/storer/storer.go
-index 859abc9f..749b3818 100644
+index dfc497daa..077f3576d 100644
 --- a/crl/storer/storer.go
 +++ b/crl/storer/storer.go
 @@ -9,6 +9,9 @@ import (
@@ -36,7 +36,7 @@ index 859abc9f..749b3818 100644
  		uploadCount:      uploadCount,
  		sizeHistogram:    sizeHistogram,
  		latencyHistogram: latencyHistogram,
-@@ -160,15 +166,19 @@ func (cs *crlStorer) UploadCRL(stream cspb.CRLStorer_UploadCRLServer) error {
+@@ -157,15 +163,19 @@ func (cs *crlStorer) UploadCRL(stream cspb.CRLStorer_UploadCRLServer) error {
  	checksum := sha256.Sum256(crlBytes)
  	checksumb64 := base64.StdEncoding.EncodeToString(checksum[:])
  	crlContentType := "application/pkix-crl"
@@ -65,7 +65,7 @@ index 859abc9f..749b3818 100644
  	if err != nil {
  		cs.uploadCount.WithLabelValues(issuer.Subject.CommonName, "failed").Inc()
  		cs.log.AuditErrf("CRL upload failed: id=[%s] err=[%s]", crlId, err)
-@@ -189,3 +199,46 @@ func (cs *crlStorer) UploadCRL(stream cspb.CRLStorer_UploadCRLServer) error {
+@@ -186,3 +196,46 @@ func (cs *crlStorer) UploadCRL(stream cspb.CRLStorer_UploadCRLServer) error {
  
  	return stream.SendAndClose(&emptypb.Empty{})
  }

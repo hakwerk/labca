@@ -24,7 +24,7 @@ dockerComposeVersion="v2.5.0"
 
 labcaUrl="https://github.com/hakwerk/labca/"
 boulderUrl="https://github.com/letsencrypt/boulder/"
-boulderTag="release-2022-09-06"
+boulderTag="release-2022-09-14"
 
 # Feature flags
 flag_skip_redis=true
@@ -591,7 +591,7 @@ config_boulder() {
     cp ratelimit/rate-limits.go "$boulderLabCADir/.backup/"
     cp errors/errors.go "$boulderLabCADir/.backup/"
     cp log/log.go "$boulderLabCADir/.backup/"
-    cp sa/_db/migrations/20210223140000_CombinedSchema.sql "$boulderLabCADir/.backup/"
+    cp sa/db/boulder_sa/20210223140000_CombinedSchema.sql "$boulderLabCADir/.backup/"
     cp Makefile "$boulderLabCADir/.backup/"
 
     $cloneDir/patch-cfg.sh "sudo -u labca -H" "$boulderLabCADir" &>>$installLog

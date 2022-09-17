@@ -23,10 +23,10 @@ index dc8c7da5..8f65f3a0 100644
          "backoffIntervalMax": "2s"
      },
      "syslog": {
-@@ -36,5 +41,9 @@
-     "beeline": {
+@@ -37,5 +42,9 @@
          "mute": true,
-         "dataset": "Test"
+         "serviceName": "Test",
+         "writeKey": {"passwordFile": "test/secrets/honeycomb_fake_password"}
 +    },
 +    "common": {
 +        "dnsTimeout": "3s",

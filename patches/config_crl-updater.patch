@@ -1,15 +1,10 @@
 diff --git a/test/config/crl-updater.json b/test/config/crl-updater.json
-index 875fc7ab..9c0ea6ed 100644
+index f6b70123f..a6c1471e5 100644
 --- a/test/config/crl-updater.json
 +++ b/test/config/crl-updater.json
-@@ -14,16 +14,18 @@
-       "serverAddress": "ca.boulder:9106",
+@@ -19,15 +19,13 @@
        "timeout": "15s"
      },
-+    "crlStorerService": {
-+      "serverAddress": "crl-storer.boulder:9109",
-+      "timeout": "15s"
-+    },
      "issuerCerts": [
 -      "/hierarchy/intermediate-cert-rsa-a.pem",
 -      "/hierarchy/intermediate-cert-rsa-b.pem",
