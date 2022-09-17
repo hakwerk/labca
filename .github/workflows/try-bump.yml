@@ -1,0 +1,40 @@
+name: Try Boulder Bump
+
+on:
+  schedule:
+    - cron: '30 5 * * 5'
+  workflow_dispatch:
+
+jobs:
+  try-bump:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+
+    steps:
+      - name: Checkout Self
+        uses: actions/checkout@v3
+
+      - uses: oprypin/find-latest-tag@v1
+        with:
+          repository: letsencrypt/boulder
+        id: boulder
+
+      - run: echo "Boulder is at version ${{ steps.boulder.outputs.tag }}"
+
+      - uses: actions/checkout@v3
+        with:
+          repository: letsencrypt/boulder
+          ref: ${{ steps.boulder.outputs.tag }}
+          path: boulder
+
+      - name: Apply our code patches
+        run: |
+            cd boulder
+            ../patch.sh
+
+      - name: Apply our config patches
+        run: |
+            cd boulder
+            ../patch-cfg.sh
+

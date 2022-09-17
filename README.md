@@ -8,7 +8,7 @@
 
 ## NEW: standalone version for step-ca [![status-experimental](https://img.shields.io/badge/status-experimental-orange.svg)](README_standalone.md)
 
-See [README_stepca](README_standalone.md)
+See [README_standalone](README_standalone.md)
 
 ## Table of Contents
 

@@ -594,23 +594,7 @@ config_boulder() {
     cp sa/_db/migrations/20210223140000_CombinedSchema.sql "$boulderLabCADir/.backup/"
     cp Makefile "$boulderLabCADir/.backup/"
 
-    sudo -u labca -H patch -p1 -o "$boulderLabCADir/entrypoint.sh" < $cloneDir/patches/entrypoint.patch &>>$installLog
-    cp test/startservers.py "$boulderLabCADir/startservers.py" &>>$installLog
-
-    sudo -u labca -H patch -p1 -o "$boulderLabCADir/config/ca-a.json" < $cloneDir/patches/test_config_ca_a.patch &>>$installLog
-    sudo -u labca -H patch -p1 -o "$boulderLabCADir/config/ca-b.json" < $cloneDir/patches/test_config_ca_b.patch &>>$installLog
-
-    sudo -u labca -H patch -p1 -o "$boulderLabCADir/config/expiration-mailer.json" < $cloneDir/patches/config_expiration-mailer.patch &>>$installLog
-    sudo -u labca -H patch -p1 -o "$boulderLabCADir/config/notify-mailer.json" < $cloneDir/patches/config_notify-mailer.patch &>>$installLog
-    sudo -u labca -H patch -p1 -o "$boulderLabCADir/config/bad-key-revoker.json" < $cloneDir/patches/config_bad-key-revoker.patch &>>$installLog
-    sudo -u labca -H patch -p1 -o "$boulderLabCADir/config/ocsp-responder.json" < $cloneDir/patches/config_ocsp-responder.patch &>>$installLog
-    sudo -u labca -H patch -p1 -o "$boulderLabCADir/config/publisher.json" < $cloneDir/patches/config_publisher.patch &>>$installLog
-    sudo -u labca -H patch -p1 -o "$boulderLabCADir/config/wfe2.json" < $cloneDir/patches/config_wfe2.patch &>>$installLog
-    sudo -u labca -H patch -p1 -o "$boulderLabCADir/config/orphan-finder.json" < $cloneDir/patches/config_orphan-finder.patch &>>$installLog
-    sudo -u labca -H patch -p1 -o "$boulderLabCADir/config/crl-storer.json" < $cloneDir/patches/config_crl-storer.patch &>>$installLog
-    sudo -u labca -H patch -p1 -o "$boulderLabCADir/config/crl-updater.json" < $cloneDir/patches/config_crl-updater.patch &>>$installLog
-    sudo -u labca -H patch -p1 -o "$boulderLabCADir/config/ra.json" < $cloneDir/patches/config_ra.patch &>>$installLog
-    sudo -u labca -H patch -p1 -o "$boulderLabCADir/config/va.json" < $cloneDir/patches/config_va.patch &>>$installLog
+    $cloneDir/patch-cfg.sh "sudo -u labca -H" "$boulderLabCADir" &>>$installLog
 
     mkdir -p $baseDir/backup
     [ -z "$(docker ps | grep boulder-bmysql-1)" ] || docker exec -i boulder-bmysql-1 mysqldump boulder_sa_integration >$baseDir/backup/dbdata-${runId}.sql
