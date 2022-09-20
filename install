@@ -403,7 +403,16 @@ update_upgrade() {
 install_pkg() {
     local package="$1"
     msg_info "Install package '$package'"
-    apt install -y "$package" &>>$installLog || msg_fatal "Could not install package '$package'"
+    err=""
+    apt install -y "$package" &>>$installLog || err="err"
+    if [ "$err" == "err" ]; then
+        if [ "$package" == "python" ]; then
+            package="python3"
+            apt install -y "$package" &>>$installLog || msg_fatal "Could not install package '$package'"
+        else
+            msg_fatal "Could not install package '$package'"
+        fi
+    fi
     msg_ok "Package '$package' is installed"
 }
 
