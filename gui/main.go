@@ -2816,7 +2816,7 @@ func init() {
 	}
 
 	var err error
-	if viper.GetBool("standalone") {
+	if *init || viper.GetBool("standalone") {
 		tmpls, err = templates.New().ParseEmbed(embeddedTemplates, "templates/")
 	} else {
 		tmpls, err = templates.New().ParseDir("./templates", "templates/")
