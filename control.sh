@@ -22,10 +22,13 @@ get_fqdn() {
 
 # TODO: install docker should be done in pre-baked image
 install_docker() {
+    export DEBIAN_FRONTEND=noninteractive
     apt update
     apt install -y apt-transport-https ca-certificates curl software-properties-common
     curl -fsSL https://download.docker.com/linux/ubuntu/gpg | apt-key add -
     add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu focal stable"
+    apt-cache policy docker-ce
+    apt update
     apt install -y docker-ce
 }
 
