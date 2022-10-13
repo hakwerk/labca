@@ -771,10 +771,12 @@ startup() {
     msg_info "$msg (this will take a while!!)"
 
     docker-compose pull -q &>>$installLog
+    cnt=$(count $PS_CONTROL)
     docker-compose stop boulder bmysql labca nginx &>>$installLog || true
     for ct in boulder_bhsm_1 boulder_bredis_1 boulder_bredis_2 boulder_bredis_3 boulder_bredis_4 boulder_bredis_5 boulder_bredis_6; do
         [ -z "$(docker ps | grep $ct)" ] || docker stop $ct &>>$installLog
     done
+    wait_down $PS_NGINX &>>$installLog || true
     wait_down $PS_MYSQL &>>$installLog || true
     wait_down $PS_LABCA &>>$installLog || true
     wait_down $PS_BOULDER &>>$installLog || true
@@ -782,20 +784,28 @@ startup() {
         [ -z "$(docker ps -a | grep -e "$ct\$")" ] || docker rm -f $ct &>>$installLog
     done
 
-    service labca stop &>>$installLog || true
-    update-rc.d labca disable &>>$installLog || true
-    [ -e "/etc/init.d/labca" ] && rm /etc/init.d/labca || true
+    local rc=0
+    service labca status &> /dev/null || rc=$?
+    if [ $rc -eq 0 ]; then
+        service labca stop &>>$installLog || true
+        update-rc.d labca disable &>>$installLog || true
+        [ -e "/etc/init.d/labca" ] && rm /etc/init.d/labca || true
+    fi
 
-    COMPOSE_HTTP_TIMEOUT=120 docker-compose up -d &>>$installLog
+    [ -d /home/labca/control_logs ] || mkdir -p /home/labca/control_logs
 
+    COMPOSE_HTTP_TIMEOUT=180 docker-compose up -d &>>$installLog
+
+    wait_up $PS_NGINX &>>$installLog || true
     wait_up $PS_MYSQL &>>$installLog || true
     wait_up $PS_LABCA &>>$installLog || true
-    wait_up $PS_SERVICE &>>$installLog || true
+    wait_up $PS_CONTROL &>>$installLog || true
     docker exec -i boulder-bmysql-1 mysql_upgrade &>>$installLog
     [ -f "$boulderLabCADir/setup_complete" ] && wait_up $PS_BOULDER $PS_BOULDER_COUNT &>>$installLog || /bin/true
 
-    [ -d /home/labca/control_logs ] || mkdir -p /home/labca/control_logs
-    COMPOSE_HTTP_TIMEOUT=120 docker-compose restart control &>>$installLog
+    if [ $cnt -gt 0 ]; then
+        COMPOSE_HTTP_TIMEOUT=180 docker-compose restart control &>>$installLog
+    fi
 
     msg_ok "$msg"
 }

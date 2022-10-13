@@ -94,7 +94,7 @@ main() {
 
     get_fqdn
 
-    docker ps >/dev/null || install_docker
+    docker ps &>/dev/null || install_docker
     install_docker_compose
 
     [ -e /etc/nginx/ssl/labca_cert.pem ] || selfsigned_cert

@@ -6,12 +6,13 @@ export PS_LABCA="bin/labca-gui"
 export PS_BOULDER="bin/boulder"
 export PS_BOULDER_COUNT=13
 export PS_MYSQL="mysqld"
-export PS_SERVICE="tcpserver"
+export PS_CONTROL="tcpserver"
+export PS_NGINX="nginx:"
 
 LOOPCOUNT=120
 
 count() {
-    local pattern="${1/___/ }"  # escape spaces, e.g. PS_SERVICE="sudo___tcpserver"
+    local pattern="${1/___/ }"  # escape spaces, e.g. PS_CONTROL="sudo___tcpserver"
 
     local prefix=""
     case $pattern in
@@ -23,6 +24,9 @@ count() {
             ;;
         $PS_MYSQL)
             prefix="docker exec $(docker ps --format "{{.Names}}" | grep -- -bmysql-) "
+            ;;
+        $PS_CONTROL)
+            prefix="docker exec $(docker ps --format "{{.Names}}" | grep -- -control-) "
             ;;
         *)
             ;;
