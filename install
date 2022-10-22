@@ -48,6 +48,9 @@ wait_down() {
 wait_up() {
     sleep 5
 }
+count() {
+    echo "0"
+}
 
 dn=$(dirname $0)
 source "$dn/utils.sh" &>/dev/null || true
