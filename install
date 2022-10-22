@@ -49,7 +49,7 @@ wait_up() {
     sleep 5
 }
 count() {
-    echo "0"
+    echo 0
 }
 
 dn=$(dirname $0)

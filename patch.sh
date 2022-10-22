@@ -37,6 +37,8 @@ $SUDO patch -p1 < $cloneDir/patches/reloader_reloader.patch
 $SUDO patch -p1 < $cloneDir/patches/startservers.patch
 $SUDO patch -p1 < $cloneDir/patches/storer_storer.patch
 
+sed -i -e "s|./test|./labca|" start.py
+
 sed -i -e "s/berrors.RateLimitError(/berrors.RateLimitError(ra.rlPolicies.RateLimitsURL(), /g" ra/ra.go
 
 sed -i -e "s/\+07:/\-07:/" log/log.go

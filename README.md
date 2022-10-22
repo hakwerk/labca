@@ -39,11 +39,14 @@ Getting Boulder up and running has quite a learning curve though and that is whe
 
 ## Install
 
-LabCA is best run on its own server / virtual machine to prevent any issues caused by conflicting applications. On a freshly installed Linux machine (currently tested with Debian 11/bullseye, Debian 10/buster and Ubuntu 18.04) run this command as root user (or as a regular user that already is in the sudo group):
+LabCA is best run on its own server / virtual machine to prevent any issues caused by conflicting applications. On a freshly installed Linux machine (currently tested with Debian 11/bullseye, Debian 10/buster, Ubuntu 22.04 and Ubuntu 20.04) run this command as root user (or as a regular user that already is in the sudo group):
 
 ```sh
 curl -sSL https://raw.githubusercontent.com/hakwerk/labca/master/install | bash
 ```
+
+Alternatively, clone this git repository and run the install script locally.
+Or a combination: run the above curl command, but abort (ctrl-c) the script after the `[✓] Clone https://github.com/hakwerk/labca/ to /home/labca/labca` line (it will be waiting for the FQDN input) so that this repository is cloned in its final location, and then inspect, tweak and/or run the script `/home/labca/labca/install`.
 
 The first-time install will take a while, depending on the power of your server and your internet speed. On my machine it takes about 12 minutes. It will install the latest versions of some packages, download the relevant programs and configure everything. If all goes well it should look like this:
 
