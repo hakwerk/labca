@@ -8,6 +8,7 @@ export PS_BOULDER_COUNT=22
 export PS_MYSQL="mysqld"
 export PS_CONTROL="tcpserver"
 export PS_NGINX="nginx:"
+export PS_CONSUL="consul"
 
 LOOPCOUNT=120
 
@@ -28,11 +29,17 @@ count() {
         $PS_CONTROL)
             prefix="docker exec $(docker ps --format "{{.Names}}" | grep -- -control-) "
             ;;
+        $PS_CONSUL)
+            prefix="docker exec $(docker ps --format "{{.Names}}" | grep -- -bconsul-) "
+            ;;
         *)
             ;;
     esac
 
     local res=$(${prefix}ps -eo pid,cmd 2>/dev/null | grep "$pattern" | grep -v grep | wc -l)
+    if [ "$pattern" == "$PS_CONSUL" ]; then
+        res=$(${prefix}ps -eo pid,args 2>/dev/null | grep "$pattern" | grep -v grep | wc -l)
+    fi
     echo $res
 }
 

@@ -39,9 +39,10 @@ read txt
 case $txt in
 "docker-restart")
     cd /boulder
-    COMPOSE_HTTP_TIMEOUT=120 docker-compose restart boulder bmysql labca nginx &>>$LOGFILE
+    COMPOSE_HTTP_TIMEOUT=120 docker-compose restart boulder bmysql bconsul labca nginx &>>$LOGFILE
     sleep 45
     wait_up $PS_MYSQL &>>$LOGFILE
+    wait_up $PS_CONSUL 2 &>>$LOGFILE
     wait_up $PS_LABCA &>>$LOGFILE
     wait_up $PS_BOULDER $PS_BOULDER_COUNT &>>$LOGFILE
     ;;
@@ -133,7 +134,8 @@ case $txt in
     boulder=$(docker inspect $(docker ps --format "{{.Names}}" | grep -- -boulder-) | grep -i started | grep -v depends_on | sed -e "s/[^:]*:\(.*\)/\1/" | sed -e "s/.*\"\(.*\)\".*/\1/")
     labca=$(docker inspect $(docker ps --format "{{.Names}}" | grep -- -labca-) | grep -i started | grep -v depends_on | sed -e "s/[^:]*:\(.*\)/\1/" | sed -e "s/.*\"\(.*\)\".*/\1/")
     mysql=$(docker inspect $(docker ps --format "{{.Names}}" | grep -- -bmysql-) | grep -i started | grep -v depends_on | sed -e "s/[^:]*:\(.*\)/\1/" | sed -e "s/.*\"\(.*\)\".*/\1/")
-    echo "$nginx|$svc|$boulder|$labca|$mysql"
+    consul=$(docker inspect $(docker ps --format "{{.Names}}" | grep -- -bconsul-) | grep -i started | sed -e "s/[^:]*:\(.*\)/\1/" | sed -e "s/.*\"\(.*\)\".*/\1/")
+    echo "$nginx|$svc|$boulder|$labca|$mysql|$consul"
     exit 0
     ;;
 "log-uptime")
@@ -158,23 +160,26 @@ case $txt in
     ;;
 "boulder-start")
     cd /boulder
-    COMPOSE_HTTP_TIMEOUT=120 docker-compose up -d bmysql
+    COMPOSE_HTTP_TIMEOUT=120 docker-compose up -d bmysql bconsul
     wait_up $PS_MYSQL &>>$LOGFILE
+    wait_up $PS_CONSUL 2 &>>$LOGFILE
     COMPOSE_HTTP_TIMEOUT=120 docker-compose up -d boulder
     wait_up $PS_BOULDER $PS_BOULDER_COUNT &>>$LOGFILE
     ;;
 "boulder-stop")
     cd /boulder
     docker-compose stop boulder
-    docker-compose stop bmysql
+    docker-compose stop bmysql bconsul
     wait_down $PS_MYSQL &>>$LOGFILE
+    wait_down $PS_CONSUL &>>$LOGFILE
     wait_down $PS_BOULDER &>>$LOGFILE
     ;;
 "boulder-restart")
     cd /boulder
-    COMPOSE_HTTP_TIMEOUT=120 docker-compose restart boulder bmysql &>>$LOGFILE
+    COMPOSE_HTTP_TIMEOUT=120 docker-compose restart boulder bmysql bconsul &>>$LOGFILE
     sleep 30
     wait_up $PS_MYSQL &>>$LOGFILE
+    wait_up $PS_CONSUL 2 &>>$LOGFILE
     wait_up $PS_BOULDER $PS_BOULDER_COUNT &>>$LOGFILE
     ;;
 "labca-restart")
@@ -187,6 +192,12 @@ case $txt in
     cd /boulder
     set +e
     COMPOSE_HTTP_TIMEOUT=120 docker-compose restart bmysql
+    set -e
+    ;;
+"consul-restart")
+    cd /boulder
+    set +e
+    COMPOSE_HTTP_TIMEOUT=120 docker-compose restart bconsul
     set -e
     ;;
 "svc-restart")

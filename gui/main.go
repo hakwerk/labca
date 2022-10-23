@@ -1004,9 +1004,10 @@ func (res *Result) ManageComponents(w http.ResponseWriter, r *http.Request, acti
 	components := _parseComponents(getLog(w, r, "components"))
 	for i := 0; i < len(components); i++ {
 		if (components[i].Name == "NGINX Webserver" && (action == "nginx-reload" || action == "nginx-restart")) ||
-			(components[i].Name == "Controller" && action == "svc-restart") ||
+			(components[i].Name == "LabCA Controller" && action == "svc-restart") ||
 			(components[i].Name == "Boulder (ACME)" && (action == "boulder-start" || action == "boulder-stop" || action == "boulder-restart")) ||
 			(components[i].Name == "LabCA Application" && action == "labca-restart") ||
+			(components[i].Name == "Consul (Boulder)" && action == "consul-restart") ||
 			(components[i].Name == "MySQL Database" && action == "mysql-restart") {
 			res.Timestamp = components[i].Timestamp
 			res.TimestampRel = components[i].TimestampRel
@@ -1095,6 +1096,7 @@ func _managePost(w http.ResponseWriter, r *http.Request) {
 		"backup-now",
 		"cert-export",
 		"mysql-restart",
+		"consul-restart",
 		"nginx-reload",
 		"nginx-restart",
 		"svc-restart",
@@ -1227,7 +1229,7 @@ func _manageGet(w http.ResponseWriter, r *http.Request) {
 				components[i].Buttons = append(components[i].Buttons, btn)
 			}
 
-			if components[i].Name == "Controller" {
+			if components[i].Name == "LabCA Controller" {
 				components[i].LogURL = ""
 				components[i].LogTitle = ""
 
@@ -1266,6 +1268,18 @@ func _manageGet(w http.ResponseWriter, r *http.Request) {
 				btn["Class"] = "btn-warning"
 				btn["Id"] = "nginx-restart"
 				btn["Title"] = "Restart the web server with some downtime for the users"
+				btn["Label"] = "Restart"
+				components[i].Buttons = append(components[i].Buttons, btn)
+			}
+
+			if components[i].Name == "Consul (Boulder)" {
+				components[i].LogURL = ""
+				components[i].LogTitle = ""
+
+				btn := make(map[string]interface{})
+				btn["Class"] = "btn-warning"
+				btn["Id"] = "consul-restart"
+				btn["Title"] = "Restart the Consul internal DNS helper"
 				btn["Label"] = "Restart"
 				components[i].Buttons = append(components[i].Buttons, btn)
 			}

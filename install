@@ -459,7 +459,7 @@ static_web() {
     if [ -d /etc/nginx ]; then
         # Migrate cert from host nginx to dockerized nginx
         [ -d /home/labca/nginx_data/ssl ] || mkdir -p /home/labca/nginx_data/ssl
-        mv /etc/nginx/ssl/* /home/labca/nginx_data/ssl/
+        [ -d /etc/nginx/ssl/ ] && mv /etc/nginx/ssl/* /home/labca/nginx_data/ssl/ || true
         mv /etc/nginx /etc/nginx.backup
     fi
 
@@ -773,12 +773,13 @@ startup() {
 
     docker-compose pull -q &>>$installLog
     cnt=$(count $PS_CONTROL)
-    docker-compose stop boulder bmysql labca nginx &>>$installLog || true
+    docker-compose stop boulder bmysql labca nginx bconsul &>>$installLog || true
     for ct in boulder_bhsm_1 boulder_bredis_1 boulder_bredis_2 boulder_bredis_3 boulder_bredis_4 boulder_bredis_5 boulder_bredis_6; do
         [ -z "$(docker ps | grep $ct)" ] || docker stop $ct &>>$installLog
     done
     wait_down $PS_NGINX &>>$installLog || true
     wait_down $PS_MYSQL &>>$installLog || true
+    wait_down $PS_CONSUL &>>$installLog || true
     wait_down $PS_LABCA &>>$installLog || true
     wait_down $PS_BOULDER &>>$installLog || true
     for ct in boulder_bhsm_1 boulder_bredis_1 boulder_bredis_2 boulder_bredis_3 boulder_bredis_4 boulder_bredis_5 boulder_bredis_6; do
@@ -799,6 +800,7 @@ startup() {
 
     wait_up $PS_NGINX &>>$installLog || true
     wait_up $PS_MYSQL &>>$installLog || true
+    wait_up $PS_CONSUL 2 &>>$installLog || true
     wait_up $PS_LABCA &>>$installLog || true
     wait_up $PS_CONTROL &>>$installLog || true
     docker exec -i boulder-bmysql-1 mysql_upgrade &>>$installLog

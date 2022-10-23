@@ -173,10 +173,11 @@ func _parseComponents(data string) []Component {
 
 	parts := strings.Split(data, "|")
 
-	if len(parts) < 5 {
+	if len(parts) < 6 {
 		components = append(components, Component{Name: "Boulder (ACME)"})
-		components = append(components, Component{Name: "Controller"})
+		components = append(components, Component{Name: "Consul (Boulder)"})
 		components = append(components, Component{Name: "LabCA Application"})
+		components = append(components, Component{Name: "LabCA Controller"})
 		components = append(components, Component{Name: "MySQL Database"})
 		components = append(components, Component{Name: "NGINX Webserver"})
 		return components
@@ -232,9 +233,20 @@ func _parseComponents(data string) []Component {
 		mysqlClass = ""
 	}
 
+	consul, err := time.Parse(time.RFC3339Nano, parts[5])
+	consulReal := ""
+	consulNice := "stopped"
+	consulClass := "error"
+	if err == nil {
+		consulReal = consul.Format("02-Jan-2006 15:04:05 MST")
+		consulNice = humanize.RelTime(consul, time.Now(), "", "")
+		consulClass = ""
+	}
+
 	components = append(components, Component{Name: "Boulder (ACME)", Timestamp: boulderReal, TimestampRel: boulderNice, Class: boulderClass})
-	components = append(components, Component{Name: "Controller", Timestamp: svcReal, TimestampRel: svcNice, Class: svcClass})
+	components = append(components, Component{Name: "Consul (Boulder)", Timestamp: consulReal, TimestampRel: consulNice, Class: consulClass})
 	components = append(components, Component{Name: "LabCA Application", Timestamp: labcaReal, TimestampRel: labcaNice, Class: labcaClass})
+	components = append(components, Component{Name: "LabCA Controller", Timestamp: svcReal, TimestampRel: svcNice, Class: svcClass})
 	components = append(components, Component{Name: "MySQL Database", Timestamp: mysqlReal, TimestampRel: mysqlNice, Class: mysqlClass})
 	components = append(components, Component{Name: "NGINX Webserver", Timestamp: nginxReal, TimestampRel: nginxNice, Class: nginxClass})
 
@@ -439,11 +451,14 @@ func parseDockerStats(data string) []AjaxStat {
 		if strings.Contains(docker.Name, "-boulder-") {
 			stat.Name = "Boulder (ACME)"
 		}
-		if strings.Contains(docker.Name, "-control-") {
-			stat.Name = "Controller"
+		if strings.Contains(docker.Name, "-bconsul-") {
+			stat.Name = "Consul (Boulder)"
 		}
 		if strings.Contains(docker.Name, "-labca-") {
 			stat.Name = "LabCA Application"
+		}
+		if strings.Contains(docker.Name, "-control-") {
+			stat.Name = "LabCA Controller"
 		}
 		if strings.Contains(docker.Name, "-nginx-") {
 			stat.Name = "NGINX Webserver"
