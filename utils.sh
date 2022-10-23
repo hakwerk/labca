@@ -4,7 +4,7 @@ set -e
 
 export PS_LABCA="bin/labca-gui"
 export PS_BOULDER="bin/boulder"
-export PS_BOULDER_COUNT=13
+export PS_BOULDER_COUNT=22
 export PS_MYSQL="mysqld"
 export PS_CONTROL="tcpserver"
 export PS_NGINX="nginx:"

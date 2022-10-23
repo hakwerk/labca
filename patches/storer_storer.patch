@@ -1,5 +1,5 @@
 diff --git a/crl/storer/storer.go b/crl/storer/storer.go
-index dfc497daa..077f3576d 100644
+index 055c0f028..8f909ee49 100644
 --- a/crl/storer/storer.go
 +++ b/crl/storer/storer.go
 @@ -9,6 +9,9 @@ import (
@@ -62,10 +62,10 @@ index dfc497daa..077f3576d 100644
 +	} else {
 +		err = storeLocalFile(cs.localStorePath, issuer.NameID(), crlNumber, shardIdx, bytes.NewReader(crlBytes))
 +	}
- 	if err != nil {
- 		cs.uploadCount.WithLabelValues(issuer.Subject.CommonName, "failed").Inc()
- 		cs.log.AuditErrf("CRL upload failed: id=[%s] err=[%s]", crlId, err)
-@@ -186,3 +196,46 @@ func (cs *crlStorer) UploadCRL(stream cspb.CRLStorer_UploadCRLServer) error {
+ 
+ 	latency := cs.clk.Now().Sub(start)
+ 	cs.latencyHistogram.WithLabelValues(issuer.Subject.CommonName).Observe(latency.Seconds())
+@@ -184,3 +194,46 @@ func (cs *crlStorer) UploadCRL(stream cspb.CRLStorer_UploadCRLServer) error {
  
  	return stream.SendAndClose(&emptypb.Empty{})
  }

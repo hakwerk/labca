@@ -3,33 +3,33 @@ index dc8c7da5..8f65f3a0 100644
 --- a/test/config/bad-key-revoker.json
 +++ b/test/config/bad-key-revoker.json
 @@ -5,6 +5,11 @@
-             "maxOpenConns": 10
-         },
-         "debugAddr": ":8020",
-+        "dnsTries": 3,
-+        "dnsResolvers": [
-+            "127.0.0.1:8053",
-+            "127.0.0.1:8054"
-+        ],
-         "tls": {
-             "caCertFile": "test/grpc-creds/minica.pem",
-             "certFile": "test/grpc-creds/bad-key-revoker.boulder/cert.pem",
-@@ -26,7 +31,7 @@
-         },
-         "maximumRevocations": 15,
-         "findCertificatesBatchSize": 10,
--        "interval": "1s",
-+        "interval": "5m",
-         "backoffIntervalMax": "2s"
+       "maxOpenConns": 10
      },
-     "syslog": {
-@@ -37,5 +42,9 @@
-         "mute": true,
-         "serviceName": "Test",
-         "writeKey": {"passwordFile": "test/secrets/honeycomb_fake_password"}
-+    },
-+    "common": {
-+        "dnsTimeout": "3s",
-+        "dnsAllowLoopbackAddresses": true
+     "debugAddr": ":8020",
++    "dnsTries": 3,
++    "dnsResolvers": [
++      "127.0.0.1:8053",
++      "127.0.0.1:8054"
++    ],
+     "tls": {
+       "caCertFile": "test/grpc-creds/minica.pem",
+       "certFile": "test/grpc-creds/bad-key-revoker.boulder/cert.pem",
+@@ -27,7 +32,7 @@
+     },
+     "maximumRevocations": 15,
+     "findCertificatesBatchSize": 10,
+-    "interval": "1s",
++    "interval": "5m",
+     "backoffIntervalMax": "2s"
+   },
+   "syslog": {
+@@ -40,5 +45,9 @@
+     "writeKey": {
+       "passwordFile": "test/secrets/honeycomb_fake_password"
      }
++  },
++  "common": {
++    "dnsTimeout": "3s",
++    "dnsAllowLoopbackAddresses": true
+   }
  }

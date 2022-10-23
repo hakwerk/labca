@@ -27,5 +27,9 @@ $SUDO patch -p1 -o "$boulderLabCADir/config/orphan-finder.json" < $cloneDir/patc
 $SUDO patch -p1 -o "$boulderLabCADir/config/crl-storer.json" < $cloneDir/patches/config_crl-storer.patch
 $SUDO patch -p1 -o "$boulderLabCADir/config/crl-updater.json" < $cloneDir/patches/config_crl-updater.patch
 $SUDO patch -p1 -o "$boulderLabCADir/config/ra.json" < $cloneDir/patches/config_ra.patch
-$SUDO patch -p1 -o "$boulderLabCADir/config/va.json" < $cloneDir/patches/config_va.patch
+
+cp test/config/va*.json "$boulderLabCADir/config/"
+perl -i -p0e "s/\"dnsResolver\": \"service.consul\",/\"dnsResolvers\": [\n      \"127.0.0.1:8053\",\n      \"127.0.0.1:8054\"\n    ],/igs" $boulderLabCADir/config/va.json
+perl -i -p0e "s/\"dnsResolver\": \"service.consul\",/\"dnsResolvers\": [\n      \"127.0.0.1:8053\",\n      \"127.0.0.1:8054\"\n    ],/igs" $boulderLabCADir/config/va-remote-a.json
+perl -i -p0e "s/\"dnsResolver\": \"service.consul\",/\"dnsResolvers\": [\n      \"127.0.0.1:8053\",\n      \"127.0.0.1:8054\"\n    ],/igs" $boulderLabCADir/config/va-remote-b.json
 

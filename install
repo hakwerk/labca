@@ -24,7 +24,7 @@ dockerComposeVersion="v2.5.0"
 
 labcaUrl="https://github.com/hakwerk/labca/"
 boulderUrl="https://github.com/letsencrypt/boulder/"
-boulderTag="release-2022-09-14"
+boulderTag="release-2022-10-17"
 
 # Feature flags
 flag_skip_redis=true
@@ -361,7 +361,6 @@ copy_admin() {
     git commit --all --quiet -m "LabCA before update $runId" &>>$installLog && { msg_ok "Commit existing modifications of $adminDir"; msg_info "$msg"; } || true
 
     cp -rp $cloneDir/gui/* "./" &>>$installLog || msg_fatal "Cannot copy the admin files to $adminDir"
-    cp -p  "$cloneDir/acme_tiny.py" "/home/labca/" &>>$installLog
 
     msg_ok "$msg"
     msg="Configure the admin application"
@@ -370,7 +369,6 @@ copy_admin() {
     [ -e "$adminDir/data/config.json" ] || echo -e "{\n  \"config\": {\n    \"complete\": false\n  },\n  \"labca\": {\n    \"fqdn\": \"$LABCA_FQDN\"\n  },\n  \"version\": \"\"\n}" > "$adminDir/data/config.json"
     replace_all $adminDir/data/openssl.cnf LABCA_FQDN
     replace_all $adminDir/data/issuer/openssl.cnf LABCA_FQDN
-    replace_all /home/labca/acme_tiny.py LABCA_FQDN
 
     cd "$cloneDir"
     version=$(sudo -u labca -H git describe --always --tags HEAD 2>/dev/null)

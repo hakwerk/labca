@@ -2,8 +2,8 @@ diff --git a/test/config/crl-updater.json b/test/config/crl-updater.json
 index f6b70123f..a6c1471e5 100644
 --- a/test/config/crl-updater.json
 +++ b/test/config/crl-updater.json
-@@ -19,15 +19,13 @@
-       "timeout": "15s"
+@@ -22,15 +22,13 @@
+       "hostOverride": "crl-storer.boulder"
      },
      "issuerCerts": [
 -      "/hierarchy/intermediate-cert-rsa-a.pem",
@@ -21,5 +21,5 @@ index f6b70123f..a6c1471e5 100644
 +    "updateOffset": "62m",
 +    "maxParallelism": 1
    },
- 
+
    "syslog": {

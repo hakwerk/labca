@@ -64,7 +64,7 @@ func _parseLine(line string, loc *time.Location) Activity {
 		activity.Class = "error"
 	}
 
-	timestamp, err := time.ParseInLocation("2006-01-02T15:04:05.999999-07:00", result[1], loc)
+	timestamp, err := time.ParseInLocation("2006-01-02T15:04:05.000000+00:00Z", result[1], loc)
 	activity.Timestamp = ""
 	activity.TimestampRel = "??"
 	if err == nil {

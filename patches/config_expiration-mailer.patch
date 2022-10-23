@@ -14,7 +14,7 @@ index 4519fe4d..f52a408c 100644
      "tls": {
        "caCertFile": "test/grpc-creds/minica.pem",
        "certFile": "test/grpc-creds/expiration-mailer.boulder/cert.pem",
-@@ -35,5 +40,9 @@
+@@ -36,5 +41,9 @@
        "mute": true,
        "serviceName": "Test",
        "writeKey": {"passwordFile": "test/secrets/honeycomb_fake_password"}

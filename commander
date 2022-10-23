@@ -64,7 +64,7 @@ case $txt in
     cd /etc/nginx/ssl
     openssl genrsa 4096 > labca_key.pem
     openssl req -new -utf8 -sha256 -key labca_key.pem -subj "/" -reqexts SAN -config <(cat /etc/ssl/openssl.cnf <(printf "[SAN]\nsubjectAltName=DNS:$fqdn")) > domain.csr
-    url=$(grep 'DEFAULT_DIRECTORY_URL =' /acme_tiny.py | sed -e 's/.*=[ ]*//' | sed -e 's/\"//g')
+    url=$(grep 'DEFAULT_DIRECTORY_URL =' /labca/acme_tiny.py | sed -e 's/.*=[ ]*//' | sed -e 's/\"//g')
     wait_server $url
     sleep 10
     /labca/renew

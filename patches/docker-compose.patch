@@ -1,5 +1,5 @@
 diff --git a/docker-compose.yml b/docker-compose.yml
-index 0cd8c8dd..36619190 100644
+index 819611f8c..3da7d454e 100644
 --- a/docker-compose.yml
 +++ b/docker-compose.yml
 @@ -8,7 +8,7 @@ services:
@@ -20,10 +20,10 @@ index 0cd8c8dd..36619190 100644
        - ./.gocache:/root/.cache/go-build:cached
        - ./.hierarchy:/hierarchy/:cached
        - ./.softhsm-tokens/:/var/lib/softhsm/tokens/:cached
-@@ -36,17 +37,25 @@ services:
-     # special logic there that will return multiple IP addresses for
-     # service names.
-     dns: 10.77.77.77
+@@ -36,18 +38,26 @@ services:
+     # IP (running consul).
+     # (https://docs.docker.com/config/containers/container-networking/#dns-services).
+     dns: 10.55.55.10
 -    ports:
 -      - 4001:4001 # ACMEv2
 -      - 4002:4002 # OCSP
@@ -34,6 +34,7 @@ index 0cd8c8dd..36619190 100644
 +      - 4003 # OCSP
      depends_on:
        - bmysql
+       - bconsul
 -    entrypoint: test/entrypoint.sh
 +    entrypoint: labca/entrypoint.sh
      working_dir: &boulder_working_dir /boulder
@@ -51,7 +52,7 @@ index 0cd8c8dd..36619190 100644
      networks:
        bluenet:
          aliases:
-@@ -60,21 +69,75 @@ services:
+@@ -61,7 +71,11 @@ services:
      # small.
      command: mysqld --bind-address=0.0.0.0 --slow-query-log --log-output=TABLE --log-queries-not-using-indexes=ON
      logging:
@@ -62,18 +63,29 @@ index 0cd8c8dd..36619190 100644
 +        max-file: "5"
 +    restart: always
  
+   bconsul:
+     image: hashicorp/consul:1.13.1
+@@ -72,18 +86,68 @@ services:
+         ipv4_address: 10.55.55.10
+     command: "consul agent -dev -config-format=hcl -config-file=/test/consul/config.hcl"
  
 -  netaccess:
 +  labca:
-+    image: *boulder_image
-+    networks:
-+      - bluenet
-+    volumes:
+     image: *boulder_image
+-    environment:
+-      GO111MODULE: "on"
+-      GOFLAGS: -mod=vendor
+-      BOULDER_CONFIG_DIR: test/config
+     networks:
+       - bluenet
+     volumes:
 +      - /home/labca/admin:/go/src/labca
 +      - ./.gocache:/root/.cache/go-build
 +      - /home/labca/nginx_data/static:/wwwstatic
 +      - /home/labca/backup:/backup
-+      - .:/boulder
+       - .:/boulder
+-    working_dir: *boulder_working_dir
+-    entrypoint: test/entrypoint-netaccess.sh
 +      - /home/labca/boulder_labca:/boulder/labca
 +    expose:
 +      - 3000
@@ -102,22 +114,16 @@ index 0cd8c8dd..36619190 100644
 +      - /home/labca/nginx_data/static:/var/www/html
 +
 +  control:
-     image: *boulder_image
--    environment:
--      GO111MODULE: "on"
--      GOFLAGS: -mod=vendor
--      BOULDER_CONFIG_DIR: test/config
-     networks:
-       - bluenet
-     volumes:
++    image: *boulder_image
++    networks:
++      - bluenet
++    volumes:
 +      - /var/run/docker.sock:/var/run/docker.sock
 +      - /home/labca/admin:/admin
 +      - /home/labca/labca:/labca
 +      - /home/labca/backup:/backup
 +      - /home/labca/control_logs:/logs
-       - .:/boulder
--    working_dir: *boulder_working_dir
--    entrypoint: test/entrypoint-netaccess.sh
++      - .:/boulder
 +      - /home/labca/boulder_labca:/boulder/labca
 +      - /home/labca/nginx_data/conf.d:/etc/nginx/conf.d
 +      - /home/labca/nginx_data/ssl:/etc/nginx/ssl

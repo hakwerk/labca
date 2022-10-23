@@ -1,8 +1,8 @@
 diff --git a/reloader/reloader.go b/reloader/reloader.go
-index d885af63..ab71babf 100644
+index 7200d707a..989db0eec 100644
 --- a/reloader/reloader.go
 +++ b/reloader/reloader.go
-@@ -8,7 +8,7 @@ import (
+@@ -12,7 +12,7 @@ import (
  
  // Wrap time.Tick so we can override it in tests.
  var makeTicker = func() (func(), <-chan time.Time) {
@@ -11,16 +11,16 @@ index d885af63..ab71babf 100644
  	return t.Stop, t.C
  }
  
-@@ -54,8 +54,12 @@ func New(filename string, dataCallback func([]byte) error, errorCallback func(er
+@@ -56,8 +56,12 @@ func New(filename string, dataCallback func([]byte) error, logger blog.Logger) (
  			case <-tickChan:
- 				currentFileInfo, err := os.Stat(filename)
+ 				currentFileInfo, err := statFile(filename)
  				if err != nil {
--					errorCallback(err)
+-					logger.Errf("statting %s: %s", filename, err)
 -					continue
 +					time.Sleep(10 * time.Second)
-+					currentFileInfo, err = os.Stat(filename)
++					currentFileInfo, err = statFile(filename)
 +					if err != nil {
-+						errorCallback(err)
++						logger.Errf("statting %s: %s", filename, err)
 +						continue
 +					}
  				}

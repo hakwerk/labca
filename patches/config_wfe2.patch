@@ -2,7 +2,7 @@ diff --git a/test/config/wfe2.json b/test/config/wfe2.json
 index c0093044..e8ba4263 100644
 --- a/test/config/wfe2.json
 +++ b/test/config/wfe2.json
-@@ -49,18 +49,6 @@
+@@ -54,18 +54,6 @@
        [
          "/hierarchy/intermediate-cert-rsa-a.pem",
          "/hierarchy/root-cert-rsa.pem"

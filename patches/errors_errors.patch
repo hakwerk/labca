@@ -1,17 +1,17 @@
 diff --git a/errors/errors.go b/errors/errors.go
-index c7e432a3..20695830 100644
+index 50be1087a..ab2efe9d1 100644
 --- a/errors/errors.go
 +++ b/errors/errors.go
-@@ -107,10 +107,10 @@ func NotFoundError(msg string, args ...interface{}) error {
+@@ -113,10 +113,10 @@ func NotFoundError(msg string, args ...interface{}) error {
  	return New(NotFound, msg, args...)
  }
  
--func RateLimitError(msg string, args ...interface{}) error {
-+func RateLimitError(errURL string, msg string, args ...interface{}) error {
+-func RateLimitError(retryAfter time.Duration, msg string, args ...interface{}) error {
++func RateLimitError(errURL string, retryAfter time.Duration, msg string, args ...interface{}) error {
  	return &BoulderError{
- 		Type:   RateLimit,
--		Detail: fmt.Sprintf(msg+": see https://letsencrypt.org/docs/rate-limits/", args...),
-+		Detail: fmt.Sprintf(msg+": see "+errURL, args...),
+ 		Type:       RateLimit,
+-		Detail:     fmt.Sprintf(msg+": see https://letsencrypt.org/docs/rate-limits/", args...),
++		Detail:     fmt.Sprintf(msg+": see "+errURL, args...),
+ 		RetryAfter: retryAfter,
  	}
  }
- 
