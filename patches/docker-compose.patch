@@ -1,18 +1,18 @@
 diff --git a/docker-compose.yml b/docker-compose.yml
-index 819611f8c..3da7d454e 100644
+index ddde0231..b06711b7 100644
 --- a/docker-compose.yml
 +++ b/docker-compose.yml
 @@ -8,7 +8,7 @@ services:
-     image: &boulder_image letsencrypt/boulder-tools:${BOULDER_TOOLS_TAG:-go1.18.6_2022-09-06}
+     image: &boulder_image letsencrypt/boulder-tools:${BOULDER_TOOLS_TAG:-go1.19.2_2022-10-05}
      environment:
        FAKE_DNS: 10.77.77.77
 -      BOULDER_CONFIG_DIR: test/config
 +      BOULDER_CONFIG_DIR: labca/config
        GOFLAGS: -mod=vendor
-       # Go 1.18 turns off SHA-1 validation on CSRs (and certs, but that doesn't
-       # affect us). It also turns off TLS 1.0 and TLS 1.1. Temporarily go back
-@@ -17,6 +17,8 @@ services:
-       GODEBUG: x509sha1=1,tls10default=1
+       # Go 1.18 turned off SHA-1 validation on CSRs (and certs, but that doesn't
+       # affect us) by default, but it can be turned back on with the x509sha1
+@@ -16,6 +16,8 @@ services:
+       GODEBUG: x509sha1=1
      volumes:
        - .:/boulder:cached
 +      - /home/labca/boulder_labca:/boulder/labca
@@ -20,7 +20,7 @@ index 819611f8c..3da7d454e 100644
        - ./.gocache:/root/.cache/go-build:cached
        - ./.hierarchy:/hierarchy/:cached
        - ./.softhsm-tokens/:/var/lib/softhsm/tokens/:cached
-@@ -36,18 +38,26 @@ services:
+@@ -35,18 +37,26 @@ services:
      # IP (running consul).
      # (https://docs.docker.com/config/containers/container-networking/#dns-services).
      dns: 10.55.55.10
@@ -52,7 +52,7 @@ index 819611f8c..3da7d454e 100644
      networks:
        bluenet:
          aliases:
-@@ -61,7 +71,11 @@ services:
+@@ -60,7 +70,11 @@ services:
      # small.
      command: mysqld --bind-address=0.0.0.0 --slow-query-log --log-output=TABLE --log-queries-not-using-indexes=ON
      logging:
@@ -65,7 +65,7 @@ index 819611f8c..3da7d454e 100644
  
    bconsul:
      image: hashicorp/consul:1.13.1
-@@ -72,18 +86,68 @@ services:
+@@ -71,18 +85,68 @@ services:
          ipv4_address: 10.55.55.10
      command: "consul agent -dev -config-format=hcl -config-file=/test/consul/config.hcl"
  

@@ -30,6 +30,7 @@ $SUDO patch -p1 < $cloneDir/patches/log-validator_main.patch
 $SUDO patch -p1 < $cloneDir/patches/mail_mailer.patch
 $SUDO patch -p1 < $cloneDir/patches/makefile.patch
 $SUDO patch -p1 < $cloneDir/patches/notify-mailer_main.patch
+$SUDO patch -p1 < $cloneDir/patches/ocsp-responder_main.patch
 $SUDO patch -p1 < $cloneDir/patches/policy_pa.patch
 $SUDO patch -p1 < $cloneDir/patches/ra_ra.patch
 $SUDO patch -p1 < $cloneDir/patches/ratelimit_rate-limits.patch

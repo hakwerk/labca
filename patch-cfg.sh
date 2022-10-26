@@ -2,6 +2,7 @@
 
 set -e
 
+flag_skip_redis=true
 cloneDir=$(dirname $0)
 
 # For legacy mode, when called from the install script...
@@ -33,3 +34,6 @@ perl -i -p0e "s/\"dnsResolver\": \"service.consul\",/\"dnsResolvers\": [\n      
 perl -i -p0e "s/\"dnsResolver\": \"service.consul\",/\"dnsResolvers\": [\n      \"127.0.0.1:8053\",\n      \"127.0.0.1:8054\"\n    ],/igs" $boulderLabCADir/config/va-remote-a.json
 perl -i -p0e "s/\"dnsResolver\": \"service.consul\",/\"dnsResolvers\": [\n      \"127.0.0.1:8053\",\n      \"127.0.0.1:8054\"\n    ],/igs" $boulderLabCADir/config/va-remote-b.json
 
+if [ "$flag_skip_redis" == true ]; then
+    perl -i -p0e "s/\n    \"redis\": \{\n.*?    \},//igs" $boulderLabCADir/config/ocsp-responder.json
+fi

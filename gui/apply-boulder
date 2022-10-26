@@ -64,14 +64,16 @@ if [ "$PKI_DOMAIN_MODE" == "lockdown" ] || [ "$PKI_DOMAIN_MODE" == "whitelist" ]
     cat rate-limit-policies.yml | tr '\n' '\r' | sed -e "s|\(certificatesPerFQDNSet:.*must-staple.le.wtf: 10000\).*\(certificatesPerFQDNSetFast:.*\)|\1\n${REPLACEMENT}rateLimitsURL: http://$PKI_FQDN/rate-limits\n\2|" | tr '\r' '\n' > rate-limit-policies.yml.bak && mv rate-limit-policies.yml.bak rate-limit-policies.yml
 fi
 
-perl -i -p0e "s/(\"maxNames\": [^\n]*).*?(\s+)(\"lifespanOCSP\":)/\1\2\"lifespanCRL\": \"96h\",\2\3/igs" config/ca-a.json
-perl -i -p0e "s/(\"maxNames\": [^\n]*).*?(\s+)(\"lifespanOCSP\":)/\1\2\"lifespanCRL\": \"96h\",\2\3/igs" config/ca-b.json
+sed -i -e "s/\"lifespanCRL\": \".*\"/\"lifespanCRL\": \"96h\"/" config/ca-a.json
+sed -i -e "s/\"lifespanCRL\": \".*\"/\"lifespanCRL\": \"96h\"/" config/ca-b.json
 sed -i -e "s/\"ocspMinTimeToExpiry\": \".*\"/\"ocspMinTimeToExpiry\": \"48h\"/" config/ocsp-updater.json
 
 sed -i -e "s|\"issuerURL\": \".*\"|\"issuerURL\": \"http://$PKI_FQDN/aia/issuer/$PKI_ISSUER_NAME_ID\"|" config/ca-a.json
 sed -i -e "s|\"issuerURL\": \".*\"|\"issuerURL\": \"http://$PKI_FQDN/aia/issuer/$PKI_ISSUER_NAME_ID\"|" config/ca-b.json
 sed -i -e "s|\"crlURL\": \".*\"|\"crlURL\": \"http://$PKI_FQDN/crl/$PKI_ISSUER_NAME_ID.crl\"|" config/ca-a.json
 sed -i -e "s|\"crlURL\": \".*\"|\"crlURL\": \"http://$PKI_FQDN/crl/$PKI_ISSUER_NAME_ID.crl\"|" config/ca-b.json
+sed -i -e "s|\"crldpBase\": \".*\"|\"crldpBase\": \"http://$PKI_FQDN/crl\"|" config/ca-a.json
+sed -i -e "s|\"crldpBase\": \".*\"|\"crldpBase\": \"http://$PKI_FQDN/crl\"|" config/ca-b.json
 
 if [ "$PKI_EXTENDED_TIMEOUT" == "1" ]; then
     sed -i -e "s/\"timeout\": \"15s\"/\"timeout\": \"30s\"/" config/ca-a.json

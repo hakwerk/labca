@@ -2,7 +2,7 @@ diff --git a/test/config/ocsp-responder.json b/test/config/ocsp-responder.json
 index ed874d3..a1a78f3 100644
 --- a/test/config/ocsp-responder.json
 +++ b/test/config/ocsp-responder.json
-@@ -7,9 +7,7 @@
+@@ -44,9 +44,7 @@
      "path": "/",
      "listenAddress": "0.0.0.0:4002",
      "issuerCerts": [
@@ -11,5 +11,5 @@ index ed874d3..a1a78f3 100644
 -      "/hierarchy/intermediate-cert-ecdsa-a.pem"
 +      "/hierarchy/intermediate-cert-rsa-a.pem"
      ],
+     "liveSigningPeriod": "60h",
      "timeout": "4.9s",
-     "shutdownStopTimeout": "10s",

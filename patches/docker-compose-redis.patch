@@ -1,8 +1,8 @@
 diff --git a/docker-compose.yml b/docker-compose.yml
-index 52ccecabd..819611f8c 100644
+index 02460285..ddde0231 100644
 --- a/docker-compose.yml
 +++ b/docker-compose.yml
-@@ -25,8 +25,6 @@ services:
+@@ -24,8 +24,6 @@ services:
          ipv4_address: 10.77.77.77
        rednet:
          ipv4_address: 10.88.88.88
@@ -11,7 +11,7 @@ index 52ccecabd..819611f8c 100644
        consulnet:
          ipv4_address: 10.55.55.55
      extra_hosts:
-@@ -44,7 +42,6 @@ services:
+@@ -43,7 +41,6 @@ services:
        - 4003:4003 # OCSP
      depends_on:
        - bmysql
@@ -19,7 +19,7 @@ index 52ccecabd..819611f8c 100644
        - bconsul
      entrypoint: test/entrypoint.sh
      working_dir: &boulder_working_dir /boulder
-@@ -66,79 +63,6 @@ services:
+@@ -65,79 +62,6 @@ services:
      logging:
          driver: none
  
@@ -99,7 +99,7 @@ index 52ccecabd..819611f8c 100644
    bconsul:
      image: hashicorp/consul:1.13.1
      volumes:
-@@ -175,13 +99,6 @@ networks:
+@@ -174,13 +98,6 @@ networks:
        config:
          - subnet: 10.88.88.0/24
  
