@@ -1,0 +1,14 @@
+diff --git a/log/log.go b/log/log.go
+index dae33eff..7fed903a 100644
+--- a/log/log.go
++++ b/log/log.go
+@@ -92,6 +92,9 @@ func newStdoutWriter(level int) *stdoutWriter {
+ 	}
+ 
+ 	prefix := fmt.Sprintf("%s %s %s[%d]:", shortHostname, datacenter, path.Base(os.Args[0]), os.Getpid())
++	if datacenter == "unknown" {
++		prefix = fmt.Sprintf("%s %s[%d]:", shortHostname, path.Base(os.Args[0]), os.Getpid())
++	}
+ 
+ 	return &stdoutWriter{
+ 		prefix: prefix,
