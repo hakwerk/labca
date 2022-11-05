@@ -2,7 +2,7 @@ diff --git a/test/config/crl-updater.json b/test/config/crl-updater.json
 index f6b70123f..a6c1471e5 100644
 --- a/test/config/crl-updater.json
 +++ b/test/config/crl-updater.json
-@@ -22,15 +22,13 @@
+@@ -22,15 +22,15 @@
        "hostOverride": "crl-storer.boulder"
      },
      "issuerCerts": [
@@ -17,6 +17,8 @@ index f6b70123f..a6c1471e5 100644
 -    "updatePeriod": "6h",
 -    "updateOffset": "9120s",
 -    "maxParallelism": 10
++    "shardWidth": "24h",
++    "lookbackPeriod": "96h",
 +    "updatePeriod": "24h",
 +    "updateOffset": "62m",
 +    "maxParallelism": 1

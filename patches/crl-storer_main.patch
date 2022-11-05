@@ -1,8 +1,8 @@
 diff --git a/cmd/crl-storer/main.go b/cmd/crl-storer/main.go
-index 4212f1849..a1369113d 100644
+index 26caa01f..b047597d 100644
 --- a/cmd/crl-storer/main.go
 +++ b/cmd/crl-storer/main.go
-@@ -49,6 +49,9 @@ type Config struct {
+@@ -47,6 +47,9 @@ type Config struct {
  		// https://docs.aws.amazon.com/sdkref/latest/guide/file-format.html.
  		AWSCredsFile string
  
@@ -12,7 +12,7 @@ index 4212f1849..a1369113d 100644
  		Features map[string]bool
  	}
  
-@@ -129,7 +132,7 @@ func main() {
+@@ -127,7 +130,7 @@ func main() {
  	}
  	s3client := s3.NewFromConfig(awsConfig, s3opts...)
  
@@ -20,4 +20,4 @@ index 4212f1849..a1369113d 100644
 +	csi, err := storer.New(issuers, s3client, c.CRLStorer.S3Bucket, c.CRLStorer.LocalStorePath, scope, logger, clk)
  	cmd.FailOnError(err, "Failed to create CRLStorer impl")
  
- 	serverMetrics := bgrpc.NewServerMetrics(scope)
+ 	start, stop, err := bgrpc.Server[cspb.CRLStorerServer]{}.Setup(

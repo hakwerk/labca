@@ -1,5 +1,5 @@
 diff --git a/cmd/expiration-mailer/main.go b/cmd/expiration-mailer/main.go
-index cff3479a2..7808fadd9 100644
+index 34299f02..5a25cdd4 100644
 --- a/cmd/expiration-mailer/main.go
 +++ b/cmd/expiration-mailer/main.go
 @@ -22,6 +22,7 @@ import (
@@ -42,7 +42,7 @@ index cff3479a2..7808fadd9 100644
  }
  
  func initStats(stats prometheus.Registerer) mailerStats {
-@@ -669,6 +679,32 @@ func main() {
+@@ -668,6 +678,32 @@ func main() {
  	cmd.FailOnError(err, "Failed to load credentials and create gRPC connection to SA")
  	sac := sapb.NewStorageAuthorityClient(conn)
  
@@ -75,7 +75,7 @@ index cff3479a2..7808fadd9 100644
  	var smtpRoots *x509.CertPool
  	if c.Mailer.SMTPTrustedRootFile != "" {
  		pem, err := os.ReadFile(c.Mailer.SMTPTrustedRootFile)
-@@ -704,6 +740,7 @@ func main() {
+@@ -703,6 +739,7 @@ func main() {
  		c.Mailer.Username,
  		smtpPassword,
  		smtpRoots,
