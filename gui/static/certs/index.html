@@ -63,6 +63,8 @@
               <th>Windows format</th>
               <th>Linux format</th>
               <th>Validity Period</th>
+              <th>CRL</th>
+              <th>CRL Validity</th>
             </tr></thead>
             <tbody>
               <tr>
@@ -71,6 +73,8 @@
                 <td><a class="public" href="root-ca.der">root-ca.der</a></td>
                 <td><a class="public" href="root-ca.pem">root-ca.pem</a></td>
                 <td><!-- BEGIN PKI_ROOT_VALIDITY -->PKI_ROOT_VALIDITY<!-- END PKI_ROOT_VALIDITY --></td>
+                <td><a class="public" href="../crl/root-ca.crl">root-ca.crl</a></td>
+                <td><!-- BEGIN PKI_ROOT_CRL_VALIDITY --><!-- END PKI_ROOT_CRL_VALIDITY --></td>
               </tr>
               <tr>
                 <td>Issuing CA</td>
@@ -78,14 +82,22 @@
                 <td><a class="public" href="ca-int.der">ca-int.der</a></td>
                 <td><a class="public" href="ca-int.pem">ca-int.pem</a></td>
                 <td><!-- BEGIN PKI_INT_VALIDITY -->PKI_INT_VALIDITY<!-- END PKI_INT_VALIDITY --></td>
+                <td><!-- BEGIN PKI_INT_CRL_LINK --><!-- END PKI_INT_CRL_LINK --></td>
+                <td><!-- BEGIN PKI_INT_CRL_VALIDITY --><!-- END PKI_INT_CRL_VALIDITY --></td>
               </tr>
             </tbody>
           </table>
 
           <p>
-            To trust the certificates provided by <!-- BEGIN WEBTITLE -->LabCA<!-- END WEBTITLE -->, all your client devices should install the root certificate in their
-            <b>Trusted Root Certification Authorities</b> store. You may choose to download the format best suited for your
-            Operating System: DER format for Windows machines or PEM format for Linux/unix machines and Android phones.
+            To trust the certificates provided by <!-- BEGIN WEBTITLE -->LabCA<!-- END WEBTITLE -->, all your client devices
+            should install the root certificate in their <b>Trusted Root Certification Authorities</b> store. You may choose
+            to download the format best suited for your Operating System: DER format for Windows machines or PEM format for
+            Linux/unix machines and Android phones.
+          </p>
+          <p>
+            The CRL (Certificate Revocation List) is a type of blocklist that includes certificates that should no longer be
+            trusted (have been revoked before their expiration date) and is used by various endpoints, including web browsers.
+            The issuer CRL is refreshed on a regular basis.
           </p>
         </div>
       </div>

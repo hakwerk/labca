@@ -504,6 +504,17 @@ static_web() {
             export PKI_WEB_TITLE="LabCA"
         fi
 
+        export PKI_ISSUER_NAME_ID=$(grep issuer_name_id $adminDir/data/config.json | sed -e 's/.*:[ ]*//' | sed -e 's/,//g' | sed -e 's/\"//g')
+        if [ -z "$PKI_ISSUER_NAME_ID" ] && [ -e "$adminDir/data/issuer/ca-int.pem" ]; then
+            local img=$(grep "&boulder_image" $boulderDir/docker-compose.yml | sed -e "s/.*boulder_image \(.*\)/\1/")
+            eval img=$img
+            docker run --rm -v $cloneDir/utils:/utils -w /utils $img go build nameidtool.go &>>$installLog
+            nmid=$($cloneDir/utils/nameidtool $adminDir/data/issuer/ca-int.pem)
+            if [ $? == 0 ]; then
+                export PKI_ISSUER_NAME_ID=$nmid
+            fi
+        fi
+
         $adminDir/apply-nginx
     fi
 

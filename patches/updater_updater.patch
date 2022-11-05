@@ -1,5 +1,5 @@
 diff --git a/crl/updater/updater.go b/crl/updater/updater.go
-index aa398d0a..2c7815b1 100644
+index aa398d0a..0db875d2 100644
 --- a/crl/updater/updater.go
 +++ b/crl/updater/updater.go
 @@ -8,6 +8,7 @@ import (
@@ -40,3 +40,12 @@ index aa398d0a..2c7815b1 100644
  	// We don't want the times at which crlUpdater runs to be dependent on when
  	// the process starts. So wait until the appropriate time before kicking off
  	// the first run and the main ticker loop.
+@@ -319,7 +343,7 @@ func (cu *crlUpdater) tickShard(ctx context.Context, atTime time.Time, issuerNam
+ 			crlEntries = append(crlEntries, entry)
+ 		}
+ 
+-		cu.log.Infof(
++		cu.log.Debugf(
+ 			"Queried SA for CRL shard: id=[%s] expiresAfter=[%s] expiresBefore=[%s] numEntries=[%d]",
+ 			crlID, chunk.start, chunk.end, len(crlEntries))
+ 	}
