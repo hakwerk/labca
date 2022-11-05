@@ -1,0 +1,42 @@
+diff --git a/crl/updater/updater.go b/crl/updater/updater.go
+index aa398d0a..2c7815b1 100644
+--- a/crl/updater/updater.go
++++ b/crl/updater/updater.go
+@@ -8,6 +8,7 @@ import (
+ 	"io"
+ 	"math"
+ 	"math/big"
++	"os"
+ 	"sort"
+ 	"strings"
+ 	"time"
+@@ -120,6 +121,29 @@ func NewUpdater(
+ // next scheduled run time based on the current time and the updateOffset, then
+ // begins running once every updatePeriod.
+ func (cu *crlUpdater) Run(ctx context.Context) error {
++	// If there is no .crl file yet, generate one (after a delay to let all other
++	// components start up fully).
++	// Dirty hack to check filesystem directly instead of using the crl-storer...
++	files, err := os.ReadDir("/wwwstatic/crl/")
++	if err != nil {
++		return err
++	}
++	present := false
++	for _, file := range files {
++		if file.Name() != "root-ca.crl" {
++			present = true
++		}
++	}
++	if !present {
++		select {
++		case <-ctx.Done():
++			return ctx.Err()
++		case <-time.After(time.Minute):
++		}
++
++		cu.Tick(ctx, cu.clk.Now())
++	}
++
+ 	// We don't want the times at which crlUpdater runs to be dependent on when
+ 	// the process starts. So wait until the appropriate time before kicking off
+ 	// the first run and the main ticker loop.

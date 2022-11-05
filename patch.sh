@@ -38,6 +38,7 @@ $SUDO patch -p1 < $cloneDir/patches/ratelimit_rate-limits.patch
 $SUDO patch -p1 < $cloneDir/patches/reloader_reloader.patch
 $SUDO patch -p1 < $cloneDir/patches/startservers.patch
 $SUDO patch -p1 < $cloneDir/patches/storer_storer.patch
+$SUDO patch -p1 < $cloneDir/patches/updater_updater.patch
 
 sed -i -e "s|./test|./labca|" start.py
 
