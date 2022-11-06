@@ -512,6 +512,7 @@ static_web() {
             nmid=$($cloneDir/utils/nameidtool $adminDir/data/issuer/ca-int.pem)
             if [ $? == 0 ]; then
                 export PKI_ISSUER_NAME_ID=$nmid
+                sed -i -e "s/\(^\s*\)\(\"keys\": {\)/\1\"issuer_name_id\": $PKI_ISSUER_NAME_ID,\n\1\2/g" /home/labca/admin/data/config.json
             fi
         fi
 
@@ -705,6 +706,7 @@ config_boulder() {
             nmid=$($cloneDir/utils/nameidtool $adminDir/data/issuer/ca-int.pem)
             if [ $? == 0 ]; then
                 export PKI_ISSUER_NAME_ID=$nmid
+                sed -i -e "s/\(^\s*\)\(\"keys\": {\)/\1\"issuer_name_id\": $PKI_ISSUER_NAME_ID,\n\1\2/g" /home/labca/admin/data/config.json
             fi
         fi
 
