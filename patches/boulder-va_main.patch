@@ -1,0 +1,35 @@
+diff --git a/cmd/boulder-va/main.go b/cmd/boulder-va/main.go
+index 80be1f34..ace5c03c 100644
+--- a/cmd/boulder-va/main.go
++++ b/cmd/boulder-va/main.go
+@@ -35,8 +35,10 @@ type Config struct {
+ 		// The number of times to try a DNS query (that has a temporary error)
+ 		// before giving up. May be short-circuited by deadlines. A zero value
+ 		// will be turned into 1.
+-		DNSTries                  int
+-		DNSResolver               string
++		DNSTries    int
++		DNSResolver string
++		// Deprecated, replaced by singular DNSResolver above.
++		DNSResolvers              []string
+ 		DNSTimeout                string
+ 		DNSAllowLoopbackAddresses bool
+ 
+@@ -119,11 +121,13 @@ func main() {
+ 	clk := cmd.Clock()
+ 
+ 	var servers bdns.ServerProvider
+-	if c.VA.DNSResolver == "" {
+-		cmd.Fail("Config key 'dnsresolver' is required")
++	if c.VA.DNSResolver != "" {
++		servers, err = bdns.StartDynamicProvider(c.VA.DNSResolver, 60*time.Second)
++		cmd.FailOnError(err, "Couldn't start dynamic DNS server resolver")
++	} else {
++		servers, err = bdns.NewStaticProvider(c.VA.DNSResolvers)
++		cmd.FailOnError(err, "Couldn't parse static DNS server(s)")
+ 	}
+-	servers, err = bdns.StartDynamicProvider(c.VA.DNSResolver, 60*time.Second)
+-	cmd.FailOnError(err, "Couldn't start dynamic DNS server resolver")
+ 
+ 	var resolver bdns.Client
+ 	if !(c.VA.DNSAllowLoopbackAddresses || c.Common.DNSAllowLoopbackAddresses) {
