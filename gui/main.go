@@ -2968,6 +2968,11 @@ func main() {
 		if viper.GetBool("standalone") {
 			sfs = http.FileServer(http.FS(staticFiles))
 
+			r.PathPrefix("/accounts/static/").Handler(http.StripPrefix("/accounts", sfs))
+			r.PathPrefix("/authz/static/").Handler(http.StripPrefix("/authz", sfs))
+			r.PathPrefix("/challenges/static/").Handler(http.StripPrefix("/challenges", sfs))
+			r.PathPrefix("/certificates/static/").Handler(http.StripPrefix("/certificates", sfs))
+			r.PathPrefix("/orders/static/").Handler(http.StripPrefix("/orders", sfs))
 			r.PathPrefix("/static/").Handler(sfs)
 		}
 		if isDev {
