@@ -24,7 +24,7 @@ dockerComposeVersion="v2.5.0"
 
 labcaUrl="https://github.com/hakwerk/labca/"
 boulderUrl="https://github.com/letsencrypt/boulder/"
-boulderTag="release-2022-11-15"
+boulderTag="release-2022-12-05"
 
 # Feature flags
 flag_skip_redis=true
@@ -456,7 +456,7 @@ static_web() {
 
     local msg="Static web pages"
     msg_info "$msg"
-    if [ -d /etc/nginx ]; then
+    if [ -d /etc/nginx ] && [ ! -d /etc/nginx.backup ]; then
         # Migrate cert from host nginx to dockerized nginx
         [ -d /home/labca/nginx_data/ssl ] || mkdir -p /home/labca/nginx_data/ssl
         [ -d /etc/nginx/ssl/ ] && mv /etc/nginx/ssl/* /home/labca/nginx_data/ssl/ || true
