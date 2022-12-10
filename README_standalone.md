@@ -29,3 +29,45 @@ labca-gui -config stepca.json
 ```
 
 The first time you connect to the application, you can create an admin account and specify the MySQL connection details for your step-ca database.
+
+
+## systemd service
+
+If you want to have the standalone version running all the time, even after a system reboot, you can create a service with the following steps (with thanks to [budulinek](https://github.com/budulinek)):
+```
+$ sudo mkdir -p /etc/labca
+$ sudo labca-gui -config /etc/labca/labca.json -port 3000 -init
+$ sudo useradd --system --home /etc/labca --shell /bin/false labca
+$ sudo chown -R labca:labca /etc/labca
+$ sudo nano /etc/systemd/system/labca.service
+```
+Put the following into that service file:
+```
+[Unit]
+Description=LabCA service
+After=network-online.target
+Wants=network-online.target
+StartLimitIntervalSec=30
+StartLimitBurst=3
+
+[Service]
+Type=simple
+User=labca
+Group=labca
+WorkingDirectory=/etc/labca
+ExecStart=/usr/bin/labca-gui -config /etc/labca/labca.json
+ExecReload=/bin/kill --signal HUP $MAINPID
+Restart=on-failure
+RestartSec=5
+TimeoutStopSec=30
+StartLimitInterval=30
+StartLimitBurst=3
+
+[Install]
+WantedBy=multi-user.target
+```
+And finally
+```
+$ sudo systemctl daemon-reload
+$ systemctl enable --now labca
+```
