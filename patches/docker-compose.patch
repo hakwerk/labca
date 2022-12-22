@@ -1,13 +1,13 @@
 diff --git a/docker-compose.yml b/docker-compose.yml
-index ddde0231..b06711b7 100644
+index 28efa8ab..1501dd10 100644
 --- a/docker-compose.yml
 +++ b/docker-compose.yml
 @@ -8,7 +8,7 @@ services:
      image: &boulder_image letsencrypt/boulder-tools:${BOULDER_TOOLS_TAG:-go1.19.2_2022-10-05}
      environment:
        FAKE_DNS: 10.77.77.77
--      BOULDER_CONFIG_DIR: test/config
-+      BOULDER_CONFIG_DIR: labca/config
+-      BOULDER_CONFIG_DIR: &boulder_config_dir test/config
++      BOULDER_CONFIG_DIR: &boulder_config_dir labca/config
        GOFLAGS: -mod=vendor
        # Go 1.18 turned off SHA-1 validation on CSRs (and certs, but that doesn't
        # affect us) by default, but it can be turned back on with the x509sha1
@@ -56,7 +56,7 @@ index ddde0231..b06711b7 100644
      # small.
      command: mysqld --bind-address=0.0.0.0 --slow-query-log --log-output=TABLE --log-queries-not-using-indexes=ON
      logging:
--        driver: none
+-      driver: none
 +      driver: "json-file"
 +      options:
 +        max-size: "500k"
@@ -75,7 +75,7 @@ index ddde0231..b06711b7 100644
 -    environment:
 -      GO111MODULE: "on"
 -      GOFLAGS: -mod=vendor
--      BOULDER_CONFIG_DIR: test/config
+-      BOULDER_CONFIG_DIR: *boulder_config_dir
      networks:
        - bluenet
      volumes:
