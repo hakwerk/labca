@@ -105,10 +105,6 @@
                 <button class="btn btn-outline btn-reg {{ $btn.Class }}" type="button" id="{{ $btn.Id }}" title="{{ $btn.Title }}">{{ $btn.Label }}</button>
                 {{ end }}
                 {{ if eq $item.Name "LabCA Application" }}
-                <span id="version-conditional-break" class="{{ if not $.UpdateAvailable }}hidden{{ end }}"/>
-                    <br/>
-                </span>
-                <button class="btn btn-outline btn-wide btn-warning mt5 {{ if not $.UpdateAvailable }}hidden{{ end }}" type="button" id="version-update" title="Update to latest version">Update LabCA</button>
                 <br/>
                 <button class="btn btn-outline btn-wide btn-success mt5" type="button" id="version-check" title="Check if there is a newer version available">Check for updates</button>
                 <span id="update-checked-span">
@@ -744,9 +740,6 @@
 
                         if (data.Success) {
                             if (data.UpdateAvailable) {
-                                $("#version-update").removeClass("hidden");
-                                $("#version-conditional-break").removeClass("hidden");
-
                                 var notes = "<span class=\"rel-notes-title\">RELEASE NOTES</span><br/><br/>";
                                 jQuery.each(data.Versions, function(idx, val) {
                                     notes += "<span class=\"rel-notes-title\">" + val + "</span><br/>"
@@ -764,9 +757,6 @@
                                     }]
                                 });
                             } else {
-                                $("#version-update").addClass("hidden")
-                                $("#version-conditional-break").addClass("hidden");
-
                                 BootstrapDialog.show({
                                     title: 'No new version',
                                     message: 'There is currently no newer version available.',
