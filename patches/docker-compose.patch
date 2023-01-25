@@ -1,9 +1,9 @@
 diff --git a/docker-compose.yml b/docker-compose.yml
-index 28efa8ab..1501dd10 100644
+index db9ee964..c932ad45 100644
 --- a/docker-compose.yml
 +++ b/docker-compose.yml
-@@ -8,7 +8,7 @@ services:
-     image: &boulder_image letsencrypt/boulder-tools:${BOULDER_TOOLS_TAG:-go1.19.2_2022-10-05}
+@@ -6,7 +6,7 @@ services:
+     image: &boulder_image letsencrypt/boulder-tools:${BOULDER_TOOLS_TAG:-go1.19.5_2023-01-10}
      environment:
        FAKE_DNS: 10.77.77.77
 -      BOULDER_CONFIG_DIR: &boulder_config_dir test/config
@@ -11,7 +11,7 @@ index 28efa8ab..1501dd10 100644
        GOFLAGS: -mod=vendor
        # Go 1.18 turned off SHA-1 validation on CSRs (and certs, but that doesn't
        # affect us) by default, but it can be turned back on with the x509sha1
-@@ -16,6 +16,8 @@ services:
+@@ -14,6 +14,8 @@ services:
        GODEBUG: x509sha1=1
      volumes:
        - .:/boulder:cached
@@ -20,7 +20,7 @@ index 28efa8ab..1501dd10 100644
        - ./.gocache:/root/.cache/go-build:cached
        - ./.hierarchy:/hierarchy/:cached
        - ./.softhsm-tokens/:/var/lib/softhsm/tokens/:cached
-@@ -35,18 +37,26 @@ services:
+@@ -33,18 +35,26 @@ services:
      # IP (running consul).
      # (https://docs.docker.com/config/containers/container-networking/#dns-services).
      dns: 10.55.55.10
@@ -52,7 +52,7 @@ index 28efa8ab..1501dd10 100644
      networks:
        bluenet:
          aliases:
-@@ -60,7 +70,11 @@ services:
+@@ -58,7 +68,11 @@ services:
      # small.
      command: mysqld --bind-address=0.0.0.0 --slow-query-log --log-output=TABLE --log-queries-not-using-indexes=ON
      logging:
@@ -65,7 +65,7 @@ index 28efa8ab..1501dd10 100644
  
    bconsul:
      image: hashicorp/consul:1.13.1
-@@ -71,18 +85,68 @@ services:
+@@ -69,18 +83,68 @@ services:
          ipv4_address: 10.55.55.10
      command: "consul agent -dev -config-format=hcl -config-file=/test/consul/config.hcl"
  
