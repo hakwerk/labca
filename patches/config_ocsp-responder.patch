@@ -2,7 +2,7 @@ diff --git a/test/config/ocsp-responder.json b/test/config/ocsp-responder.json
 index ed874d3..a1a78f3 100644
 --- a/test/config/ocsp-responder.json
 +++ b/test/config/ocsp-responder.json
-@@ -44,9 +44,7 @@
+@@ -45,9 +45,7 @@
      "path": "/",
      "listenAddress": "0.0.0.0:4002",
      "issuerCerts": [

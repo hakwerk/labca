@@ -1,8 +1,8 @@
 diff --git a/cmd/boulder-va/main.go b/cmd/boulder-va/main.go
-index 80be1f34..ace5c03c 100644
+index cd6342bc..bb6f0074 100644
 --- a/cmd/boulder-va/main.go
 +++ b/cmd/boulder-va/main.go
-@@ -35,8 +35,10 @@ type Config struct {
+@@ -33,8 +33,10 @@ type Config struct {
  		// The number of times to try a DNS query (that has a temporary error)
  		// before giving up. May be short-circuited by deadlines. A zero value
  		// will be turned into 1.
@@ -15,7 +15,7 @@ index 80be1f34..ace5c03c 100644
  		DNSTimeout                string
  		DNSAllowLoopbackAddresses bool
  
-@@ -119,11 +121,13 @@ func main() {
+@@ -102,11 +104,13 @@ func main() {
  	clk := cmd.Clock()
  
  	var servers bdns.ServerProvider

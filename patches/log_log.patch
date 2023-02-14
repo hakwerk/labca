@@ -1,8 +1,8 @@
 diff --git a/log/log.go b/log/log.go
-index dae33eff..7fed903a 100644
+index 02368437..dc39bcdd 100644
 --- a/log/log.go
 +++ b/log/log.go
-@@ -92,6 +92,9 @@ func newStdoutWriter(level int) *stdoutWriter {
+@@ -93,6 +93,9 @@ func newStdoutWriter(level int) *stdoutWriter {
  	}
  
  	prefix := fmt.Sprintf("%s %s %s[%d]:", shortHostname, datacenter, path.Base(os.Args[0]), os.Getpid())

@@ -1,5 +1,5 @@
 diff --git a/docker-compose.yml b/docker-compose.yml
-index 7fd47d36..db9ee964 100644
+index 4ce7c1d6..ed8da276 100644
 --- a/docker-compose.yml
 +++ b/docker-compose.yml
 @@ -22,8 +22,6 @@ services:
@@ -11,25 +11,24 @@ index 7fd47d36..db9ee964 100644
        consulnet:
          ipv4_address: 10.55.55.55
      extra_hosts:
-@@ -41,7 +39,6 @@ services:
+@@ -41,8 +39,6 @@ services:
        - 4003:4003 # OCSP
      depends_on:
        - bmysql
--      - bredis_clusterer
+-      - bredis_1
+-      - bredis_2
        - bconsul
      entrypoint: test/entrypoint.sh
      working_dir: &boulder_working_dir /boulder
-@@ -62,82 +59,6 @@ services:
-     command: mysqld --bind-address=0.0.0.0 --slow-query-log --log-output=TABLE --log-queries-not-using-indexes=ON
+@@ -64,24 +60,6 @@ services:
      logging:
        driver: none
--  # TODO(#6517): replace all bredis_ services with those from
--  # docker-compose.next.yml.
+ 
 -  bredis_1:
 -    image: redis:6.2.7
 -    volumes:
 -      - ./test/:/test/:cached
--    command: redis-server /test/redis-cluster.config
+-    command: redis-server /test/redis.config
 -    networks:
 -      redisnet:
 -        ipv4_address: 10.33.33.2
@@ -38,71 +37,15 @@ index 7fd47d36..db9ee964 100644
 -    image: redis:6.2.7
 -    volumes:
 -      - ./test/:/test/:cached
--    command: redis-server /test/redis-cluster.config
+-    command: redis-server /test/redis.config
 -    networks:
 -      redisnet:
 -        ipv4_address: 10.33.33.3
 -
--  bredis_3:
--    image: redis:6.2.7
--    volumes:
--      - ./test/:/test/:cached
--    command: redis-server /test/redis-cluster.config
--    networks:
--      redisnet:
--        ipv4_address: 10.33.33.4
--
--  bredis_4:
--    image: redis:6.2.7
--    volumes:
--      - ./test/:/test/:cached
--    command: redis-server /test/redis-cluster.config
--    networks:
--      redisnet:
--        ipv4_address: 10.33.33.5
--
--  bredis_5:
--    image: redis:6.2.7
--    volumes:
--      - ./test/:/test/:cached
--    command: redis-server /test/redis-cluster.config
--    networks:
--      redisnet:
--        ipv4_address: 10.33.33.6
--
--  bredis_6:
--    image: redis:6.2.7
--    volumes:
--      - ./test/:/test/:cached
--    command: redis-server /test/redis-cluster.config
--    networks:
--      redisnet:
--        ipv4_address: 10.33.33.7
--  # TODO(#6517): remove bredis_clusterer.
--  bredis_clusterer:
--    image: redis:6.2.7
--    environment:
--      BOULDER_CONFIG_DIR: *boulder_config_dir
--    volumes:
--      - ./test/:/test/:cached
--      - ./cluster/:/cluster/:cached
--    command: /test/wait-for-it.sh 10.33.33.2 4218 /test/redis-create.sh
--    depends_on:
--      - bredis_1
--      - bredis_2
--      - bredis_3
--      - bredis_4
--      - bredis_5
--      - bredis_6
--    networks:
--      redisnet:
--        ipv4_address: 10.33.33.10
--        aliases:
--          - boulder-redis-clusterer
- 
    bconsul:
      image: hashicorp/consul:1.13.1
-@@ -175,13 +96,6 @@ networks:
+     volumes:
+@@ -118,13 +96,6 @@ networks:
        config:
          - subnet: 10.88.88.0/24
  

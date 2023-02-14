@@ -1,10 +1,10 @@
 diff --git a/core/interfaces.go b/core/interfaces.go
-index d19eb4fb8..3ae50d737 100644
+index 003329c3..c01cd881 100644
 --- a/core/interfaces.go
 +++ b/core/interfaces.go
-@@ -10,4 +10,5 @@ type PolicyAuthority interface {
- 	WillingToIssueWildcards(identifiers []identifier.ACMEIdentifier) error
- 	ChallengesFor(domain identifier.ACMEIdentifier) ([]Challenge, error)
- 	ChallengeTypeEnabled(t AcmeChallenge) bool
+@@ -11,4 +11,5 @@ type PolicyAuthority interface {
+ 	ChallengesFor(identifier.ACMEIdentifier) ([]Challenge, error)
+ 	ChallengeTypeEnabled(AcmeChallenge) bool
+ 	CheckAuthz(*Authorization) error
 +	ValidEmail(address string) error
  }
