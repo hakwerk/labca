@@ -856,6 +856,7 @@ main() {
     check_root
     install_pkg "git"
     install_pkg "sudo"
+    install_pkg "patch"
     labca_user
     end_temporary_log
 
