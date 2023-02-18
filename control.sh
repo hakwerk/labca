@@ -76,6 +76,7 @@ start_cron() {
     apt update
     apt install -y cron
     [ -e /boulder/labca/setup_complete ] && [ ! -e /etc/cron.d/labca ] && ln -sf /labca/cron_d /etc/cron.d/labca || true
+    chmod g-w /labca/cron_d
     [ -e /logs/cron.log ] || touch /logs/cron.log
     tail -f -n0 /logs/cron.log &
     service cron start
