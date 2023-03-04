@@ -46,8 +46,10 @@ type config struct {
 		TLS       cmd.TLSConfig
 		SAService *cmd.GRPCClientConfig
 
-		DNSTries     int
-		DNSResolvers []string
+		DNSTries                  int
+		DNSResolvers              []string
+		DNSTimeout                string
+		DNSAllowLoopbackAddresses bool
 
 		// Path to a file containing a list of trusted root certificates for use
 		// during the SMTP connection (as opposed to the gRPC connections).
@@ -58,12 +60,6 @@ type config struct {
 
 	Syslog  cmd.SyslogConfig
 	Beeline cmd.BeelineConfig
-
-	Common struct {
-		DNSResolver               string
-		DNSTimeout                string
-		DNSAllowLoopbackAddresses bool
-	}
 }
 
 func main() {
@@ -93,19 +89,16 @@ func main() {
 
 	clk := cmd.Clock()
 
-	dnsTimeout, err := time.ParseDuration(c.Common.DNSTimeout)
+	dnsTimeout, err := time.ParseDuration(c.Mailer.DNSTimeout)
 	cmd.FailOnError(err, "Couldn't parse DNS timeout")
 	dnsTries := c.Mailer.DNSTries
 	if dnsTries < 1 {
 		dnsTries = 1
 	}
 	var resolver bdns.Client
-	if len(c.Common.DNSResolver) != 0 {
-		c.Mailer.DNSResolvers = append(c.Mailer.DNSResolvers, c.Common.DNSResolver)
-	}
 	servers, err := bdns.NewStaticProvider(c.Mailer.DNSResolvers)
 	cmd.FailOnError(err, "Couldn't parse static DNS server(s)")
-	if !c.Common.DNSAllowLoopbackAddresses {
+	if !c.Mailer.DNSAllowLoopbackAddresses {
 		r := bdns.New(
 			dnsTimeout,
 			servers,

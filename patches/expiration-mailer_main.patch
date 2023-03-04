@@ -1,5 +1,5 @@
 diff --git a/cmd/expiration-mailer/main.go b/cmd/expiration-mailer/main.go
-index d30f0e7d..ce296c61 100644
+index d30f0e7d..ba22185f 100644
 --- a/cmd/expiration-mailer/main.go
 +++ b/cmd/expiration-mailer/main.go
 @@ -24,6 +24,7 @@ import (
@@ -19,46 +19,32 @@ index d30f0e7d..ce296c61 100644
  )
  
  type regStore interface {
-@@ -683,6 +684,9 @@ type Config struct {
+@@ -683,6 +684,11 @@ type Config struct {
  		TLS       cmd.TLSConfig
  		SAService *cmd.GRPCClientConfig
  
-+		DNSTries     int
-+		DNSResolvers []string
++		DNSTries                  int
++		DNSResolvers              []string
++		DNSTimeout                string
++		DNSAllowLoopbackAddresses bool
 +
  		// Path to a file containing a list of trusted root certificates for use
  		// during the SMTP connection (as opposed to the gRPC connections).
  		SMTPTrustedRootFile string
-@@ -692,6 +696,12 @@ type Config struct {
- 
- 	Syslog  cmd.SyslogConfig
- 	Beeline cmd.BeelineConfig
-+
-+	Common struct {
-+ 		DNSResolver               string
-+ 		DNSTimeout                string
-+ 		DNSAllowLoopbackAddresses bool
-+ 	}
- }
- 
- func initStats(stats prometheus.Registerer) mailerStats {
-@@ -832,6 +842,32 @@ func main() {
+@@ -832,6 +838,29 @@ func main() {
  	cmd.FailOnError(err, "Failed to load credentials and create gRPC connection to SA")
  	sac := sapb.NewStorageAuthorityClient(conn)
  
-+	dnsTimeout, err := time.ParseDuration(c.Common.DNSTimeout)
++	dnsTimeout, err := time.ParseDuration(c.Mailer.DNSTimeout)
 +	cmd.FailOnError(err, "Couldn't parse DNS timeout")
 +	dnsTries := c.Mailer.DNSTries
 +	if dnsTries < 1 {
 +		dnsTries = 1
 +	}
 +	var resolver bdns.Client
-+	if len(c.Common.DNSResolver) != 0 {
-+		c.Mailer.DNSResolvers = append(c.Mailer.DNSResolvers, c.Common.DNSResolver)
-+	}
 +	servers, err := bdns.NewStaticProvider(c.Mailer.DNSResolvers)
 +	cmd.FailOnError(err, "Couldn't parse static DNS server(s)")
-+	if !c.Common.DNSAllowLoopbackAddresses {
++	if !c.Mailer.DNSAllowLoopbackAddresses {
 +		r := bdns.New(
 +			dnsTimeout,
 +			servers,
@@ -75,7 +61,7 @@ index d30f0e7d..ce296c61 100644
  	var smtpRoots *x509.CertPool
  	if c.Mailer.SMTPTrustedRootFile != "" {
  		pem, err := os.ReadFile(c.Mailer.SMTPTrustedRootFile)
-@@ -867,6 +903,7 @@ func main() {
+@@ -867,6 +896,7 @@ func main() {
  		c.Mailer.Username,
  		smtpPassword,
  		smtpRoots,
