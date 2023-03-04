@@ -1,8 +1,8 @@
 diff --git a/cmd/cert-checker/main.go b/cmd/cert-checker/main.go
-index 340c5629..0dc0389a 100644
+index cbc4f2e4..ec054876 100644
 --- a/cmd/cert-checker/main.go
 +++ b/cmd/cert-checker/main.go
-@@ -100,6 +100,7 @@ type certChecker struct {
+@@ -101,6 +101,7 @@ type certChecker struct {
  	checkPeriod                 time.Duration
  	acceptableValidityDurations map[time.Duration]bool
  	logger                      blog.Logger
@@ -10,7 +10,7 @@ index 340c5629..0dc0389a 100644
  }
  
  func newChecker(saDbMap certDB,
-@@ -109,6 +110,7 @@ func newChecker(saDbMap certDB,
+@@ -110,6 +111,7 @@ func newChecker(saDbMap certDB,
  	period time.Duration,
  	avd map[time.Duration]bool,
  	logger blog.Logger,
@@ -18,7 +18,7 @@ index 340c5629..0dc0389a 100644
  ) certChecker {
  	return certChecker{
  		pa:                          pa,
-@@ -121,6 +123,7 @@ func newChecker(saDbMap certDB,
+@@ -122,6 +124,7 @@ func newChecker(saDbMap certDB,
  		checkPeriod:                 period,
  		acceptableValidityDurations: avd,
  		logger:                      logger,
@@ -26,7 +26,7 @@ index 340c5629..0dc0389a 100644
  	}
  }
  
-@@ -347,7 +350,7 @@ func (c *certChecker) checkCert(cert core.Certificate, ignoredLints map[string]b
+@@ -348,7 +351,7 @@ func (c *certChecker) checkCert(cert core.Certificate, ignoredLints map[string]b
  			err = c.pa.WillingToIssueWildcards([]identifier.ACMEIdentifier{id})
  			if err != nil {
  				problems = append(problems, fmt.Sprintf("Policy Authority isn't willing to issue for '%s': %s", name, err))
@@ -35,21 +35,19 @@ index 340c5629..0dc0389a 100644
  				// For defense-in-depth, even if the PA was willing to issue for a name
  				// we double check it against a list of forbidden domains. This way even
  				// if the hostnamePolicyFile malfunctions we will flag the forbidden
-@@ -409,11 +412,12 @@ type Config struct {
+@@ -410,10 +413,11 @@ type Config struct {
  		DB cmd.DBConfig
  		cmd.HostnamePolicyConfig
  
--		Workers             int
--		ReportDirectoryPath string
--		UnexpiredOnly       bool
--		BadResultsOnly      bool
--		CheckPeriod         cmd.ConfigDuration
+-		Workers        int
+-		UnexpiredOnly  bool
+-		BadResultsOnly bool
+-		CheckPeriod    config.Duration
 +		Workers              int
-+		ReportDirectoryPath  string
 +		UnexpiredOnly        bool
 +		BadResultsOnly       bool
 +		SkipForbiddenDomains bool
-+		CheckPeriod          cmd.ConfigDuration
++		CheckPeriod          config.Duration
  
  		// AcceptableValidityDurations is a list of durations which are
  		// acceptable for certificates we issue.

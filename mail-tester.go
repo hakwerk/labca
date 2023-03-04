@@ -9,6 +9,7 @@ import (
 
 	"github.com/letsencrypt/boulder/bdns"
 	"github.com/letsencrypt/boulder/cmd"
+	bconfig "github.com/letsencrypt/boulder/config"
 	"github.com/letsencrypt/boulder/features"
 	bmail "github.com/letsencrypt/boulder/mail"
 )
@@ -40,7 +41,7 @@ type config struct {
 		// Path to a text/template email template
 		EmailTemplate string
 
-		Frequency cmd.ConfigDuration
+		Frequency bconfig.Duration
 
 		TLS       cmd.TLSConfig
 		SAService *cmd.GRPCClientConfig

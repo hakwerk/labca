@@ -1,18 +1,14 @@
 diff --git a/docker-compose.yml b/docker-compose.yml
-index ed8da276..9171ee2b 100644
+index fd157266..d272bf2d 100644
 --- a/docker-compose.yml
 +++ b/docker-compose.yml
-@@ -6,7 +6,7 @@ services:
-     image: &boulder_image letsencrypt/boulder-tools:${BOULDER_TOOLS_TAG:-go1.19.5_2023-02-02}
+@@ -5,10 +5,12 @@ services:
+     image: &boulder_image letsencrypt/boulder-tools:${BOULDER_TOOLS_TAG:-go1.20.1_2023-02-22}
      environment:
        FAKE_DNS: 10.77.77.77
 -      BOULDER_CONFIG_DIR: &boulder_config_dir test/config
 +      BOULDER_CONFIG_DIR: &boulder_config_dir labca/config
        GOFLAGS: -mod=vendor
-       # Go 1.18 turned off SHA-1 validation on CSRs (and certs, but that doesn't
-       # affect us) by default, but it can be turned back on with the x509sha1
-@@ -14,6 +14,8 @@ services:
-       GODEBUG: x509sha1=1
      volumes:
        - .:/boulder:cached
 +      - /home/labca/boulder_labca:/boulder/labca
@@ -20,9 +16,9 @@ index ed8da276..9171ee2b 100644
        - ./.gocache:/root/.cache/go-build:cached
        - ./.hierarchy:/hierarchy/:cached
        - ./.softhsm-tokens/:/var/lib/softhsm/tokens/:cached
-@@ -33,18 +35,26 @@ services:
-     # IP (running consul).
-     # (https://docs.docker.com/config/containers/container-networking/#dns-services).
+@@ -28,18 +30,26 @@ services:
+     # TODO: Remove this when ServerAddress is deprecated in favor of SRV records
+     # and DNSAuthority.
      dns: 10.55.55.10
 -    ports:
 -      - 4001:4001 # ACMEv2
@@ -52,7 +48,7 @@ index ed8da276..9171ee2b 100644
      networks:
        bluenet:
          aliases:
-@@ -58,7 +68,11 @@ services:
+@@ -53,7 +63,11 @@ services:
      # small.
      command: mysqld --bind-address=0.0.0.0 --slow-query-log --log-output=TABLE --log-queries-not-using-indexes=ON
      logging:
@@ -65,7 +61,7 @@ index ed8da276..9171ee2b 100644
  
    bconsul:
      image: hashicorp/consul:1.13.1
-@@ -69,18 +83,68 @@ services:
+@@ -64,18 +78,68 @@ services:
          ipv4_address: 10.55.55.10
      command: "consul agent -dev -config-format=hcl -config-file=/test/consul/config.hcl"
  
