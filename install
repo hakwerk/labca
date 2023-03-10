@@ -6,7 +6,12 @@
 # Install with this command from a Linux machine (only tested with Debian and Ubuntu):
 # curl -sSL https://raw.githubusercontent.com/hakwerk/labca/master/install | bash
 
-set -e
+set -eEuo pipefail
+trap 'err_report $? $LINENO' INT TERM ERR
+
+err_report() {
+    msg_fatal "return code $1 on line $2 in $(basename $0)" $1
+}
 
 #
 # Variables / Constants
@@ -85,7 +90,7 @@ msg_fatal() {
     local msg="$1"
     echo -e "\\n  ${COL_LIGHT_RED}Error: ${msg}${COL_NC}\\n"
     echo "[`date "${logTimeFormat}"`] [FATAL] ${msg}" >> $installLog
-    exit 1
+    exit ${2:-1}
 }
 
 #
