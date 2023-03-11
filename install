@@ -6,7 +6,7 @@
 # Install with this command from a Linux machine (only tested with Debian and Ubuntu):
 # curl -sSL https://raw.githubusercontent.com/hakwerk/labca/master/install | bash
 
-set -eEuo pipefail
+set -eEo pipefail
 trap 'err_report $? $LINENO' INT TERM ERR
 
 err_report() {
@@ -29,7 +29,7 @@ dockerComposeVersion="v2.5.0"
 
 labcaUrl="https://github.com/hakwerk/labca/"
 boulderUrl="https://github.com/letsencrypt/boulder/"
-boulderTag="c33c3c83"
+boulderTag="release-2023-03-06"
 
 # Feature flags
 flag_skip_redis=true
@@ -358,6 +358,7 @@ copy_admin() {
 
     [ -d "$adminDir" ] || mkdir "$adminDir"
     cd "$adminDir"
+    git config --global --add safe.directory "$adminDir"
     git status --short &> /dev/null || rc=$?
     if [ $rc -gt 0 ]; then
         git init &>>$installLog
@@ -478,6 +479,7 @@ static_web() {
 
     [ -d /home/labca/nginx_data/static ] || mkdir /home/labca/nginx_data/static
     cd /home/labca/nginx_data/static
+    git config --global --add safe.directory /home/labca/nginx_data/static
     git status --short &> /dev/null || rc=$?
     if [ $rc -gt 0 ]; then
         git init &>>$installLog
@@ -579,6 +581,7 @@ config_boulder() {
     [ -d "$boulderLabCADir" ] || mkdir -p "$boulderLabCADir"
     cd "$boulderLabCADir"
     local rc=0
+    git config --global --add safe.directory "$boulderLabCADir"
     git status --short &> /dev/null || rc=$?
     if [ $rc -gt 0 ]; then
         git init &>>$installLog
