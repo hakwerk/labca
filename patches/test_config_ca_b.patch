@@ -3,34 +3,34 @@ index 960d62f95..54b25dd81 100644
 --- a/test/config/ca-b.json
 +++ b/test/config/ca-b.json
 @@ -106,30 +106,7 @@
-           "crlURL": "http://example.com/crl",
-           "location": {
-             "configFile": "test/test-ca.key-pkcs11.json",
--            "certFile": "/hierarchy/intermediate-cert-rsa-a.pem",
--            "numSessions": 2
--          }
--        },
--        {
--          "useForRSALeaves": false,
--          "useForECDSALeaves": true,
--          "issuerURL": "http://127.0.0.1:4001/aia/issuer/5214744660557630",
--          "ocspURL": "http://127.0.0.1:4002/",
--          "location": {
--            "configFile": "/hierarchy/intermediate-signing-key-ecdsa.pkcs11.json",
--            "certFile": "/hierarchy/intermediate-cert-ecdsa-a.pem",
--            "numSessions": 2
--          }
--        },
--        {
--          "useForRSALeaves": false,
--          "useForECDSALeaves": false,
--          "issuerURL": "http://127.0.0.1:4001/aia/issuer/41127673797486028",
--          "ocspURL": "http://127.0.0.1:4002/",
--          "crlURL": "http://example.com/crl",
--          "location": {
--            "configFile": "test/test-ca.key-pkcs11.json",
--            "certFile": "/hierarchy/intermediate-cert-rsa-b.pem",
-+            "certFile": "test/test-ca.pem",
-             "numSessions": 2
-           }
-         }
+ 					"crlURL": "http://example.com/crl",
+ 					"location": {
+ 						"configFile": "test/test-ca.key-pkcs11.json",
+-						"certFile": "/hierarchy/intermediate-cert-rsa-a.pem",
+-						"numSessions": 2
+-					}
+-				},
+-				{
+-					"useForRSALeaves": false,
+-					"useForECDSALeaves": true,
+-					"issuerURL": "http://127.0.0.1:4001/aia/issuer/5214744660557630",
+-					"ocspURL": "http://127.0.0.1:4002/",
+-					"location": {
+-						"configFile": "/hierarchy/intermediate-signing-key-ecdsa.pkcs11.json",
+-						"certFile": "/hierarchy/intermediate-cert-ecdsa-a.pem",
+-						"numSessions": 2
+-					}
+-				},
+-				{
+-					"useForRSALeaves": false,
+-					"useForECDSALeaves": false,
+-					"issuerURL": "http://127.0.0.1:4001/aia/issuer/41127673797486028",
+-					"ocspURL": "http://127.0.0.1:4002/",
+-					"crlURL": "http://example.com/crl",
+-					"location": {
+-						"configFile": "test/test-ca.key-pkcs11.json",
+-						"certFile": "/hierarchy/intermediate-cert-rsa-b.pem",
++						"certFile": "test/test-ca.pem",
+ 						"numSessions": 2
+ 					}
+ 				}

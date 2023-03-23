@@ -3,36 +3,36 @@ index bfea858d..fecea919 100644
 --- a/test/config/ocsp-responder.json
 +++ b/test/config/ocsp-responder.json
 @@ -4,22 +4,6 @@
-       "dbConnectFile": "test/secrets/ocsp_responder_dburl",
-       "maxOpenConns": 10
-     },
--    "redis": {
--      "username": "ocsp-responder",
--      "passwordFile": "test/secrets/ocsp_responder_redis_password",
--      "shardAddrs": {
--        "shard1": "10.33.33.2:4218",
--        "shard2": "10.33.33.3:4218"
--      },
--      "timeout": "5s",
--      "poolSize": 100,
--      "routeRandomly": true,
--      "tls": {
--        "caCertFile": "test/redis-tls/minica.pem",
--        "certFile": "test/redis-tls/boulder/cert.pem",
--        "keyFile": "test/redis-tls/boulder/key.pem"
--      }
--    },
-     "tls": {
-       "caCertFile": "test/grpc-creds/minica.pem",
-       "certFile": "test/grpc-creds/ocsp-responder.boulder/cert.pem",
+ 			"dbConnectFile": "test/secrets/ocsp_responder_dburl",
+ 			"maxOpenConns": 10
+ 		},
+-		"redis": {
+-			"username": "ocsp-responder",
+-			"passwordFile": "test/secrets/ocsp_responder_redis_password",
+-			"shardAddrs": {
+-				"shard1": "10.33.33.2:4218",
+-				"shard2": "10.33.33.3:4218"
+-			},
+-			"timeout": "5s",
+-			"poolSize": 100,
+-			"routeRandomly": true,
+-			"tls": {
+-				"caCertFile": "test/redis-tls/minica.pem",
+-				"certFile": "test/redis-tls/boulder/cert.pem",
+-				"keyFile": "test/redis-tls/boulder/key.pem"
+-			}
+-		},
+ 		"tls": {
+ 			"caCertFile": "test/grpc-creds/minica.pem",
+ 			"certFile": "test/grpc-creds/ocsp-responder.boulder/cert.pem",
 @@ -39,9 +23,7 @@
-     "path": "/",
-     "listenAddress": "0.0.0.0:4002",
-     "issuerCerts": [
--      "/hierarchy/intermediate-cert-rsa-a.pem",
--      "/hierarchy/intermediate-cert-rsa-b.pem",
--      "/hierarchy/intermediate-cert-ecdsa-a.pem"
-+      "/hierarchy/intermediate-cert-rsa-a.pem"
-     ],
-     "liveSigningPeriod": "60h",
-     "timeout": "4.9s",
+ 		"path": "/",
+ 		"listenAddress": "0.0.0.0:4002",
+ 		"issuerCerts": [
+-			"/hierarchy/intermediate-cert-rsa-a.pem",
+-			"/hierarchy/intermediate-cert-rsa-b.pem",
+-			"/hierarchy/intermediate-cert-ecdsa-a.pem"
++			"/hierarchy/intermediate-cert-rsa-a.pem"
+ 		],
+ 		"liveSigningPeriod": "60h",
+ 		"timeout": "4.9s",

@@ -1,21 +1,21 @@
 diff --git a/cmd/boulder-va/main.go b/cmd/boulder-va/main.go
-index 905e1aec..39ce5e6b 100644
+index af0e7e520..f2dffb3ac 100644
 --- a/cmd/boulder-va/main.go
 +++ b/cmd/boulder-va/main.go
-@@ -25,8 +25,10 @@ type Config struct {
- 		// The number of times to try a DNS query (that has a temporary error)
+@@ -24,8 +24,10 @@ type Config struct {
+ 		// DNSTries is the number of times to try a DNS query (that has a temporary error)
  		// before giving up. May be short-circuited by deadlines. A zero value
  		// will be turned into 1.
 -		DNSTries                  int
--		DNSResolver               string
+-		DNSResolver               string `validate:"required"`
 +		DNSTries    int
-+		DNSResolver string
++		DNSResolver string `validate:"required"`
 +		// Deprecated, replaced by singular DNSResolver above.
 +		DNSResolvers              []string
  		DNSTimeout                string
  		DNSAllowLoopbackAddresses bool
  
-@@ -98,11 +100,13 @@ func main() {
+@@ -92,11 +94,13 @@ func main() {
  	clk := cmd.Clock()
  
  	var servers bdns.ServerProvider

@@ -1,5 +1,5 @@
 diff --git a/cmd/cert-checker/main.go b/cmd/cert-checker/main.go
-index cbc4f2e4..ec054876 100644
+index 1dbc8fadf..442f34e69 100644
 --- a/cmd/cert-checker/main.go
 +++ b/cmd/cert-checker/main.go
 @@ -101,6 +101,7 @@ type certChecker struct {
@@ -39,11 +39,11 @@ index cbc4f2e4..ec054876 100644
  		DB cmd.DBConfig
  		cmd.HostnamePolicyConfig
  
--		Workers        int
+-		Workers        int `validate:"required,min=1"`
 -		UnexpiredOnly  bool
 -		BadResultsOnly bool
 -		CheckPeriod    config.Duration
-+		Workers              int
++		Workers              int `validate:"required,min=1"`
 +		UnexpiredOnly        bool
 +		BadResultsOnly       bool
 +		SkipForbiddenDomains bool

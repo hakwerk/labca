@@ -4,12 +4,12 @@ index 5497f8f1..8f91fd59 100644
 +++ b/test/config/orphan-finder.json
 @@ -1,9 +1,7 @@
  {
-   "backdate": "1h",
-   "issuerCerts": [
--    "/hierarchy/intermediate-cert-rsa-a.pem",
--    "/hierarchy/intermediate-cert-rsa-b.pem",
--    "/hierarchy/intermediate-cert-ecdsa-a.pem"
-+    "/hierarchy/intermediate-cert-rsa-a.pem"
-   ],
- 
-   "syslog": {
+ 	"backdate": "1h",
+ 	"issuerCerts": [
+-		"/hierarchy/intermediate-cert-rsa-a.pem",
+-		"/hierarchy/intermediate-cert-rsa-b.pem",
+-		"/hierarchy/intermediate-cert-ecdsa-a.pem"
++		"/hierarchy/intermediate-cert-rsa-a.pem"
+ 	],
+ 	"syslog": {
+ 		"stdoutlevel": 7,

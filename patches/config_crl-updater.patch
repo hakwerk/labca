@@ -3,25 +3,25 @@ index f6b70123f..a6c1471e5 100644
 --- a/test/config/crl-updater.json
 +++ b/test/config/crl-updater.json
 @@ -22,15 +22,15 @@
-       "hostOverride": "crl-storer.boulder"
-     },
-     "issuerCerts": [
--      "/hierarchy/intermediate-cert-rsa-a.pem",
--      "/hierarchy/intermediate-cert-rsa-b.pem",
--      "/hierarchy/intermediate-cert-ecdsa-a.pem"
-+      "/hierarchy/intermediate-cert-rsa-a.pem"
-     ],
--    "numShards": 10,
-+    "numShards": 1,
-     "certificateLifetime": "2160h",
--    "updatePeriod": "6h",
--    "updateOffset": "9120s",
--    "maxParallelism": 10
-+    "shardWidth": "24h",
-+    "lookbackPeriod": "96h",
-+    "updatePeriod": "24h",
-+    "updateOffset": "62m",
-+    "maxParallelism": 1
-   },
-
-   "syslog": {
+ 			"hostOverride": "crl-storer.boulder"
+ 		},
+ 		"issuerCerts": [
+-			"/hierarchy/intermediate-cert-rsa-a.pem",
+-			"/hierarchy/intermediate-cert-rsa-b.pem",
+-			"/hierarchy/intermediate-cert-ecdsa-a.pem"
++			"/hierarchy/intermediate-cert-rsa-a.pem"
+ 		],
+-		"numShards": 10,
++		"numShards": 1,
+ 		"certificateLifetime": "2160h",
+-		"updatePeriod": "6h",
+-		"updateOffset": "9120s",
+-		"maxParallelism": 10
++		"shardWidth": "24h",
++		"lookbackPeriod": "96h",
++		"updatePeriod": "24h",
++		"updateOffset": "62m",
++		"maxParallelism": 1
+ 	},
+ 	"syslog": {
+ 		"stdoutlevel": 6,

@@ -142,5 +142,5 @@ func main() {
 }
 
 func init() {
-	cmd.RegisterCommand("mail-tester", main)
+	cmd.RegisterCommand("mail-tester", main, &cmd.ConfigValidator{Config: &config{}})
 }

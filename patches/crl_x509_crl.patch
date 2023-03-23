@@ -1,8 +1,8 @@
 diff --git a/crl/crl_x509/crl.go b/crl/crl_x509/crl.go
-index ba53b813..01ffc0a4 100644
+index f49356dd3..d2c88b3ca 100644
 --- a/crl/crl_x509/crl.go
 +++ b/crl/crl_x509/crl.go
-@@ -418,6 +418,9 @@ func CreateRevocationList(rand io.Reader, template *RevocationList, issuer *x509
+@@ -417,6 +417,9 @@ func CreateRevocationList(rand io.Reader, template *RevocationList, issuer *x509
  		return nil, err
  	}
  
@@ -12,7 +12,7 @@ index ba53b813..01ffc0a4 100644
  	input := tbsCertListContents
  	if hashFunc != 0 {
  		h := hashFunc.New()
-@@ -437,11 +440,19 @@ func CreateRevocationList(rand io.Reader, template *RevocationList, issuer *x509
+@@ -436,11 +439,19 @@ func CreateRevocationList(rand io.Reader, template *RevocationList, issuer *x509
  		return nil, err
  	}
  
@@ -33,7 +33,7 @@ index ba53b813..01ffc0a4 100644
  }
  
  // CheckSignatureFrom verifies that the signature on rl is a valid signature
-@@ -462,3 +473,35 @@ func (rl *RevocationList) CheckSignatureFrom(parent *x509.Certificate) error {
+@@ -461,3 +472,35 @@ func (rl *RevocationList) CheckSignatureFrom(parent *x509.Certificate) error {
  
  	return parent.CheckSignature(x509.SignatureAlgorithm(rl.SignatureAlgorithm), rl.RawTBSRevocationList, rl.Signature)
  }

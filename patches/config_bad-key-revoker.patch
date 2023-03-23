@@ -3,25 +3,25 @@ index f4696dc2..b9c19ce3 100644
 --- a/test/config/bad-key-revoker.json
 +++ b/test/config/bad-key-revoker.json
 @@ -5,6 +5,13 @@
-       "maxOpenConns": 10
-     },
-     "debugAddr": ":8020",
-+    "dnsTries": 3,
-+    "dnsResolvers": [
-+      "127.0.0.1:8053",
-+      "127.0.0.1:8054"
-+    ],
-+    "dnsTimeout": "3s",
-+    "dnsAllowLoopbackAddresses": true,
-     "tls": {
-       "caCertFile": "test/grpc-creds/minica.pem",
-       "certFile": "test/grpc-creds/bad-key-revoker.boulder/cert.pem",
+ 			"maxOpenConns": 10
+ 		},
+ 		"debugAddr": ":8020",
++		"dnsTries": 3,
++		"dnsResolvers": [
++			"127.0.0.1:8053",
++			"127.0.0.1:8054"
++		],
++		"dnsTimeout": "3s",
++		"dnsAllowLoopbackAddresses": true,
+ 		"tls": {
+ 			"caCertFile": "test/grpc-creds/minica.pem",
+ 			"certFile": "test/grpc-creds/bad-key-revoker.boulder/cert.pem",
 @@ -27,7 +34,7 @@
-     },
-     "maximumRevocations": 15,
-     "findCertificatesBatchSize": 10,
--    "interval": "1s",
-+    "interval": "5m",
-     "backoffIntervalMax": "2s"
-   },
-   "syslog": {
+ 		},
+ 		"maximumRevocations": 15,
+ 		"findCertificatesBatchSize": 10,
+-		"interval": "1s",
++		"interval": "5m",
+ 		"backoffIntervalMax": "2s"
+ 	},
+ 	"syslog": {

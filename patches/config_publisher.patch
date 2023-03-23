@@ -3,21 +3,21 @@ index 6e0337c..1e5ed7b 100644
 --- a/test/config/publisher.json
 +++ b/test/config/publisher.json
 @@ -6,18 +6,6 @@
-       [
-         "/hierarchy/intermediate-cert-rsa-a.pem",
-         "/hierarchy/root-cert-rsa.pem"
--      ],
--      [
--        "/hierarchy/intermediate-cert-rsa-b.pem",
--        "/hierarchy/root-cert-rsa.pem"
--      ],
--      [
--        "/hierarchy/intermediate-cert-ecdsa-a.pem",
--        "/hierarchy/root-cert-ecdsa.pem"
--      ],
--      [
--        "/hierarchy/intermediate-cert-ecdsa-b.pem",
--        "/hierarchy/root-cert-ecdsa.pem"
-       ]
-     ],
-     "debugAddr": ":8009",
+ 			[
+ 				"/hierarchy/intermediate-cert-rsa-a.pem",
+ 				"/hierarchy/root-cert-rsa.pem"
+-			],
+-			[
+-				"/hierarchy/intermediate-cert-rsa-b.pem",
+-				"/hierarchy/root-cert-rsa.pem"
+-			],
+-			[
+-				"/hierarchy/intermediate-cert-ecdsa-a.pem",
+-				"/hierarchy/root-cert-ecdsa.pem"
+-			],
+-			[
+-				"/hierarchy/intermediate-cert-ecdsa-b.pem",
+-				"/hierarchy/root-cert-ecdsa.pem"
+ 			]
+ 		],
+ 		"debugAddr": ":8009",

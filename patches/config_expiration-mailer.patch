@@ -2,17 +2,17 @@ diff --git a/test/config/expiration-mailer.json b/test/config/expiration-mailer.
 index 3b813060..6c709172 100644
 --- a/test/config/expiration-mailer.json
 +++ b/test/config/expiration-mailer.json
-@@ -13,6 +13,13 @@
-     "nagTimes": ["480h", "240h"],
-     "emailTemplate": "test/config/expiration-mailer.gotmpl",
-     "debugAddr": ":8008",
-+    "dnsTries": 3,
-+    "dnsResolvers": [
-+      "127.0.0.1:8053",
-+      "127.0.0.1:8054"
-+    ],
-+    "dnsTimeout": "3s",
-+    "dnsAllowLoopbackAddresses": true,
-     "tls": {
-       "caCertFile": "test/grpc-creds/minica.pem",
-       "certFile": "test/grpc-creds/expiration-mailer.boulder/cert.pem",
+@@ -16,6 +16,13 @@
+ 		],
+ 		"emailTemplate": "test/config/expiration-mailer.gotmpl",
+ 		"debugAddr": ":8008",
++		"dnsTries": 3,
++		"dnsResolvers": [
++			"127.0.0.1:8053",
++			"127.0.0.1:8054"
++		],
++		"dnsTimeout": "3s",
++		"dnsAllowLoopbackAddresses": true,
+ 		"tls": {
+ 			"caCertFile": "test/grpc-creds/minica.pem",
+ 			"certFile": "test/grpc-creds/expiration-mailer.boulder/cert.pem",

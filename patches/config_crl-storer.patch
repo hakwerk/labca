@@ -3,15 +3,15 @@ index 61f14d79..a620896f 100644
 --- a/test/config/crl-storer.json
 +++ b/test/config/crl-storer.json
 @@ -15,10 +15,9 @@
-       ]
-     },
-     "issuerCerts": [
--      "/hierarchy/intermediate-cert-rsa-a.pem",
--      "/hierarchy/intermediate-cert-rsa-b.pem",
--      "/hierarchy/intermediate-cert-ecdsa-a.pem"
-+      "/hierarchy/intermediate-cert-rsa-a.pem"
-     ],
-+    "localStorePath": "/wwwstatic/crl",
-     "s3Endpoint": "http://localhost:7890",
-     "s3Bucket": "lets-encrypt-crls",
-     "awsConfigFile": "test/config/crl-storer.ini",
+ 			]
+ 		},
+ 		"issuerCerts": [
+-			"/hierarchy/intermediate-cert-rsa-a.pem",
+-			"/hierarchy/intermediate-cert-rsa-b.pem",
+-			"/hierarchy/intermediate-cert-ecdsa-a.pem"
++			"/hierarchy/intermediate-cert-rsa-a.pem"
+ 		],
++		"localStorePath": "/wwwstatic/crl",
+ 		"s3Endpoint": "http://localhost:7890",
+ 		"s3Bucket": "lets-encrypt-crls",
+ 		"awsConfigFile": "test/config/crl-storer.ini",
