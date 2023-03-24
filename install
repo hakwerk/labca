@@ -314,7 +314,7 @@ has_domain() {
 # existing configuration or full hostname.
 get_fqdn() {
     local cfgFile="$adminDir/data/config.json"
-    local cfgFqdn=$(grep fqdn $cfgFile 2>/dev/null | grep -v LABCA_FQDN | cut -d ":" -f 2- | tr -d " \",")
+    local cfgFqdn=$(grep fqdn $cfgFile 2>/dev/null | grep -v LABCA_FQDN | cut -d ":" -f 2- | tr -d " \"," || echo "")
     LABCA_FQDN=${cfgFqdn:-$(hostname -f)}
 
     while [ "$cfgFqdn" == "" ]; do
@@ -492,8 +492,6 @@ static_web() {
     mkdir -p crl
     [ -e cert ] || ln -s certs cert
     cp -rp $cloneDir/gui/static/* .
-    sed -i -e "s|<\!-- BEGIN LABCA_CPS_LOCATION -->.*<\!-- END LABCA_CPS_LOCATION -->|<\!-- BEGIN LABCA_CPS_LOCATION --><a class=\"public\" href=\"http://$LABCA_FQDN/cps/\">http://$LABCA_FQDN/cps/</a><\!-- END LABCA_CPS_LOCATION -->|g" cps/index.html
-    sed -i -e "s|<\!-- BEGIN LABCA_CERTS_LOCATION -->.*<\!-- END LABCA_CERTS_LOCATION -->|<\!-- BEGIN LABCA_CERTS_LOCATION --><a class=\"public\" href=\"http://$LABCA_FQDN/certs/\">http://$LABCA_FQDN/certs/</a><\!-- END LABCA_CERTS_LOCATION -->|g" cps/index.html
     [ -e $adminDir/data/root-ca.crl ] && cp $adminDir/data/root-ca.crl crl/ || true
     [ -e $adminDir/data/root-ca.pem ] && cp $adminDir/data/root-ca.pem certs/ || true
     [ -e $adminDir/data/root-ca.der ] && cp $adminDir/data/root-ca.der certs/ || true
@@ -502,27 +500,6 @@ static_web() {
 
     local have_config=$(grep restarted $adminDir/data/config.json | grep true)
     if [ "$have_config" != "" ]; then
-        export PKI_ROOT_CERT_BASE="$adminDir/data/root-ca"
-        export PKI_INT_CERT_BASE="$adminDir/data/issuer/ca-int"
-        export PKI_DEFAULT_O=$(grep organization $adminDir/data/config.json | sed -e 's/.*:[ ]*//' | sed -e 's/\",//g' | sed -e 's/\"//g')
-        export PKI_FQDN=$LABCA_FQDN
-        export PKI_WEB_TITLE=$(grep web_title $adminDir/data/config.json | sed -e 's/.*:[ ]*//' | sed -e 's/\",//g' | sed -e 's/\"//g')
-        if [ "$PKI_WEB_TITLE" == "" ]; then
-            export PKI_WEB_TITLE="LabCA"
-        fi
-
-        export PKI_ISSUER_NAME_ID=$(grep issuer_name_id $adminDir/data/config.json | sed -e 's/.*:[ ]*//' | sed -e 's/,//g' | sed -e 's/\"//g')
-        if [ -z "$PKI_ISSUER_NAME_ID" ] && [ -e "$adminDir/data/issuer/ca-int.pem" ]; then
-            local img=$(grep "&boulder_image" $boulderDir/docker-compose.yml | sed -e "s/.*boulder_image \(.*\)/\1/")
-            eval img=$img
-            docker run --rm -v $cloneDir/utils:/utils -w /utils $img go build nameidtool.go &>>$installLog
-            nmid=$($cloneDir/utils/nameidtool $adminDir/data/issuer/ca-int.pem)
-            if [ $? == 0 ]; then
-                export PKI_ISSUER_NAME_ID=$nmid
-                sed -i -e "s/\(^\s*\)\(\"keys\": {\)/\1\"issuer_name_id\": $PKI_ISSUER_NAME_ID,\n\1\2/g" /home/labca/admin/data/config.json
-            fi
-        fi
-
         $adminDir/apply-nginx
     fi
 
@@ -698,44 +675,6 @@ config_boulder() {
 
     local have_config=$(grep restarted $adminDir/data/config.json | grep true)
     if [ "$have_config" != "" ]; then
-        export PKI_ROOT_CERT_BASE="$adminDir/data/root-ca"
-        export PKI_INT_CERT_BASE="$adminDir/data/issuer/ca-int"
-        export PKI_DNS=$(grep dns $adminDir/data/config.json | perl -p0e 's/.*?:\s+(.*)/\1/' | sed -e 's/\",//g' | sed -e 's/\"//g')
-        export PKI_FQDN=$(grep fqdn $adminDir/data/config.json | sed -e 's/.*:[ ]*//' | sed -e 's/\",//g' | sed -e 's/\"//g')
-        export PKI_DOMAIN=$(echo $PKI_FQDN | perl -p0e 's/.*?\.//')
-        export PKI_DOMAIN_MODE=$(grep domain_mode $adminDir/data/config.json | sed -e 's/.*:[ ]*//' | sed -e 's/\",//g' | sed -e 's/\"//g')
-        export PKI_LOCKDOWN_DOMAINS=$(grep lockdown $adminDir/data/config.json | grep -v domain_mode | sed -e 's/.*:[ ]*//' | sed -e 's/\",//g' | sed -e 's/\"//g')
-        export PKI_WHITELIST_DOMAINS=$(grep whitelist $adminDir/data/config.json | grep -v domain_mode | sed -e 's/.*:[ ]*//' | sed -e 's/\",//g' | sed -e 's/\"//g')
-        export PKI_ISSUER_NAME_ID=$(grep issuer_name_id $adminDir/data/config.json | sed -e 's/.*:[ ]*//' | sed -e 's/,//g' | sed -e 's/\"//g')
-        if [ -z "$PKI_ISSUER_NAME_ID" ] && [ -e "$adminDir/data/issuer/ca-int.pem" ]; then
-            local img=$(grep "&boulder_image" $boulderDir/docker-compose.yml | sed -e "s/.*boulder_image \(.*\)/\1/")
-            eval img=$img
-            docker run --rm -v $cloneDir/utils:/utils -w /utils $img go build nameidtool.go &>>$installLog
-            nmid=$($cloneDir/utils/nameidtool $adminDir/data/issuer/ca-int.pem)
-            if [ $? == 0 ]; then
-                export PKI_ISSUER_NAME_ID=$nmid
-                sed -i -e "s/\(^\s*\)\(\"keys\": {\)/\1\"issuer_name_id\": $PKI_ISSUER_NAME_ID,\n\1\2/g" /home/labca/admin/data/config.json
-            fi
-        fi
-
-        enabled=$(grep "email\": {" $adminDir/data/config.json -A1 | grep enable | head -1 | perl -p0e 's/.*?:\s+(.*)/\1/' | sed -e 's/\",//g' | sed -e 's/\"//g')
-        if [ "$enabled" == "true," ]; then
-            export PKI_EMAIL_SERVER=$(grep server $adminDir/data/config.json | head -1 | perl -p0e 's/.*?:\s+(.*)/\1/' | sed -e 's/\",//g' | sed -e 's/\"//g')
-            export PKI_EMAIL_PORT=$(grep port $adminDir/data/config.json | head -1 | perl -p0e 's/.*?:\s+(.*)/\1/' | sed -e 's/\",//g' | sed -e 's/\"//g')
-            export PKI_EMAIL_USER=$(grep user $adminDir/data/config.json | head -1 | perl -p0e 's/.*?:\s+(.*)/\1/' | sed -e 's/\",//g' | sed -e 's/\"//g')
-            export PKI_EMAIL_FROM=$(grep from $adminDir/data/config.json | head -1 | perl -p0e 's/.*?:\s+(.*)/\1/' | sed -e 's/\",//g' | sed -e 's/\"//g')
-        else
-            export PKI_EMAIL_SERVER="localhost"
-            export PKI_EMAIL_PORT="9380"
-            export PKI_EMAIL_USER="cert-manager@example.com"
-            export PKI_EMAIL_FROM="Expiry bot <test@example.com>"
-        fi
-
-        local extended_timeout=$(grep extended_timeout $adminDir/data/config.json | grep true)
-        if [ "$extended_timeout" != "" ]; then
-            export PKI_EXTENDED_TIMEOUT=1
-        fi
-
         $adminDir/apply-boulder &>>$installLog
     else
         chown -R labca:labca "$boulderLabCADir"
@@ -787,13 +726,13 @@ startup() {
 
     cd "$boulderDir"
     cnt=$(docker-compose ps | wc -l)
-    if [ "$cnt" == "2" ]; then
+    if [ "$cnt" -le "2" ]; then
         msg="Download docker images and build containers"
     fi
     msg_info "$msg (this will take a while!!)"
 
     docker-compose pull -q &>>$installLog
-    cnt=$(count $PS_CONTROL)
+    cnt=$(count $PS_CONTROL || echo "0")
     docker-compose stop boulder bmysql labca nginx bconsul &>>$installLog || true
     for ct in boulder_bhsm_1 boulder_bredis_1 boulder_bredis_2 boulder_bredis_3 boulder_bredis_4 boulder_bredis_5 boulder_bredis_6; do
         [ -z "$(docker ps | grep $ct)" ] || docker stop $ct &>>$installLog

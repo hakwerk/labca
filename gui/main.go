@@ -1735,50 +1735,6 @@ func randToken() string {
 }
 
 func _applyConfig() error {
-	os.Setenv("PKI_ROOT_CERT_BASE", "data/root-ca")
-	os.Setenv("PKI_INT_CERT_BASE", "data/issuer/ca-int")
-	os.Setenv("PKI_DEFAULT_O", viper.GetString("labca.organization"))
-	if viper.GetString("labca.web_title") == "" {
-		os.Setenv("PKI_WEB_TITLE", "LabCA")
-	} else {
-		os.Setenv("PKI_WEB_TITLE", viper.GetString("labca.web_title"))
-	}
-	os.Setenv("PKI_DNS", viper.GetString("labca.dns"))
-	domain := viper.GetString("labca.fqdn")
-	os.Setenv("PKI_FQDN", domain)
-	pos := strings.Index(domain, ".")
-	if pos > -1 {
-		pos = pos + 1
-		domain = domain[pos:]
-	}
-	os.Setenv("PKI_DOMAIN", domain)
-	os.Setenv("PKI_DOMAIN_MODE", viper.GetString("labca.domain_mode"))
-	os.Setenv("PKI_LOCKDOWN_DOMAINS", viper.GetString("labca.lockdown"))
-	os.Setenv("PKI_WHITELIST_DOMAINS", viper.GetString("labca.whitelist"))
-	os.Setenv("PKI_ISSUER_NAME_ID", viper.GetString("issuer_name_id"))
-	if viper.GetBool("labca.extended_timeout") {
-		os.Setenv("PKI_EXTENDED_TIMEOUT", "1")
-	} else {
-		os.Setenv("PKI_EXTENDED_TIMEOUT", "0")
-	}
-	if viper.GetBool("labca.email.enable") {
-		os.Setenv("PKI_EMAIL_SERVER", viper.GetString("labca.email.server"))
-		os.Setenv("PKI_EMAIL_PORT", viper.GetString("labca.email.port"))
-		os.Setenv("PKI_EMAIL_USER", viper.GetString("labca.email.user"))
-		res, err := _decrypt(viper.GetString("labca.email.pass"))
-		if err != nil {
-			log.Println("WARNING: could not decrypt stored password: " + err.Error())
-		}
-		os.Setenv("PKI_EMAIL_PASS", string(res))
-		os.Setenv("PKI_EMAIL_FROM", viper.GetString("labca.email.from"))
-	} else {
-		os.Setenv("PKI_EMAIL_SERVER", "localhost")
-		os.Setenv("PKI_EMAIL_PORT", "9380")
-		os.Setenv("PKI_EMAIL_USER", "cert-master@example.com")
-		os.Setenv("PKI_EMAIL_PASS", "password")
-		os.Setenv("PKI_EMAIL_FROM", "Expiry bot <test@example.com>")
-	}
-
 	_, err := exeCmd("./apply")
 	if err != nil {
 		fmt.Println("")
@@ -2803,6 +2759,7 @@ func init() {
 	init := flag.Bool("init", false, "Initialize the application for running standalone, create/update the config file")
 	port := flag.Int("port", 0, "Port to listen on (default 3000 when using init)")
 	versionFlag := flag.Bool("version", false, "Show version number and exit")
+	decrypt := flag.String("d", "", "Decrypt a value")
 	flag.Parse()
 
 	if *versionFlag {
@@ -2827,6 +2784,16 @@ func init() {
 	viper.SetDefault("config.complete", false)
 	if err := viper.ReadInConfig(); err != nil {
 		panic(fmt.Errorf("fatal error config file: '%s'", err))
+	}
+
+	if *decrypt != "" {
+		plain, err := _decrypt(*decrypt)
+		if err == nil {
+			fmt.Println(string(plain))
+			os.Exit(0)
+		} else {
+			os.Exit(1)
+		}
 	}
 
 	var err error

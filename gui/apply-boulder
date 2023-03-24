@@ -2,6 +2,57 @@
 
 set -e
 
+baseDir=$(dirname $0)
+dataDir="$baseDir/data"
+
+PKI_DNS=$(grep dns $dataDir/config.json | perl -p0e 's/.*?:\s+(.*)/\1/' | sed -e 's/\",//g' | sed -e 's/\"//g')
+if [ "$PKI_DNS" == "" ]; then
+    PKI_DNS="10.55.55.10:53"
+fi
+PKI_FQDN=$(grep fqdn $dataDir/config.json | sed -e 's/.*:[ ]*//' | sed -e 's/\",//g' | sed -e 's/\"//g')
+PKI_DOMAIN=$(echo $PKI_FQDN | perl -p0e 's/.*?\.//')
+PKI_DOMAIN_MODE=$(grep domain_mode $dataDir/config.json | sed -e 's/.*:[ ]*//' | sed -e 's/\",//g' | sed -e 's/\"//g')
+PKI_LOCKDOWN_DOMAINS=$(grep lockdown $dataDir/config.json | grep -v domain_mode | sed -e 's/.*:[ ]*//' | sed -e 's/\",//g' | sed -e 's/\"//g')
+PKI_WHITELIST_DOMAINS=$(grep whitelist $dataDir/config.json | grep -v domain_mode | sed -e 's/.*:[ ]*//' | sed -e 's/\",//g' | sed -e 's/\"//g')
+PKI_ROOT_CERT_BASE="$dataDir/root-ca"
+PKI_INT_CERT_BASE="$dataDir/issuer/ca-int"
+PKI_ISSUER_NAME_ID=$(grep issuer_name_id $dataDir/config.json | sed -e 's/.*:[ ]*//' | sed -e 's/,//g' | sed -e 's/\"//g')
+if [ -z "$PKI_ISSUER_NAME_ID" ] && [ -e "$PKI_INT_CERT_BASE.pem" ]; then
+    nmid=$($baseDir/nameidtool $PKI_INT_CERT_BASE.pem)
+    if [ $? == 0 ]; then
+        PKI_ISSUER_NAME_ID=$nmid
+        sed -i -e "s/\(^\s*\)\(\"keys\": {\)/\1\"issuer_name_id\": $PKI_ISSUER_NAME_ID,\n\1\2/g" $dataDir/config.json
+    fi
+fi
+extended_timeout=$(grep extended_timeout $dataDir/config.json | grep true || echo "")
+if [ "$extended_timeout" != "" ]; then
+    PKI_EXTENDED_TIMEOUT=1
+else
+    PKI_EXTENDED_TIMEOUT=0
+fi
+enabled=$(grep "email\": {" $dataDir/config.json -A1 | grep enable | head -1 | perl -p0e 's/.*?:\s+(.*)/\1/' | sed -e 's/\",//g' | sed -e 's/\"//g')
+if [ "$enabled" == "true," ]; then
+    PKI_EMAIL_SERVER=$(grep server $dataDir/config.json | head -1 | perl -p0e 's/.*?:\s+(.*)/\1/' | sed -e 's/\",//g' | sed -e 's/\"//g')
+    PKI_EMAIL_PORT=$(grep port $dataDir/config.json | head -1 | perl -p0e 's/.*?:\s+(.*)/\1/' | sed -e 's/\",//g' | sed -e 's/\"//g')
+    PKI_EMAIL_USER=$(grep user $dataDir/config.json | head -1 | perl -p0e 's/.*?:\s+(.*)/\1/' | sed -e 's/\",//g' | sed -e 's/\"//g')
+    PKI_EMAIL_PASS=$(grep pass $dataDir/config.json | grep -v password | head -1 | perl -p0e 's/.*?:\s+(.*)/\1/' | sed -e 's/\",//g' | sed -e 's/\"//g')
+    pwd=""
+    if [ -e $baseDir/bin/labca-gui ]; then
+        pwd=$([ -e ] && $baseDir/bin/labca-gui -d $PKI_EMAIL_PASS || echo "")
+    elif [ -e $baseDir/bin/labca-gui_prev ]; then
+        pwd=$([ -e ] && $baseDir/bin/labca-gui_prev -d $PKI_EMAIL_PASS || echo "")
+    fi
+    PKI_EMAIL_PASS=$pwd
+    PKI_EMAIL_FROM=$(grep from $dataDir/config.json | head -1 | perl -p0e 's/.*?:\s+(.*)/\1/' | sed -e 's/\",//g' | sed -e 's/\"//g')
+else
+    PKI_EMAIL_SERVER="localhost"
+    PKI_EMAIL_PORT="9380"
+    PKI_EMAIL_USER="cert-manager@example.com"
+    PKI_EMAIL_PASS="password"
+    PKI_EMAIL_FROM="Expiry bot <test@example.com>"
+fi
+
+
 perl -i -p0e "s/(\"dnsResolvers\": \[\n).*?(\s+\],)/\1      \"$PKI_DNS\"\2/igs" config/va.json
 perl -i -p0e "s/(\"dnsResolvers\": \[\n).*?(\s+\],)/\1      \"$PKI_DNS\"\2/igs" config/va-remote-a.json
 perl -i -p0e "s/(\"dnsResolvers\": \[\n).*?(\s+\],)/\1      \"$PKI_DNS\"\2/igs" config/va-remote-b.json
@@ -131,16 +182,20 @@ rm -f test-root.pem
 rm -f test-root.der
 rm -f test-root.p8
 
-cp -p $PKI_INT_CERT_BASE.key test-ca.key
-cp -p $PKI_INT_CERT_BASE.key.der test-ca.key.der
-cp -p $PKI_INT_CERT_BASE.pem test-ca.pem
-openssl rsa -in $PKI_INT_CERT_BASE.key -pubout > test-ca.pubkey.pem 2>/dev/null || openssl ec -in $PKI_INT_CERT_BASE.key -pubout > test-ca.pubkey.pem
-openssl pkcs8 -topk8 -inform PEM -outform PEM -nocrypt -in test-ca.key -out test-ca.p8
-cp -p $PKI_ROOT_CERT_BASE.key test-root.key
-cp -p $PKI_ROOT_CERT_BASE.key.der test-root.key.der
-cp -p $PKI_ROOT_CERT_BASE.pem test-root.pem
-openssl rsa -in $PKI_ROOT_CERT_BASE.key -pubout > test-root.pubkey.pem 2>/dev/null || openssl ec -in $PKI_ROOT_CERT_BASE.key -pubout > test-root.pubkey.pem
-openssl pkcs8 -topk8 -inform PEM -outform PEM -nocrypt -in test-root.key -out test-root.p8
+if [ -e $PKI_INT_CERT_BASE.key ]; then
+    cp -p $PKI_INT_CERT_BASE.key test-ca.key
+    cp -p $PKI_INT_CERT_BASE.key.der test-ca.key.der
+    cp -p $PKI_INT_CERT_BASE.pem test-ca.pem
+    openssl rsa -in $PKI_INT_CERT_BASE.key -pubout > test-ca.pubkey.pem 2>/dev/null || openssl ec -in $PKI_INT_CERT_BASE.key -pubout > test-ca.pubkey.pem
+    openssl pkcs8 -topk8 -inform PEM -outform PEM -nocrypt -in test-ca.key -out test-ca.p8
+fi
+if [ -e $PKI_ROOT_CERT_BASE.key ]; then
+    cp -p $PKI_ROOT_CERT_BASE.key test-root.key
+    cp -p $PKI_ROOT_CERT_BASE.key.der test-root.key.der
+    cp -p $PKI_ROOT_CERT_BASE.pem test-root.pem
+    openssl rsa -in $PKI_ROOT_CERT_BASE.key -pubout > test-root.pubkey.pem 2>/dev/null || openssl ec -in $PKI_ROOT_CERT_BASE.key -pubout > test-root.pubkey.pem
+    openssl pkcs8 -topk8 -inform PEM -outform PEM -nocrypt -in test-root.key -out test-root.p8
+fi
 
 chown -R `ls -l PKI.md | cut -d" " -f 3,4 | sed 's/ /:/g'` .
 
