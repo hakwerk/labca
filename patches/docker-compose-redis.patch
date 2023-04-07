@@ -1,5 +1,5 @@
 diff --git a/docker-compose.yml b/docker-compose.yml
-index eb4634161..3e1ecb6f6 100644
+index e9b68587b..5699aa777 100644
 --- a/docker-compose.yml
 +++ b/docker-compose.yml
 @@ -20,8 +20,6 @@ services:
@@ -11,18 +11,18 @@ index eb4634161..3e1ecb6f6 100644
        consulnet:
          ipv4_address: 10.55.55.55
      # Use consul as a backup to Docker's embedded DNS server. If there's a name
-@@ -39,8 +37,6 @@ services:
-       - 4003:4003 # OCSP
+@@ -40,8 +38,6 @@ services:
      depends_on:
        - bmysql
+       - bproxysql
 -      - bredis_1
 -      - bredis_2
        - bconsul
      entrypoint: test/entrypoint.sh
      working_dir: &boulder_working_dir /boulder
-@@ -62,24 +58,6 @@ services:
-     logging:
-       driver: none
+@@ -78,24 +74,6 @@ services:
+         aliases:
+           - boulder-proxysql
  
 -  bredis_1:
 -    image: redis:6.2.7
@@ -45,7 +45,7 @@ index eb4634161..3e1ecb6f6 100644
    bconsul:
      image: hashicorp/consul:1.13.1
      volumes:
-@@ -116,13 +94,6 @@ networks:
+@@ -132,13 +110,6 @@ networks:
        config:
          - subnet: 10.88.88.0/24
  

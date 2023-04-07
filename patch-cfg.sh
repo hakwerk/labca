@@ -37,3 +37,5 @@ perl -i -p0e "s/\"dnsResolver\": \"service.consul\",/\"dnsResolvers\": [\n      
 if [ "$flag_skip_redis" == true ]; then
     perl -i -p0e "s/\n    \"redis\": \{\n.*?    \},//igs" $boulderLabCADir/config/ocsp-responder.json
 fi
+
+for f in $(grep -l boulder-proxysql $boulderLabCADir/secrets/*); do sed -i -e "s/proxysql:6033/mysql:3306/" $f; done

@@ -59,7 +59,6 @@ type config struct {
 	}
 
 	Syslog  cmd.SyslogConfig
-	Beeline cmd.BeelineConfig
 }
 
 func main() {

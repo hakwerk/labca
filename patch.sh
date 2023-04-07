@@ -45,6 +45,8 @@ sed -i -e "s|./test|./labca|" start.py
 
 sed -i -e "s/berrors.RateLimitError(/berrors.RateLimitError(ra.rlPolicies.RateLimitsURL(), /g" ra/ra.go
 
+sed -i -e "s/proxysql:6033/mysql:3306/" sa/db/dbconfig.yml
+
 mkdir -p "cmd/mail-tester"
 cp $cloneDir/mail-tester.go cmd/mail-tester/main.go
 perl -i -p0e "s/(\n\t\"github.com\/letsencrypt\/boulder\/cmd\")/\t_ \"github.com\/letsencrypt\/boulder\/cmd\/mail-tester\"\n\1/igs"  cmd/boulder/main.go

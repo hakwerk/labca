@@ -1,5 +1,5 @@
 diff --git a/cmd/boulder-va/main.go b/cmd/boulder-va/main.go
-index af0e7e520..f2dffb3ac 100644
+index c91be2a79..4ed591e10 100644
 --- a/cmd/boulder-va/main.go
 +++ b/cmd/boulder-va/main.go
 @@ -24,8 +24,10 @@ type Config struct {
@@ -15,7 +15,7 @@ index af0e7e520..f2dffb3ac 100644
  		DNSTimeout                string
  		DNSAllowLoopbackAddresses bool
  
-@@ -92,11 +94,13 @@ func main() {
+@@ -91,11 +93,13 @@ func main() {
  	clk := cmd.Clock()
  
  	var servers bdns.ServerProvider
