@@ -613,13 +613,11 @@ config_boulder() {
 
     cd "$boulderLabCADir"
     sed -i -e "s/test-ca2.pem/test-ca.pem/" config/ocsp-responder.json
-    sed -i -e "s/test-ca2.pem/test-ca.pem/" config/ocsp-updater.json
     sed -i -e "s/test-ca2.pem/test-ca.pem/" config/publisher.json
     sed -i -e "s/test-ca2.pem/test-ca.pem/" config/ra.json
     sed -i -e "s/test-ca2.pem/test-ca.pem/" config/wfe2.json
     sed -i -e "s|/hierarchy/intermediate-cert-rsa-a.pem|labca/test-ca.pem|" config/akamai-purger.json
     sed -i -e "s|/hierarchy/intermediate-cert-rsa-a.pem|labca/test-ca.pem|" config/ocsp-responder.json
-    sed -i -e "s|/hierarchy/intermediate-cert-rsa-a.pem|labca/test-ca.pem|" config/ocsp-updater.json
     sed -i -e "s|/hierarchy/intermediate-cert-rsa-a.pem|labca/test-ca.pem|" config/publisher.json
     sed -i -e "s|/hierarchy/intermediate-cert-rsa-a.pem|labca/test-ca.pem|" config/ra.json
     sed -i -e "s|/hierarchy/intermediate-cert-rsa-a.pem|labca/test-ca.pem|" config/wfe2.json
