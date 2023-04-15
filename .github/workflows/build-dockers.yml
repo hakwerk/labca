@@ -54,5 +54,5 @@ jobs:
           file: ${{ matrix.dockerfile }}
           push: false
           tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }
+          labels: ${{ steps.meta.outputs.labels }}
 
