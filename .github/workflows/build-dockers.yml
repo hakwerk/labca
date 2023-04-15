@@ -52,6 +52,11 @@ jobs:
         run: |
           build/build.sh
 
+      - name: DEBUG
+        run: |
+          git status
+          git diff build/docker-compose.yml
+
       - name: Login to GHCR
         if: github.event_name != 'pull_request'
         uses: docker/login-action@v2
