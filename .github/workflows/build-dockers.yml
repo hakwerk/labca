@@ -41,7 +41,7 @@ jobs:
             type=schedule,pattern={{date 'YYYYMMDD'}}
             type=match,pattern=v(.*),group=1
             type=edge,branch=$repo.default_branch
-            type=ref,event=branch,suffix=-{{ sha }}
+            type=ref,event=branch
             type=ref,event=pr
             type=sha
 
@@ -65,7 +65,8 @@ jobs:
         with:
           context: build
           file: ${{ matrix.dockerfile }}
+          labels: ${{ steps.meta.outputs.labels }}
+          platforms: linux/amd64
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
 
