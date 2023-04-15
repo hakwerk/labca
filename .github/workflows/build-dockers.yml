@@ -35,8 +35,10 @@ jobs:
             type=semver,pattern={{version}}
             type=sha
 
-      - run: echo "Tags are: ${{ steps.meta.outputs.tags }}"
-      - run: echo "Labels are: ${{ steps.meta.outputs.labels }}"
+      - run: |
+          echo "Tags are: ${{ steps.meta.outputs.tags }}"
+      - run: |
+          echo "Labels are: ${{ steps.meta.outputs.labels }}"
 
       - name: Set up docker buildx
         uses: docker/setup-buildx-action@v2
