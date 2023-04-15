@@ -30,6 +30,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v3
+        with:
+          ref: ${{ github.head_ref }}
 
       - name: Extract metadata (tags, labels) for Docker
         id: meta
@@ -52,10 +54,10 @@ jobs:
         run: |
           build/build.sh
 
-      - name: DEBUG
-        run: |
-          git status
-          git diff build/docker-compose.yml
+      - name: Commit any updated files
+        uses: stefanzweifel/git-auto-commit-action@v4
+        with:
+          commit_message: [skip ci] Commit changes from build-docker action
 
       - name: Login to GHCR
         if: github.event_name != 'pull_request'
