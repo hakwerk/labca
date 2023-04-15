@@ -35,7 +35,7 @@ cp -p docker-compose.yml $cloneDir/build/
 
 echo
 BASEDIR=/go/src/github.com/letsencrypt/boulder
-docker run -it -v $boulderDir:$BASEDIR:cached -v $TMP_DIR/bin:$BASEDIR/bin -w $BASEDIR -e BUILD_HOST=$BUILD_HOST $BUILD_IMAGE sh -c "git config --global --add safe.directory $BASEDIR && make build"
+docker run -v $boulderDir:$BASEDIR:cached -v $TMP_DIR/bin:$BASEDIR/bin -w $BASEDIR -e BUILD_HOST=$BUILD_HOST $BUILD_IMAGE sh -c "git config --global --add safe.directory $BASEDIR && make build"
 
 cp $cloneDir/nginx.conf $TMP_DIR/
 cp $cloneDir/proxy.conf $TMP_DIR/
@@ -47,8 +47,8 @@ sed -i '/^$/d' $TMP_DIR/admin/setup.sh
 
 echo
 BASEDIR=/go/src/labca
-docker run -it -v $TMP_DIR/admin:$BASEDIR:cached -v $TMP_DIR:$BASEDIR/bin -w $BASEDIR -e GIT_VERSION=$GIT_VERSION $BUILD_IMAGE ./setup.sh
-docker run -it -v $TMP_DIR:/utils -w /utils $BUILD_IMAGE go build nameidtool.go
+docker run -v $TMP_DIR/admin:$BASEDIR:cached -v $TMP_DIR:$BASEDIR/bin -w $BASEDIR -e GIT_VERSION=$GIT_VERSION $BUILD_IMAGE ./setup.sh
+docker run -v $TMP_DIR:/utils -w /utils $BUILD_IMAGE go build nameidtool.go
 
 cp -rp $cloneDir/gui/setup.sh $TMP_DIR/admin/
 cp -rp $cloneDir/acme_tiny.py $TMP_DIR/
