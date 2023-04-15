@@ -3,7 +3,12 @@ name: Build Docker Images
 on:
   push:
     branches:
-      - 'dockerbuild'
+      - "**"
+    tags:
+      - "v*"
+  pull_request:
+    branches:
+      - "main"
   workflow_dispatch:
 
 jobs:
@@ -14,10 +19,13 @@ jobs:
         include:
           - image: ghcr.io/hakwerk/labca-gui
             dockerfile: build/Dockerfile-gui
+            label: org.opencontainers.image.title=labca-gui
           - image: ghcr.io/hakwerk/labca-boulder
             dockerfile: build/Dockerfile-boulder
+            label: org.opencontainers.image.title=labca-boulder
           - image: ghcr.io/hakwerk/labca-control
             dockerfile: build/Dockerfile-control
+            label: org.opencontainers.image.title=labca-control
 
     steps:
       - name: Checkout
@@ -28,11 +36,13 @@ jobs:
         uses: docker/metadata-action@v4
         with:
           images: ${{ matrix.image }}
+          labels: ${{ matrix.label }}
           tags: |
-            type=schedule
-            type=ref,event=branch
+            type=schedule,pattern={{date 'YYYYMMDD'}}
+            type=match,pattern=v(.*),group=1
+            type=edge,branch=$repo.default_branch
+            type=ref,event=branch,suffix=-{{ sha }}
             type=ref,event=pr
-            type=semver,pattern={{version}}
             type=sha
 
       - name: Set up docker buildx
@@ -47,7 +57,7 @@ jobs:
         with:
           context: build
           file: ${{ matrix.dockerfile }}
-          push: false
+          push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
 
