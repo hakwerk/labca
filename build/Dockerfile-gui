@@ -1,0 +1,15 @@
+FROM ubuntu:focal
+
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+        ca-certificates \
+        tzdata \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY tmp/labca-gui /opt/labca/bin/
+COPY tmp/nameidtool /opt/labca/
+COPY tmp/admin/setup.sh /opt/labca/
+COPY tmp/admin/apply /opt/labca/
+COPY tmp/admin/apply-boulder /opt/labca/
+COPY tmp/admin/apply-nginx /opt/labca/
+COPY tmp/admin/templates /opt/labca/templates/

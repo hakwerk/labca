@@ -454,7 +454,7 @@ func parseDockerStats(data string) []AjaxStat {
 		if strings.Contains(docker.Name, "-bconsul-") {
 			stat.Name = "Consul (Boulder)"
 		}
-		if strings.Contains(docker.Name, "-labca-") {
+		if strings.Contains(docker.Name, "labca-gui-") {
 			stat.Name = "LabCA Application"
 		}
 		if strings.Contains(docker.Name, "-control-") {

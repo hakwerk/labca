@@ -8,7 +8,7 @@ dataDir="$baseDir/data"
 export PKI_ROOT_CERT_BASE="$dataDir/root-ca"
 export PKI_INT_CERT_BASE="$dataDir/issuer/ca-int"
 
-cd /wwwstatic
+cd /opt/wwwstatic
 
 $baseDir/apply-nginx
 
@@ -19,5 +19,5 @@ cp $PKI_INT_CERT_BASE.pem certs/
 cp $PKI_INT_CERT_BASE.der certs/
 
 
-cd /boulder/labca
+cd /opt/boulder/labca
 $baseDir/apply-boulder

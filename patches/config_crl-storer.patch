@@ -11,7 +11,7 @@ index 61f14d79..a620896f 100644
 -			"/hierarchy/intermediate-cert-ecdsa-a.pem"
 +			"/hierarchy/intermediate-cert-rsa-a.pem"
  		],
-+		"localStorePath": "/wwwstatic/crl",
++		"localStorePath": "/opt/wwwstatic/crl",
  		"s3Endpoint": "http://localhost:7890",
  		"s3Bucket": "lets-encrypt-crls",
  		"awsConfigFile": "test/config/crl-storer.ini",

@@ -5,7 +5,7 @@ BINNAME?=labca-gui
 Q=$(if $V,,@)
 PREFIX?=
 TAG=$(shell git rev-list --tags --max-count=1)
-VERSION=$(shell git describe --tags $(TAG))
+VERSION=$(shell git describe --always --tags $(TAG))
 DEB_VERSION=$(shell echo $(VERSION) | sed 's/^v//' | sed 's/-/./g')
 RELEASE=./release
 

@@ -1,5 +1,5 @@
 /etc/nginx/ssl/*.log
-/logs/cron-*.log
+/opt/logs/cron-*.log
 {
     rotate 4
     monthly

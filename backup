@@ -12,23 +12,23 @@ fi
 BASE=${NOW}_${HOSTNAME}${CRON}
 TMPDIR=/tmp/$BASE
 mkdir -p $TMPDIR
-mkdir -p /backup
+mkdir -p /opt/backup
 
-cd /boulder
+cd /opt/boulder
 docker-compose exec -T bmysql mysqldump boulder_sa_integration >$TMPDIR/boulder_sa_integration.sql
 
 cp -p /etc/nginx/ssl/*key* /etc/nginx/ssl/*cert.pem /etc/nginx/ssl/*.csr $TMPDIR/
 
-cp -rp /admin/data $TMPDIR/
+cp -rp /opt/labca/data $TMPDIR/
 
 
 cd /tmp
-tar czf /backup/$BASE.tgz $BASE
+tar czf /opt/backup/$BASE.tgz $BASE
 rm -rf $TMPDIR
 
 # housekeeping
-find /backup -name "*_cron_*.tgz" -mtime +31 -exec rm -rf {} \;
+find /opt/backup -name "*_cron_*.tgz" -mtime +31 -exec rm -rf {} \;
 
 if [ "$1" != "cron" ]; then
-    echo /backup/$BASE.tgz
+    echo /opt/backup/$BASE.tgz
 fi

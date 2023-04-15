@@ -2,7 +2,7 @@
 
 set -e
 
-FILE=/backup/$1
+FILE=/opt/backup/$1
 
 [ "$1" != "" ] || (echo "You must provide a backup file name to restore"; exit 1)
 [ -f $FILE ] || (echo "Backup file '$FILE' not found"; exit 1)
@@ -13,13 +13,13 @@ TMPDIR=/tmp/$BASE
 cd /tmp
 tar xzf $FILE 2>&1
 
-cd /boulder
+cd /opt/boulder
 [ -f $TMPDIR/boulder_sa_integration.sql ] || (echo "MySQL backup file not found"; exit 1)
 docker-compose exec -T bmysql mysql boulder_sa_integration <$TMPDIR/boulder_sa_integration.sql
 
 mv -f $TMPDIR/*key* $TMPDIR/*cert.pem $TMPDIR/*.csr /etc/nginx/ssl/
 
 [ -d  $TMPDIR/data ] || (echo "Data folder backup not found"; exit 1)
-rm -rf /admin/data && mv $TMPDIR/data /admin/
+rm -rf /opt/labca/data/* && mv $TMPDIR/data/* /opt/labca/data/
 
 rm -rf $TMPDIR

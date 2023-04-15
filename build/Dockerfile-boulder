@@ -1,0 +1,25 @@
+FROM letsencrypt/boulder-tools:go1.20.1_2023-02-22 AS boulder-tools
+
+FROM ubuntu:focal
+
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+        ca-certificates \
+        mariadb-client-core-10.3 \
+        python3-pip \
+        rsyslog \
+        softhsm2 \
+    && rm -rf /var/lib/apt/lists/* \
+    && pip3 install requests
+
+COPY --from=boulder-tools /usr/local/bin/sql-migrate /usr/local/bin/sql-migrate
+COPY --from=boulder-tools /usr/local/bin/pebble-challtestsrv /usr/local/bin/pebble-challtestsrv
+COPY tmp/bin /opt/boulder/bin
+COPY tmp/src/start.py /opt/boulder
+RUN sed -i -e "s|./test|./labca|" /opt/boulder/start.py
+COPY tmp/src/sa/db /opt/boulder/sa/db
+COPY tmp/src/sa/db-users /opt/boulder/sa/db-users
+COPY tmp/src/test/boulder-tools/boulder.rsyslog.conf /etc/rsyslog.d/
+RUN sed -i '/imklog/s/^/#/' /etc/rsyslog.conf
+RUN sed -i '/$ActionFileDefaultTemplate/s/^/#/' /etc/rsyslog.conf
+RUN sed -i '/$RepeatedMsgReduction on/s/^/#/' /etc/rsyslog.conf

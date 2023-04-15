@@ -16,15 +16,16 @@ err_report() {
 #
 # Variables / Constants
 #
-baseDir=/home/labca
-logDir="$baseDir/logs"
+installMode=${installMode:-normal}
+baseDir=${baseDir:-/home/labca}
+logDir=${logDir:-"$baseDir/logs"}
 runId="`date +%y%m%d-%H%M%S`"
 installLog="$logDir/install-${runId}.log"
 logTimeFormat="+%Y-%m-%d %T.%3N"
-cloneDir="$baseDir/labca"
-adminDir="$baseDir/admin"
-boulderDir="$baseDir/boulder"
-boulderLabCADir="${boulderDir}_labca"
+cloneDir=${cloneDir:-"$baseDir/labca"}
+adminDir=${adminDir:-"$baseDir/admin"}
+boulderDir=${boulderDir:-"$baseDir/boulder"}
+boulderLabCADir=${boulderLabCADir:-"${boulderDir}_labca"}
 dockerComposeVersion="v2.5.0"
 
 labcaUrl="https://github.com/hakwerk/labca/"
@@ -64,6 +65,7 @@ cmdlineFqdn=""
 cmdlineBranch=""
 fullCmdline=""
 keepLocal=0
+alphaTest=0
 
 #
 # Helper functions for informing the user and logging to file
@@ -175,7 +177,14 @@ pull_repo() {
     msg_info "$msg"
     sudo -u labca -H git stash --all --quiet &>>$installLog || true
     sudo -u labca -H git clean --quiet --force -d &>>$installLog || true
-    sudo -u labca -H git pull --quiet &>>$installLog && msg_ok "$msg" || msg_fatal "Could not update local repository"
+    sudo -u labca -H git pull --quiet &>>$installLog && msg_ok "$msg" || (
+        if [ "$dir" == "$GOPATH/src/github.com/letsencrypt/boulder" ]; then
+            sudo -u labca -H git reset --hard $boulderTag &>>$installLog && msg_ok "$msg" || msg_fatal "Could not reset local repository"
+            sudo -u labca -H git pull --quiet &>>$installLog && msg_ok "$msg" || msg_fatal "Could not update local repository (after reset)"
+        else
+            msg_fatal "Could not update local repository"
+        fi
+    )
 
     if [ "$branch" != "" ]; then
         cd "$dir"
@@ -265,7 +274,7 @@ prompt_and_export() {
 # Parse the command line options, if any
 parse_cmdline() {
     fullCmdline="$@"
-    local parsed=$(getopt --options=n:,b:,k --longoptions=name:,fqdn:,branch:,keep --name "$0" -- "$@" 2>>$installLog) || msg_fatal "Could not process commandline parameters"
+    local parsed=$(getopt --options=n:,b:,k,t --longoptions=name:,fqdn:,branch:,keep,test --name "$0" -- "$@" 2>>$installLog) || msg_fatal "Could not process commandline parameters"
     eval set -- "$parsed"
     while true; do
         case "$1" in
@@ -283,6 +292,11 @@ parse_cmdline() {
                 keepLocal=1
                 shift 1
                 msg_ok "option: keeping local version as is"
+                ;;
+            -t|--test)
+                alphaTest=1
+                shift 1
+                msg_ok "option: INCLUDING ALPHA TEST STEPS"
                 ;;
             --)
                 shift
@@ -496,7 +510,7 @@ static_web() {
     [ -e $adminDir/data/root-ca.pem ] && cp $adminDir/data/root-ca.pem certs/ || true
     [ -e $adminDir/data/root-ca.der ] && cp $adminDir/data/root-ca.der certs/ || true
     [ -e $adminDir/data/issuer/ca-int.pem ] && cp $adminDir/data/issuer/ca-int.pem certs/ || true
-    [ -e $adminDir/data/issuer/ca-int.pem ] && cp $adminDir/data/issuer/ca-int.der certs/ || true
+    [ -e $adminDir/data/issuer/ca-int.der ] && cp $adminDir/data/issuer/ca-int.der certs/ || true
 
     local have_config=$(grep restarted $adminDir/data/config.json | grep true)
     if [ "$have_config" != "" ]; then
@@ -566,12 +580,12 @@ config_boulder() {
     [ -d ".backup" ] || mkdir -p ".backup"
 
     git add --all &>/dev/null || true
-    git commit --all --quiet -m "LabCA before update $runId" &>>$installLog && { msg_ok "Commit existing modifications of $boulderLabCADir"; msg_info "$msg"; } || true
+    [ "$installMode" == "normal" ] && git commit --all --quiet -m "LabCA before update $runId" &>>$installLog && { msg_ok "Commit existing modifications of $boulderLabCADir"; msg_info "$msg"; } || true
 
     [ ! -e "$boulderLabCADir/secrets/smtp_password" ] || mv "$boulderLabCADir/secrets/smtp_password" "$boulderLabCADir/secrets/smtp_password_PRESERVE"
     cp -r "$boulderDir/test" -T "$boulderLabCADir" &>>$installLog
     [ ! -e "$boulderLabCADir/secrets/smtp_password_PRESERVE" ] || mv "$boulderLabCADir/secrets/smtp_password_PRESERVE" "$boulderLabCADir/secrets/smtp_password"
-    chown -R labca:labca "$boulderLabCADir"
+    [ "$installMode" == "normal" ] && chown -R labca:labca "$boulderLabCADir" || /bin/true
 
     rm -rf authz-filler challtestsrv gsb-test-srv
 
@@ -580,7 +594,14 @@ config_boulder() {
     msg_info "$msg"
 
     cd "$boulderDir"
-    $cloneDir/patch.sh "sudo -u labca -H" &>>$installLog
+    if [ "$installMode" == "normal" ]; then
+        $cloneDir/patch.sh "sudo -u labca -H" &>>$installLog
+        sed -i -e "s/LABCA_FQDN: .*/LABCA_FQDN: $LABCA_FQDN/" docker-compose.yml
+    else
+        $cloneDir/patch.sh &>>$installLog
+    fi
+
+    git config --global --add safe.directory /home/labca/boulder_labca
 
     cp docker-compose.yml "$boulderLabCADir/.backup/"
     cp cmd/shell.go "$boulderLabCADir/.backup/"
@@ -602,7 +623,11 @@ config_boulder() {
     cp sa/db/boulder_sa/20210223140000_CombinedSchema.sql "$boulderLabCADir/.backup/"
     cp Makefile "$boulderLabCADir/.backup/"
 
-    $cloneDir/patch-cfg.sh "sudo -u labca -H" "$boulderLabCADir" &>>$installLog
+    if [ "$installMode" == "normal" ]; then
+        $cloneDir/patch-cfg.sh "sudo -u labca -H" "$boulderLabCADir" &>>$installLog
+    else
+        $cloneDir/patch-cfg.sh " " "$boulderLabCADir" &>>$installLog
+    fi
 
     mkdir -p $baseDir/backup
     [ -z "$(docker ps | grep boulder-bmysql-1)" ] || docker exec -i boulder-bmysql-1 mysqldump boulder_sa_integration >$baseDir/backup/dbdata-${runId}.sql
@@ -611,75 +636,32 @@ config_boulder() {
         rm $file
     done
 
-    cd "$boulderLabCADir"
-    sed -i -e "s/test-ca2.pem/test-ca.pem/" config/ocsp-responder.json
-    sed -i -e "s/test-ca2.pem/test-ca.pem/" config/publisher.json
-    sed -i -e "s/test-ca2.pem/test-ca.pem/" config/ra.json
-    sed -i -e "s/test-ca2.pem/test-ca.pem/" config/wfe2.json
-    sed -i -e "s|/hierarchy/intermediate-cert-rsa-a.pem|labca/test-ca.pem|" config/akamai-purger.json
-    sed -i -e "s|/hierarchy/intermediate-cert-rsa-a.pem|labca/test-ca.pem|" config/ocsp-responder.json
-    sed -i -e "s|/hierarchy/intermediate-cert-rsa-a.pem|labca/test-ca.pem|" config/publisher.json
-    sed -i -e "s|/hierarchy/intermediate-cert-rsa-a.pem|labca/test-ca.pem|" config/ra.json
-    sed -i -e "s|/hierarchy/intermediate-cert-rsa-a.pem|labca/test-ca.pem|" config/wfe2.json
-    sed -i -e "s|/hierarchy/intermediate-cert-rsa-a.pem|labca/test-ca.pem|" config/orphan-finder.json
-    sed -i -e "s|/hierarchy/intermediate-cert-rsa-a.pem|labca/test-ca.pem|" config/crl-storer.json
-    sed -i -e "s|/hierarchy/intermediate-cert-rsa-a.pem|labca/test-ca.pem|" config/crl-updater.json
-    sed -i -e "s|/hierarchy/intermediate-cert-rsa-a.pem|labca/test-ca.pem|" config/ra.json
-    sed -i -e "s|/hierarchy/intermediate-cert-rsa-a.pem|labca/test-ca.pem|" issuer-ocsp-responder.json
-    sed -i -e "s|/hierarchy/intermediate-cert-rsa-a.pem|labca/test-ca.pem|" cert-ceremonies/intermediate-ocsp-rsa.yaml
-    sed -i -e "s|/hierarchy/intermediate-cert-rsa-a.pem|labca/test-ca.pem|" v2_integration.py
-    sed -i -e "s|/hierarchy/root-cert-rsa.pem|labca/test-root.pem|" cert-ceremonies/root-ceremony-rsa.yaml
-    sed -i -e "s|/hierarchy/root-cert-rsa.pem|labca/test-root.pem|" cert-ceremonies/intermediate-ocsp-rsa.yaml
-    sed -i -e "s|/hierarchy/root-cert-rsa.pem|labca/test-root.pem|" cert-ceremonies/intermediate-ceremony-rsa.yaml
-    sed -i -e "s|/hierarchy/root-cert-rsa.pem|labca/test-root.pem|" config/publisher.json
-    sed -i -e "s|/hierarchy/root-cert-rsa.pem|labca/test-root.pem|" config/wfe2.json
-    sed -i -e "s|/hierarchy/root-cert-rsa.pem|labca/test-root.pem|" integration-test.py
-    sed -i -e "s|/hierarchy/root-cert-rsa.pem|labca/test-root.pem|" helpers.py
-    sed -i -e "s/5001/443/g" config/va.json
-    sed -i -e "s/5002/80/g" config/va.json
-    sed -i -e "s/5001/443/g" config/va-remote-a.json
-    sed -i -e "s/5002/80/g" config/va-remote-a.json
-    sed -i -e "s/5001/443/g" config/va-remote-b.json
-    sed -i -e "s/5002/80/g" config/va-remote-b.json
-    sed -i -e "s|https://boulder:4431/terms/v7|https://$LABCA_FQDN/terms/v1|" config/wfe2.json
-    sed -i -e "s|http://boulder:4430/acme/issuer-cert|http://$LABCA_FQDN/acme/issuer-cert|" config/wfe2.json
-    sed -i -e "s|http://127.0.0.1:4000/acme/issuer-cert|https://$LABCA_FQDN/acme/issuer-cert|" config/wfe2.json
-    sed -i -e "s|letsencrypt/boulder|hakwerk/labca|" config/wfe2.json
-    sed -i -e "s|http://127.0.0.1:4002/|http://$LABCA_FQDN/ocsp/|g" config/ca-a.json
-    sed -i -e "s|http://127.0.0.1:4002/|http://$LABCA_FQDN/ocsp/|g" config/ca-b.json
-    sed -i -e "s|http://example.com/cps|http://$LABCA_FQDN/cps/|g" config/ca-a.json
-    sed -i -e "s|http://example.com/cps|http://$LABCA_FQDN/cps/|g" config/ca-b.json
-    sed -i -e "s|1.2.3.4|1.3.6.1.4.1.44947.1.1.1|g" config/ca-a.json
-    sed -i -e "s|1.2.3.4|1.3.6.1.4.1.44947.1.1.1|g" config/ca-b.json
-    sed -i -e "s/ocspURL.Path = encodedReq/ocspURL.Path += encodedReq/" ocsp/helper/helper.go
-    sed -i -e "s/\"dnsTimeout\": \".*\"/\"dnsTimeout\": \"3s\"/" config/ra.json
-    sed -i -e "s/\"dnsTimeout\": \".*\"/\"dnsTimeout\": \"3s\"/" config/va.json
-    sed -i -e "s/\"dnsTimeout\": \".*\"/\"dnsTimeout\": \"3s\"/" config/va-remote-a.json
-    sed -i -e "s/\"dnsTimeout\": \".*\"/\"dnsTimeout\": \"3s\"/" config/va-remote-b.json
-
-    if [ "$flag_skip_redis" == true ]; then
-        sed -i -e "s/^\(.*wait-for-it.sh.*4218\)/#\1/" entrypoint.sh
+    if [ "$installMode" == "normal" ]; then
+        cd "$boulderLabCADir"
+        sed -i -e "s|https://boulder:4431/terms/v7|https://$LABCA_FQDN/terms/v1|" config/wfe2.json
+        sed -i -e "s|http://boulder:4430/acme/issuer-cert|http://$LABCA_FQDN/acme/issuer-cert|" config/wfe2.json
+        sed -i -e "s|http://127.0.0.1:4000/acme/issuer-cert|https://$LABCA_FQDN/acme/issuer-cert|" config/wfe2.json
+        sed -i -e "s|http://127.0.0.1:4002/|http://$LABCA_FQDN/ocsp/|g" config/ca-a.json
+        sed -i -e "s|http://127.0.0.1:4002/|http://$LABCA_FQDN/ocsp/|g" config/ca-b.json
+        sed -i -e "s|http://example.com/cps|http://$LABCA_FQDN/cps/|g" config/ca-a.json
+        sed -i -e "s|http://example.com/cps|http://$LABCA_FQDN/cps/|g" config/ca-b.json
+        cd "$boulderDir"
     fi
 
-    for file in `find . -type f | grep -v .git`; do
-        sed -i -e "s|test/|labca/|g" $file
-    done
-
-    sed -i -e "s/names/name\(s\)/" config/expiration-mailer.gotmpl
-
-    rm test-ca2.pem
     ([ -e mock-vendor.go ] && rm mock-vendor.go) || /bin/true
     ([ -e test-tools.go ] && rm test-tools.go) || /bin/true
 
-    local have_config=$(grep restarted $adminDir/data/config.json | grep true)
-    if [ "$have_config" != "" ]; then
-        $adminDir/apply-boulder &>>$installLog
-    else
-        chown -R labca:labca "$boulderLabCADir"
+    if [ "$installMode" == "normal" ]; then
+        local have_config=$(grep restarted $adminDir/data/config.json 2>/dev/null | grep true)
+        if [ "$have_config" != "" ]; then
+            $adminDir/apply-boulder &>>$installLog
+        else
+            chown -R labca:labca "$boulderLabCADir" || /bin/true
+        fi
     fi
 
     git add --all &>/dev/null || true
-    git commit --all --quiet -m "LabCA after update $runId" &>>$installLog || true
+    [ "$installMode" == "normal" ] && git commit --all --quiet -m "LabCA after update $runId" &>>$installLog || true
 
     msg_ok "$msg"
 }
@@ -723,6 +705,10 @@ startup() {
     local msg="Restart docker containers and service"
 
     cd "$boulderDir"
+    let num=$(docker ps -a | grep " boulder-" | wc -l)
+    if [ $num -eq 0 ]; then
+        perl -i -p0e "s/(version:.*\n).*\n?(services:\n)/\1name: labca\n\2/" docker-compose.yml
+    fi
     cnt=$(docker-compose ps | wc -l)
     if [ "$cnt" -le "2" ]; then
         msg="Download docker images and build containers"
@@ -735,11 +721,18 @@ startup() {
     for ct in boulder_bhsm_1 boulder_bredis_1 boulder_bredis_2 boulder_bredis_3 boulder_bredis_4 boulder_bredis_5 boulder_bredis_6; do
         [ -z "$(docker ps | grep $ct)" ] || docker stop $ct &>>$installLog
     done
+    if [ $num -ne 0 ]; then
+        docker-compose stop control &>>$installLog || true
+    fi
     wait_down $PS_NGINX &>>$installLog || true
     wait_down $PS_MYSQL &>>$installLog || true
     wait_down $PS_CONSUL &>>$installLog || true
     wait_down $PS_LABCA &>>$installLog || true
     wait_down $PS_BOULDER &>>$installLog || true
+    if [ $num -ne 0 ]; then
+        wait_down $PS_CONTROL &>>$installLog || true
+        cnt=0
+    fi
     for ct in boulder_bhsm_1 boulder_bredis_1 boulder_bredis_2 boulder_bredis_3 boulder_bredis_4 boulder_bredis_5 boulder_bredis_6; do
         [ -z "$(docker ps -a | grep -e "$ct\$")" ] || docker rm -f $ct &>>$installLog
     done
@@ -753,6 +746,9 @@ startup() {
     fi
 
     [ -d /home/labca/control_logs ] || mkdir -p /home/labca/control_logs
+
+    perl -i -p0e "s/(version:.*\n).*\n?(services:\n)/\1name: labca\n\2/" docker-compose.yml
+    docker network rm boulder_bluenet boulder_consulnet boulder_rednet &>>$installLog || /bin/true
 
     COMPOSE_HTTP_TIMEOUT=180 docker-compose up -d &>>$installLog
 
@@ -790,6 +786,20 @@ first_time() {
     fi
 }
 
+check_dockeronly() {
+    set +e
+    wd=$(which docker)
+    set -e
+    if [ "$wd" != "" ]; then
+        let num=$(docker volume ls | grep labca_ | grep -v labca_dbdata | wc -l)
+        if [ $num -gt 0 ]; then
+            scriptname=$(basename $0)
+            echo "You can not run the $scriptname script when using dockeronly mode!"
+            exit 1
+        fi
+    fi
+}
+
 #
 # The actual main function to tie it all together
 #
@@ -797,6 +807,8 @@ main() {
     local curdir="$PWD"
 
     echo
+    check_dockeronly
+
     start_temporary_log
     check_root
     install_pkg "git"
@@ -817,6 +829,22 @@ main() {
         restart_if_updated
     fi
 
+    if [ $alphaTest -eq 1 ]; then
+        install_extra
+        cd $(dirname $this)
+        local msg="TEST: build labca-gui binary"
+        msg_info "$msg"
+        # this will ultimately NOT be done on the target machine!
+        build/build.sh &>>$installLog || msg_fatal "Could not build docker images!"
+        msg_ok "$msg"
+        msg="TEST build local docker image"
+        msg_info "$msg"
+        build/tag_and_upload.sh &>>$installLog || msg_fatal "Could not tag (and upload) docker images!"
+        msg_ok "$msg"
+        msg_ok "That's it for now!"
+        exit 0
+    fi
+
     get_fqdn
     copy_admin
 
@@ -829,6 +857,15 @@ main() {
     get_boulder
     config_boulder
 
+    #if [ $alphaTest -eq 1 ]; then
+    #    msg="TEST modify docker-compose.yml"
+    #    msg_info "$msg"
+    #    cd "$boulderDir"
+    #    patch -p1 < $(dirname $this)/build/tmp.patch &>>$installLog
+    #    patch -p1 -o "$boulderLabCADir/startservers.py" < $(dirname $this)/build/tmp2.patch
+    #    msg_ok "$msg"
+    #fi
+
     cleanup
     startup
 
@@ -840,4 +877,4 @@ main() {
     cd "$curdir"
 }
 
-main "$@"
+[ "$installMode" == "normal" ] && main "$@" || /bin/true

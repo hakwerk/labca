@@ -1,5 +1,5 @@
 diff --git a/docker-compose.yml b/docker-compose.yml
-index 5699aa777..77ec97a16 100644
+index 5699aa777..cfdcc784a 100644
 --- a/docker-compose.yml
 +++ b/docker-compose.yml
 @@ -8,10 +8,12 @@ services:
@@ -10,9 +10,10 @@ index 5699aa777..77ec97a16 100644
 +      BOULDER_CONFIG_DIR: &boulder_config_dir labca/config
        GOFLAGS: -mod=vendor
      volumes:
-       - .:/boulder:cached
-+      - /home/labca/boulder_labca:/boulder/labca
-+      - /home/labca/nginx_data/static:/wwwstatic
+-      - .:/boulder:cached
++      - .:/opt/boulder:cached
++      - /home/labca/boulder_labca:/opt/boulder/labca
++      - /home/labca/nginx_data/static:/opt/wwwstatic
        - ./.gocache:/root/.cache/go-build:cached
        - ./.hierarchy:/hierarchy/:cached
        - ./.softhsm-tokens/:/var/lib/softhsm/tokens/:cached
@@ -33,8 +34,9 @@ index 5699aa777..77ec97a16 100644
 -      - bproxysql
        - bconsul
 -    entrypoint: test/entrypoint.sh
+-    working_dir: &boulder_working_dir /boulder
 +    entrypoint: labca/entrypoint.sh
-     working_dir: &boulder_working_dir /boulder
++    working_dir: &boulder_working_dir /opt/boulder
 +    logging:
 +      driver: "json-file"
 +      options:
@@ -77,12 +79,12 @@ index 5699aa777..77ec97a16 100644
  
    bconsul:
      image: hashicorp/consul:1.13.1
-@@ -83,18 +81,68 @@ services:
+@@ -83,18 +81,70 @@ services:
          ipv4_address: 10.55.55.10
      command: "consul agent -dev -config-format=hcl -config-file=/test/consul/config.hcl"
  
 -  netaccess:
-+  labca:
++  gui:
      image: *boulder_image
 -    environment:
 -      GO111MODULE: "on"
@@ -91,14 +93,15 @@ index 5699aa777..77ec97a16 100644
      networks:
        - bluenet
      volumes:
-+      - /home/labca/admin:/go/src/labca
-+      - ./.gocache:/root/.cache/go-build
-+      - /home/labca/nginx_data/static:/wwwstatic
-+      - /home/labca/backup:/backup
-       - .:/boulder
+-      - .:/boulder
 -    working_dir: *boulder_working_dir
 -    entrypoint: test/entrypoint-netaccess.sh
-+      - /home/labca/boulder_labca:/boulder/labca
++      - /home/labca/admin:/go/src/labca
++      - ./.gocache:/root/.cache/go-build
++      - /home/labca/nginx_data/static:/opt/wwwstatic
++      - /home/labca/backup:/opt/backup
++      - .:/opt/boulder
++      - /home/labca/boulder_labca:/opt/boulder/labca
 +    expose:
 +      - 3000
 +    depends_on:
@@ -131,12 +134,14 @@ index 5699aa777..77ec97a16 100644
 +      - bluenet
 +    volumes:
 +      - /var/run/docker.sock:/var/run/docker.sock
-+      - /home/labca/admin:/admin
-+      - /home/labca/labca:/labca
-+      - /home/labca/backup:/backup
-+      - /home/labca/control_logs:/logs
-+      - .:/boulder
-+      - /home/labca/boulder_labca:/boulder/labca
++      - /home/labca/admin/data:/opt/labca/data
++      - /home/labca/admin/data:/opt/labca/gui/data
++      - /home/labca/admin/bin:/opt/labca/bin
++      - /home/labca/labca:/opt/labca
++      - /home/labca/backup:/opt/backup
++      - /home/labca/control_logs:/opt/logs
++      - .:/opt/boulder
++      - /home/labca/boulder_labca:/opt/boulder/labca
 +      - /home/labca/nginx_data/conf.d:/etc/nginx/conf.d
 +      - /home/labca/nginx_data/ssl:/etc/nginx/ssl
 +      - /home/labca/nginx_data/static:/var/www/html
@@ -144,7 +149,7 @@ index 5699aa777..77ec97a16 100644
 +      - 3030
 +    environment:
 +      LABCA_FQDN: ${LABCA_FQDN:-notset}
-+    working_dir: /labca
++    working_dir: /opt/labca
 +    command: ./control.sh
 +    restart: always
 +

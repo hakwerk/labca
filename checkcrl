@@ -7,7 +7,7 @@ if [ crl/ -nt certs/index.html ]; then
     echo "Updating certs/index.html with latest CRL info..."
 
     PKI_ROOT_CERT_BASE="crl/root-ca"
-    PKI_ISSUER_NAME_ID=$(grep issuer_name_id /admin/data/config.json | sed -e 's/.*:[ ]*//' | sed -e 's/,//g' | sed -e 's/\"//g')
+    PKI_ISSUER_NAME_ID=$(grep issuer_name_id /opt/labca/data/config.json | sed -e 's/.*:[ ]*//' | sed -e 's/,//g' | sed -e 's/\"//g')
 
     PKI_ROOT_CRL_VALIDITY=""
     if [ -e "$PKI_ROOT_CERT_BASE.crl" ]; then

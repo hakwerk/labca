@@ -8,7 +8,7 @@ set -e
 if [ ! -e bin/labca-gui ]; then
     go mod download
 
-    go build -buildvcs=false -o bin/labca-gui
+    go build -buildvcs=false -o bin/labca-gui -ldflags="-X 'main.standaloneVersion=$GIT_VERSION'"
 fi
 
 export DEBIAN_FRONTEND=noninteractive

@@ -27,3 +27,4 @@ debian/.debhelper/
 debian/files
 debian/labca-gui.substvars
 debian/labca-gui/
+build/tmp/

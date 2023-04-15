@@ -10,5 +10,5 @@ echo "Running cron-$(basename $0) for ${TODAY}..."
 if ! expires=`openssl x509 -checkend $[ 86400 * $RENEW ] -noout -in /etc/nginx/ssl/labca_cert.pem`; then
     echo "    renewing!"
     cp -p /etc/nginx/ssl/labca_cert.pem /etc/nginx/ssl/labca_cert_$TODAY.pem
-    /labca/renew
+    /opt/labca/renew
 fi

@@ -20,33 +20,46 @@ get_fqdn() {
     fi
 }
 
-# TODO: install docker should be done in pre-baked image
-install_docker() {
-    export DEBIAN_FRONTEND=noninteractive
-    apt update
-    apt install -y apt-transport-https ca-certificates curl software-properties-common
-    curl -fsSL https://download.docker.com/linux/ubuntu/gpg | apt-key add -
-    add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu focal stable"
-    apt-cache policy docker-ce
-    apt update
-    apt install -y docker-ce
+setup_boulder_data() {
+    cp -rp /opt/staging/boulder_labca/* /opt/boulder/labca/
+
+    cd /opt/boulder/labca
+    /opt/labca/apply-boulder
 }
 
-# TODO: install docker-compose should be done in pre-baked image
-install_docker_compose() {
-    dockerComposeVersion="v2.5.0"
-    local dcver=""
-    [ -x /usr/local/bin/docker-compose ] && dcver="`/usr/local/bin/docker-compose --version`"
-    local vercmp=${dcver/$dockerComposeVersion/}
-    if [ "$dcver" == "" ] || [ "$dcver" == "$vercmp" ]; then
-        local v1test=${dcver/version 1./}
-        if [ "$dcver" != "$v1test" ] && [ "$dcver" != "" ]; then
-            mv /usr/local/bin/docker-compose /usr/local/bin/docker-compose-v1
-        fi
+setup_nginx_data() {
+    rm -f /etc/nginx/conf.d/default.conf
+    cp -p /opt/staging/nginx.conf /etc/nginx/conf.d/labca.conf
+    cp -p /opt/staging/proxy.conf /etc/nginx/conf.d/proxy.conf
+    [ -e /opt/boulder/labca/setup_complete ] && perl -i -p0e 's/\n    # BEGIN temporary redirect\n    location = \/ \{\n        return 302 \/admin\/;\n    }\n    # END temporary redirect\n//igs' /etc/nginx/conf.d/labca.conf || true
 
-        curl -sSL https://github.com/docker/compose/releases/download/$dockerComposeVersion/docker-compose-`uname -s`-`uname -m` -o /usr/local/bin/docker-compose
-        chmod +x /usr/local/bin/docker-compose
+    cd /var/www/html
+    mkdir -p .well-known/acme-challenge
+    find .well-known/acme-challenge/ -type f -mtime +10 -exec rm {} \;  # Clean up files older than 10 days
+    mkdir -p crl
+    [ -e cert ] || ln -s certs cert
+    cp -rp /opt/staging/static/* .
+
+    [ -e /opt/labca/data/root-ca.crl ] && cp /opt/labca/data/root-ca.crl crl/ || true
+    [ -e /opt/labca/data/root-ca.pem ] && cp /opt/labca/data/root-ca.pem certs/ || true
+    [ -e /opt/labca/data/root-ca.der ] && cp /opt/labca/data/root-ca.der certs/ || true
+    [ -e /opt/labca/data/issuer/ca-int.pem ] && cp /opt/labca/data/issuer/ca-int.pem certs/ || true
+    [ -e /opt/labca/data/issuer/ca-int.pem ] && cp /opt/labca/data/issuer/ca-int.der certs/ || true
+
+    if [ ! -e /etc/nginx/ssl/labca_cert.pem ]; then
+        pushd /etc/nginx/ssl >/dev/null
+        openssl req -x509 -nodes -sha256 -newkey rsa:2048 -keyout labca_key.pem -out labca_cert.pem -days 7 \
+            -subj "/O=LabCA/CN=$LABCA_FQDN" -reqexts SAN -extensions SAN \
+            -config <(cat /etc/ssl/openssl.cnf <(printf "\n[SAN]\nbasicConstraints=CA:FALSE\nnsCertType=server\nsubjectAltName=DNS:$LABCA_FQDN"))
+        popd >/dev/null
     fi
+
+    /opt/labca/apply-nginx
+}
+
+setup_labca_data() {
+    cd /opt/labca/data
+    cp -rp /opt/staging/data/* .
 }
 
 selfsigned_cert() {
@@ -71,10 +84,7 @@ renew_near_expiry() {
     popd >/dev/null
 }
 
-# TODO: install cron should be done in pre-baked image
 start_cron() {
-    apt update
-    apt install -y cron
     [ -e /opt/boulder/labca/setup_complete ] && [ ! -e /etc/cron.d/labca ] && ln -sf /opt/labca/cron_d /etc/cron.d/labca || true
     chmod g-w /opt/labca/cron_d
     [ -e /opt/logs/cron.log ] || touch /opt/logs/cron.log
@@ -82,24 +92,17 @@ start_cron() {
     service cron start
 }
 
-# TODO: install ucspi-tcp should be done in pre-baked image
 serve_commander() {
-    apt update
-    apt install -y ucspi-tcp
-    cd /opt/boulder/labca
-    /opt/labca/gui/apply-boulder
-    cd -
     echo "Start serving commander script..."
     tcpserver 0.0.0.0 3030 /opt/labca/commander
 }
 
 main() {
-    mkdir -p /opt/logs
-
     get_fqdn
 
-    docker ps &>/dev/null || install_docker
-    install_docker_compose
+    setup_boulder_data
+    setup_nginx_data
+    setup_labca_data
 
     [ -e /etc/nginx/ssl/labca_cert.pem ] || selfsigned_cert
     renew_near_expiry

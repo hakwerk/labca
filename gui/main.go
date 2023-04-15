@@ -1866,7 +1866,7 @@ func _setupAdminUser(w http.ResponseWriter, r *http.Request) bool {
 			}
 			defer file.Close()
 
-			out, err := os.Create("/backup/" + header.Filename)
+			out, err := os.Create("/opt/backup/" + header.Filename)
 			if err != nil {
 				fmt.Println(err)
 				reg.Errors["File"] = "Could not create local file"
@@ -2861,6 +2861,9 @@ func init() {
 		version = standaloneVersion
 	} else {
 		version = viper.GetString("version")
+		if version == "" {
+			version = standaloneVersion
+		}
 	}
 
 	webTitle = viper.GetString("labca.web_title")
@@ -2927,7 +2930,7 @@ func main() {
 	r.HandleFunc("/certificates/{id}", certificateHandler).Methods("GET")
 	r.HandleFunc("/certificates/{id}", certRevokeHandler).Methods("POST")
 
-	r.PathPrefix("/backup/").Handler(http.StripPrefix("/backup/", http.FileServer(http.Dir("/backup"))))
+	r.PathPrefix("/backup/").Handler(http.StripPrefix("/backup/", http.FileServer(http.Dir("/opt/backup"))))
 
 	r.NotFoundHandler = http.HandlerFunc(notFoundHandler)
 	if viper.GetBool("standalone") || isDev {

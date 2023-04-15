@@ -17,7 +17,7 @@ index aa398d0a..0db875d2 100644
 +	// If there is no .crl file yet, generate one (after a delay to let all other
 +	// components start up fully).
 +	// Dirty hack to check filesystem directly instead of using the crl-storer...
-+	files, err := os.ReadDir("/wwwstatic/crl/")
++	files, err := os.ReadDir("/opt/wwwstatic/crl/")
 +	if err != nil {
 +		return err
 +	}
@@ -31,7 +31,7 @@ index aa398d0a..0db875d2 100644
 +		select {
 +		case <-ctx.Done():
 +			return ctx.Err()
-+		case <-time.After(time.Minute):
++		case <-time.After(2 * time.Minute):
 +		}
 +
 +		cu.Tick(ctx, cu.clk.Now())

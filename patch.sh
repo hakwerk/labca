@@ -13,6 +13,10 @@ if [ "$flag_skip_redis" == true ]; then
     $SUDO patch -p1 < $cloneDir/patches/docker-compose-redis.patch
 fi
 $SUDO patch -p1 < $cloneDir/patches/docker-compose.patch
+if [ "$SUDO" == "" ]; then
+    # TODO: should incorporate this into docker-compose.patch
+    $SUDO patch -p1 < $cloneDir/build/tmp.patch
+fi
 
 $SUDO patch -p1 < $cloneDir/patches/bad-key-revoker_main.patch
 $SUDO patch -p1 < $cloneDir/patches/boulder-va_main.patch
@@ -38,6 +42,10 @@ $SUDO patch -p1 < $cloneDir/patches/ra_ra.patch
 $SUDO patch -p1 < $cloneDir/patches/ratelimit_rate-limits.patch
 $SUDO patch -p1 < $cloneDir/patches/reloader_reloader.patch
 $SUDO patch -p1 < $cloneDir/patches/startservers.patch
+if [ "$SUDO" == "" ]; then
+    # TODO: should include this into startservers.patch
+    $SUDO patch -p1 < $cloneDir/build/tmp2.patch
+fi
 $SUDO patch -p1 < $cloneDir/patches/storer_storer.patch
 $SUDO patch -p1 < $cloneDir/patches/updater_updater.patch
 

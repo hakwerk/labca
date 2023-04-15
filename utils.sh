@@ -4,7 +4,7 @@ set -e
 
 export PS_LABCA="bin/labca-gui"
 export PS_BOULDER="bin/boulder"
-export PS_BOULDER_COUNT=22
+export PS_BOULDER_COUNT=21
 export PS_MYSQL="mysqld"
 export PS_CONTROL="tcpserver"
 export PS_NGINX="nginx:"
@@ -18,7 +18,7 @@ count() {
     local prefix=""
     case $pattern in
         $PS_LABCA)
-            prefix="docker exec $(docker ps --format "{{.Names}}" | grep -- -labca-) "
+            prefix="docker exec $(docker ps --format "{{.Names}}" | grep -- labca-gui-) "
             ;;
         $PS_BOULDER)
             prefix="docker exec $(docker ps --format "{{.Names}}" | grep -- -boulder-) "

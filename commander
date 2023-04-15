@@ -2,7 +2,7 @@
 
 set -euo pipefail
 
-LOGFILE=/logs/commander.log
+LOGFILE=/opt/logs/commander.log
 
 err_report() {
     echo "ERROR! On line $1 in commander script"
@@ -38,8 +38,8 @@ function wait_server() {
 read txt
 case $txt in
 "docker-restart")
-    cd /boulder
-    COMPOSE_HTTP_TIMEOUT=120 docker-compose restart boulder bmysql bconsul labca nginx &>>$LOGFILE
+    cd /opt/boulder
+    COMPOSE_HTTP_TIMEOUT=120 docker-compose restart boulder bmysql bconsul gui nginx &>>$LOGFILE
     sleep 45
     wait_up $PS_MYSQL &>>$LOGFILE
     wait_up $PS_CONSUL 2 &>>$LOGFILE
@@ -53,32 +53,32 @@ case $txt in
     [ -e labca_key.pem ] || openssl genrsa 4096 > labca_key.pem
     san=$(openssl x509 -noout -text -in labca_cert.pem | grep DNS:)
     openssl req -new -utf8 -sha256 -key labca_key.pem -subj "/" -reqexts SAN -config <(cat /etc/ssl/openssl.cnf <(printf "[SAN]\nsubjectAltName=$san")) > domain.csr
-    url=$(grep 'DEFAULT_DIRECTORY_URL =' /labca/acme_tiny.py | sed -e 's/.*=[ ]*//' | sed -e 's/\"//g')
+    url=$(grep 'DEFAULT_DIRECTORY_URL =' /opt/labca/acme_tiny.py | sed -e 's/.*=[ ]*//' | sed -e 's/\"//g')
     wait_server $url
     sleep 10
-    /labca/renew
-    ln -sf /labca/cron_d /etc/cron.d/labca
-    ln -sf /labca/logrotate_d /etc/logrotate.d/labca
+    /opt/labca/renew
+    ln -sf /opt/labca/cron_d /etc/cron.d/labca
+    ln -sf /opt/labca/logrotate_d /etc/logrotate.d/labca
     ;;
 "acme-change")
     read fqdn
     cd /etc/nginx/ssl
     openssl genrsa 4096 > labca_key.pem
     openssl req -new -utf8 -sha256 -key labca_key.pem -subj "/" -reqexts SAN -config <(cat /etc/ssl/openssl.cnf <(printf "[SAN]\nsubjectAltName=DNS:$fqdn")) > domain.csr
-    url=$(grep 'DEFAULT_DIRECTORY_URL =' /labca/acme_tiny.py | sed -e 's/.*=[ ]*//' | sed -e 's/\"//g')
+    url=$(grep 'DEFAULT_DIRECTORY_URL =' /opt/labca/acme_tiny.py | sed -e 's/.*=[ ]*//' | sed -e 's/\"//g')
     wait_server $url
     sleep 10
-    /labca/renew
+    /opt/labca/renew
     ;;
 "nginx-remove-redirect")
     perl -i -p0e 's/\n    # BEGIN temporary redirect\n    location = \/ \{\n        return 302 \/admin\/;\n    }\n    # END temporary redirect\n//igs' /etc/nginx/conf.d/labca.conf
     ;;
 "nginx-reload")
-    cd /boulder
+    cd /opt/boulder
     docker-compose exec -T nginx nginx -s reload &>>$LOGFILE
     ;;
 "nginx-restart")
-    cd /boulder
+    cd /opt/boulder
     docker-compose restart nginx &>>$LOGFILE
     ;;
 "log-cert")
@@ -90,51 +90,51 @@ case $txt in
     exit 0
     ;;
 "log-control-notail")
-    cd /boulder
+    cd /opt/boulder
     docker-compose logs --no-color --tail=50 control
     ;;
 "log-cron")
-    [ -f /logs/cron.log ] && tail -n200 -f /logs/cron.log || /bin/true
+    [ -f /opt/logs/cron.log ] && tail -n200 -f /opt/logs/cron.log || /bin/true
     exit 0
     ;;
 "log-boulder")
-    cd /boulder
+    cd /opt/boulder
     docker-compose logs -f --no-color --tail=50 boulder
     ;;
 "log-boulder-notail")
-    cd /boulder
+    cd /opt/boulder
     docker-compose logs --no-color --tail=50 boulder
     ;;
 "log-audit")
-    cd /boulder
+    cd /opt/boulder
     docker-compose logs --no-color boulder | grep "\[AUDIT\]" | grep -v "grpc: parseServiceConfig error unmarshaling  due to unexpected end of JSON input" | tail -50
     docker-compose logs -f --no-color --tail=0 boulder | grep "\[AUDIT\]"
     ;;
 "log-activity")
-    cd /boulder
+    cd /opt/boulder
     echo "GMT"
     docker-compose logs --no-color boulder | grep "\[AUDIT\]" | grep -v "grpc: parseServiceConfig error unmarshaling  due to unexpected end of JSON input" | tail -15
     exit 0
     ;;
 "log-labca")
-    cd /boulder
-    docker-compose logs -f --no-color --tail=50 labca
+    cd /opt/boulder
+    docker-compose logs -f --no-color --tail=50 gui
     ;;
 "log-labca-notail")
-    cd /boulder
-    docker-compose logs --no-color --tail=50 labca
+    cd /opt/boulder
+    docker-compose logs --no-color --tail=50 gui
     ;;
 "log-web")
-    cd /boulder
+    cd /opt/boulder
     docker-compose logs -f --no-color --tail=50 nginx
     ;;
 "log-components")
-    nginx=$(docker inspect $(docker ps --format "{{.Names}}" | grep -- -nginx-) | grep -i started | sed -e "s/[^:]*:\(.*\)/\1/" | sed -e "s/.*\"\(.*\)\".*/\1/")
-    svc=$(docker inspect $(docker ps --format "{{.Names}}" | grep -- -control-) | grep -i started | sed -e "s/[^:]*:\(.*\)/\1/" | sed -e "s/.*\"\(.*\)\".*/\1/")
+    nginx=$(docker inspect $(docker ps --format "{{.Names}}" | grep -- -nginx-) | grep -i started | grep -v depends_on | sed -e "s/[^:]*:\(.*\)/\1/" | sed -e "s/.*\"\(.*\)\".*/\1/")
+    svc=$(docker inspect $(docker ps --format "{{.Names}}" | grep -- -control-) | grep -i started | grep -v depends_on | sed -e "s/[^:]*:\(.*\)/\1/" | sed -e "s/.*\"\(.*\)\".*/\1/")
     boulder=$(docker inspect $(docker ps --format "{{.Names}}" | grep -- -boulder-) | grep -i started | grep -v depends_on | sed -e "s/[^:]*:\(.*\)/\1/" | sed -e "s/.*\"\(.*\)\".*/\1/")
-    labca=$(docker inspect $(docker ps --format "{{.Names}}" | grep -- -labca-) | grep -i started | grep -v depends_on | sed -e "s/[^:]*:\(.*\)/\1/" | sed -e "s/.*\"\(.*\)\".*/\1/")
+    labca=$(docker inspect $(docker ps --format "{{.Names}}" | grep -- labca-gui) | grep -i started | grep -v depends_on | sed -e "s/[^:]*:\(.*\)/\1/" | sed -e "s/.*\"\(.*\)\".*/\1/")
     mysql=$(docker inspect $(docker ps --format "{{.Names}}" | grep -- -bmysql-) | grep -i started | grep -v depends_on | sed -e "s/[^:]*:\(.*\)/\1/" | sed -e "s/.*\"\(.*\)\".*/\1/")
-    consul=$(docker inspect $(docker ps --format "{{.Names}}" | grep -- -bconsul-) | grep -i started | sed -e "s/[^:]*:\(.*\)/\1/" | sed -e "s/.*\"\(.*\)\".*/\1/")
+    consul=$(docker inspect $(docker ps --format "{{.Names}}" | grep -- -bconsul-) | grep -i started | grep -v depends_on | sed -e "s/[^:]*:\(.*\)/\1/" | sed -e "s/.*\"\(.*\)\".*/\1/")
     echo "$nginx|$svc|$boulder|$labca|$mysql|$consul"
     exit 0
     ;;
@@ -145,21 +145,21 @@ case $txt in
     exit 0
     ;;
 "log-stats")
-    docker stats --no-stream -a | grep " boulder-"
+    docker stats --no-stream -a | grep " labca-"
     ;;
 "revoke-cert")
     read serial
     read reasonCode
-    cd /boulder
+    cd /opt/boulder
     docker-compose exec -T boulder bin/admin-revoker serial-revoke --config labca/config/admin-revoker.json $serial $reasonCode 2>&1
     ;;
 "test-email")
     read recipient
-    cd /boulder
+    cd /opt/boulder
     docker-compose exec -T boulder bin/mail-tester --config labca/config/expiration-mailer.json $recipient 2>&1
     ;;
 "boulder-start")
-    cd /boulder
+    cd /opt/boulder
     COMPOSE_HTTP_TIMEOUT=120 docker-compose up -d bmysql bconsul
     wait_up $PS_MYSQL &>>$LOGFILE
     wait_up $PS_CONSUL 2 &>>$LOGFILE
@@ -167,7 +167,7 @@ case $txt in
     wait_up $PS_BOULDER $PS_BOULDER_COUNT &>>$LOGFILE
     ;;
 "boulder-stop")
-    cd /boulder
+    cd /opt/boulder
     docker-compose stop boulder
     docker-compose stop bmysql bconsul
     wait_down $PS_MYSQL &>>$LOGFILE
@@ -175,7 +175,7 @@ case $txt in
     wait_down $PS_BOULDER &>>$LOGFILE
     ;;
 "boulder-restart")
-    cd /boulder
+    cd /opt/boulder
     COMPOSE_HTTP_TIMEOUT=120 docker-compose restart boulder bmysql bconsul &>>$LOGFILE
     sleep 30
     wait_up $PS_MYSQL &>>$LOGFILE
@@ -183,48 +183,48 @@ case $txt in
     wait_up $PS_BOULDER $PS_BOULDER_COUNT &>>$LOGFILE
     ;;
 "labca-restart")
-    cd /boulder
-    COMPOSE_HTTP_TIMEOUT=120 docker-compose restart labca
+    cd /opt/boulder
+    COMPOSE_HTTP_TIMEOUT=120 docker-compose restart gui
     sleep 15
     wait_up $PS_LABCA &>>$LOGFILE
     ;;
 "mysql-restart")
-    cd /boulder
+    cd /opt/boulder
     set +e
     COMPOSE_HTTP_TIMEOUT=120 docker-compose restart bmysql
     set -e
     ;;
 "consul-restart")
-    cd /boulder
+    cd /opt/boulder
     set +e
     COMPOSE_HTTP_TIMEOUT=120 docker-compose restart bconsul
     set -e
     ;;
 "svc-restart")
-    cd /boulder
+    cd /opt/boulder
     set +e
     COMPOSE_HTTP_TIMEOUT=120 docker-compose restart control
     set -e
     ;;
 "log-backups")
-    ls -1tr /backup || /bin/true
+    ls -1tr /opt/backup || /bin/true
     exit 0
     ;;
 "log-server-backup")
-    /labca/backup
+    /opt/labca/backup
     exit 0
     ;;
 "backup-delete")
     read backup
-    rm -f /backup/$backup
+    rm -f /opt/backup/$backup
     ;;
 "backup-restore")
     read backup
-    /labca/restore "$backup"
+    /opt/labca/restore "$backup"
     ;;
 "server-restart")
-    cd /boulder
-    nohup docker-compose restart labca & >/dev/null
+    cd /opt/boulder
+    nohup docker-compose restart gui & >/dev/null
     nohup docker-compose restart nginx & >/dev/null
     set +e
     nohup docker-compose restart control & >/dev/null

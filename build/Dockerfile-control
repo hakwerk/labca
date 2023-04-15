@@ -1,0 +1,62 @@
+FROM ubuntu:focal as builder
+
+RUN export DEBIAN_FRONTEND=noninteractive \
+    && apt-get update \
+    && apt-get install -y --no-install-recommends \
+        ca-certificates \
+        cron \
+        curl \
+    && curl -fsSL https://get.docker.com -o get-docker.sh \
+    && sh get-docker.sh \
+    && curl -SL https://github.com/docker/compose/releases/download/v2.16.0/docker-compose-linux-x86_64 -o /usr/local/bin/docker-compose \
+    && chmod +x /usr/local/bin/docker-compose \
+    && rm -rf /var/lib/apt/lists/*
+
+FROM ubuntu:focal
+
+RUN export DEBIAN_FRONTEND=noninteractive \
+    && apt-get update \
+    && apt-get install -y --no-install-recommends \
+        ca-certificates \
+        cron \
+        curl \
+        python3 \
+        tzdata \
+        ucspi-tcp \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY --from=builder /usr/bin/docker /usr/bin/docker
+COPY --from=builder /lib/x86_64-linux-gnu/libpthread.so.0 /lib/x86_64-linux-gnu/libpthread.so.0
+COPY --from=builder /lib/x86_64-linux-gnu/libdl.so.2 /lib/x86_64-linux-gnu/libdl.so.2
+COPY --from=builder /lib/x86_64-linux-gnu/libc.so.6 /lib/x86_64-linux-gnu/libc.so.6
+COPY --from=builder /lib64/ld-linux-x86-64.so.2 /lib64/ld-linux-x86-64.so.2
+
+COPY --from=builder /usr/local/bin/docker-compose /usr/local/bin/docker-compose
+
+COPY tmp/acme_tiny.py /opt/labca/
+COPY tmp/backup /opt/labca/
+COPY tmp/checkcrl /opt/labca/
+COPY tmp/checkrenew /opt/labca/
+COPY tmp/commander /opt/labca/
+COPY tmp/control.sh /opt/labca/
+COPY tmp/cron_d /opt/labca/
+COPY tmp/mailer /opt/labca/
+COPY tmp/nameidtool /opt/labca/
+COPY tmp/renew /opt/labca/
+COPY tmp/restore /opt/labca/
+COPY tmp/utils.sh /opt/labca/
+COPY tmp/src/labca /opt/staging/boulder_labca
+COPY tmp/admin/apply-boulder /opt/labca/
+
+COPY tmp/admin/static /opt/staging/static
+COPY tmp/admin/data /opt/staging/data
+COPY tmp/nginx.conf /opt/staging/
+COPY tmp/proxy.conf /opt/staging/
+COPY tmp/admin/apply-nginx /opt/labca/
+
+COPY tmp/bin/boulder /opt/boulder/bin/
+
+RUN cd /opt/boulder/bin/ \
+    && ln -s boulder admin-revoker \
+    && ln -s boulder mail-tester \
+    && mkdir /opt/logs
