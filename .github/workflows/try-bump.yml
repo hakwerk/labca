@@ -36,5 +36,6 @@ jobs:
       - name: Apply our config patches
         run: |
             cd boulder
+            cp -r test labca
             ../patch-cfg.sh
 

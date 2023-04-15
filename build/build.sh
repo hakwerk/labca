@@ -50,4 +50,17 @@ BASEDIR=/go/src/labca
 docker run -it -v $TMP_DIR/admin:$BASEDIR:cached -v $TMP_DIR:$BASEDIR/bin -w $BASEDIR -e GIT_VERSION=$GIT_VERSION $BUILD_IMAGE ./setup.sh
 docker run -it -v $TMP_DIR:/utils -w /utils $BUILD_IMAGE go build nameidtool.go
 
+cp -rp $cloneDir/gui/setup.sh $TMP_DIR/admin/
+cp -rp $cloneDir/acme_tiny.py $TMP_DIR/
+cp -rp $cloneDir/backup $TMP_DIR/
+cp -rp $cloneDir/checkcrl $TMP_DIR/
+cp -rp $cloneDir/checkrenew $TMP_DIR/
+cp -rp $cloneDir/commander $TMP_DIR/
+cp -rp $cloneDir/control_do.sh $TMP_DIR/control.sh
+cp -rp $cloneDir/cron_d $TMP_DIR/
+cp -rp $cloneDir/mailer $TMP_DIR/
+cp -rp $cloneDir/renew $TMP_DIR/
+cp -rp $cloneDir/restore $TMP_DIR/
+cp -rp $cloneDir/utils.sh $TMP_DIR/
+
 echo
