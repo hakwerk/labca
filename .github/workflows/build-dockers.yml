@@ -43,6 +43,7 @@ jobs:
 
   build-publish:
     runs-on: ubuntu-latest
+    needs: prepare
     strategy:
       matrix:
         include:
