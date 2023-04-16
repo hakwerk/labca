@@ -26,7 +26,6 @@ die() {
     exit 1
 }
 
-cp -rp ../gui/setup.sh tmp/admin/
 [ -f "tmp/labca-gui" ] || die "LabCA binary does not exist!"
 docker build -f Dockerfile-gui -t $LABCA_GUI_TAG .
 
@@ -44,17 +43,6 @@ if [ "$BRANCH" == "master" ] || [ "$BRANCH" == "main" ]; then
     docker tag "$ID" $LABCA_BOULDER_LATEST
 fi
 
-cp -rp ../acme_tiny.py tmp/
-cp -rp ../backup tmp/
-cp -rp ../checkcrl tmp/
-cp -rp ../checkrenew tmp/
-cp -rp ../commander tmp/
-cp -rp ../control_do.sh tmp/control.sh
-cp -rp ../cron_d tmp/
-cp -rp ../mailer tmp/
-cp -rp ../renew tmp/
-cp -rp ../restore tmp/
-cp -rp ../utils.sh tmp/
 docker build -f Dockerfile-control -t $LABCA_CONTROL_TAG .
 
 if [ "$BRANCH" == "master" ] || [ "$BRANCH" == "main" ]; then
