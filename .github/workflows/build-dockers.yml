@@ -34,7 +34,7 @@ jobs:
         uses: stefanzweifel/git-auto-commit-action@v4
         with:
           commit_message: "[skip ci] Commit changes from build-dockers action"
-          commit_options: "-S 043D9FF89A5ABB15"
+          commit_options: "-S043D9FF89A5ABB15"
 
       - name: Cache build output
         uses: actions/cache/save@v3
