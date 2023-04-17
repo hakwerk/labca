@@ -84,9 +84,8 @@ jobs:
           tags: |
             type=schedule,pattern={{date 'YYYYMMDD'}}
             type=match,pattern=v(.*),group=1
-            type=edge,branch=master
-            type=edge,branch=main
-            type=ref,event=branch
+            type=edge,enable={{is_default_branch}}
+            type=ref,event=branch,enable={{!is_default_branch}}
             type=ref,event=pr
             type=sha
 
