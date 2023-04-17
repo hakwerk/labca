@@ -84,8 +84,8 @@ jobs:
           tags: |
             type=schedule,pattern={{date 'YYYYMMDD'}}
             type=match,pattern=v(.*),group=1
-            type=edge,enable=${{is_default_branch}}
-            type=ref,event=branch,enable=${{!is_default_branch}}
+            type=edge,enable=${{ github.ref == format('refs/heads/{0}', github.event.repository.default_branch) }}
+            type=ref,event=branch,enable=${{ github.ref != format('refs/heads/{0}', github.event.repository.default_branch) }}
             type=ref,event=pr
             type=sha
 
