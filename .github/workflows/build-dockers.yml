@@ -84,7 +84,8 @@ jobs:
           tags: |
             type=schedule,pattern={{date 'YYYYMMDD'}}
             type=match,pattern=v(.*),group=1
-            type=edge,branch=$repo.default_branch
+            type=edge,branch=master
+            type=edge,branch=main
             type=ref,event=branch
             type=ref,event=pr
             type=sha
