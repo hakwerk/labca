@@ -1,5 +1,5 @@
 diff --git a/cmd/crl-storer/main.go b/cmd/crl-storer/main.go
-index bc1339957..b8d3b052a 100644
+index 36b9d2fc6..de60aa899 100644
 --- a/cmd/crl-storer/main.go
 +++ b/cmd/crl-storer/main.go
 @@ -46,6 +46,9 @@ type Config struct {
@@ -20,4 +20,4 @@ index bc1339957..b8d3b052a 100644
 +	csi, err := storer.New(issuers, s3client, c.CRLStorer.S3Bucket, c.CRLStorer.LocalStorePath, scope, logger, clk)
  	cmd.FailOnError(err, "Failed to create CRLStorer impl")
  
- 	start, stop, err := bgrpc.NewServer(c.CRLStorer.GRPC).Add(
+ 	start, err := bgrpc.NewServer(c.CRLStorer.GRPC).Add(

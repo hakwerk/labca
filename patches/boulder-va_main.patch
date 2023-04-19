@@ -1,5 +1,5 @@
 diff --git a/cmd/boulder-va/main.go b/cmd/boulder-va/main.go
-index c91be2a79..4ed591e10 100644
+index f3390749c..488125d71 100644
 --- a/cmd/boulder-va/main.go
 +++ b/cmd/boulder-va/main.go
 @@ -24,8 +24,10 @@ type Config struct {
@@ -30,6 +30,6 @@ index c91be2a79..4ed591e10 100644
  	}
 -	servers, err = bdns.StartDynamicProvider(c.VA.DNSResolver, 60*time.Second)
 -	cmd.FailOnError(err, "Couldn't start dynamic DNS server resolver")
+ 	defer servers.Stop()
  
  	var resolver bdns.Client
- 	if !(c.VA.DNSAllowLoopbackAddresses || c.Common.DNSAllowLoopbackAddresses) {
