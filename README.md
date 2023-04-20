@@ -6,16 +6,13 @@
 
 ![08-dashboard](https://user-images.githubusercontent.com/44847421/48658726-ebd4c400-ea46-11e8-8cb1-43584dbc3719.jpg)
 
-## NEW: standalone version for step-ca [![status-experimental](https://img.shields.io/badge/status-experimental-orange.svg)](README_standalone.md)
-
-See [README_standalone](README_standalone.md)
-
 ## Table of Contents
 
 - [Background](#background)
 - [Install](#install)
 - [Usage](#usage)
 - [Troubleshooting](#troubleshooting)
+- [Standalone version for step-ca](#standalone-version-for-step-ca)
 - [Contributing](#contributing)
 - [License](#license)
 
@@ -51,6 +48,8 @@ Or a combination: run the above curl command, but abort (ctrl-c) the script afte
 The first-time install will take a while, depending on the power of your server and your internet speed. On my machine it takes about 12 minutes. It will install the latest versions of some packages, download the relevant programs and configure everything. If all goes well it should look like this:
 
 <img src="https://user-images.githubusercontent.com/44847421/48658718-dc557b00-ea46-11e8-8596-00709fad9197.jpg" width="300">
+
+**NEW**: It is now possible to run LabCA on an existing docker server, see [README_dockeronly](README_dockeronly.md) [![status-alpha](https://img.shields.io/badge/status-alpha-orange.svg)](README_dockeronly.md)
 
 ### Setup
 
@@ -137,6 +136,10 @@ See also the [Let's Encrypt&trade; page on CAA](https://letsencrypt.org/docs/caa
 ### NOTE
 
 Although LabCA tries to be as robust as possible, use it at your own risk. If you depend on it, make sure that you know what you are doing!
+
+## Standalone version for step-ca
+
+See [README_standalone](README_standalone.md) [![status-experimental](https://img.shields.io/badge/status-experimental-orange.svg)](README_standalone.md)
 
 ## Contributing
 
