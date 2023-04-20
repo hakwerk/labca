@@ -3,7 +3,7 @@ name: labca
 services:
   boulder:
     # Should match one of the GO_DEV_VERSIONS in test/boulder-tools/tag_and_upload.sh.
-    image: ghcr.io/hakwerk/labca-boulder:dockeronly
+    image: ghcr.io/hakwerk/labca-boulder:latest
     environment:
       # To solve HTTP-01 and TLS-ALPN-01 challenges, change the IP in FAKE_DNS
       # to the IP address where your ACME client's solver is listening.
@@ -84,7 +84,7 @@ services:
     command: "consul agent -dev -config-format=hcl -config-file=/opt/boulder/labca/consul/config.hcl"
 
   gui:
-    image: ghcr.io/hakwerk/labca-gui:dockeronly
+    image: ghcr.io/hakwerk/labca-gui:latest
     networks:
       - bluenet
     volumes:
@@ -123,7 +123,7 @@ services:
       - control
 
   control:
-    image: ghcr.io/hakwerk/labca-control:dockeronly
+    image: ghcr.io/hakwerk/labca-control:latest
     networks:
       - bluenet
     volumes:
