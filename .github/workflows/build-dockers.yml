@@ -44,7 +44,7 @@ jobs:
         uses: actions/cache/save@v3
         with:
           path: build
-          key: build-dockers
+          key: build-dockers-${{ github.sha }}
 
   build-publish:
     runs-on: ubuntu-latest
@@ -71,7 +71,7 @@ jobs:
         uses: actions/cache/restore@v3
         with:
           path: build
-          key: build-dockers
+          key: build-dockers-${{ github.sha }}
 
       - name: Set up docker buildx
         uses: docker/setup-buildx-action@v2
