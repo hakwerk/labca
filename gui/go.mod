@@ -1,6 +1,6 @@
 module github.com/hakwerk/labca/gui
 
-go 1.18
+go 1.20
 
 require (
 	github.com/biz/templates v0.0.2
