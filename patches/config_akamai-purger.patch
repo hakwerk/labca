@@ -1,0 +1,15 @@
+diff --git a/test/config/akamai-purger.json b/test/config/akamai-purger.json
+index 62c5b4cc9..2c39d70cb 100644
+--- a/test/config/akamai-purger.json
++++ b/test/config/akamai-purger.json
+@@ -13,6 +13,10 @@
+ 			"certFile": "test/grpc-creds/akamai-purger.boulder/cert.pem",
+ 			"keyFile": "test/grpc-creds/akamai-purger.boulder/key.pem"
+ 		},
++		"throughput": {
++			"queueEntriesPerBatch": 5,
++			"purgeBatchInterval": "5m"
++		},
+ 		"grpc": {
+ 			"address": ":9099",
+ 			"maxConnectionAge": "30s",
