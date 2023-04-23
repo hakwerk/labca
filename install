@@ -717,7 +717,7 @@ startup() {
 
     docker-compose pull -q &>>$installLog
     cnt=$(count $PS_CONTROL || echo "0")
-    docker-compose stop boulder bmysql labca nginx bconsul &>>$installLog || true
+    docker-compose stop boulder bmysql labca nginx bconsul gui &>>$installLog || true
     for ct in boulder_bhsm_1 boulder_bredis_1 boulder_bredis_2 boulder_bredis_3 boulder_bredis_4 boulder_bredis_5 boulder_bredis_6; do
         [ -z "$(docker ps | grep $ct)" ] || docker stop $ct &>>$installLog
     done
@@ -748,7 +748,8 @@ startup() {
     [ -d /home/labca/control_logs ] || mkdir -p /home/labca/control_logs
 
     perl -i -p0e "s/(version:.*\n).*\n?(services:\n)/\1name: labca\n\2/" docker-compose.yml
-    docker network rm boulder_bluenet boulder_consulnet boulder_rednet &>>$installLog || /bin/true
+    docker network rm -f boulder_bluenet boulder_consulnet boulder_rednet &>>$installLog || /bin/true
+    docker rm -f boulder-control-1 boulder-boulder-1 boulder-labca-1 boulder-bmysql-1 boulder-bconsul-1 boulder-nginx-1 >/dev/null &>>$installLog
 
     COMPOSE_HTTP_TIMEOUT=180 docker-compose up -d &>>$installLog
 
