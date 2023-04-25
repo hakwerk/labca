@@ -1,8 +1,8 @@
 diff --git a/cmd/log-validator/main.go b/cmd/log-validator/main.go
-index f204b6340..227acdfd2 100644
+index 80b72f997..72efc69bc 100644
 --- a/cmd/log-validator/main.go
 +++ b/cmd/log-validator/main.go
-@@ -63,8 +63,8 @@ func lineValid(text string) error {
+@@ -64,8 +64,8 @@ func lineValid(text string) error {
  	if strings.Contains(text, errorPrefix) {
  		return nil
  	}

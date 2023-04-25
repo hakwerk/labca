@@ -51,7 +51,7 @@ if [ "$BRANCH" == "master" ] || [ "$BRANCH" == "main" ]; then
 fi
 
 echo
-if [ "$BRANCH" != "master" ] || [ "$BRANCH" == "main" ]; then
+if [ "$BRANCH" != "master" ] && [ "$BRANCH" != "main" ]; then
     echo "Not pushing to Dockerhub..."
     exit
 fi
