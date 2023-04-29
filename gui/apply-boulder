@@ -162,7 +162,7 @@ for fl in $(grep -Rl maxOpenConns config/); do
     m=$(grep "connMaxIdleTime" $fl)
     set -e
     if [ -z "$m" ]; then
-        perl -i -p0e "s/( +)(\"maxOpenConns\": .*)/\1\2,\n\1\"connMaxIdleTime\": \"30s\"/g" $fl
+        perl -i -p0e "s/([ \t]+)(\"maxOpenConns\": .*)/\1\2,\n\1\"connMaxIdleTime\": \"30s\"/g" $fl
     fi
 done
 
