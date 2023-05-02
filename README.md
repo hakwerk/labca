@@ -49,7 +49,7 @@ The first-time install will take a while, depending on the power of your server 
 
 <img src="https://user-images.githubusercontent.com/44847421/48658718-dc557b00-ea46-11e8-8596-00709fad9197.jpg" width="300">
 
-**NEW**: It is now possible to run LabCA on an existing docker server, see [README_dockeronly](README_dockeronly.md) [![status-alpha](https://img.shields.io/badge/status-alpha-orange.svg)](README_dockeronly.md)
+**NEW**: It is now possible to run LabCA on an existing docker server, see [README_dockeronly](README_dockeronly.md) [![status-beta](https://img.shields.io/badge/status-beta-yellow.svg)](README_dockeronly.md)
 
 ### Setup
 
