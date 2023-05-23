@@ -9,7 +9,7 @@ index cfdcc784a..b50c8b18d 100644
    boulder:
      # Should match one of the GO_DEV_VERSIONS in test/boulder-tools/tag_and_upload.sh.
 -    image: &boulder_image letsencrypt/boulder-tools:${BOULDER_TOOLS_TAG:-go1.20.3_2023-04-04}
-+    image: ghcr.io/hakwerk/labca-boulder:latest
++    image: ghcr.io/hakwerk/labca-boulder:${LABCA_IMAGE_VERSION:-latest}
      environment:
        # To solve HTTP-01 and TLS-ALPN-01 challenges, change the IP in FAKE_DNS
        # to the IP address where your ACME client's solver is listening.
@@ -55,7 +55,7 @@ index cfdcc784a..b50c8b18d 100644
  
    gui:
 -    image: *boulder_image
-+    image: ghcr.io/hakwerk/labca-gui:latest
++    image: ghcr.io/hakwerk/labca-gui:${LABCA_IMAGE_VERSION:-latest}
      networks:
        - bluenet
      volumes:
@@ -97,7 +97,7 @@ index cfdcc784a..b50c8b18d 100644
  
    control:
 -    image: *boulder_image
-+    image: ghcr.io/hakwerk/labca-control:latest
++    image: ghcr.io/hakwerk/labca-control:${LABCA_IMAGE_VERSION:-latest}
      networks:
        - bluenet
      volumes:
