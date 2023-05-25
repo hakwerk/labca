@@ -1,5 +1,5 @@
 diff --git a/docker-compose.yml b/docker-compose.yml
-index cfdcc784a..b50c8b18d 100644
+index 4fe5b4749..e70a007ef 100644
 --- a/docker-compose.yml
 +++ b/docker-compose.yml
 @@ -1,8 +1,9 @@
@@ -8,7 +8,7 @@ index cfdcc784a..b50c8b18d 100644
  services:
    boulder:
      # Should match one of the GO_DEV_VERSIONS in test/boulder-tools/tag_and_upload.sh.
--    image: &boulder_image letsencrypt/boulder-tools:${BOULDER_TOOLS_TAG:-go1.20.3_2023-04-04}
+-    image: &boulder_image letsencrypt/boulder-tools:${BOULDER_TOOLS_TAG:-go1.20.4_2023-05-02}
 +    image: ghcr.io/hakwerk/labca-boulder:${LABCA_IMAGE_VERSION:-latest}
      environment:
        # To solve HTTP-01 and TLS-ALPN-01 challenges, change the IP in FAKE_DNS

@@ -1,9 +1,9 @@
 diff --git a/test/config/crl-storer.json b/test/config/crl-storer.json
-index 61f14d79..a620896f 100644
+index ef70c2ffc..a53b75d86 100644
 --- a/test/config/crl-storer.json
 +++ b/test/config/crl-storer.json
-@@ -15,10 +15,9 @@
- 			]
+@@ -23,10 +23,9 @@
+ 			}
  		},
  		"issuerCerts": [
 -			"/hierarchy/intermediate-cert-rsa-a.pem",

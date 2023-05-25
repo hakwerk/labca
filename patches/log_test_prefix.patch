@@ -1,0 +1,24 @@
+diff --git a/log/test_prefix.go b/log/test_prefix.go
+index d1fb89491..8974ac30e 100644
+--- a/log/test_prefix.go
++++ b/log/test_prefix.go
+@@ -2,8 +2,18 @@
+ 
+ package log
+ 
++import (
++	"fmt"
++	"os"
++
++	"github.com/letsencrypt/boulder/core"
++)
++
+ // getPrefix returns the prefix and clkFormat that should be used by the
+ // stdout logger.
+ func getPrefix() (string, string) {
+-	return "", "15:04:05.000000"
++	prefix := fmt.Sprintf("%s[%d]: ", core.Command(), os.Getpid())
++	clkFormat := "2006-01-02T15:04:05.000000+00:00Z"
++
++	return prefix, clkFormat
+ }

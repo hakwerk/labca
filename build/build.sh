@@ -8,7 +8,7 @@ TMP_DIR=$(pwd)/tmp
 rm -rf $TMP_DIR && mkdir -p $TMP_DIR/{admin,bin,logs,src}
 
 boulderDir=$TMP_DIR/src
-boulderTag="release-2023-04-24"
+boulderTag="release-2023-05-22"
 boulderUrl="https://github.com/letsencrypt/boulder/"
 cloneDir=$(pwd)/..
 
@@ -18,7 +18,9 @@ BUILD_IMAGE=$(eval echo $(grep boulder-tools ../patches/docker-compose.patch | h
 
 git clone --branch $boulderTag --depth 1 $boulderUrl $boulderDir 2>/dev/null
 cd $boulderDir
-git checkout $boulderTag -b $boulderTag 2>/dev/null
+if [ $boulderTag != "main" ]; then
+    git checkout $boulderTag -b $boulderTag 2>/dev/null
+fi
 
 if [ "$BUILD_IMAGE" == "" ]; then
     BUILD_IMAGE=$(eval echo $(grep boulder-tools $TMP_DIR/src/docker-compose.yml | grep "image:" | head -1 | sed -e "s/image://" | sed -e "s/&boulder_image//"))

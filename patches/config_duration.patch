@@ -1,0 +1,13 @@
+diff --git a/config/duration.go b/config/duration.go
+index c97eeb486..6167bf768 100644
+--- a/config/duration.go
++++ b/config/duration.go
+@@ -9,7 +9,7 @@ import (
+ // Duration is just an alias for time.Duration that allows
+ // serialization to YAML as well as JSON.
+ type Duration struct {
+-	time.Duration `validate:"required"`
++	time.Duration
+ }
+ 
+ // ErrDurationMustBeString is returned when a non-string value is

@@ -1,0 +1,14 @@
+diff --git a/log/prod_prefix.go b/log/prod_prefix.go
+index b4cf55daf..91f1aee8b 100644
+--- a/log/prod_prefix.go
++++ b/log/prod_prefix.go
+@@ -25,6 +25,9 @@ func getPrefix() (string, string) {
+ 	}
+ 
+ 	prefix := fmt.Sprintf("%s %s %s[%d]: ", shortHostname, datacenter, core.Command(), os.Getpid())
++	if datacenter == "unknown" {
++		prefix = fmt.Sprintf("%s[%d]: ", core.Command(), os.Getpid())
++	}
+ 	clkFormat := "2006-01-02T15:04:05.000000+00:00Z"
+ 
+ 	return prefix, clkFormat

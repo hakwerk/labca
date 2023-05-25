@@ -1,35 +1,41 @@
 diff --git a/cmd/boulder-va/main.go b/cmd/boulder-va/main.go
-index ebc83fa14..cfef7773c 100644
+index 3625dace9..55cb7cc18 100644
 --- a/cmd/boulder-va/main.go
 +++ b/cmd/boulder-va/main.go
-@@ -25,8 +25,10 @@ type Config struct {
- 		// DNSTries is the number of times to try a DNS query (that has a temporary error)
+@@ -27,8 +27,9 @@ type Config struct {
  		// before giving up. May be short-circuited by deadlines. A zero value
  		// will be turned into 1.
--		DNSTries                  int
--		DNSResolver               string `validate:"required"`
-+		DNSTries    int
-+		DNSResolver string `validate:"required"`
-+		// Deprecated, replaced by singular DNSResolver above.
+ 		DNSTries                  int
+-		DNSResolver               string           `validate:"required_without=DNSProvider,excluded_with=DNSProvider,omitempty,hostname|hostname_port"`
+-		DNSProvider               *cmd.DNSProvider `validate:"required_without=DNSResolver,excluded_with=DNSResolver,omitempty"`
++		DNSResolver               string `validate:"omitempty,hostname|hostname_port"`
 +		DNSResolvers              []string
- 		DNSTimeout                string
++		DNSProvider               *cmd.DNSProvider `validate:"omitempty"`
+ 		DNSTimeout                config.Duration  `validate:"required"`
  		DNSAllowLoopbackAddresses bool
  
-@@ -94,11 +96,13 @@ func main() {
- 	clk := cmd.Clock()
+@@ -88,7 +89,7 @@ func main() {
+ 		cmd.Fail("Cannot specify both 'dnsResolver' and dnsProvider")
+ 	}
+ 
+-	if c.VA.DNSResolver == "" && c.VA.DNSProvider == nil {
++	if c.VA.DNSResolver == "" && c.VA.DNSProvider == nil && len(c.VA.DNSResolvers) == 0 {
+ 		cmd.Fail("Must specify either 'dnsResolver' or dnsProvider")
+ 	}
+ 
+@@ -101,8 +102,13 @@ func main() {
+ 	}
  
  	var servers bdns.ServerProvider
--	if c.VA.DNSResolver == "" {
--		cmd.Fail("Config key 'dnsresolver' is required")
-+	if c.VA.DNSResolver != "" {
-+		servers, err = bdns.StartDynamicProvider(c.VA.DNSResolver, 60*time.Second)
-+		cmd.FailOnError(err, "Couldn't start dynamic DNS server resolver")
-+	} else {
+-	servers, err = bdns.StartDynamicProvider(c.VA.DNSProvider, 60*time.Second)
+-	cmd.FailOnError(err, "Couldn't start dynamic DNS server resolver")
++	if len(c.VA.DNSResolvers) > 0 {
 +		servers, err = bdns.NewStaticProvider(c.VA.DNSResolvers)
 +		cmd.FailOnError(err, "Couldn't parse static DNS server(s)")
- 	}
--	servers, err = bdns.StartDynamicProvider(c.VA.DNSResolver, 60*time.Second)
--	cmd.FailOnError(err, "Couldn't start dynamic DNS server resolver")
++	} else {
++		servers, err = bdns.StartDynamicProvider(c.VA.DNSProvider, 60*time.Second)
++		cmd.FailOnError(err, "Couldn't start dynamic DNS server resolver")
++	}
  	defer servers.Stop()
  
  	var resolver bdns.Client

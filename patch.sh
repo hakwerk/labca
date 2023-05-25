@@ -22,7 +22,9 @@ $SUDO patch -p1 < $cloneDir/patches/bad-key-revoker_main.patch
 $SUDO patch -p1 < $cloneDir/patches/boulder-va_main.patch
 $SUDO patch -p1 < $cloneDir/patches/ca_crl.patch
 $SUDO patch -p1 < $cloneDir/patches/cert-checker_main.patch
+$SUDO patch -p1 < $cloneDir/patches/cmd_config.patch
 $SUDO patch -p1 < $cloneDir/patches/cmd_shell.patch
+$SUDO patch -p1 < $cloneDir/patches/config_duration.patch
 $SUDO patch -p1 < $cloneDir/patches/contact-auditor_main.patch
 $SUDO patch -p1 < $cloneDir/patches/core_interfaces.patch
 $SUDO patch -p1 < $cloneDir/patches/crl-storer_main.patch
@@ -31,7 +33,8 @@ $SUDO patch -p1 < $cloneDir/patches/db_migrations.patch
 $SUDO patch -p1 < $cloneDir/patches/errors_errors.patch
 $SUDO patch -p1 < $cloneDir/patches/expiration-mailer_main.patch
 $SUDO patch -p1 < $cloneDir/patches/linter_linter.patch
-$SUDO patch -p1 < $cloneDir/patches/log_log.patch
+$SUDO patch -p1 < $cloneDir/patches/log_prod_prefix.patch
+$SUDO patch -p1 < $cloneDir/patches/log_test_prefix.patch
 $SUDO patch -p1 < $cloneDir/patches/log-validator_main.patch
 $SUDO patch -p1 < $cloneDir/patches/mail_mailer.patch
 $SUDO patch -p1 < $cloneDir/patches/makefile.patch

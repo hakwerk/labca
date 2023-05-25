@@ -1,5 +1,5 @@
 diff --git a/docker-compose.yml b/docker-compose.yml
-index 5699aa777..cfdcc784a 100644
+index 05d16611b..4fe5b4749 100644
 --- a/docker-compose.yml
 +++ b/docker-compose.yml
 @@ -8,10 +8,12 @@ services:
@@ -17,7 +17,7 @@ index 5699aa777..cfdcc784a 100644
        - ./.gocache:/root/.cache/go-build:cached
        - ./.hierarchy:/hierarchy/:cached
        - ./.softhsm-tokens/:/var/lib/softhsm/tokens/:cached
-@@ -31,19 +33,26 @@ services:
+@@ -31,20 +33,26 @@ services:
      # TODO: Remove this when ServerAddress is deprecated in favor of SRV records
      # and DNSAuthority.
      dns: 10.55.55.10
@@ -33,6 +33,7 @@ index 5699aa777..cfdcc784a 100644
        - bmysql
 -      - bproxysql
        - bconsul
+-      - bjaeger
 -    entrypoint: test/entrypoint.sh
 -    working_dir: &boulder_working_dir /boulder
 +    entrypoint: labca/entrypoint.sh
@@ -51,7 +52,7 @@ index 5699aa777..cfdcc784a 100644
      networks:
        bluenet:
          aliases:
-@@ -57,22 +66,11 @@ services:
+@@ -58,22 +66,11 @@ services:
      # small.
      command: mysqld --bind-address=0.0.0.0 --slow-query-log --log-output=TABLE --log-queries-not-using-indexes=ON
      logging:
@@ -79,7 +80,7 @@ index 5699aa777..cfdcc784a 100644
  
    bconsul:
      image: hashicorp/consul:1.13.1
-@@ -83,18 +81,70 @@ services:
+@@ -84,26 +81,70 @@ services:
          ipv4_address: 10.55.55.10
      command: "consul agent -dev -config-format=hcl -config-file=/test/consul/config.hcl"
  
@@ -127,10 +128,16 @@ index 5699aa777..cfdcc784a 100644
 +      - /home/labca/nginx_data/conf.d:/etc/nginx/conf.d
 +      - /home/labca/nginx_data/ssl:/etc/nginx/ssl
 +      - /home/labca/nginx_data/static:/var/www/html
-+
+ 
+-  bjaeger:
+-    image: jaegertracing/all-in-one:1.44
+-    environment:
+-      COLLECTOR_OTLP_ENABLED: "true"
 +  control:
 +    image: *boulder_image
-+    networks:
+     networks:
+-      bluenet:
+-        ipv4_address: 10.77.77.17
 +      - bluenet
 +    volumes:
 +      - /var/run/docker.sock:/var/run/docker.sock

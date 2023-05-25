@@ -20,7 +20,7 @@ index f4696dc2..b9c19ce3 100644
  		},
  		"maximumRevocations": 15,
  		"findCertificatesBatchSize": 10,
--		"interval": "1s",
+-		"interval": "50ms",
 +		"interval": "5m",
  		"backoffIntervalMax": "2s"
  	},
