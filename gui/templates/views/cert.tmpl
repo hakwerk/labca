@@ -22,6 +22,10 @@
 <form role="form" class="form-cert" action="{{ .RequestBase }}/setup" enctype="multipart/form-data" method="POST">
   <input type="hidden" name="cert" value="{{ if .IsRoot }}root{{ else }}issuer{{ end }}">
   <input type="hidden" name="createtype" value="generate">
+  <input type="hidden" name="keep-root-online" id="keep-root-online">
+  <input type="hidden" name="ack-rootkey" id="ack-rootkey">
+  <input type="hidden" name="rootkey" id="rootkey">
+  <input type="hidden" name="rootpassphrase" id="rootpassphrase">
   <div class="form-group">
     <label for="keytype">Key type and size:</label>
     <select class="form-control" id="keytype" name="keytype" required autocomplete="off">
@@ -36,21 +40,21 @@
   </div>
   <div class="form-group">
     <label for="c">Country (2-Letter code):</label>
-    <input class="form-control" type="text" id="c" name="c" value="{{ .Country }}" maxlength="2" required {{ if ne .Country "" }}readonly{{ end }}>
+    <input class="form-control" type="text" id="c" name="c" value="{{ .Country }}" maxlength="2" required {{ if and (ne .Country "") (.IsRootGenerated) }}readonly{{ end }}>
     {{ with .Errors.Country }}
     <span class="error">{{ . }}</span>
     {{ end }}
   </div>
   <div class="form-group">
     <label for="o">Organization:</label>
-    <input class="form-control" type="text" id="o" name="o" value="{{ .Organization }}" required {{ if ne .Organization "" }}readonly{{ end }}>
+    <input class="form-control" type="text" id="o" name="o" value="{{ .Organization }}" required {{ if and (ne .Organization "") (.IsRootGenerated) }}readonly{{ end }}>
     {{ with .Errors.Organization }}
     <span class="error">{{ . }}</span>
     {{ end }}
   </div>
   <div class="form-group">
     <label for="ou">Org. Unit (optional):</label>
-    <input class="form-control" type="text" id="ou" name="ou" value="{{ .OrgUnit }}" {{ if and (ne .Organization "") (not .IsRoot) }}readonly{{ end }}>
+    <input class="form-control" type="text" id="ou" name="ou" value="{{ .OrgUnit }}" {{ if and (ne .Organization "") (.IsRootGenerated) }}readonly{{ end }}>
     {{ with .Errors.OrgUnit }}
     <span class="error">{{ . }}</span>
     {{ end }}
@@ -66,7 +70,13 @@
     {{ with .Errors.Generate }}
     <span class="error">{{ . }}</span><br/>
     {{ end }}
-    <input class="btn btn-default" type="submit" value="Generate">
+    <input class="btn btn-default" type="submit" value="Generate" name="generate" id="generatebtn">
+    {{ if and (not .IsRoot) (not .IsRootGenerated) }}
+    <input class="btn btn-default" type="submit" value="Get CSR" name="getcsr">
+    {{ end }}
+    {{ if not .IsRoot }}
+    <input class="btn btn-danger btn-right" type="submit" value="Revert Root" name="revertroot" id="revertroot">
+    {{ end }}
   </div>
 </form>
   </div>
@@ -105,12 +115,20 @@
   <input type="hidden" name="cert" value="{{ if .IsRoot }}root{{ else }}issuer{{ end }}">
   <input type="hidden" name="createtype" value="upload">
   <div class="form-group">
-    <label for="key">Key (in PEM format):
+    <label for="certificate">Certificate (in PEM format):
+    {{ with .Errors.Certificate }}
+    <span class="error"><br/>{{ . }}</span>
+    {{ end }}
+    </label>
+    <textarea class="form-control" id="certificate" name="certificate" rows="10" cols="80" required>{{ .Certificate }}</textarea>
+  </div>
+  <div class="form-group">
+    <label for="key">Key (in PEM format{{ if .IsRoot }}; optional{{ end }}):
     {{ with .Errors.Key }}
     <span class="error"><br/>{{ . }}</span>
     {{ end }}
     </label>
-    <textarea class="form-control" id="key" name="key" rows="10" cols="80" required>{{ .Key }}</textarea>
+    <textarea class="form-control" id="key" name="key" rows="10" cols="80">{{ .Key }}</textarea>
   </div>
   <div class="form-group">
     <label for="passphrase">Passphrase (optional):
@@ -120,13 +138,14 @@
     </label>
     <input class="form-control" type="password" id="passphrase" name="passphrase" value="">
   </div>
-  <div class="form-group">
-    <label for="certificate">Certificate (in PEM format):
-    {{ with .Errors.Certificate }}
+  <div class="form-group" style="display: none;">
+    You should provide the Root CRL here as well, but this can also be done later<br>
+    <label for="crl">Root CRL (optional):
+    {{ with .Errors.CRL }}
     <span class="error"><br/>{{ . }}</span>
     {{ end }}
     </label>
-    <textarea class="form-control" id="certificate" name="certificate" rows="10" cols="80" required>{{ .Certificate }}</textarea>
+    <textarea class="form-control" id="crl" name="crl" rows="10" cols="80">{{ .CRL }}</textarea>
   </div>
   <div>
     {{ with .Errors.Upload }}
@@ -140,6 +159,63 @@
 <p id="processing" class="hidden"><br/>Setting up LabCA and applying configuration. This will take a minute...<br/>
 <img id="restart-spinner" src="static/img/spinner.gif" height="36"></p>
 {{end}}
+
+{{ if ne .RootKey nil }}
+<div id="modal-rootkey" class="modal fade" data-backdrop="static" data-keyboard="false" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content modal-rootkey-content">
+      <h4>Root Key</h4>
+      <p>This is the generated private key for the Root CA certificate. <span class="error"><b>Copy it now and store
+      it in a secure, private and offline location!</b></span> After setting up the Issuer CA certificate in the next
+      step, we will delete the key from the system.<br/>
+      When we need the key for certain operations in the future, we will ask for it.</p>
+      <textarea class="form-control" rows="10" cols="80" readonly>{{ .RootKey }}</textarea>
+      <input type="checkbox" id="modal-keep-root-online"> Keep the root key on the LabCA server (UNSAFE)<br/>
+      {{ with .CertificateInfo.Errors.Modal }}
+      <span class="error">{{ . }}</span><br/>
+      {{ end }}
+      <input class="btn btn-default btn-reg" value="OK" id="modal-rootkey-done"/>
+    </div>
+  </div>
+</div>
+{{ end }}
+
+{{ if and (not .CertificateInfo.IsRoot) (ne .CSR nil) }}
+<div id="modal-csr" class="modal fade" data-backdrop="static" data-keyboard="false" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content modal-csr-content">
+      <h4>CSR</h4>
+      <textarea class="form-control" rows="10" cols="80" readonly>{{ .CSR }}</textarea>
+      <p>Please have this CSR signed by the offline Root CA. Then you can close this dialog and upload the resulting certificate.</p>
+      {{ with .CertificateInfo.Errors.Modal }}
+      <span class="error">{{ . }}</span><br/>
+      {{ end }}
+      <input class="btn btn-default btn-reg" value="OK" id="modal-csr-done"/>
+    </div>
+  </div>
+</div>
+{{ end }}
+
+{{ if .GetRootKey }}
+<div id="modal-root-key" class="modal fade" data-backdrop="static" data-keyboard="false" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content modal-csr-content">
+      <h4>Root Key Required</h4>
+      <p>Please provide the Root CA key file in PEM format. As soon as we are done with it, it will be removed from the system again.</p>
+      <textarea class="form-control" id="modal-rootkey" rows="10" cols="80"></textarea>
+      <div class="form-group">
+        <label for="modal-rootpassphrase">Passphrase (optional):</label>
+        <input class="form-control" type="password" id="modal-rootpassphrase" value="">
+      </div>
+      {{ with .CertificateInfo.Errors.Modal }}
+      <span class="error">{{ . }}</span><br/>
+      {{ end }}
+      <input class="btn btn-default btn-reg" value="Upload" id="modal-root-key-upload"/>
+    </div>
+  </div>
+</div>
+{{ end }}
+
 {{ template "partials/progress.tmpl" . }}
 {{end}}
 
@@ -151,6 +227,46 @@
                     $(window).resize();
                 }, 250);
             });
+
+{{ if ne .CSR nil }}
+            $("#modal-csr").modal("show");
+{{ end }}
+            $("#modal-csr-done").click(function() {
+                $('.nav-tabs a[href="#upload"]').tab('show');
+                $("#key").val("").parent().hide();
+                $("#passphrase").val("").parent().hide();
+                $("#crl").val("").parent().show();
+                $("#modal-csr").modal("hide");
+            });
+
+{{ if ne .RootKey nil }}
+            $("#modal-rootkey").modal("show");
+{{ end }}
+            $("#modal-rootkey-done").click(function() {
+                $("#ack-rootkey").val("yes");
+                $("#keep-root-online").val($("#modal-keep-root-online").prop("checked"));
+                $("#modal-rootkey").modal("hide");
+                $("#generatebtn").click();
+            });
+
+{{ if .GetRootKey }}
+            $("#modal-root-key").modal("show");
+{{ end }}
+            $("#modal-root-key-upload").click(function() {
+                $("#rootkey").val($("#modal-rootkey").val());
+                $("#rootpassphrase").val($("#modal-rootpassphrase").val());
+                $("#modal-root-key").modal("hide");
+                $("#generatebtn").click();
+            });
+
+            $("#revertroot").click(function() {
+                if (!window.confirm("Do you really want to remove the Root CA certificate?")) {
+                    return false;
+                }
+                $("#c").removeAttr("required");
+                $("#o").removeAttr("required");
+            });
+
 {{ if not .CertificateInfo.IsRoot }}
 
             $(".form-cert").submit(function() {

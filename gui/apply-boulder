@@ -191,13 +191,15 @@ fi
 if [ -e $PKI_ROOT_CERT_BASE.key ]; then
     cp -p $PKI_ROOT_CERT_BASE.key test-root.key
     cp -p $PKI_ROOT_CERT_BASE.key.der test-root.key.der
-    cp -p $PKI_ROOT_CERT_BASE.pem test-root.pem
     openssl rsa -in $PKI_ROOT_CERT_BASE.key -pubout > test-root.pubkey.pem 2>/dev/null || openssl ec -in $PKI_ROOT_CERT_BASE.key -pubout > test-root.pubkey.pem
     openssl pkcs8 -topk8 -inform PEM -outform PEM -nocrypt -in test-root.key -out test-root.p8
+fi
+if [ -e $PKI_ROOT_CERT_BASE.pem ]; then
+    cp -p $PKI_ROOT_CERT_BASE.pem test-root.pem
 fi
 
 chown -R `ls -l PKI.md | cut -d" " -f 3,4 | sed 's/ /:/g'` .
 
-if [ -e $PKI_INT_CERT_BASE.key ] && [ -e $PKI_ROOT_CERT_BASE.key ]; then
+if [ -e $PKI_INT_CERT_BASE.key ] && [ -e $PKI_ROOT_CERT_BASE.pem ]; then
     [ -f setup_complete ] || touch setup_complete
 fi

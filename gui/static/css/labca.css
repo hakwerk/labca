@@ -124,6 +124,10 @@ td.pad-low-top {
     width: 10em;
 }
 
+.btn-right {
+    float: right;
+}
+
 .vmiddle {
     vertical-align: middle !important;
 }
@@ -138,6 +142,16 @@ td.pad-low-top {
 .bd-modal-lg .modal-dialog .modal-content {
     text-align: center;
     border: none;
+}
+
+.modal-content {
+    padding: 6px;
+    width: 614px;
+}
+
+.modal-content > textarea {
+    width: 600px;
+    height: 550px;
 }
 
 .non-fluid {

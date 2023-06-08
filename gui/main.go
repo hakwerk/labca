@@ -18,6 +18,7 @@ import (
 	"fmt"
 	"html/template"
 	"io"
+	"io/ioutil"
 	"log"
 	"math"
 	"math/big"
@@ -1542,6 +1543,9 @@ func _buildCI(r *http.Request, session *sessions.Session, isRoot bool) *Certific
 	ci.Initialize()
 
 	if session.Values["ct"] != nil {
+		if !isRoot && session.Values["ct"].(string) == "generate" {
+			ci.IsRootGenerated = true
+		}
 		ci.CreateType = session.Values["ct"].(string)
 	}
 	if session.Values["kt"] != nil {
@@ -1587,6 +1591,49 @@ func issuerNameID(certfile string) (int64, error) {
 }
 
 func _certCreate(w http.ResponseWriter, r *http.Request, certBase string, isRoot bool) bool {
+	if r.Method == "POST" {
+		if err := r.ParseMultipartForm(2 * 1024 * 1024); err != nil {
+			errorHandler(w, r, err, http.StatusInternalServerError)
+			return false
+		}
+
+		if r.Form.Get("revertroot") != "" {
+			// From issuer certificate creation page it is possible to remove the root again and start over
+			exeCmd("rm data/root-ca.key") // Does not necessarily exist
+			if _, err := exeCmd("rm data/root-ca.pem"); err != nil {
+				errorHandler(w, r, err, http.StatusInternalServerError)
+				return false
+			}
+			certBase = "root-ca"
+			isRoot = true
+			r.Method = "GET"
+			sess, _ := sessionStore.Get(r, "labca")
+			sess.Values["ct"] = "generate"
+			if err := sess.Save(r, w); err != nil {
+				log.Printf("cannot save session: %s\n", err)
+			}
+		} else if r.Form.Get("ack-rootkey") == "yes" {
+			// Root Key was shown, do we need to keep it online?
+			if r.Form.Get("keep-root-online") == "true" {
+				sess, _ := sessionStore.Get(r, "labca")
+				sess.Values["root-online"] = true
+				if err := sess.Save(r, w); err != nil {
+					log.Printf("cannot save session: %s\n", err)
+				}
+			}
+
+			// Undo what setupHandler did when showing the public key...
+			_, errPem := os.Stat("data/root-ca.pem")
+			_, errTmp := os.Stat("data/root-ca.pem_TMP")
+			if os.IsNotExist(errPem) && !os.IsNotExist(errTmp) {
+				exeCmd("mv data/root-ca.pem_TMP data/root-ca.pem")
+			}
+
+			r.Method = "GET"
+			return true
+		}
+	}
+
 	path := "data/"
 	if !isRoot {
 		path = path + "issuer/"
@@ -1641,15 +1688,99 @@ func _certCreate(w http.ResponseWriter, r *http.Request, certBase string, isRoot
 			ci.RequestBase = r.Header.Get("X-Request-Base")
 
 			if !ci.Validate() {
-				render(w, r, "cert:manage", map[string]interface{}{"CertificateInfo": ci, "Progress": _progress(certBase), "HelpText": _helptext(certBase)})
-				return false
+				if session.Values["csr"] == true {
+					delete(ci.Errors, "Key")
+				} else {
+					render(w, r, "cert:manage", map[string]interface{}{"CertificateInfo": ci, "Progress": _progress(certBase), "HelpText": _helptext(certBase)})
+					return false
+				}
 			}
 
-			if err := ci.Create(path, certBase); err != nil {
-				ci.Errors[cases.Title(language.Und).String(ci.CreateType)] = err.Error()
-				log.Printf("_certCreate: create failed: %v", err)
-				render(w, r, "cert:manage", map[string]interface{}{"CertificateInfo": ci, "Progress": _progress(certBase), "HelpText": _helptext(certBase)})
-				return false
+			wasCSR := session.Values["csr"] == true
+			if r.Form.Get("ack-rootkey") != "yes" {
+				if r.Form.Get("rootkey") != "" {
+					rootci := &CertificateInfo{
+						IsRoot:     true,
+						Key:        r.Form.Get("rootkey"),
+						Passphrase: r.Form.Get("rootpassphrase"),
+					}
+					if !rootci.StoreRootKey("data/") {
+						ci.Errors["Modal"] = rootci.Errors["Modal"]
+						render(w, r, "cert:manage", map[string]interface{}{"CertificateInfo": ci, "GetRootKey": true, "Progress": _progress(certBase), "HelpText": _helptext(certBase)})
+						return false
+					}
+				}
+				if r.Form.Get("crl") != "" {
+					rootci := &CertificateInfo{
+						IsRoot: true,
+						CRL:    r.Form.Get("crl"),
+					}
+					if !rootci.StoreCRL("data/") {
+						ci.Errors["Modal"] = rootci.Errors["Modal"]
+						csr, err := os.Open(path + certBase + ".csr")
+						if err != nil {
+							ci.Errors[cases.Title(language.Und).String(ci.CreateType)] = "Error reading .csr file! See LabCA logs for details"
+							log.Printf("_certCreate: read csr: %v", err)
+							render(w, r, "cert:manage", map[string]interface{}{"CertificateInfo": ci, "Progress": _progress(certBase), "HelpText": _helptext(certBase)})
+							return false
+						}
+						defer csr.Close()
+						b, err := ioutil.ReadAll(csr)
+
+						render(w, r, "cert:manage", map[string]interface{}{"CertificateInfo": ci, "CSR": string(b), "Progress": _progress(certBase), "HelpText": _helptext(certBase)})
+						return false
+					}
+				}
+
+				if err := ci.Create(path, certBase, wasCSR); err != nil {
+					if err.Error() == "NO_ROOT_KEY" {
+						if r.Form.Get("generate") != "" {
+							if r.Form.Get("rootkey") == "" {
+								render(w, r, "cert:manage", map[string]interface{}{"CertificateInfo": ci, "GetRootKey": true, "Progress": _progress(certBase), "HelpText": _helptext(certBase)})
+								return false
+							} else {
+								rootci := &CertificateInfo{
+									IsRoot:     true,
+									Key:        r.Form.Get("rootkey"),
+									Passphrase: r.Form.Get("rootpassphrase"),
+								}
+								if !rootci.StoreRootKey("data/") {
+									ci.Errors["Modal"] = rootci.Errors["Modal"]
+									render(w, r, "cert:manage", map[string]interface{}{"CertificateInfo": ci, "GetRootKey": true, "Progress": _progress(certBase), "HelpText": _helptext(certBase)})
+									return false
+								}
+
+								render(w, r, "cert:manage", map[string]interface{}{"CertificateInfo": ci, "Progress": _progress(certBase), "HelpText": _helptext(certBase)})
+								return false
+							}
+						}
+
+						if r.Form.Get("getcsr") != "" {
+							csr, err := os.Open(path + certBase + ".csr")
+							if err != nil {
+								ci.Errors[cases.Title(language.Und).String(ci.CreateType)] = "Error reading .csr file! See LabCA logs for details"
+								log.Printf("_certCreate: read csr: %v", err)
+								render(w, r, "cert:manage", map[string]interface{}{"CertificateInfo": ci, "Progress": _progress(certBase), "HelpText": _helptext(certBase)})
+								return false
+							}
+							defer csr.Close()
+							b, err := ioutil.ReadAll(csr)
+
+							session.Values["csr"] = true
+							if err = session.Save(r, w); err != nil {
+								log.Printf("cannot save session: %s\n", err)
+							}
+
+							render(w, r, "cert:manage", map[string]interface{}{"CertificateInfo": ci, "CSR": string(b), "Progress": _progress(certBase), "HelpText": _helptext(certBase)})
+							return false
+						}
+					} else {
+						ci.Errors[cases.Title(language.Und).String(ci.CreateType)] = err.Error()
+						log.Printf("_certCreate: create failed: %v", err)
+						render(w, r, "cert:manage", map[string]interface{}{"CertificateInfo": ci, "Progress": _progress(certBase), "HelpText": _helptext(certBase)})
+						return false
+					}
+				}
 			}
 
 			if !ci.IsRoot {
@@ -1659,6 +1790,15 @@ func _certCreate(w http.ResponseWriter, r *http.Request, certBase string, isRoot
 					viper.WriteConfig()
 				} else {
 					log.Printf("_certCreate: could not calculate IssuerNameID: %v", err)
+				}
+
+				if session.Values["root-online"] != true {
+					if _, err := os.Stat(path + "../root-ca.key"); !os.IsNotExist(err) {
+						fmt.Println("Removing private Root key from the system...")
+						if _, err := exeCmd("rm " + path + "../root-ca.key"); err != nil {
+							log.Printf("_certCreate: error deleting root key: %v", err)
+						}
+					}
 				}
 			}
 
@@ -1675,6 +1815,21 @@ func _certCreate(w http.ResponseWriter, r *http.Request, certBase string, isRoot
 			session.Values["cn"] = ci.CommonName
 			if err = session.Save(r, w); err != nil {
 				log.Printf("cannot save session: %s\n", err)
+			}
+
+			if ci.IsRoot && ci.CreateType == "generate" && r.Form.Get("ack-rootkey") != "yes" {
+				key, err := os.Open(path + certBase + ".key")
+				if err != nil {
+					ci.Errors[cases.Title(language.Und).String(ci.CreateType)] = "Error reading .key file! See LabCA logs for details"
+					log.Printf("_certCreate: read key: %v", err)
+					render(w, r, "cert:manage", map[string]interface{}{"CertificateInfo": ci, "Progress": _progress(certBase), "HelpText": _helptext(certBase)})
+					return false
+				}
+				defer key.Close()
+				b, err := ioutil.ReadAll(key)
+
+				render(w, r, "cert:manage", map[string]interface{}{"CertificateInfo": ci, "RootKey": string(b), "Progress": _progress(certBase), "HelpText": _helptext(certBase)})
+				return false
 			}
 
 			// Fake the method to GET as we need to continue in the setupHandler() function
@@ -1811,18 +1966,25 @@ func _helptext(stage string) template.HTML {
 		return template.HTML(fmt.Sprint("<p>This is the top level certificate that will sign the issuer\n",
 			"certificate(s). You can either generate a fresh Root CA (Certificate Authority) or import an\n",
 			"existing one, e.g. a backup from another LabCA instance.</p>\n",
-			"<p>If you want to generate a certificate, pick a key type and strength (the higher the number the\n",
+			"<p>If you want to <b>generate</b> a new certificate, pick a key type and strength (the higher the number the\n",
 			"more secure, ECDSA is more modern than RSA), provide at least a country and organization name,\n",
 			"and the common name. It is recommended that the common name contains the word 'Root' as well\n",
 			"as your organization name so you can recognize it, and that's why that is automatically filled\n",
-			"once you leave the organization field.</p>"))
+			"once you leave the organization field.</p>\n",
+			"<p>If you want to <b>upload</b> an existing root certificate, you may choose to keep the private key\n",
+			"offline for security reasons according to best practices. If you do include it here, we will be able\n",
+			"to generate an issuing certificate automatically in the next step. If you don't include it, we will\n",
+			"ask for it when needed.</p>"))
 	} else if stage == "ca-int" {
 		return template.HTML(fmt.Sprint("<p>This is what end users will see as the issuing certificate. Again,\n",
 			"you can either generate a fresh certificate or import an existing one, as long as it is signed by\n",
 			"the Root CA from the previous step.</p>\n",
-			"<p>If you want to generate a certificate, by default the same key type and strength is selected as\n",
+			"<p>If you want to <b>generate</b> a certificate, by default the same key type and strength is selected as\n",
 			"was chosen in the previous step when generating the root, but you may choose a different\n",
-			"one. By default the common name is the same as the CN for the Root CA, minus the word 'Root'.</p>"))
+			"one. By default the common name is the same as the CN for the Root CA, minus the word 'Root'.</p>\n",
+			"<p>If you are using an offline Root CA certificate then you can download the Certificate Signing\n",
+			"Request (CSR) here and have it signed by the Root CA. Alternatively we (temporarily) need the\n",
+			"secret key of the Root CA for generating the issuing certificate.</p>"))
 	} else if stage == "standalone" {
 		return template.HTML(fmt.Sprint("<p>Currently only step-ca is supported, using the MySQL database backend.\n",
 			"Please provide the necessary connectiuon details here."))
@@ -2168,7 +2330,9 @@ func setupHandler(w http.ResponseWriter, r *http.Request) {
 	// 3. Setup root CA certificate
 	if !_certCreate(w, r, "root-ca", true) {
 		// Cleanup the cert (if it even exists) so we will retry on the next run
-		os.Remove("data/root-ca.pem")
+		if _, err := os.Stat("data/root-ca.pem"); !os.IsNotExist(err) {
+			exeCmd("mv data/root-ca.pem data/root-ca.pem_TMP")
+		}
 		return
 	}
 

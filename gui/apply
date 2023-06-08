@@ -12,7 +12,11 @@ cd /opt/wwwstatic
 
 $baseDir/apply-nginx
 
-cp $PKI_ROOT_CERT_BASE.crl crl/
+if [ -e "$PKI_ROOT_CERT_BASE.crl" ]; then
+    cp $PKI_ROOT_CERT_BASE.crl crl/
+else
+    echo "WARNING: no Root CRL file present - please upload one from the manage page"
+fi
 cp $PKI_ROOT_CERT_BASE.pem certs/
 cp $PKI_ROOT_CERT_BASE.der certs/
 cp $PKI_INT_CERT_BASE.pem certs/
