@@ -1039,6 +1039,95 @@ func _checkUpdatesHandler(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(res)
 }
 
+func generateCRLHandler(w http.ResponseWriter, r *http.Request, isRoot bool) {
+	res := struct {
+		Success bool
+		Errors  map[string]string
+	}{Success: true, Errors: make(map[string]string)}
+
+	if isRoot {
+		path := "data/"
+		certBase := "root-ca"
+		keyFileExists := true
+		if _, err := os.Stat(path + certBase + ".key"); os.IsNotExist(err) {
+			keyFileExists = false
+		}
+		if keyFileExists {
+			if _, err := exeCmd("openssl ca -config " + path + "openssl.cnf -gencrl -keyfile " + path + certBase + ".key -cert " + path + certBase + ".pem -out " + path + certBase + ".crl"); err != nil {
+				res.Success = false
+				res.Errors["CRL"] = "Could not generate Root CRL - see logs"
+			}
+		} else {
+			if r.Form.Get("rootkey") == "" {
+				res.Success = false
+				res.Errors["CRL"] = "NO_ROOT_KEY"
+			} else {
+				rootci := &CertificateInfo{
+					IsRoot:     true,
+					Key:        r.Form.Get("rootkey"),
+					Passphrase: r.Form.Get("rootpassphrase"),
+				}
+				if !rootci.StoreRootKey(path) {
+					res.Success = false
+					res.Errors["CRL"] = rootci.Errors["Modal"]
+				} else {
+					// Generate CRL now that we have the key
+					if _, err := exeCmd("openssl ca -config " + path + "openssl.cnf -gencrl -keyfile " + path + certBase + ".key -cert " + path + certBase + ".pem -out " + path + certBase + ".crl"); err != nil {
+						res.Success = false
+						res.Errors["CRL"] = "Could not generate Root CRL - see logs"
+					}
+					// Remove the Root Key if we want to keep it offline
+					if viper.GetBool("keep_root_offline") {
+						if _, err := os.Stat(path + certBase + ".key"); !os.IsNotExist(err) {
+							fmt.Println("Removing private Root key from the system...")
+							if _, err := exeCmd("rm " + path + certBase + ".key"); err != nil {
+								log.Printf("_certCreate: error deleting root key: %v", err)
+							}
+						}
+						if _, err := os.Stat(path + certBase + ".key.der"); !os.IsNotExist(err) {
+							if _, err := exeCmd("rm " + path + certBase + ".key.der"); err != nil {
+								log.Printf("_certCreate: error deleting root key (DER format): %v", err)
+							}
+						}
+					}
+				}
+			}
+		}
+
+		_hostCommand(w, r, "check-crl")
+
+	} else { // !isRoot
+		if !_hostCommand(w, r, "gen-issuer-crl") {
+			res.Success = false
+			res.Errors["CRL"] = "Failed to generate CRL - see logs"
+		}
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(res)
+}
+
+func uploadCRLHandler(w http.ResponseWriter, r *http.Request) {
+	res := struct {
+		Success bool
+		Errors  map[string]string
+	}{Success: true, Errors: make(map[string]string)}
+
+	rootci := &CertificateInfo{
+		IsRoot: true,
+		CRL:    r.Form.Get("crl"),
+	}
+	if !rootci.StoreCRL("data/") {
+		res.Success = false
+		res.Errors["CRL"] = rootci.Errors["Modal"]
+	}
+
+	_hostCommand(w, r, "check-crl")
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(res)
+}
+
 func _managePostDispatch(w http.ResponseWriter, r *http.Request, action string) bool {
 	if action == "backup-restore" || action == "backup-delete" || action == "backup-now" {
 		_backupHandler(w, r)
@@ -1080,6 +1169,21 @@ func _managePostDispatch(w http.ResponseWriter, r *http.Request, action string) 
 		return true
 	}
 
+	if action == "upload-root-crl" {
+		uploadCRLHandler(w, r)
+		return true
+	}
+
+	if action == "gen-root-crl" {
+		generateCRLHandler(w, r, true)
+		return true
+	}
+
+	if action == "gen-issuer-crl" {
+		generateCRLHandler(w, r, false)
+		return true
+	}
+
 	return false
 }
 
@@ -1113,6 +1217,9 @@ func _managePost(w http.ResponseWriter, r *http.Request) {
 		"send-email",
 		"version-check",
 		"version-update",
+		"upload-root-crl",
+		"gen-root-crl",
+		"gen-issuer-crl",
 	} {
 		if a == action {
 			actionKnown = true
@@ -1599,7 +1706,8 @@ func _certCreate(w http.ResponseWriter, r *http.Request, certBase string, isRoot
 
 		if r.Form.Get("revertroot") != "" {
 			// From issuer certificate creation page it is possible to remove the root again and start over
-			exeCmd("rm data/root-ca.key") // Does not necessarily exist
+			exeCmd("rm data/root-ca.key")     // Does not necessarily exist
+			exeCmd("rm data/root-ca.key.der") // Does not necessarily exist
 			if _, err := exeCmd("rm data/root-ca.pem"); err != nil {
 				errorHandler(w, r, err, http.StatusInternalServerError)
 				return false
@@ -1614,13 +1722,8 @@ func _certCreate(w http.ResponseWriter, r *http.Request, certBase string, isRoot
 			}
 		} else if r.Form.Get("ack-rootkey") == "yes" {
 			// Root Key was shown, do we need to keep it online?
-			if r.Form.Get("keep-root-online") == "true" {
-				sess, _ := sessionStore.Get(r, "labca")
-				sess.Values["root-online"] = true
-				if err := sess.Save(r, w); err != nil {
-					log.Printf("cannot save session: %s\n", err)
-				}
-			}
+			viper.Set("keep_root_offline", r.Form.Get("keep-root-online") != "true")
+			viper.WriteConfig()
 
 			// Undo what setupHandler did when showing the public key...
 			_, errPem := os.Stat("data/root-ca.pem")
@@ -1792,11 +1895,16 @@ func _certCreate(w http.ResponseWriter, r *http.Request, certBase string, isRoot
 					log.Printf("_certCreate: could not calculate IssuerNameID: %v", err)
 				}
 
-				if session.Values["root-online"] != true {
+				if viper.GetBool("keep_root_offline") {
 					if _, err := os.Stat(path + "../root-ca.key"); !os.IsNotExist(err) {
 						fmt.Println("Removing private Root key from the system...")
 						if _, err := exeCmd("rm " + path + "../root-ca.key"); err != nil {
 							log.Printf("_certCreate: error deleting root key: %v", err)
+						}
+					}
+					if _, err := os.Stat(path + "../root-ca.key.der"); !os.IsNotExist(err) {
+						if _, err := exeCmd("rm " + path + "../root-ca.key.der"); err != nil {
+							log.Printf("_certCreate: error deleting root key (DER format): %v", err)
 						}
 					}
 				}

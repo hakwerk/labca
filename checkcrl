@@ -2,6 +2,15 @@
 
 set -e
 
+if [ -e data/root-ca.crl ] && [ ! -e /var/www/html/crl/root-ca.crl ]; then
+    cp -p data/root-ca.crl /var/www/html/crl/root-ca.crl
+    touch /var/www/html/crl
+fi
+if [ -e data/root-ca.crl ] && [ data/root-ca.crl -nt /var/www/html/crl/root-ca.crl ]; then
+    cp -p data/root-ca.crl /var/www/html/crl/root-ca.crl
+    touch /var/www/html/crl
+fi
+
 cd /var/www/html
 if [ crl/ -nt certs/index.html ]; then
     echo "Updating certs/index.html with latest CRL info..."

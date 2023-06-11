@@ -170,7 +170,7 @@
       step, we will delete the key from the system.<br/>
       When we need the key for certain operations in the future, we will ask for it.</p>
       <textarea class="form-control" rows="10" cols="80" readonly>{{ .RootKey }}</textarea>
-      <input type="checkbox" id="modal-keep-root-online"> Keep the root key on the LabCA server (UNSAFE)<br/>
+      <input type="checkbox" id="modal-keep-root-online"> Keep the root key on the LabCA server (INSECURE)<br/>
       {{ with .CertificateInfo.Errors.Modal }}
       <span class="error">{{ . }}</span><br/>
       {{ end }}
@@ -199,7 +199,7 @@
 {{ if .GetRootKey }}
 <div id="modal-root-key" class="modal fade" data-backdrop="static" data-keyboard="false" tabindex="-1">
   <div class="modal-dialog">
-    <div class="modal-content modal-csr-content">
+    <div class="modal-content modal-root-key-content">
       <h4>Root Key Required</h4>
       <p>Please provide the Root CA key file in PEM format. As soon as we are done with it, it will be removed from the system again.</p>
       <textarea class="form-control" id="modal-rootkey" rows="10" cols="80"></textarea>

@@ -239,6 +239,14 @@ case $txt in
         nohup /labca/install -b $branch &>>$LOGFILE
     fi
     ;;
+"gen-issuer-crl")
+    cd /opt/boulder
+    docker compose exec -i boulder ./bin/boulder crl-updater --config labca/config/crl-updater.json -runOnce -debug-addr :18021 &>>$LOGFILE
+    /opt/labca/checkcrl &>>$LOGFILE
+    ;;
+"check-crl")
+    /opt/labca/checkcrl &>>$LOGFILE
+    ;;
 *)
     echo "Unknown command '$txt'. ERROR!"
     exit 1

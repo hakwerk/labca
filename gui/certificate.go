@@ -664,7 +664,6 @@ func (ci *CertificateInfo) Create(path string, certBase string, wasCSR bool) err
 			keyFileExists = false
 		}
 		if keyFileExists {
-			// TODO: make option in GUI to trigger crl creation!
 			if _, err := exeCmd("openssl ca -config " + path + "openssl.cnf -gencrl -keyfile " + path + certBase + ".key -cert " + path + certBase + ".pem -out " + path + certBase + ".crl"); err != nil {
 				return reportError(err)
 			}

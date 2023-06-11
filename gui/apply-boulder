@@ -183,6 +183,9 @@ rm -f test-root.p8
 
 if [ -e $PKI_INT_CERT_BASE.key ]; then
     cp -p $PKI_INT_CERT_BASE.key test-ca.key
+    if [ ! -e $PKI_INT_CERT_BASE.key.der ]; then
+        openssl pkey -in $PKI_INT_CERT_BASE.key -out $PKI_INT_CERT_BASE.key.der -outform der
+    fi
     cp -p $PKI_INT_CERT_BASE.key.der test-ca.key.der
     cp -p $PKI_INT_CERT_BASE.pem test-ca.pem
     openssl rsa -in $PKI_INT_CERT_BASE.key -pubout > test-ca.pubkey.pem 2>/dev/null || openssl ec -in $PKI_INT_CERT_BASE.key -pubout > test-ca.pubkey.pem
@@ -190,6 +193,9 @@ if [ -e $PKI_INT_CERT_BASE.key ]; then
 fi
 if [ -e $PKI_ROOT_CERT_BASE.key ]; then
     cp -p $PKI_ROOT_CERT_BASE.key test-root.key
+    if [ ! -e $PKI_ROOT_CERT_BASE.key.der ]; then
+        openssl pkey -in $PKI_ROOT_CERT_BASE.key -out $PKI_ROOT_CERT_BASE.key.der -outform der
+    fi
     cp -p $PKI_ROOT_CERT_BASE.key.der test-root.key.der
     openssl rsa -in $PKI_ROOT_CERT_BASE.key -pubout > test-root.pubkey.pem 2>/dev/null || openssl ec -in $PKI_ROOT_CERT_BASE.key -pubout > test-root.pubkey.pem
     openssl pkcs8 -topk8 -inform PEM -outform PEM -nocrypt -in test-root.key -out test-root.p8
