@@ -380,9 +380,7 @@
         <label for="modal-rootpassphrase">Passphrase (optional):</label>
         <input class="form-control" type="password" id="modal-rootpassphrase" value="">
       </div>
-      {{ with .CertificateInfo.Errors.Modal }}
-      <span class="error">{{ . }}</span><br/>
-      {{ end }}
+      <span class="error" id="modal-root-key-error" style="display: none;"></span><br/>
       <input class="btn btn-default btn-reg" value="Upload" id="modal-root-key-upload"/>
       <button type="button" class="btn btn-default" data-dismiss="modal" id="cancel-rootkey">Cancel</button>
     </div>
@@ -395,9 +393,7 @@
       <h4>CRL</h4>
       <p>Please provide the CRL for the Root CA.</p>
       <textarea class="form-control" id="modal-crl-val" rows="10" cols="80" required>{{ .CRL }}</textarea>
-      {{ with .CertificateInfo.Errors.Modal }}
-      <span class="error">{{ . }}</span><br/>
-      {{ end }}
+      <span class="error" id="modal-crl-error" style="display: none;"></span><br/>
       <input class="btn btn-default btn-reg" value="OK" id="modal-crl-done"/>
       <button type="button" class="btn btn-default" data-dismiss="modal" id="cancel-crl">Cancel</button>
     </div>
@@ -864,7 +860,6 @@
                             $("#issuer-crl-result").removeClass("hidden").removeClass("error").show().html(msg).addClass("success");
 
                         } else {
-                            console.log("***DEBUG*** 1 ", data);
                             $("#issuer-crl-result").removeClass("hidden").removeClass("success").show().text(data.Errors["CRL"]).addClass("error");
                         }
                     })
@@ -893,7 +888,6 @@
                             return false;
 
                         } else {
-                            console.log("***DEBUG*** 2 ", data);
                             $("#root-crl-result").removeClass("hidden").removeClass("success").show().text(data.Errors["CRL"]).addClass("error");
                         }
                     })
@@ -903,36 +897,42 @@
                     });
 
                 } else if ( $(evt.target).attr("id") == "modal-root-key-upload") {
-                    $('#modal-root-key').modal('hide');
-                    $.ajax(window.location.href, {
-                        method: "POST",
-                        data: {
-                            action: 'gen-root-crl',
-                            rootkey: $("#modal-rootkey").val(),
-                            rootpassphrase: $("#modal-rootpassphrase").val(),
-                        },
-                    })
-                    .done(function(data) {
+                    if ($("#modal-rootkey").val() == "") {
                         $('#modal-spinner').modal('hide');
-                        $('.modal-backdrop').remove();
+                        $("#modal-root-key-error").show().text("Please provide the root key");
+                        return false;
+                    } else {
+                        $('#modal-root-key').modal('hide');
+                        $("#modal-root-key-error").hide();
+                        $.ajax(window.location.href, {
+                            method: "POST",
+                            data: {
+                                action: 'gen-root-crl',
+                                rootkey: $("#modal-rootkey").val(),
+                                rootpassphrase: $("#modal-rootpassphrase").val(),
+                            },
+                        })
+                        .done(function(data) {
+                            $('#modal-spinner').modal('hide');
+                            $('.modal-backdrop').remove();
 
-                        if (data.Success) {
-                            var msg = "Successfully generated Root CRL.<br/>";
-                            $("#root-crl-result").removeClass("hidden").removeClass("error").show().html(msg).addClass("success");
+                            if (data.Success) {
+                                var msg = "Successfully generated Root CRL.<br/>";
+                                $("#root-crl-result").removeClass("hidden").removeClass("error").show().html(msg).addClass("success");
 
-                        } else if (data.Errors["CRL"] == "NO_ROOT_KEY") {
-                            $('#modal-root-key').modal('show');
-                            return false;
+                            } else if (data.Errors["CRL"] == "NO_ROOT_KEY") {
+                                $('#modal-root-key').modal('show');
+                                return false;
 
-                        } else {
-                            console.log("***DEBUG*** 3 ", data);
-                            $("#root-crl-result").removeClass("hidden").removeClass("success").show().text(data.Errors["CRL"]).addClass("error");
-                        }
-                    })
-                    .fail(function(xhr, status, err) {
-                        $('#modal-spinner').modal('hide');
-                        $("#root-crl-result").removeClass("hidden").removeClass("success").show().html(err + "<br/>").addClass("error");
-                    });
+                            } else {
+                                $("#root-crl-result").removeClass("hidden").removeClass("success").show().text(data.Errors["CRL"]).addClass("error");
+                            }
+                        })
+                        .fail(function(xhr, status, err) {
+                            $('#modal-spinner').modal('hide');
+                            $("#root-crl-result").removeClass("hidden").removeClass("success").show().html(err + "<br/>").addClass("error");
+                        });
+                    }
 
                 } else if ( $(evt.target).attr("id") == "upload-root-crl") {
                     $('#modal-spinner').modal('hide');
@@ -940,30 +940,36 @@
                     return false;
 
                 } else if ( $(evt.target).attr("id") == "modal-crl-done") {
-                    $('#modal-crl').modal('hide');
-                    $.ajax(window.location.href, {
-                        method: "POST",
-                        data: {
-                            action: 'upload-root-crl',
-                            crl: $("#modal-crl-val").val(),
-                        },
-                    })
-                    .done(function(data) {
+                    if ($("#modal-crl-val").val() == "") {
                         $('#modal-spinner').modal('hide');
+                        $("#modal-crl-error").show().text("Please provide CRL content");
+                        return false;
+                    } else {
+                        $('#modal-crl').modal('hide');
+                        $("#modal-crl-error").hide();
+                        $.ajax(window.location.href, {
+                            method: "POST",
+                            data: {
+                                action: 'upload-root-crl',
+                                crl: $("#modal-crl-val").val(),
+                            },
+                        })
+                        .done(function(data) {
+                            $('#modal-spinner').modal('hide');
 
-                        if (data.Success) {
-                            var msg = "Successfully uploaded Root CRL.<br/>";
-                            $("#root-crl-result").removeClass("hidden").removeClass("error").show().html(msg).addClass("success");
+                            if (data.Success) {
+                                var msg = "Successfully uploaded Root CRL.<br/>";
+                                $("#root-crl-result").removeClass("hidden").removeClass("error").show().html(msg).addClass("success");
 
-                        } else {
-                            console.log("***DEBUG*** 4 ", data);
-                            $("#root-crl-result").removeClass("hidden").removeClass("success").show().text(data.Errors["CRL"]).addClass("error");
-                        }
-                    })
-                    .fail(function(xhr, status, err) {
-                        $('#modal-spinner').modal('hide');
-                        $("#root-crl-result").removeClass("hidden").removeClass("success").show().html(err + "<br/>").addClass("error");
-                    });
+                            } else {
+                                $("#root-crl-result").removeClass("hidden").removeClass("success").show().text(data.Errors["CRL"]).addClass("error");
+                            }
+                        })
+                        .fail(function(xhr, status, err) {
+                            $('#modal-spinner').modal('hide');
+                            $("#root-crl-result").removeClass("hidden").removeClass("success").show().html(err + "<br/>").addClass("error");
+                        });
+                    }
 
                 } else if ( $(evt.target).attr("id") == "cancel-rootkey" || $(evt.target).attr("id") == "cancel-crl") {
                     $('#modal-spinner').modal('hide');
