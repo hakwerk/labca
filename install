@@ -630,7 +630,7 @@ config_boulder() {
     fi
 
     mkdir -p $baseDir/backup
-    [ -z "$(docker ps | grep boulder-bmysql-1)" ] || docker exec -i boulder-bmysql-1 mysqldump boulder_sa_integration >$baseDir/backup/dbdata-${runId}.sql
+    [ -z "$(docker ps | grep labca-bmysql-1)" ] || docker exec -i labca-bmysql-1 mysqldump boulder_sa_integration >$baseDir/backup/dbdata-${runId}.sql
     # housekeeping
     for file in `ls -1t $baseDir/backup/dbdata-*.sql 2>&1 | tail -n +3 || true`; do
         rm $file
@@ -654,7 +654,9 @@ config_boulder() {
     if [ "$installMode" == "normal" ]; then
         local have_config=$(grep restarted $adminDir/data/config.json 2>/dev/null | grep true)
         if [ "$have_config" != "" ]; then
+            cd "$boulderLabCADir"
             $adminDir/apply-boulder &>>$installLog
+            cd "$boulderDir"
         else
             chown -R labca:labca "$boulderLabCADir" || /bin/true
         fi
@@ -758,7 +760,7 @@ startup() {
     wait_up $PS_CONSUL 2 &>>$installLog || true
     wait_up $PS_LABCA &>>$installLog || true
     wait_up $PS_CONTROL &>>$installLog || true
-    docker exec -i boulder-bmysql-1 mysql_upgrade &>>$installLog
+    docker exec -i labca-bmysql-1 mysql_upgrade &>>$installLog
     [ -f "$boulderLabCADir/setup_complete" ] && wait_up $PS_BOULDER $PS_BOULDER_COUNT &>>$installLog || /bin/true
 
     if [ $cnt -gt 0 ]; then
