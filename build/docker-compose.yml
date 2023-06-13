@@ -73,7 +73,7 @@ services:
     restart: always
 
   bconsul:
-    image: hashicorp/consul:1.13.1
+    image: hashicorp/consul:1.14.2
     depends_on:
       - control
     volumes:
@@ -81,6 +81,10 @@ services:
     networks:
       consulnet:
         ipv4_address: 10.55.55.10
+      bluenet:
+        ipv4_address: 10.77.77.10
+      rednet:
+        ipv4_address: 10.88.88.10
     command: "consul agent -dev -config-format=hcl -config-file=/opt/boulder/labca/consul/config.hcl"
 
   gui:
@@ -91,7 +95,6 @@ services:
       - ldata:/opt/labca/data
       - nginx_html:/opt/wwwstatic
       - backup:/opt/backup
-      #- .:/boulder
       - boulder_data:/opt/boulder/labca
     expose:
       - 3000
