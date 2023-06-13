@@ -55,11 +55,9 @@ sed -i -e "s|/hierarchy/intermediate-cert-rsa-a.pem|labca/test-ca.pem|" config/o
 sed -i -e "s|/hierarchy/intermediate-cert-rsa-a.pem|labca/test-ca.pem|" config/crl-storer.json
 sed -i -e "s|/hierarchy/intermediate-cert-rsa-a.pem|labca/test-ca.pem|" config/crl-updater.json
 sed -i -e "s|/hierarchy/intermediate-cert-rsa-a.pem|labca/test-ca.pem|" config/ra.json
-sed -i -e "s|/hierarchy/intermediate-cert-rsa-a.pem|labca/test-ca.pem|" issuer-ocsp-responder.json
-sed -i -e "s|/hierarchy/intermediate-cert-rsa-a.pem|labca/test-ca.pem|" cert-ceremonies/intermediate-ocsp-rsa.yaml
 sed -i -e "s|/hierarchy/intermediate-cert-rsa-a.pem|labca/test-ca.pem|" v2_integration.py
 sed -i -e "s|/hierarchy/root-cert-rsa.pem|labca/test-root.pem|" cert-ceremonies/root-ceremony-rsa.yaml
-sed -i -e "s|/hierarchy/root-cert-rsa.pem|labca/test-root.pem|" cert-ceremonies/intermediate-ocsp-rsa.yaml
+sed -i -e "s|/hierarchy/root-cert-rsa.pem|labca/test-root.pem|" cert-ceremonies/root-crl-rsa.yaml
 sed -i -e "s|/hierarchy/root-cert-rsa.pem|labca/test-root.pem|" cert-ceremonies/intermediate-ceremony-rsa.yaml
 sed -i -e "s|/hierarchy/root-cert-rsa.pem|labca/test-root.pem|" config/publisher.json
 sed -i -e "s|/hierarchy/root-cert-rsa.pem|labca/test-root.pem|" config/wfe2.json
@@ -79,6 +77,10 @@ sed -i -e "s/\"dnsTimeout\": \".*\"/\"dnsTimeout\": \"3s\"/" config/ra.json
 sed -i -e "s/\"dnsTimeout\": \".*\"/\"dnsTimeout\": \"3s\"/" config/va.json
 sed -i -e "s/\"dnsTimeout\": \".*\"/\"dnsTimeout\": \"3s\"/" config/va-remote-a.json
 sed -i -e "s/\"dnsTimeout\": \".*\"/\"dnsTimeout\": \"3s\"/" config/va-remote-b.json
+sed -i -e "s/\"stdoutlevel\": 4,/\"stdoutlevel\": 6,/" config/ca-a.json
+sed -i -e "s/\"stdoutlevel\": 4,/\"stdoutlevel\": 6,/" config/ca-b.json
+sed -i -e "s/\"stdoutlevel\": 4,/\"stdoutlevel\": 6,/" config/va-remote-a.json
+sed -i -e "s/\"stdoutlevel\": 4,/\"stdoutlevel\": 6,/" config/va-remote-b.json
 
 if [ "$flag_skip_redis" == true ]; then
     sed -i -e "s/^\(.*wait-for-it.sh.*4218\)/#\1/" entrypoint.sh
