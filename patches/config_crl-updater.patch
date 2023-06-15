@@ -20,7 +20,7 @@ index f6b70123f..a6c1471e5 100644
 +		"shardWidth": "24h",
 +		"lookbackPeriod": "96h",
 +		"updatePeriod": "24h",
-+		"updateOffset": "62m",
++		"updateOffset": "5m",
 +		"maxParallelism": 1
  	},
  	"syslog": {

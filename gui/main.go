@@ -727,6 +727,45 @@ func _configUpdateHandler(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(res)
 }
 
+func _crlIntervalUpdateHandler(w http.ResponseWriter, r *http.Request) {
+	res := struct {
+		Success bool
+		Errors  map[string]string
+	}{Success: true, Errors: make(map[string]string)}
+
+	delta := false
+	crlInterval := r.Form.Get("crl_interval")
+
+	ci, err := time.ParseDuration(crlInterval)
+	if err != nil {
+		res.Success = false
+		res.Errors["CRLInterval"] = "Could not parse duration"
+	} else {
+		back := 4 * ci
+		crlInterval += "|" + back.String()
+		if crlInterval != viper.GetString("crl_interval") {
+			delta = true
+			viper.Set("crl_interval", crlInterval)
+		}
+
+		if delta {
+			viper.WriteConfig()
+
+			err := _applyConfig()
+			if err != nil {
+				res.Success = false
+				res.Errors["CRLInterval"] = "Config apply error: '" + err.Error() + "'"
+			}
+		} else {
+			res.Success = false
+			res.Errors["CRLInterval"] = "Nothing changed!"
+		}
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(res)
+}
+
 // EmailConfig stores configuration used for sending out emails
 type EmailConfig struct {
 	DoEmail   bool
@@ -1154,6 +1193,11 @@ func _managePostDispatch(w http.ResponseWriter, r *http.Request, action string) 
 		return true
 	}
 
+	if action == "update-crl-interval" {
+		_crlIntervalUpdateHandler(w, r)
+		return true
+	}
+
 	if action == "update-email" {
 		_emailUpdateHandler(w, r)
 		return true
@@ -1213,6 +1257,7 @@ func _managePost(w http.ResponseWriter, r *http.Request) {
 		"update-account",
 		"update-backend",
 		"update-config",
+		"update-crl-interval",
 		"update-email",
 		"send-email",
 		"version-check",
@@ -1412,6 +1457,13 @@ func _manageGet(w http.ResponseWriter, r *http.Request) {
 
 		manageData["RootDetails"] = _doCmdOutput(w, r, "openssl x509 -noout -text -nameopt utf8 -in data/root-ca.pem")
 		manageData["IssuerDetails"] = _doCmdOutput(w, r, "openssl x509 -noout -text -nameopt utf8 -in data/issuer/ca-int.pem")
+
+		if viper.Get("crl_interval") == nil || viper.GetString("crl_interval") == "" {
+			manageData["CRLInterval"] = "24h"
+		} else {
+			ci := strings.Split(viper.GetString("crl_interval"), "|")
+			manageData["CRLInterval"] = ci[0]
+		}
 
 		manageData["Fqdn"] = viper.GetString("labca.fqdn")
 		manageData["Organization"] = viper.GetString("labca.organization")

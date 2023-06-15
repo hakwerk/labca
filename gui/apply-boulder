@@ -117,9 +117,22 @@ if [ "$PKI_DOMAIN_MODE" == "lockdown" ] || [ "$PKI_DOMAIN_MODE" == "whitelist" ]
     cat rate-limit-policies.yml | tr '\n' '\r' | sed -e "s|\(certificatesPerFQDNSet:.*must-staple.le.wtf: 10000\).*\(certificatesPerFQDNSetFast:.*\)|\1\n${REPLACEMENT}rateLimitsURL: http://$PKI_FQDN/rate-limits\n\2|" | tr '\r' '\n' > rate-limit-policies.yml.bak && mv rate-limit-policies.yml.bak rate-limit-policies.yml
 fi
 
-sed -i -e "s/\"lifespanCRL\": \".*\"/\"lifespanCRL\": \"96h\"/" config/ca-a.json
-sed -i -e "s/\"lifespanCRL\": \".*\"/\"lifespanCRL\": \"96h\"/" config/ca-b.json
+CRLINT=24h
+CRLLIFE=96h
+CRLCONF=$(grep crl_interval $dataDir/config.json | perl -p0e 's/.*?:\s+(.*)/\1/' | sed -e 's/\",//g' | sed -e 's/\"//g')
+if [ "$CRLCONF" != "" ]; then
+    CRLINT=$(echo $CRLCONF | cut -d "|" -f 1)
+    CRLLIFE=$(echo $CRLCONF | cut -d "|" -f 2)
+fi
+sed -i -e "s/\"shardWidth\": \".*\"/\"shardWidth\": \"$CRLINT\"/" config/crl-updater.json
+sed -i -e "s/\"updatePeriod\": \".*\"/\"updatePeriod\": \"$CRLINT\"/" config/crl-updater.json
+sed -i -e "s/\"lookbackPeriod\": \".*\"/\"lookbackPeriod\": \"$CRLLIFE\"/" config/crl-updater.json
+sed -i -e "s/\"lifespanCRL\": \".*\"/\"lifespanCRL\": \"$CRLLIFE\"/" config/ca-a.json
+sed -i -e "s/\"lifespanCRL\": \".*\"/\"lifespanCRL\": \"$CRLLIFE\"/" config/ca-b.json
+rm -f config/contact-exporter.json
+rm -f config/nonce.json
 rm -f config/ocsp-updater.json
+rm -f config/wfe.json
 
 sed -i -e "s|\"issuerURL\": \".*\"|\"issuerURL\": \"http://$PKI_FQDN/aia/issuer/$PKI_ISSUER_NAME_ID\"|" config/ca-a.json
 sed -i -e "s|\"issuerURL\": \".*\"|\"issuerURL\": \"http://$PKI_FQDN/aia/issuer/$PKI_ISSUER_NAME_ID\"|" config/ca-b.json

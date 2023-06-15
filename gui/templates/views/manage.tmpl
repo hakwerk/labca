@@ -220,6 +220,17 @@
         <span class="hidden" id="issuer-crl-result"></span>
       </div>
     </div>
+    <form role="form">
+      <div class="form-group">
+        <label for="crl-interval">CRL update interval:</label>
+        <input class="form-control non-fluid" type="text" id="crl-interval" name="crl-interval" value="{{ .CRLInterval }}" required>
+        <p>The Issuer CRL will be automatically generated in a regular interval.</p>
+      </div>
+      <div class="form-group">
+        <button class="btn btn-default" type="button" id="update-crl-interval" title="Update the system configuration">Update</button>
+        <span class="hidden" id="crl-interval-result"></span>
+      </div>
+    </form>
   </div>
 
   <div class="tab-pane fade" id="config">
@@ -452,6 +463,8 @@
                 $("#send-email-result").hide();
                 $("#root-crl-result").hide();
                 $("#issuer-crl-result").hide();
+                $("#crl-interval-result").hide();
+
 
                 if ( $(evt.target).attr("id") == "backup-now") {
                     $.ajax(window.location.href, {
@@ -674,6 +687,40 @@
                         $('#modal-spinner').modal('hide');
                         $("#update-backend-result").removeClass("hidden").removeClass("success").show().html(err + "<br/>").addClass("error");
                     });
+
+                } else if ( $(evt.target).attr("id") == "update-crl-interval") {
+                    if ($("#crl-interval").val() == "") {
+                        $('#modal-spinner').modal('hide');
+                        $("#crl-interval-result").removeClass("hidden").removeClass("success").show().text("Please provide an interval value").addClass("error");
+                        return false;
+                    } else {
+                        $.ajax(window.location.href, {
+                            method: "POST",
+                            data: {
+                                action: $(evt.target).attr("id"),
+                                crl_interval: $("#crl-interval").val(),
+                            },
+                        })
+                        .done(function(data) {
+                            $('#modal-spinner').modal('hide');
+
+                            if (data.Success) {
+                                var msg = "Successfully updated configuration.<br/>";
+                                $("#crl-interval-result").removeClass("hidden").removeClass("error").show().html(msg).addClass("success");
+
+                                setTimeout(function() {
+                                    window.location.reload();
+                                }, 2000);
+
+                            } else {
+                                $("#crl-interval-result").removeClass("hidden").removeClass("success").show().text(data.Errors["CRLInterval"]).addClass("error");
+                            }
+                        })
+                        .fail(function(xhr, status, err) {
+                            $('#modal-spinner').modal('hide');
+                            $("#crl-interval-result").removeClass("hidden").removeClass("success").show().html(err + "<br/>").addClass("error");
+                        });
+                    }
 
                 } else if ( $(evt.target).attr("id") == "update-config") {
                     $.ajax(window.location.href, {
