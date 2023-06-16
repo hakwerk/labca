@@ -755,6 +755,9 @@ func _crlIntervalUpdateHandler(w http.ResponseWriter, r *http.Request) {
 			if err != nil {
 				res.Success = false
 				res.Errors["CRLInterval"] = "Config apply error: '" + err.Error() + "'"
+			} else if !_hostCommand(w, r, "boulder-restart") {
+				res.Success = false
+				res.Errors["CRLInterval"] = "Error restarting Boulder (ACME)"
 			}
 		} else {
 			res.Success = false

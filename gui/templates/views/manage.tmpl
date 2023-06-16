@@ -705,12 +705,8 @@
                             $('#modal-spinner').modal('hide');
 
                             if (data.Success) {
-                                var msg = "Successfully updated configuration.<br/>";
+                                var msg = "Successfully updated configuration and restarted Boulder (ACME).<br/>";
                                 $("#crl-interval-result").removeClass("hidden").removeClass("error").show().html(msg).addClass("success");
-
-                                setTimeout(function() {
-                                    window.location.reload();
-                                }, 2000);
 
                             } else {
                                 $("#crl-interval-result").removeClass("hidden").removeClass("success").show().text(data.Errors["CRLInterval"]).addClass("error");
@@ -718,7 +714,11 @@
                         })
                         .fail(function(xhr, status, err) {
                             $('#modal-spinner').modal('hide');
-                            $("#crl-interval-result").removeClass("hidden").removeClass("success").show().html(err + "<br/>").addClass("error");
+                            if (status == 502 || err == "Bad Gateway") {
+                                $("#crl-interval-result").removeClass("hidden").removeClass("error").show().html("Restarted Boulder (ACME).<br/>").addClass("success");
+                            } else {
+                                $("#crl-interval-result").removeClass("hidden").removeClass("success").show().html(err + "<br/>").addClass("error");
+                            }
                         });
                     }
 
