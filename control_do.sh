@@ -24,6 +24,22 @@ setup_boulder_data() {
     cp -rp /opt/staging/boulder_labca/* /opt/boulder/labca/
 
     cd /opt/boulder/labca
+
+    sed -i -e "s|https://boulder.service.consul:4431/terms/v7|https://$LABCA_FQDN/terms/v1|" config/wfe2.json
+    sed -i -e "s|boulder.service.consul:4000|$LABCA_FQDN|g" config/wfe2.json
+    sed -i -e "s|http://127.0.0.1:4002/|http://$LABCA_FQDN/ocsp/|g" config/ca-a.json
+    sed -i -e "s|http://127.0.0.1:4002/|http://$LABCA_FQDN/ocsp/|g" config/ca-b.json
+    sed -i -e "s|http://example.com/cps|http://$LABCA_FQDN/cps/|g" config/ca-a.json
+    sed -i -e "s|http://example.com/cps|http://$LABCA_FQDN/cps/|g" config/ca-b.json
+    sed -i -e "s|http://example.com/crl|http://$LABCA_FQDN/crl/|g" config/ca-a.json
+    sed -i -e "s|http://example.com/crl|http://$LABCA_FQDN/crl/|g" config/ca-b.json
+    sed -i -e "s|boulder.service.consul:4000|$LABCA_FQDN|g" config/va.json
+    sed -i -e "s|boulder.service.consul:4001|$LABCA_FQDN|g" config/va.json
+    sed -i -e "s|boulder.service.consul:4000|$LABCA_FQDN|g" config/va-remote-a.json
+    sed -i -e "s|boulder.service.consul:4001|$LABCA_FQDN|g" config/va-remote-a.json
+    sed -i -e "s|boulder.service.consul:4000|$LABCA_FQDN|g" config/va-remote-b.json
+    sed -i -e "s|boulder.service.consul:4001|$LABCA_FQDN|g" config/va-remote-b.json
+
     /opt/labca/apply-boulder
 }
 
@@ -60,6 +76,9 @@ setup_nginx_data() {
 setup_labca_data() {
     cd /opt/labca/data
     cp -rp /opt/staging/data/* .
+
+    sed -i -e "s|LABCA_FQDN|$LABCA_FQDN|g" openssl.cnf
+    sed -i -e "s|LABCA_FQDN|$LABCA_FQDN|g" issuer/openssl.cnf
 }
 
 selfsigned_cert() {
