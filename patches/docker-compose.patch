@@ -119,7 +119,7 @@ index f2b242fb5..35714ad44 100644
 +    restart: always
 +
 +  nginx:
-+    image: nginx:1.21.6
++    image: nginx:1.25.1
 +    restart: always
 +    networks:
 +      - bluenet
