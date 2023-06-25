@@ -87,6 +87,24 @@ func _parseLine(line string, loc *time.Location) Activity {
 			activity.Title = "Validation Agent"
 		}
 	}
+	if activity.Title == "" {
+		switch result[4] {
+		case "nonce-service":
+			activity.Title = "Nonce Service"
+		case "boulder-publisher":
+			activity.Title = "Publisher"
+		case "log-validator":
+			activity.Title = "Log Validator"
+		case "crl-storer":
+			activity.Title = "CRL Storer"
+		case "crl-updater":
+			activity.Title = "CRL Updater"
+		case "ocsp-responder":
+			activity.Title = "OCSP Responder"
+		default:
+			activity.Title = result[4]
+		}
+	}
 
 	message := result[6]
 	idx := strings.Index(message, ".well-known/acme-challenge")
