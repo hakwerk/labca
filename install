@@ -630,7 +630,14 @@ config_boulder() {
     fi
 
     mkdir -p $baseDir/backup
-    [ -z "$(docker ps | grep labca-bmysql-1)" ] || docker exec -i labca-bmysql-1 mysqldump boulder_sa_integration >$baseDir/backup/dbdata-${runId}.sql
+    if [ ! -z "$(docker ps | grep boulder-bmysql-1)" ]; then
+        docker exec boulder-bmysql-1 mysqldump --databases boulder_sa_integration >$baseDir/backup/dbdata-old-${runId}.sql
+        docker exec boulder-bmysql-1 mysql boulder_sa_integration -e 'delete from gorp_migrations;'
+    fi
+    if [ ! -z "$(docker ps | grep labca-bmysql-1)" ]; then
+        docker exec labca-bmysql-1 mysqldump --databases boulder_sa_integration >$baseDir/backup/dbdata-${runId}.sql
+        docker exec labca-bmysql-1 mysql boulder_sa_integration -e 'delete from gorp_migrations;'
+    fi
     # housekeeping
     for file in `ls -1t $baseDir/backup/dbdata-*.sql 2>&1 | tail -n +3 || true`; do
         rm $file
@@ -759,6 +766,13 @@ startup() {
     perl -i -p0e "s/(version:.*\n).*\n?(services:\n)/\1name: labca\n\2/" docker-compose.yml
     docker network rm -f boulder_bluenet boulder_consulnet boulder_rednet &>>$installLog || /bin/true
     docker rm -f boulder-control-1 boulder-boulder-1 boulder-labca-1 boulder-bmysql-1 boulder-bconsul-1 boulder-nginx-1 >/dev/null &>>$installLog
+
+    # Restore MySQL data when moving from boulder-bmysql-1 to labca-bmysql-1
+    if [ -z "$(docker volume ls | grep labca_dbdata)" ] && [ ! -z "$(docker volume ls | grep boulder_dbdata)" ]; then
+        docker volume create labca_dbdata &>>$installLog
+        dimg=$(grep mariadb: docker-compose.yml | sed -e "s/\s*image:\s*//")
+        docker run --rm -v boulder_dbdata:/old -v labca_dbdata:/new $dimg bash -c "cp -R /old/* /new/" &>>$installLog
+    fi
 
     COMPOSE_HTTP_TIMEOUT=180 docker-compose up -d &>>$installLog
 
