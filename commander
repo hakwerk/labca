@@ -51,12 +51,23 @@ case $txt in
     cd /etc/nginx/ssl
     [ -e account.key ] || openssl genrsa 4096 > account.key
     [ -e labca_key.pem ] || openssl genrsa 4096 > labca_key.pem
-    san=$(openssl x509 -noout -text -in labca_cert.pem | grep DNS:)
-    openssl req -new -utf8 -sha256 -key labca_key.pem -subj "/" -reqexts SAN -config <(cat /etc/ssl/openssl.cnf <(printf "[SAN]\nsubjectAltName=$san")) > domain.csr
-    url=$(grep 'DEFAULT_DIRECTORY_URL =' /opt/labca/acme_tiny.py | sed -e 's/.*=[ ]*//' | sed -e 's/\"//g')
-    wait_server $url
-    sleep 10
-    /opt/labca/renew
+
+    if [ -e labca_cert.pem ]; then
+        if [ ! -e domain.csr ]; then
+            san=$(openssl x509 -noout -text -in labca_cert.pem | grep DNS:)
+            openssl req -new -utf8 -sha256 -key labca_key.pem -subj "/" -reqexts SAN -config <(cat /etc/ssl/openssl.cnf <(printf "[SAN]\nsubjectAltName=$san")) > domain.csr
+        fi
+
+        hash=$(openssl x509 -hash -noout -in labca_cert.pem)
+        issuer_hash=$(openssl x509 -issuer_hash -noout -in labca_cert.pem)
+    fi
+    if [ "$hash" == "$issuer_hash" ] || ! expires=$(openssl x509 -checkend 172800 -noout -in labca_cert.pem); then
+        url=$(grep 'DEFAULT_DIRECTORY_URL =' /opt/labca/acme_tiny.py | sed -e 's/.*=[ ]*//' | sed -e 's/\"//g')
+        wait_server $url
+        sleep 10
+        /opt/labca/renew
+    fi
+
     ln -sf /opt/labca/cron_d /etc/cron.d/labca
     ln -sf /opt/labca/logrotate_d /etc/logrotate.d/labca
     ;;
