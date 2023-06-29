@@ -93,6 +93,7 @@ services:
     networks:
       - bluenet
     volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
       - ldata:/opt/labca/data
       - nginx_html:/opt/wwwstatic
       - backup:/opt/backup
