@@ -518,8 +518,15 @@
                         }
                     })
                     .fail(function(xhr, status, err) {
-                        $('#modal-spinner').modal('hide');
-                        $("#backup-result").removeClass("hidden").removeClass("success").show().text(err).addClass("error");
+                        if (status == 502 || err == "Bad Gateway") {
+                            setTimeout(function() {
+                                $('#modal-spinner').modal('hide');
+                                $("#backup-result").removeClass("hidden").removeClass("error").show().html("Restarted control container.<br/>").addClass("success");
+                            }, 2000);
+                        } else {
+                            $('#modal-spinner').modal('hide');
+                            $("#backup-result").removeClass("hidden").removeClass("success").show().html(err + "<br/>").addClass("error");
+                        }
                     });
 
                 } else if ( $(evt.target).hasClass("backup-delete") ) {

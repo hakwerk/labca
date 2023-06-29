@@ -44,7 +44,8 @@ cp $cloneDir/proxy.conf $TMP_DIR/
 cp $cloneDir/utils/nameidtool.go $TMP_DIR/
 cp -rp $cloneDir/gui/* $TMP_DIR/admin/
 sed -i -e "s/^bin\/labca-gui//" $TMP_DIR/admin/setup.sh
-sed -i -e "s/.*apt update.*//" $TMP_DIR/admin/setup.sh
+sed -i -e "s/.*apt .*//" $TMP_DIR/admin/setup.sh
+sed -i -e "s/.*apt-.*//" $TMP_DIR/admin/setup.sh
 sed -i '/^$/d' $TMP_DIR/admin/setup.sh
 
 echo

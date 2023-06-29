@@ -211,12 +211,6 @@ case $txt in
     COMPOSE_HTTP_TIMEOUT=120 docker-compose restart bconsul
     set -e
     ;;
-"svc-restart")
-    cd /opt/boulder
-    set +e
-    COMPOSE_HTTP_TIMEOUT=120 docker-compose restart control
-    set -e
-    ;;
 "log-backups")
     ls -1tr /opt/backup || /bin/true
     exit 0
@@ -232,14 +226,12 @@ case $txt in
 "backup-restore")
     read backup
     /opt/labca/restore "$backup"
+    sleep 3
     ;;
 "server-restart")
     cd /opt/boulder
     nohup docker-compose restart gui & >/dev/null
     nohup docker-compose restart nginx & >/dev/null
-    set +e
-    nohup docker-compose restart control & >/dev/null
-    set -e
     ;;
 "version-update")
     cd $dn

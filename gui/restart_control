@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+
+set -e
+
+cd /opt/boulder
+docker compose restart control

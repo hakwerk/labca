@@ -13,4 +13,5 @@ COPY tmp/admin/setup.sh /opt/labca/
 COPY tmp/admin/apply /opt/labca/
 COPY tmp/admin/apply-boulder /opt/labca/
 COPY tmp/admin/apply-nginx /opt/labca/
+COPY tmp/admin/restart_control /opt/labca/
 COPY tmp/admin/templates /opt/labca/templates/

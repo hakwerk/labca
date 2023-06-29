@@ -80,7 +80,7 @@ index f2b242fb5..35714ad44 100644
  
    bconsul:
      image: hashicorp/consul:1.14.2
-@@ -87,27 +84,72 @@ services:
+@@ -87,27 +84,73 @@ services:
        rednet:
          ipv4_address: 10.88.88.10
      command: "consul agent -dev -config-format=hcl -config-file=/test/consul/config.hcl"
@@ -99,6 +99,7 @@ index f2b242fb5..35714ad44 100644
 -      - .:/boulder
 -    working_dir: *boulder_working_dir
 -    entrypoint: test/entrypoint-netaccess.sh
++      - /var/run/docker.sock:/var/run/docker.sock
 +      - /home/labca/admin:/go/src/labca
 +      - ./.gocache:/root/.cache/go-build
 +      - /home/labca/nginx_data/static:/opt/wwwstatic

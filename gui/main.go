@@ -521,9 +521,14 @@ func _backupHandler(w http.ResponseWriter, r *http.Request) {
 		if !_hostCommand(w, r, action, backup) {
 			res.Success = false
 			res.Message = "Command failed - see LabCA log for any details"
+		} else {
+			defer func() {
+				_hostCommand(w, r, "server-restart")
+				if _, err := exeCmd("./restart_control"); err != nil {
+					log.Printf("_backupHandler: error restarting control container: %v", err)
+				}
+			}()
 		}
-
-		defer _hostCommand(w, r, "server-restart")
 	} else if action == "backup-delete" {
 		backup := r.Form.Get("backup")
 		if !_hostCommand(w, r, action, backup) {
@@ -1228,6 +1233,13 @@ func _managePostDispatch(w http.ResponseWriter, r *http.Request, action string) 
 
 	if action == "gen-issuer-crl" {
 		generateCRLHandler(w, r, false)
+		return true
+	}
+
+	if action == "svc-restart" {
+		if _, err := exeCmd("./restart_control"); err != nil {
+			log.Printf("_managePostDispatch: error restarting control container: %v", err)
+		}
 		return true
 	}
 
