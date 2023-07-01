@@ -9,7 +9,8 @@ if [ "$1" == "cron" ]; then
     TODAY=`date '+%Y_%m_%d'`
     echo "Running cron-$(basename $0) for ${TODAY}..."
 fi
-BASE=${NOW}_${HOSTNAME}${CRON}
+instance=$(grep fqdn /opt/labca/data/config.json 2>/dev/null | cut -d ":" -f 2- | tr -d " \"," | cut -d"." -f1)
+BASE=${NOW}_${instance}${CRON}
 TMPDIR=/tmp/$BASE
 mkdir -p $TMPDIR
 mkdir -p /opt/backup
