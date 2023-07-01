@@ -51,6 +51,7 @@ if [ "$SUDO" == "" ]; then
 fi
 $SUDO patch -p1 < $cloneDir/patches/storer_storer.patch
 $SUDO patch -p1 < $cloneDir/patches/updater_updater.patch
+$SUDO patch -p1 < $cloneDir/patches/wfe2_main.patch
 
 sed -i -e "s|./test|./labca|" start.py
 

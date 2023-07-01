@@ -1,0 +1,13 @@
+diff --git a/cmd/boulder-wfe2/main.go b/cmd/boulder-wfe2/main.go
+index 9ea4b47ab..9beca8778 100644
+--- a/cmd/boulder-wfe2/main.go
++++ b/cmd/boulder-wfe2/main.go
+@@ -104,7 +104,7 @@ type Config struct {
+ 		// DirectoryCAAIdentity is used for the /directory response's "meta"
+ 		// element's "caaIdentities" field. It should match the VA's "issuerDomain"
+ 		// configuration value (this value is the one used to enforce CAA)
+-		DirectoryCAAIdentity string `validate:"required,fqdn"`
++		DirectoryCAAIdentity string `validate:"required"`
+ 		// DirectoryWebsite is used for the /directory response's "meta" element's
+ 		// "website" field.
+ 		DirectoryWebsite string `validate:"required,url"`
