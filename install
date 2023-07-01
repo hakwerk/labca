@@ -633,10 +633,14 @@ config_boulder() {
     if [ ! -z "$(docker ps | grep boulder-bmysql-1)" ]; then
         docker exec boulder-bmysql-1 mysqldump --databases boulder_sa_integration >$baseDir/backup/dbdata-old-${runId}.sql
         docker exec boulder-bmysql-1 mysql boulder_sa_integration -e 'delete from gorp_migrations;'
+        msg_ok "Saved pre-update database to dbdata-old-${runId}.sql"
+        msg_info "$msg"
     fi
     if [ ! -z "$(docker ps | grep labca-bmysql-1)" ]; then
         docker exec labca-bmysql-1 mysqldump --databases boulder_sa_integration >$baseDir/backup/dbdata-${runId}.sql
         docker exec labca-bmysql-1 mysql boulder_sa_integration -e 'delete from gorp_migrations;'
+        msg_ok "Saved pre-update database to dbdata-${runId}.sql"
+        msg_info "$msg"
     fi
     # housekeeping
     for file in `ls -1t $baseDir/backup/dbdata-*.sql 2>&1 | tail -n +3 || true`; do
