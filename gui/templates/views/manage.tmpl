@@ -141,13 +141,15 @@
             {{ end }}
           </tbody>
         </table>
-        <button class="btn btn-default" type="button" id="backup-now" title="Create system backup now">Backup Now</button>
+        <button class="btn btn-outline btn-success" type="button" id="backup-now" title="Create system backup now">Backup Now</button>
+        <button class="btn btn-default" type="button" id="backup-upload" title="Upload a backup .tgz file downloaded earlier">Upload File</button>
         <span class="hidden" id="backup-result"></span>
       </div>
       <div class="col-lg-6 col-md-9 col-sm-12">
         <div class="well">
           Backups are automatically created once a week. Here you can manually create extra backups and download, delete
-          or restore a selected backup.<br/> After restoring the services will be <b>automatically restarted</b>.<br/>
+          or restore a selected backup. You can also upload a backup that was downloaded earlier.<br/>
+          After restoring the services will be <b>automatically restarted</b>.<br/>
           Automatic backups are removed after one month, manual backups are kept until manually deleted.
         </div>
       </div>
@@ -410,16 +412,35 @@
     </div>
   </div>
 </div>
+
+<div id="modal-backup" class="modal fade" data-backdrop="static" data-keyboard="false" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content modal-backup-content">
+      <h4>Upload Backup File</h4>
+      <p>Please select a backup (.tgz) file that was downloaded from LabCA earlier.</p>
+      <form enctype="multipart/form-data" id="modal-backup-form" method="POST">
+        <input type="hidden" name="action" value="backup-upload">
+        <input class="form-control non-fluid" type="file" id="backup-file" name="backup-file" required>
+        <span class="error" id="modal-backup-error" style="display: none;"></span><br/>
+        <input class="btn btn-default btn-reg" value="Upload" id="modal-backup-done"/>
+        <button type="button" class="btn btn-default" data-dismiss="modal" id="cancel-backup">Cancel</button>
+      </form>
+    </div>
+  </div>
+</div>
 {{end}}
 
 {{ define "tail" }}
     <script type="text/javascript" src="static/js/zxcvbn.js"></script>
     <script type="text/javascript" src="static/js/pwdux.js"></script>
     <script type="text/javascript" src="static/js/jquery.stickytabs.js"></script>
+    <script type="text/javascript" src="static/js/jquery.form.min.js"></script>
     <script type="text/javascript" src="static/js/bootstrap-dialog.min.js"></script>
     <script>
         $(function() {
             $('.nav-tabs-sticky').stickyTabs();
+
+            $('#modal-backup-form').ajaxForm();
 
             $('a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
                 positionFooter();
@@ -464,6 +485,7 @@
                 $("#root-crl-result").hide();
                 $("#issuer-crl-result").hide();
                 $("#crl-interval-result").hide();
+                $("#modal-backup-error").hide();
 
 
                 if ( $(evt.target).attr("id") == "backup-now") {
@@ -494,6 +516,44 @@
                         $('#modal-spinner').modal('hide');
                         $("#backup-result").removeClass("hidden").removeClass("success").show().text(err).addClass("error");
                     });
+
+                } else if ( $(evt.target).attr("id") == "backup-upload") {
+                    $('#modal-spinner').modal('hide');
+                    $('#modal-backup').modal('show');
+                    return false;
+
+                } else if ( $(evt.target).attr("id") == "modal-backup-done") {
+                    if ($("#backup-file").val() == "" || !$("#backup-file").val().match(/\.tgz$/)) {
+                        $('#modal-spinner').modal('hide');
+                        $("#modal-backup-error").removeClass("hidden").removeClass("success").show().text("Please provide a backup file").addClass("error");
+                        return false;
+                    } else {
+                        $("#modal-backup-error").hide();
+
+                        $("#modal-backup-form").ajaxSubmit({
+                            method: "POST",
+                            success: function(data)  {
+                                $('#modal-spinner').modal('hide');
+                                if (data.Success) {
+                                    var msg = "Successfully uploaded backup";
+                                    $("#backup-result").removeClass("hidden").removeClass("error").show().text(msg).addClass("success");
+                                    $("#backups-tbody").append('<tr><td class="vmiddle"><a href="/admin/backup/' + data.Message + '" class="backupdl">' + data.Message + '</a></td><td class="vmiddle"></td></tr>');
+                                    $('#modal-backup').modal('hide');
+
+                                    setTimeout(function() {
+                                        window.location.reload();
+                                    }, 2000);
+
+                                } else {
+                                    $("#modal-backup-error").removeClass("hidden").removeClass("success").show().text(data.Message).addClass("error");
+                                }
+                            },
+                            error: function(xhr, status, err) {
+                                $('#modal-spinner').modal('hide');
+                                $("#modal-backup-error").removeClass("hidden").removeClass("success").show().html(err + "<br/>").addClass("error");
+                            }
+                        })
+                    }
 
                 } else if ( $(evt.target).hasClass("backup-restore") ) {
                     var name = $(this).parent().parent().children().first().text();
@@ -1025,8 +1085,9 @@
                         });
                     }
 
-                } else if ( $(evt.target).attr("id") == "cancel-rootkey" || $(evt.target).attr("id") == "cancel-crl") {
+                } else if ( $(evt.target).attr("id") == "cancel-rootkey" || $(evt.target).attr("id") == "cancel-crl" || $(evt.target).attr("id") == "cancel-backup") {
                     $('#modal-spinner').modal('hide');
+                    $('#modal-backup').modal('hide');
                     $('#modal-crl').modal('hide');
                     $('#modal-root-key').modal('hide');
                     return false;

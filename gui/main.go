@@ -543,6 +543,36 @@ func _backupHandler(w http.ResponseWriter, r *http.Request) {
 		} else {
 			res.Message = filepath.Base(res.Message)
 		}
+	} else if action == "backup-upload" {
+		file, header, err := r.FormFile("backup-file")
+		if err != nil {
+			fmt.Println(err)
+			res.Success = false
+			res.Message = "Could not read uploaded file"
+		}
+		var out *os.File
+		if res.Success {
+			defer file.Close()
+
+			out, err = os.Create("/opt/backup/" + header.Filename)
+			if err != nil {
+				fmt.Println(err)
+				res.Success = false
+				res.Message = "Could not create backup file on server"
+			}
+		}
+		if res.Success {
+			defer out.Close()
+
+			_, copyError := io.Copy(out, file)
+			if copyError != nil {
+				fmt.Println(err)
+				res.Success = false
+				res.Message = "Could not store uploaded file"
+			} else {
+				res.Message = header.Filename
+			}
+		}
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -1176,7 +1206,7 @@ func uploadCRLHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func _managePostDispatch(w http.ResponseWriter, r *http.Request, action string) bool {
-	if action == "backup-restore" || action == "backup-delete" || action == "backup-now" {
+	if action == "backup-restore" || action == "backup-delete" || action == "backup-now" || action == "backup-upload" {
 		_backupHandler(w, r)
 		return true
 	}
@@ -1253,11 +1283,20 @@ func _managePost(w http.ResponseWriter, r *http.Request) {
 	}
 
 	action := r.Form.Get("action")
+	if action == "" {
+		if err := r.ParseMultipartForm(2 * 1024 * 1024); err != nil {
+			errorHandler(w, r, err, http.StatusInternalServerError)
+			return
+		}
+		action = r.Form.Get("action")
+	}
+
 	actionKnown := false
 	for _, a := range []string{
 		"backup-restore",
 		"backup-delete",
 		"backup-now",
+		"backup-upload",
 		"cert-export",
 		"mysql-restart",
 		"consul-restart",
