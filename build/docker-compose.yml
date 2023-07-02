@@ -94,6 +94,7 @@ services:
       - bluenet
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
+      - ./docker-compose.yml:/opt/boulder/docker-compose.yml
       - ldata:/opt/labca/data
       - nginx_html:/opt/wwwstatic
       - backup:/opt/backup

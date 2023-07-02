@@ -1,5 +1,5 @@
 diff --git a/docker-compose.yml b/docker-compose.yml
-index 6a1d77c44..00464ff36 100644
+index 6a1d77c44..c93ed0e3c 100644
 --- a/docker-compose.yml
 +++ b/docker-compose.yml
 @@ -1,8 +1,9 @@
@@ -49,7 +49,7 @@ index 6a1d77c44..00464ff36 100644
      networks:
        consulnet:
          ipv4_address: 10.55.55.10
-@@ -83,27 +84,27 @@ services:
+@@ -83,27 +84,28 @@ services:
          ipv4_address: 10.77.77.10
        rednet:
          ipv4_address: 10.88.88.10
@@ -71,6 +71,7 @@ index 6a1d77c44..00464ff36 100644
 -      - /home/labca/backup:/opt/backup
 -      - .:/opt/boulder
 -      - /home/labca/boulder_labca:/opt/boulder/labca
++      - ./docker-compose.yml:/opt/boulder/docker-compose.yml
 +      - ldata:/opt/labca/data
 +      - nginx_html:/opt/wwwstatic
 +      - backup:/opt/backup
@@ -87,7 +88,7 @@ index 6a1d77c44..00464ff36 100644
      logging:
        driver: "json-file"
        options:
-@@ -120,27 +121,26 @@ services:
+@@ -120,27 +122,26 @@ services:
        - 80:80
        - 443:443
      volumes:
@@ -129,7 +130,7 @@ index 6a1d77c44..00464ff36 100644
      expose:
        - 3030
      environment:
-@@ -151,6 +151,14 @@ services:
+@@ -151,6 +152,14 @@ services:
  
  volumes:
    dbdata:
