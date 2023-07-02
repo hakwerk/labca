@@ -438,36 +438,28 @@ install_pkg() {
 }
 
 install_extra() {
-    local packages=(apt-transport-https ca-certificates curl gnupg2 net-tools software-properties-common tzdata ucspi-tcp zip python)
+    local packages=(apt-transport-https ca-certificates curl gnupg net-tools tzdata ucspi-tcp zip python)
     for package in "${packages[@]}"; do
         install_pkg "$package"
     done
 
     distrib=$(lsb_release -is | tr '[:upper:]' '[:lower:]')
-    curl -fsSL https://download.docker.com/linux/${distrib}/gpg 2>>$installLog | apt-key add - &>>$installLog || msg_fatal "Could not download docker repository key"
-    add-apt-repository -r -y "deb [arch=amd64] https://download.docker.com/linux/${distrib} $(lsb_release -cs) stable" &>>$installLog
-    add-apt-repository -y "deb [arch=amd64] https://download.docker.com/linux/${distrib} $(lsb_release -cs) stable" &>>$installLog
-    apt-cache policy docker-ce &>>$installLog
-    apt update &>>$installLog
-    install_pkg "docker-ce"
+    install -m 0755 -d /etc/apt/keyrings
+    [ ! -e /etc/apt/keyrings/docker.gpg ] || mv /etc/apt/keyrings/docker.gpg /etc/apt/keyrings/docker.gpg_PREV
+    curl -fsSL https://download.docker.com/linux/${distrib}/gpg 2>>$installLog | gpg --dearmor -o /etc/apt/keyrings/docker.gpg &>>$installLog || msg_fatal "Could not download docker repository key"
+    chmod a+r /etc/apt/keyrings/docker.gpg
+    echo \
+      "deb [arch="$(dpkg --print-architecture)" signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/${distrib} \
+      "$(. /etc/os-release && echo "$VERSION_CODENAME")" stable" | \
+      tee /etc/apt/sources.list.d/docker.list > /dev/null &>>$installLog
+    apt-get update &>>$installLog
+    local packages=(docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin)
+    for package in "${packages[@]}"; do
+        install_pkg "$package"
+    done
 
     # Make sure the labca user has docker permissions
     usermod -aG docker labca
-
-    msg_info "Install binary 'docker-compose'"
-    local dcver=""
-    [ -x /usr/local/bin/docker-compose ] && dcver="`/usr/local/bin/docker-compose --version`"
-    local vercmp=${dcver/$dockerComposeVersion/}
-    if [ "$dcver" == "" ] || [ "$dcver" == "$vercmp" ]; then
-        local v1test=${dcver/version 1./}
-        if [ "$dcver" != "$v1test" ] && [ "$dcver" != "" ]; then
-            mv /usr/local/bin/docker-compose /usr/local/bin/docker-compose-v1
-        fi
-
-        curl -sSL https://github.com/docker/compose/releases/download/$dockerComposeVersion/docker-compose-`uname -s`-`uname -m` -o /usr/local/bin/docker-compose &>>$installLog || msg_fatal "Could not download docker-compose"
-        chmod +x /usr/local/bin/docker-compose
-    fi
-    msg_ok "Binary 'docker-compose' is installed"
 }
 
 # Configure the static web pages (for end users)
@@ -729,20 +721,20 @@ startup() {
     if [ $num -eq 0 ]; then
         perl -i -p0e "s/(version:.*\n).*\n?(services:\n)/\1name: labca\n\2/" docker-compose.yml
     fi
-    cnt=$(docker-compose ps | wc -l)
+    cnt=$(docker compose ps | wc -l)
     if [ "$cnt" -le "2" ]; then
         msg="Download docker images and build containers"
     fi
     msg_info "$msg (this will take a while!!)"
 
-    docker-compose pull -q &>>$installLog
+    docker compose pull -q &>>$installLog
     cnt=$(count $PS_CONTROL || echo "0")
-    docker-compose stop boulder bmysql labca nginx bconsul gui &>>$installLog || true
+    docker compose stop boulder bmysql labca nginx bconsul gui &>>$installLog || true
     for ct in boulder_bhsm_1 boulder_bredis_1 boulder_bredis_2 boulder_bredis_3 boulder_bredis_4 boulder_bredis_5 boulder_bredis_6; do
         [ -z "$(docker ps | grep $ct)" ] || docker stop $ct &>>$installLog
     done
     if [ $num -ne 0 ]; then
-        docker-compose stop control &>>$installLog || true
+        docker compose stop control &>>$installLog || true
     fi
     wait_down $PS_NGINX &>>$installLog || true
     wait_down $PS_MYSQL &>>$installLog || true
@@ -778,7 +770,7 @@ startup() {
         docker run --rm -v boulder_dbdata:/old -v labca_dbdata:/new $dimg bash -c "cp -R /old/* /new/" &>>$installLog
     fi
 
-    COMPOSE_HTTP_TIMEOUT=180 docker-compose up -d &>>$installLog
+    COMPOSE_HTTP_TIMEOUT=180 docker compose up -d &>>$installLog
 
     wait_up $PS_NGINX &>>$installLog || true
     wait_up $PS_MYSQL &>>$installLog || true
@@ -789,7 +781,7 @@ startup() {
     [ -f "$boulderLabCADir/setup_complete" ] && wait_up $PS_BOULDER $PS_BOULDER_COUNT &>>$installLog || /bin/true
 
     if [ $cnt -gt 0 ]; then
-        COMPOSE_HTTP_TIMEOUT=180 docker-compose restart control &>>$installLog
+        COMPOSE_HTTP_TIMEOUT=180 docker compose restart control &>>$installLog
     fi
 
     msg_ok "$msg"

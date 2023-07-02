@@ -324,15 +324,15 @@ func errorHandler(w http.ResponseWriter, r *http.Request, err error, status int)
 			}
 			data = getLog(w, r, "control-notail")
 			if data != "" {
-				FileErrors = append(FileErrors, map[string]interface{}{"FileName": "docker-compose logs control", "Content": data})
+				FileErrors = append(FileErrors, map[string]interface{}{"FileName": "docker compose logs control", "Content": data})
 			}
 			data = getLog(w, r, "boulder-notail")
 			if data != "" {
-				FileErrors = append(FileErrors, map[string]interface{}{"FileName": "docker-compose logs boulder", "Content": data})
+				FileErrors = append(FileErrors, map[string]interface{}{"FileName": "docker compose logs boulder", "Content": data})
 			}
 			data = getLog(w, r, "labca-notail")
 			if data != "" {
-				FileErrors = append(FileErrors, map[string]interface{}{"FileName": "docker-compose logs labca", "Content": data})
+				FileErrors = append(FileErrors, map[string]interface{}{"FileName": "docker compose logs labca", "Content": data})
 			}
 
 			render(w, r, "error", map[string]interface{}{"Message": "Some unexpected error occurred!", "FileErrors": FileErrors})

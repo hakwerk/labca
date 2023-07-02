@@ -16,7 +16,7 @@ mkdir -p $TMPDIR
 mkdir -p /opt/backup
 
 cd /opt/boulder
-docker-compose exec -T bmysql mysqldump boulder_sa_integration >$TMPDIR/boulder_sa_integration.sql
+docker compose exec bmysql mysqldump boulder_sa_integration >$TMPDIR/boulder_sa_integration.sql
 
 cp -p /etc/nginx/ssl/*key* /etc/nginx/ssl/*cert.pem /etc/nginx/ssl/*.csr $TMPDIR/
 

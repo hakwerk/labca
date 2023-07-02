@@ -103,28 +103,29 @@ The end users in your organization / lab can visit the public pages of you LabCA
 ## Troubleshooting
 
 After installing sometimes the application is not starting up properly and it can be quite hard to figure out why.
-First, make sure that all five containers are running:
+First, make sure that all six containers are running:
 ```
-root@testpki:/home/labca/boulder# docker-compose ps -a
-NAME                COMMAND                  SERVICE             STATUS              PORTS
-boulder-bmysql-1    "docker-entrypoint.s…"   bmysql              running             3306/tcp
-boulder-boulder-1   "labca/entrypoint.sh"    boulder             running             4001-4003/tcp
-boulder-control-1   "./control.sh"           control             running             3030/tcp
-boulder-labca-1     "./setup.sh"             labca               running             3000/tcp
-boulder-nginx-1     "/docker-entrypoint.…"   nginx               running             0.0.0.0:80->80/tcp, 0.0.0.0:443->443/tcp, :::80->80/tcp, :::443->443/tcp
+root@testpki:/home/labca/boulder# docker compose ps -a
+NAME                IMAGE                                           COMMAND                  SERVICE             CREATED             STATUS              PORTS
+labca-bconsul-1     hashicorp/consul:1.14.2                         "docker-entrypoint.s…"   bconsul             2 hours ago         Up About an hour    8300-8302/tcp, 8500/tcp, 8301-8302/udp, 8600/tcp, 8600/udp
+labca-bmysql-1      mariadb:10.5                                    "docker-entrypoint.s…"   bmysql              2 hours ago         Up About an hour    3306/tcp
+labca-boulder-1     letsencrypt/boulder-tools:go1.20.5_2023-06-20   "labca/entrypoint.sh"    boulder             2 hours ago         Up About an hour    4001-4003/tcp
+labca-control-1     letsencrypt/boulder-tools:go1.20.5_2023-06-20   "./control.sh"           control             2 hours ago         Up 2 hours          3030/tcp
+labca-gui-1         letsencrypt/boulder-tools:go1.20.5_2023-06-20   "./setup.sh"             gui                 2 hours ago         Up 2 hours          3000/tcp
+labca-nginx-1       nginx:1.25.1                                    "/docker-entrypoint.…"   nginx               2 hours ago         Up 2 hours          0.0.0.0:80->80/tcp, :::80->80/tcp, 0.0.0.0:443->443/tcp, :::443->443/tcp
 ```
 
 Some log files to check in case of issues are:
 * /home/labca/nginx_data/ssl/acme_tiny.log
-* cd /home/labca/boulder; docker-compose exec control cat /logs/commander.log (if it exists)
-* cd /home/labca/boulder; docker-compose logs control
-* cd /home/labca/boulder; docker-compose logs boulder
-* cd /home/labca/boulder; docker-compose logs labca
-* possibly cd /home/labca/boulder; docker-compose logs nginx
+* cd /home/labca/boulder; docker compose exec control cat /logs/commander.log (if it exists)
+* cd /home/labca/boulder; docker compose logs control
+* cd /home/labca/boulder; docker compose logs boulder
+* cd /home/labca/boulder; docker compose logs labca
+* possibly cd /home/labca/boulder; docker compose logs nginx
 
 ### Common error messages
 
-If you get "**No valid IP addresses found for <hostname>**" in /home/labca/nginx_data/ssl/acme_tiny.log, solve it by entering the hostname in your local DNS. Same for "**Could not resolve host: <hostname>**" in one of those docker-compose logs.
+If you get "**No valid IP addresses found for <hostname>**" in /home/labca/nginx_data/ssl/acme_tiny.log, solve it by entering the hostname in your local DNS. Same for "**Could not resolve host: <hostname>**" in one of those docker compose logs.
 
 When issuing a certificate, LabCA/boulder checks for CAA (Certification Authority Authorization) records in DNS, which specify what CAs are allowed to issue certificates for the domain. If you get an error like "**SERVFAIL looking up CAA for internal**" or "**CAA record for ca01.foo.internal prevents issuance**", you can try to add something like this to your DNS domain:
 ```

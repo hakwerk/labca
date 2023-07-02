@@ -1,6 +1,6 @@
 # LabCA Docker Only ![status-beta](https://img.shields.io/badge/status-beta-yellow.svg)
 
-It is now also possible, instead of dedicating a complete (virtual) machine to LabCA, to run LabCA using docker-compose on a non-dedicated machine. This is quite new and therefore still needs more testing.
+It is now also possible, instead of dedicating a complete (virtual) machine to LabCA, to run LabCA using docker compose on a non-dedicated machine. This is quite new and therefore still needs more testing.
 
 ## Startup
 
@@ -9,14 +9,14 @@ The `docker-compose.yml` file is located in the `build` subdirectory for now. Yo
 git clone https://github.com/hakwerk/labca.git
 cd labca/build
 export LABCA_FQDN=labca.example.com
-docker-compose up -d
+docker compose up -d
 ```
 And to tail the logs, especially if there are any issues:
 ```
-docker-compose logs -f
+docker compose logs -f
 ```
 
-In case you get an error like the after running `docker-compose up`:
+In case you get an error like the after running `docker compose up`:
 ```
 Error response from daemon: failed to create shim task: OCI runtime create failed: runc create failed: unable to start container process: exec: "labca/entrypoint.sh": stat labca/entrypoint.sh: no such file or directory: unknown
 ```

@@ -9,4 +9,4 @@ python3 /opt/labca/acme_tiny.py --account-key ./account.key --csr ./domain.csr -
 mv domain_chain.crt labca_cert.pem
 
 cd /opt/boulder
-docker-compose restart nginx
+docker compose restart nginx

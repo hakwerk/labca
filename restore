@@ -16,7 +16,7 @@ tar xzf $FILE 2>&1
 cd /opt/boulder
 [ -f $TMPDIR/boulder_sa_integration.sql ] || (echo "MySQL backup file not found"; exit 1)
 sed -i -e "s/\(INSERT INTO \`gorp_migrations\`.*\)/-- \1/" $TMPDIR/boulder_sa_integration.sql
-docker-compose exec -T bmysql mysql boulder_sa_integration <$TMPDIR/boulder_sa_integration.sql
+docker compose exec bmysql mysql boulder_sa_integration <$TMPDIR/boulder_sa_integration.sql
 
 mv -f $TMPDIR/*key* $TMPDIR/*cert.pem $TMPDIR/*.csr /etc/nginx/ssl/
 

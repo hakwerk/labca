@@ -39,7 +39,7 @@ read txt
 case $txt in
 "docker-restart")
     cd /opt/boulder
-    COMPOSE_HTTP_TIMEOUT=120 docker-compose restart boulder bmysql bconsul gui nginx &>>$LOGFILE
+    COMPOSE_HTTP_TIMEOUT=120 docker compose restart boulder bmysql bconsul gui nginx &>>$LOGFILE
     sleep 45
     wait_up $PS_MYSQL &>>$LOGFILE
     wait_up $PS_CONSUL 2 &>>$LOGFILE
@@ -86,11 +86,11 @@ case $txt in
     ;;
 "nginx-reload")
     cd /opt/boulder
-    docker-compose exec -T nginx nginx -s reload &>>$LOGFILE
+    docker compose exec nginx nginx -s reload &>>$LOGFILE
     ;;
 "nginx-restart")
     cd /opt/boulder
-    docker-compose restart nginx &>>$LOGFILE
+    docker compose restart nginx &>>$LOGFILE
     ;;
 "log-cert")
     [ -f /etc/nginx/ssl/acme_tiny.log ] && tail -200 /etc/nginx/ssl/acme_tiny.log || /bin/true
@@ -102,7 +102,7 @@ case $txt in
     ;;
 "log-control-notail")
     cd /opt/boulder
-    docker-compose logs --no-color --tail=50 control
+    docker compose logs --no-color --tail=50 control
     ;;
 "log-cron")
     [ -f /opt/logs/cron.log ] && tail -n200 -f /opt/logs/cron.log || /bin/true
@@ -110,34 +110,34 @@ case $txt in
     ;;
 "log-boulder")
     cd /opt/boulder
-    docker-compose logs -f --no-color --tail=50 boulder
+    docker compose logs -f --no-color --tail=50 boulder
     ;;
 "log-boulder-notail")
     cd /opt/boulder
-    docker-compose logs --no-color --tail=50 boulder
+    docker compose logs --no-color --tail=50 boulder
     ;;
 "log-audit")
     cd /opt/boulder
-    docker-compose logs --no-color boulder | grep "\[AUDIT\]" | grep -v "grpc: parseServiceConfig error unmarshaling  due to unexpected end of JSON input" | tail -50
-    docker-compose logs -f --no-color --tail=0 boulder | grep "\[AUDIT\]"
+    docker compose logs --no-color boulder | grep "\[AUDIT\]" | grep -v "grpc: parseServiceConfig error unmarshaling  due to unexpected end of JSON input" | tail -50
+    docker compose logs -f --no-color --tail=0 boulder | grep "\[AUDIT\]"
     ;;
 "log-activity")
     cd /opt/boulder
     echo "GMT"
-    docker-compose logs --no-color boulder | grep "\[AUDIT\]" | grep -v "grpc: parseServiceConfig error unmarshaling  due to unexpected end of JSON input" | tail -15
+    docker compose logs --no-color boulder | grep "\[AUDIT\]" | grep -v "grpc: parseServiceConfig error unmarshaling  due to unexpected end of JSON input" | tail -15
     exit 0
     ;;
 "log-labca")
     cd /opt/boulder
-    docker-compose logs -f --no-color --tail=50 gui
+    docker compose logs -f --no-color --tail=50 gui
     ;;
 "log-labca-notail")
     cd /opt/boulder
-    docker-compose logs --no-color --tail=50 gui
+    docker compose logs --no-color --tail=50 gui
     ;;
 "log-web")
     cd /opt/boulder
-    docker-compose logs -f --no-color --tail=50 nginx
+    docker compose logs -f --no-color --tail=50 nginx
     ;;
 "log-components")
     nginx=$(docker inspect $(docker ps --format "{{.Names}}" | grep -- -nginx-) | grep -i started | grep -v depends_on | sed -e "s/[^:]*:\(.*\)/\1/" | sed -e "s/.*\"\(.*\)\".*/\1/")
@@ -162,32 +162,32 @@ case $txt in
     read serial
     read reasonCode
     cd /opt/boulder
-    docker-compose exec -T boulder bin/admin-revoker serial-revoke --config labca/config/admin-revoker.json $serial $reasonCode 2>&1
+    docker compose exec boulder bin/admin-revoker serial-revoke --config labca/config/admin-revoker.json $serial $reasonCode 2>&1
     ;;
 "test-email")
     read recipient
     cd /opt/boulder
-    docker-compose exec -T boulder bin/mail-tester --config labca/config/expiration-mailer.json $recipient 2>&1
+    docker compose exec boulder bin/mail-tester --config labca/config/expiration-mailer.json $recipient 2>&1
     ;;
 "boulder-start")
     cd /opt/boulder
-    COMPOSE_HTTP_TIMEOUT=120 docker-compose up -d bmysql bconsul
+    COMPOSE_HTTP_TIMEOUT=120 docker compose up -d bmysql bconsul
     wait_up $PS_MYSQL &>>$LOGFILE
     wait_up $PS_CONSUL 2 &>>$LOGFILE
-    COMPOSE_HTTP_TIMEOUT=120 docker-compose up -d boulder
+    COMPOSE_HTTP_TIMEOUT=120 docker compose up -d boulder
     wait_up $PS_BOULDER $PS_BOULDER_COUNT &>>$LOGFILE
     ;;
 "boulder-stop")
     cd /opt/boulder
-    docker-compose stop boulder
-    docker-compose stop bmysql bconsul
+    docker compose stop boulder
+    docker compose stop bmysql bconsul
     wait_down $PS_MYSQL &>>$LOGFILE
     wait_down $PS_CONSUL &>>$LOGFILE
     wait_down $PS_BOULDER &>>$LOGFILE
     ;;
 "boulder-restart")
     cd /opt/boulder
-    COMPOSE_HTTP_TIMEOUT=120 docker-compose restart boulder bmysql bconsul &>>$LOGFILE
+    COMPOSE_HTTP_TIMEOUT=120 docker compose restart boulder bmysql bconsul &>>$LOGFILE
     sleep 30
     wait_up $PS_MYSQL &>>$LOGFILE
     wait_up $PS_CONSUL 2 &>>$LOGFILE
@@ -195,20 +195,20 @@ case $txt in
     ;;
 "labca-restart")
     cd /opt/boulder
-    COMPOSE_HTTP_TIMEOUT=120 docker-compose restart gui
+    COMPOSE_HTTP_TIMEOUT=120 docker compose restart gui
     sleep 15
     wait_up $PS_LABCA &>>$LOGFILE
     ;;
 "mysql-restart")
     cd /opt/boulder
     set +e
-    COMPOSE_HTTP_TIMEOUT=120 docker-compose restart bmysql
+    COMPOSE_HTTP_TIMEOUT=120 docker compose restart bmysql
     set -e
     ;;
 "consul-restart")
     cd /opt/boulder
     set +e
-    COMPOSE_HTTP_TIMEOUT=120 docker-compose restart bconsul
+    COMPOSE_HTTP_TIMEOUT=120 docker compose restart bconsul
     set -e
     ;;
 "log-backups")
@@ -230,8 +230,8 @@ case $txt in
     ;;
 "server-restart")
     cd /opt/boulder
-    nohup docker-compose restart gui & >/dev/null
-    nohup docker-compose restart nginx & >/dev/null
+    nohup docker compose restart gui & >/dev/null
+    nohup docker compose restart nginx & >/dev/null
     ;;
 "version-update")
     cd $dn
