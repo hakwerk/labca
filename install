@@ -391,6 +391,7 @@ copy_admin() {
     replace_all $adminDir/data/issuer/openssl.cnf LABCA_FQDN
 
     cd "$cloneDir"
+    sudo -u labca -H git config --global --add safe.directory "$cloneDir"
     version=$(sudo -u labca -H git describe --always --tags HEAD 2>/dev/null)
     cd "$adminDir"
     grep \"version\" data/config.json &>/dev/null || sed -i -e 's/^}$/,\n  "version": ""\n}/' data/config.json
