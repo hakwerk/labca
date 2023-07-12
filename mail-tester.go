@@ -86,7 +86,6 @@ func main() {
 
 	scope, logger, oTelShutdown := cmd.StatsAndLogging(c.Syslog, c.OpenTelemetry, c.Mailer.DebugAddr)
 	defer oTelShutdown(context.Background())
-	defer logger.AuditPanic()
 	logger.Info(cmd.VersionString())
 
 	clk := cmd.Clock()

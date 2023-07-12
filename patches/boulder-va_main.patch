@@ -1,5 +1,5 @@
 diff --git a/cmd/boulder-va/main.go b/cmd/boulder-va/main.go
-index 3625dace9..55cb7cc18 100644
+index 8994b9b20..a0f0f9aa6 100644
 --- a/cmd/boulder-va/main.go
 +++ b/cmd/boulder-va/main.go
 @@ -27,8 +27,9 @@ type Config struct {
@@ -14,7 +14,7 @@ index 3625dace9..55cb7cc18 100644
  		DNSTimeout                config.Duration  `validate:"required"`
  		DNSAllowLoopbackAddresses bool
  
-@@ -88,7 +89,7 @@ func main() {
+@@ -87,7 +88,7 @@ func main() {
  		cmd.Fail("Cannot specify both 'dnsResolver' and dnsProvider")
  	}
  
@@ -23,7 +23,7 @@ index 3625dace9..55cb7cc18 100644
  		cmd.Fail("Must specify either 'dnsResolver' or dnsProvider")
  	}
  
-@@ -101,8 +102,13 @@ func main() {
+@@ -100,8 +101,13 @@ func main() {
  	}
  
  	var servers bdns.ServerProvider

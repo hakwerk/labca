@@ -2,7 +2,7 @@
 SHELL=/bin/bash
 PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
 
-1 6 * * Mon root /opt/labca/backup cron &>>/opt/logs/cron.log
 1 7 * * * root /opt/labca/mailer &>>/opt/logs/cron.log
 5 7 * * * root /opt/labca/checkrenew &>>/opt/logs/cron.log
+11 7 * * Mon root /opt/labca/backup cron &>>/opt/logs/cron.log
 */5 * * * * root /opt/labca/checkcrl &>>/opt/logs/cron.log

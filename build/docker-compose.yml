@@ -11,6 +11,8 @@ services:
       FAKE_DNS: 10.77.77.77
       BOULDER_CONFIG_DIR: &boulder_config_dir labca/config
       GOFLAGS: -mod=vendor
+      # Forward the parent env's GOEXPERIMENT value into the container.
+      GOEXPERIMENT: ${GOEXPERIMENT:-}
     volumes:
       - boulder_data:/opt/boulder/labca
       - nginx_html:/opt/wwwstatic
