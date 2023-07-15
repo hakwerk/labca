@@ -40,9 +40,11 @@ flag_skip_redis=true
 #
 COL_NC='\e[0m' # No Color
 COL_LIGHT_GREEN='\e[1;32m'
+COL_YELLOW='\e[1;33m'
 COL_LIGHT_RED='\e[1;31m'
 TICK="[${COL_LIGHT_GREEN}✓${COL_NC}]"
 CROSS="[${COL_LIGHT_RED}✗${COL_NC}]"
+WARN="[${COL_YELLOW}✠${COL_NC}]"
 INFO="[.]"
 DONE="${COL_LIGHT_GREEN} done!${COL_NC}"
 OVER="\\r\\033[K"
@@ -80,6 +82,12 @@ msg_ok() {
     local msg="$1"
     echo -e "${OVER}  ${TICK} ${msg}"
     echo "[`date "${logTimeFormat}"`] [OK   ] ${msg}" >> $installLog
+}
+
+msg_warn() {
+    local msg="$1"
+    echo -e "${OVER}  ${WARN} ${msg}"
+    echo "[`date "${logTimeFormat}"`] [WARN] ${msg}" >> $installLog
 }
 
 msg_err() {
@@ -138,7 +146,7 @@ labca_user() {
     cd ~labca
     local gig=$(sudo -u labca -H git config --global core.excludesfile 2>/dev/null)
     if [ -z "$gig" ]; then
-        sudo -u labca -H git config --global core.excludesfile /home/labca/.gitignore_global >/dev/null 2>&1 || msg_info "WARNING: could not set core.excludesfile"
+        sudo -u labca -H git config --global core.excludesfile /home/labca/.gitignore_global >/dev/null 2>&1 || msg_warn "WARNING: could not set core.excludesfile"
         gig=$(sudo -u labca -H git config --global core.excludesfile 2>/dev/null)
     fi
     gig=${gig/\~/\/home\/labca}
@@ -458,6 +466,14 @@ install_extra() {
     for package in "${packages[@]}"; do
         install_pkg "$package"
     done
+
+    dcver=$(docker compose version | grep v2.19 | wc -l)
+    if [ "$dcver" != "0" ]; then
+        dc18=$(apt list docker-compose-plugin -a 2>/dev/null | grep 2.18 | cut -d ' ' -f 2)
+        apt install -y --allow-downgrades docker-compose-plugin=${dc18} &>>$installLog
+
+        msg_warn "docker-compose-plugin was downgraded to v2.18 due to a known bug with v2.19.x"
+    fi
 
     # Make sure the labca user has docker permissions
     usermod -aG docker labca
