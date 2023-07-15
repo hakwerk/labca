@@ -479,7 +479,7 @@ static_web() {
     [ -d /home/labca/nginx_data/conf.d ] || mkdir -p /home/labca/nginx_data/conf.d
     [ -d /home/labca/nginx_data/ssl ] || mkdir -p /home/labca/nginx_data/ssl
     cp $cloneDir/nginx.conf /home/labca/nginx_data/conf.d/labca.conf
-    cp $cloneDir/proxy.conf /home/labca/nginx_data/conf.d/proxy.conf
+    cp $cloneDir/proxy.inc /home/labca/nginx_data/conf.d/proxy.inc
     if [ -f "$boulderLabCADir/setup_complete" ]; then
         perl -i -p0e 's/\n    # BEGIN temporary redirect\n    location = \/ \{\n        return 302 \/admin\/;\n    }\n    # END temporary redirect\n//igs' /home/labca/nginx_data/conf.d/labca.conf
     fi

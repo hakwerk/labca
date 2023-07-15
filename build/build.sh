@@ -40,7 +40,7 @@ BASEDIR=/go/src/github.com/letsencrypt/boulder
 docker run -v $boulderDir:$BASEDIR:cached -v $TMP_DIR/bin:$BASEDIR/bin -w $BASEDIR -e BUILD_HOST=$BUILD_HOST $BUILD_IMAGE sh -c "git config --global --add safe.directory $BASEDIR && make build"
 
 cp $cloneDir/nginx.conf $TMP_DIR/
-cp $cloneDir/proxy.conf $TMP_DIR/
+cp $cloneDir/proxy.inc $TMP_DIR/
 cp $cloneDir/utils/nameidtool.go $TMP_DIR/
 cp -rp $cloneDir/gui/* $TMP_DIR/admin/
 head -13 $cloneDir/gui/setup.sh > $TMP_DIR/admin/setup.sh

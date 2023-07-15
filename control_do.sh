@@ -46,7 +46,7 @@ setup_boulder_data() {
 setup_nginx_data() {
     rm -f /etc/nginx/conf.d/default.conf
     cp -p /opt/staging/nginx.conf /etc/nginx/conf.d/labca.conf
-    cp -p /opt/staging/proxy.conf /etc/nginx/conf.d/proxy.conf
+    cp -p /opt/staging/proxy.inc /etc/nginx/conf.d/proxy.inc
     [ -e /opt/boulder/labca/setup_complete ] && perl -i -p0e 's/\n    # BEGIN temporary redirect\n    location = \/ \{\n        return 302 \/admin\/;\n    }\n    # END temporary redirect\n//igs' /etc/nginx/conf.d/labca.conf || true
 
     cd /var/www/html

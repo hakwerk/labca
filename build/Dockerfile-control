@@ -55,7 +55,7 @@ COPY tmp/admin/apply-boulder /opt/labca/
 COPY tmp/admin/static /opt/staging/static
 COPY tmp/admin/data /opt/staging/data
 COPY tmp/nginx.conf /opt/staging/
-COPY tmp/proxy.conf /opt/staging/
+COPY tmp/proxy.inc /opt/staging/
 COPY tmp/admin/apply-nginx /opt/labca/
 
 COPY tmp/bin/boulder /opt/boulder/bin/
