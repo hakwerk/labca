@@ -1,6 +1,6 @@
-# LabCA Docker Only ![status-beta](https://img.shields.io/badge/status-beta-yellow.svg)
+# LabCA Docker Only
 
-It is now also possible, instead of dedicating a complete (virtual) machine to LabCA, to run LabCA using docker compose on a non-dedicated machine. This is quite new and therefore still needs more testing.
+It is now also possible, instead of dedicating a complete (virtual) machine to LabCA, to run LabCA using docker compose on a non-dedicated machine.
 
 ## Startup
 
