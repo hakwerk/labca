@@ -29,7 +29,7 @@ apt-get install -y docker-ce docker-ce-cli containerd.io docker-compose-plugin
 dcver=$(docker compose version | grep v2.19 | wc -l)
 if [ "$dcver" != "0" ]; then
     dc18=$(apt list docker-compose-plugin -a 2>/dev/null | grep 2.18 | cut -d ' ' -f 2)
-    apt install -y --allow-downgrades docker-compose-plugin=${dc18} &>>$installLog
+    apt install -y --allow-downgrades docker-compose-plugin=${dc18}
 fi
 
 bin/labca-gui
