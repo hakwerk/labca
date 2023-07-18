@@ -68,6 +68,7 @@ cmdlineBranch=""
 fullCmdline=""
 keepLocal=0
 alphaTest=0
+dcdowngraded=0
 
 #
 # Helper functions for informing the user and logging to file
@@ -471,6 +472,7 @@ install_extra() {
     if [ "$dcver" != "0" ]; then
         dc18=$(apt list docker-compose-plugin -a 2>/dev/null | grep 2.18 | cut -d ' ' -f 2)
         apt install -y --allow-downgrades docker-compose-plugin=${dc18} &>>$installLog
+        dcdowngraded=1
 
         msg_warn "docker-compose-plugin was downgraded to v2.18 due to a known bug with v2.19.x"
     fi
@@ -734,10 +736,6 @@ startup() {
     local msg="Restart docker containers and service"
 
     cd "$boulderDir"
-    let num=$(docker ps -a | grep " boulder-" | wc -l)
-    if [ $num -eq 0 ]; then
-        perl -i -p0e "s/(version:.*\n).*\n?(services:\n)/\1name: labca\n\2/" docker-compose.yml
-    fi
     cnt=$(docker compose ps | wc -l)
     if [ "$cnt" -le "2" ]; then
         msg="Download docker images and build containers"
@@ -745,26 +743,35 @@ startup() {
     msg_info "$msg (this will take a while!!)"
 
     docker compose pull -q &>>$installLog
-    cnt=$(count $PS_CONTROL || echo "0")
-    docker compose stop boulder bmysql labca nginx bconsul gui &>>$installLog || true
+
+    # Cleanup any remaining containers with old names
+    docker compose -p boulder stop &>>$installLog || true
+    docker compose -p boulder rm -f &>>$installLog || true
     for ct in boulder_bhsm_1 boulder_bredis_1 boulder_bredis_2 boulder_bredis_3 boulder_bredis_4 boulder_bredis_5 boulder_bredis_6; do
         [ -z "$(docker ps | grep $ct)" ] || docker stop $ct &>>$installLog
     done
-    if [ $num -ne 0 ]; then
-        docker compose stop control &>>$installLog || true
-    fi
+    for ct in boulder_bhsm_1 boulder_bredis_1 boulder_bredis_2 boulder_bredis_3 boulder_bredis_4 boulder_bredis_5 boulder_bredis_6; do
+        [ -z "$(docker ps -a | grep -e "$ct\$")" ] || docker rm -f $ct &>>$installLog
+    done
+    docker network rm -f boulder_bluenet boulder_consulnet boulder_rednet &>>$installLog || true
+    docker stop boulder-labca-1 >&/dev/null || true
+    docker rm -f boulder-labca-1 >&/dev/null || true
+    docker stop labca-labca-1 >&/dev/null || true
+    docker rm -f labca-labca-1 >&/dev/null || true
+
+    cnt=$(count $PS_CONTROL || echo "0")
+    haserr=$(docker compose logs | grep "cannot assign requested address" | wc -l)
+    docker compose stop &>>$installLog || true
     wait_down $PS_NGINX &>>$installLog || true
     wait_down $PS_MYSQL &>>$installLog || true
     wait_down $PS_CONSUL &>>$installLog || true
     wait_down $PS_LABCA &>>$installLog || true
+    wait_down $PS_CONTROL &>>$installLog || true
     wait_down $PS_BOULDER &>>$installLog || true
-    if [ $num -ne 0 ]; then
-        wait_down $PS_CONTROL &>>$installLog || true
-        cnt=0
+
+    if [ $dcdowngraded -eq 1 ] || [ $haserr -ne 0 ]; then
+        docker compose rm -f &>>$installLog || true
     fi
-    for ct in boulder_bhsm_1 boulder_bredis_1 boulder_bredis_2 boulder_bredis_3 boulder_bredis_4 boulder_bredis_5 boulder_bredis_6; do
-        [ -z "$(docker ps -a | grep -e "$ct\$")" ] || docker rm -f $ct &>>$installLog
-    done
 
     local rc=0
     service labca status &> /dev/null || rc=$?
@@ -775,10 +782,6 @@ startup() {
     fi
 
     [ -d /home/labca/control_logs ] || mkdir -p /home/labca/control_logs
-
-    perl -i -p0e "s/(version:.*\n).*\n?(services:\n)/\1name: labca\n\2/" docker-compose.yml
-    docker network rm -f boulder_bluenet boulder_consulnet boulder_rednet &>>$installLog || /bin/true
-    docker rm -f boulder-control-1 boulder-boulder-1 boulder-labca-1 boulder-bmysql-1 boulder-bconsul-1 boulder-nginx-1 >/dev/null &>>$installLog
 
     # Restore MySQL data when moving from boulder-bmysql-1 to labca-bmysql-1
     if [ -z "$(docker volume ls | grep labca_dbdata)" ] && [ ! -z "$(docker volume ls | grep boulder_dbdata)" ]; then
@@ -795,11 +798,7 @@ startup() {
     wait_up $PS_LABCA &>>$installLog || true
     wait_up $PS_CONTROL &>>$installLog || true
     docker exec -i labca-bmysql-1 mysql_upgrade &>>$installLog
-    [ -f "$boulderLabCADir/setup_complete" ] && wait_up $PS_BOULDER $PS_BOULDER_COUNT &>>$installLog || /bin/true
-
-    if [ $cnt -gt 0 ]; then
-        COMPOSE_HTTP_TIMEOUT=180 docker compose restart control &>>$installLog
-    fi
+    [ -f "$boulderLabCADir/setup_complete" ] && wait_up $PS_BOULDER $PS_BOULDER_COUNT &>>$installLog || true
 
     msg_ok "$msg"
 }

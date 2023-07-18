@@ -1,10 +1,8 @@
 diff --git a/docker-compose.yml b/docker-compose.yml
-index 02958b245..869b7d5de 100644
+index 81ece4913..869b7d5de 100644
 --- a/docker-compose.yml
 +++ b/docker-compose.yml
-@@ -1,8 +1,9 @@
- version: '3'
-+name: labca
+@@ -3,7 +3,7 @@ name: labca
  services:
    boulder:
      # Should match one of the GO_DEV_VERSIONS in test/boulder-tools/tag_and_upload.sh.
@@ -13,7 +11,7 @@ index 02958b245..869b7d5de 100644
      environment:
        # To solve HTTP-01 and TLS-ALPN-01 challenges, change the IP in FAKE_DNS
        # to the IP address where your ACME client's solver is listening.
-@@ -13,12 +14,9 @@ services:
+@@ -14,12 +14,9 @@ services:
        # Forward the parent env's GOEXPERIMENT value into the container.
        GOEXPERIMENT: ${GOEXPERIMENT:-}
      volumes:
@@ -29,7 +27,7 @@ index 02958b245..869b7d5de 100644
      networks:
        bluenet:
          ipv4_address: 10.77.77.77
-@@ -42,6 +40,7 @@ services:
+@@ -43,6 +40,7 @@ services:
      depends_on:
        - bmysql
        - bconsul
@@ -37,7 +35,7 @@ index 02958b245..869b7d5de 100644
      entrypoint: labca/entrypoint.sh
      working_dir: &boulder_working_dir /opt/boulder
      logging:
-@@ -76,8 +75,10 @@ services:
+@@ -77,8 +75,10 @@ services:
  
    bconsul:
      image: hashicorp/consul:1.14.2
@@ -49,7 +47,7 @@ index 02958b245..869b7d5de 100644
      networks:
        consulnet:
          ipv4_address: 10.55.55.10
-@@ -85,27 +86,28 @@ services:
+@@ -86,27 +86,28 @@ services:
          ipv4_address: 10.77.77.10
        rednet:
          ipv4_address: 10.88.88.10
@@ -88,7 +86,7 @@ index 02958b245..869b7d5de 100644
      logging:
        driver: "json-file"
        options:
-@@ -122,27 +124,26 @@ services:
+@@ -123,27 +124,26 @@ services:
        - 80:80
        - 443:443
      volumes:
@@ -130,7 +128,7 @@ index 02958b245..869b7d5de 100644
      expose:
        - 3030
      environment:
-@@ -153,6 +154,14 @@ services:
+@@ -154,6 +154,14 @@ services:
  
  volumes:
    dbdata:

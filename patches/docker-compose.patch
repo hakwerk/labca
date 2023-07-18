@@ -1,8 +1,14 @@
 diff --git a/docker-compose.yml b/docker-compose.yml
-index 59f5423d4..02958b245 100644
+index 59f5423d4..81ece4913 100644
 --- a/docker-compose.yml
 +++ b/docker-compose.yml
-@@ -8,12 +8,14 @@ services:
+@@ -1,4 +1,5 @@
+ version: '3'
++name: labca
+ services:
+   boulder:
+     # Should match one of the GO_DEV_VERSIONS in test/boulder-tools/tag_and_upload.sh.
+@@ -8,12 +9,14 @@ services:
        # to the IP address where your ACME client's solver is listening.
        # FAKE_DNS: 172.17.0.1
        FAKE_DNS: 10.77.77.77
@@ -20,7 +26,7 @@ index 59f5423d4..02958b245 100644
        - ./.gocache:/root/.cache/go-build:cached
        - ./.hierarchy:/hierarchy/:cached
        - ./.softhsm-tokens/:/var/lib/softhsm/tokens/:cached
-@@ -33,20 +35,26 @@ services:
+@@ -33,20 +36,26 @@ services:
      # TODO: Remove this when ServerAddress is deprecated in favor of SRV records
      # and DNSAuthority.
      dns: 10.55.55.10
@@ -55,7 +61,7 @@ index 59f5423d4..02958b245 100644
      networks:
        bluenet:
          aliases:
-@@ -60,22 +68,11 @@ services:
+@@ -60,22 +69,11 @@ services:
      # small.
      command: mysqld --bind-address=0.0.0.0 --slow-query-log --log-output=TABLE --log-queries-not-using-indexes=ON
      logging:
@@ -83,7 +89,7 @@ index 59f5423d4..02958b245 100644
  
    bconsul:
      image: hashicorp/consul:1.14.2
-@@ -89,27 +86,73 @@ services:
+@@ -89,27 +87,73 @@ services:
        rednet:
          ipv4_address: 10.88.88.10
      command: "consul agent -dev -config-format=hcl -config-file=/test/consul/config.hcl"
