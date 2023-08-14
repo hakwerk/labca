@@ -1,8 +1,8 @@
 diff --git a/cmd/contact-auditor/main.go b/cmd/contact-auditor/main.go
-index 419182fe..d77270cd 100644
+index a20560b6f..ac0d567f8 100644
 --- a/cmd/contact-auditor/main.go
 +++ b/cmd/contact-auditor/main.go
-@@ -11,6 +11,7 @@ import (
+@@ -12,6 +12,7 @@ import (
  	"time"
  
  	"github.com/letsencrypt/boulder/cmd"
@@ -10,7 +10,7 @@ index 419182fe..d77270cd 100644
  	"github.com/letsencrypt/boulder/db"
  	blog "github.com/letsencrypt/boulder/log"
  	"github.com/letsencrypt/boulder/policy"
-@@ -49,9 +50,13 @@ func validateContacts(id int64, createdAt string, contacts []string) error {
+@@ -50,9 +51,13 @@ func validateContacts(id int64, createdAt string, contacts []string) error {
  		fmt.Fprintf(&probsBuff, "%d\t%s\tvalidation\t%q\t%q\t%q\n", id, createdAt, contact, prob, contacts)
  	}
  

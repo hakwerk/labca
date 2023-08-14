@@ -1,5 +1,5 @@
 diff --git a/docker-compose.yml b/docker-compose.yml
-index 59f5423d4..81ece4913 100644
+index 4c28fe96..df62bf8b 100644
 --- a/docker-compose.yml
 +++ b/docker-compose.yml
 @@ -1,4 +1,5 @@
@@ -67,7 +67,7 @@ index 59f5423d4..81ece4913 100644
      logging:
 -      driver: none
 -  bproxysql:
--    image: proxysql/proxysql:2.5.2
+-    image: proxysql/proxysql:2.5.4
 -    # The --initial flag force resets the ProxySQL database on startup. By
 -    # default, ProxySQL ignores new configuration if the database already
 -    # exists. Without this flag, new configuration wouldn't be applied until you
@@ -88,7 +88,7 @@ index 59f5423d4..81ece4913 100644
 +    restart: always
  
    bconsul:
-     image: hashicorp/consul:1.14.2
+     image: hashicorp/consul:1.15.4
 @@ -89,27 +87,73 @@ services:
        rednet:
          ipv4_address: 10.88.88.10

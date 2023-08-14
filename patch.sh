@@ -43,6 +43,7 @@ $SUDO patch -p1 < $cloneDir/patches/ocsp-responder_main.patch
 $SUDO patch -p1 < $cloneDir/patches/policy_pa.patch
 $SUDO patch -p1 < $cloneDir/patches/ra_ra.patch
 $SUDO patch -p1 < $cloneDir/patches/ratelimit_rate-limits.patch
+$SUDO patch -p1 < $cloneDir/patches/ratelimits_names.patch
 $SUDO patch -p1 < $cloneDir/patches/reloader_reloader.patch
 $SUDO patch -p1 < $cloneDir/patches/startservers.patch
 if [ "$SUDO" == "" ]; then

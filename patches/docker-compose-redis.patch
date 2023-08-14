@@ -1,5 +1,5 @@
 diff --git a/docker-compose.yml b/docker-compose.yml
-index f7c4e45c0..59f5423d4 100644
+index 5be626d6..4c28fe96 100644
 --- a/docker-compose.yml
 +++ b/docker-compose.yml
 @@ -22,8 +22,6 @@ services:
@@ -11,16 +11,18 @@ index f7c4e45c0..59f5423d4 100644
        consulnet:
          ipv4_address: 10.55.55.55
      # Use consul as a backup to Docker's embedded DNS server. If there's a name
-@@ -42,8 +40,6 @@ services:
+@@ -42,10 +40,6 @@ services:
      depends_on:
        - bmysql
        - bproxysql
 -      - bredis_1
 -      - bredis_2
+-      - bredis_3
+-      - bredis_4
        - bconsul
        - bjaeger
      entrypoint: test/entrypoint.sh
-@@ -81,24 +77,6 @@ services:
+@@ -83,42 +77,6 @@ services:
          aliases:
            - boulder-proxysql
  
@@ -28,7 +30,7 @@ index f7c4e45c0..59f5423d4 100644
 -    image: redis:6.2.7
 -    volumes:
 -      - ./test/:/test/:cached
--    command: redis-server /test/redis.config
+-    command: redis-server /test/redis-ocsp.config
 -    networks:
 -      redisnet:
 -        ipv4_address: 10.33.33.2
@@ -37,15 +39,33 @@ index f7c4e45c0..59f5423d4 100644
 -    image: redis:6.2.7
 -    volumes:
 -      - ./test/:/test/:cached
--    command: redis-server /test/redis.config
+-    command: redis-server /test/redis-ocsp.config
 -    networks:
 -      redisnet:
 -        ipv4_address: 10.33.33.3
 -
+-  bredis_3:
+-    image: redis:6.2.7
+-    volumes:
+-      - ./test/:/test/:cached
+-    command: redis-server /test/redis-ratelimits.config
+-    networks:
+-      redisnet:
+-        ipv4_address: 10.33.33.4
+-
+-  bredis_4:
+-    image: redis:6.2.7
+-    volumes:
+-      - ./test/:/test/:cached
+-    command: redis-server /test/redis-ratelimits.config
+-    networks:
+-      redisnet:
+-        ipv4_address: 10.33.33.5
+-
    bconsul:
-     image: hashicorp/consul:1.14.2
+     image: hashicorp/consul:1.15.4
      volumes:
-@@ -148,13 +126,6 @@ networks:
+@@ -168,13 +126,6 @@ networks:
        config:
          - subnet: 10.88.88.0/24
  

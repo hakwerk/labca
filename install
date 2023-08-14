@@ -30,7 +30,7 @@ dockerComposeVersion="v2.5.0"
 
 labcaUrl="https://github.com/hakwerk/labca/"
 boulderUrl="https://github.com/letsencrypt/boulder/"
-boulderTag="release-2023-07-11"
+boulderTag="release-2023-08-14"
 
 # Feature flags
 flag_skip_redis=true

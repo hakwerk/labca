@@ -24,16 +24,15 @@ $SUDO patch -p1 -o "$boulderLabCADir/config/bad-key-revoker.json" < $cloneDir/pa
 $SUDO patch -p1 -o "$boulderLabCADir/config/ocsp-responder.json" < $cloneDir/patches/config_ocsp-responder.patch
 $SUDO patch -p1 -o "$boulderLabCADir/config/publisher.json" < $cloneDir/patches/config_publisher.patch
 $SUDO patch -p1 -o "$boulderLabCADir/config/wfe2.json" < $cloneDir/patches/config_wfe2.patch
-$SUDO patch -p1 -o "$boulderLabCADir/config/orphan-finder.json" < $cloneDir/patches/config_orphan-finder.patch
 $SUDO patch -p1 -o "$boulderLabCADir/config/crl-storer.json" < $cloneDir/patches/config_crl-storer.patch
 $SUDO patch -p1 -o "$boulderLabCADir/config/crl-updater.json" < $cloneDir/patches/config_crl-updater.patch
 $SUDO patch -p1 -o "$boulderLabCADir/config/ra.json" < $cloneDir/patches/config_ra.patch
 $SUDO patch -p1 -o "$boulderLabCADir/config/akamai-purger.json" < $cloneDir/patches/config_akamai-purger.patch
 
 cp test/config/va*.json "$boulderLabCADir/config/"
-perl -i -p0e "s/\"dnsResolver\": \"service.consul\",/\"dnsResolvers\": [\n      \"127.0.0.1:8053\",\n      \"127.0.0.1:8054\"\n    ],/igs" $boulderLabCADir/config/va.json
-perl -i -p0e "s/\"dnsResolver\": \"service.consul\",/\"dnsResolvers\": [\n      \"127.0.0.1:8053\",\n      \"127.0.0.1:8054\"\n    ],/igs" $boulderLabCADir/config/va-remote-a.json
-perl -i -p0e "s/\"dnsResolver\": \"service.consul\",/\"dnsResolvers\": [\n      \"127.0.0.1:8053\",\n      \"127.0.0.1:8054\"\n    ],/igs" $boulderLabCADir/config/va-remote-b.json
+perl -i -p0e "s/\"dnsProvider\": {.*?\t\t},/\"dnsResolvers\": [\n\t\t\t\"127.0.0.1:8053\",\n\t\t\t\"127.0.0.1:8054\"\n\t\t],/igs" $boulderLabCADir/config/va.json
+perl -i -p0e "s/\"dnsProvider\": {.*?\t\t},/\"dnsResolvers\": [\n\t\t\t\"127.0.0.1:8053\",\n\t\t\t\"127.0.0.1:8054\"\n\t\t],/igs" $boulderLabCADir/config/va-remote-a.json
+perl -i -p0e "s/\"dnsProvider\": {.*?\t\t},/\"dnsResolvers\": [\n\t\t\t\"127.0.0.1:8053\",\n\t\t\t\"127.0.0.1:8054\"\n\t\t],/igs" $boulderLabCADir/config/va-remote-b.json
 
 if [ "$flag_skip_redis" == true ]; then
     perl -i -p0e "s/\n    \"redis\": \{\n.*?    \},//igs" $boulderLabCADir/config/ocsp-responder.json
@@ -51,7 +50,6 @@ sed -i -e "s|/hierarchy/intermediate-cert-rsa-a.pem|labca/test-ca.pem|" config/o
 sed -i -e "s|/hierarchy/intermediate-cert-rsa-a.pem|labca/test-ca.pem|" config/publisher.json
 sed -i -e "s|/hierarchy/intermediate-cert-rsa-a.pem|labca/test-ca.pem|" config/ra.json
 sed -i -e "s|/hierarchy/intermediate-cert-rsa-a.pem|labca/test-ca.pem|" config/wfe2.json
-sed -i -e "s|/hierarchy/intermediate-cert-rsa-a.pem|labca/test-ca.pem|" config/orphan-finder.json
 sed -i -e "s|/hierarchy/intermediate-cert-rsa-a.pem|labca/test-ca.pem|" config/crl-storer.json
 sed -i -e "s|/hierarchy/intermediate-cert-rsa-a.pem|labca/test-ca.pem|" config/crl-updater.json
 sed -i -e "s|/hierarchy/intermediate-cert-rsa-a.pem|labca/test-ca.pem|" config/ra.json

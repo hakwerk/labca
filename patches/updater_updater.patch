@@ -1,5 +1,5 @@
 diff --git a/crl/updater/updater.go b/crl/updater/updater.go
-index cf58b3e6f..75ee6f338 100644
+index 678f15ce9..df3cdc2f5 100644
 --- a/crl/updater/updater.go
 +++ b/crl/updater/updater.go
 @@ -8,6 +8,7 @@ import (
@@ -10,7 +10,7 @@ index cf58b3e6f..75ee6f338 100644
  	"sort"
  	"strings"
  	"time"
-@@ -128,6 +129,29 @@ func NewUpdater(
+@@ -136,6 +137,29 @@ func NewUpdater(
  // next scheduled run time based on the current time and the updateOffset, then
  // begins running once every updatePeriod.
  func (cu *crlUpdater) Run(ctx context.Context) error {
@@ -40,7 +40,7 @@ index cf58b3e6f..75ee6f338 100644
  	// We don't want the times at which crlUpdater runs to be dependent on when
  	// the process starts. So wait until the appropriate time before kicking off
  	// the first run and the main ticker loop.
-@@ -149,7 +173,7 @@ func (cu *crlUpdater) Run(ctx context.Context) error {
+@@ -157,7 +181,7 @@ func (cu *crlUpdater) Run(ctx context.Context) error {
  	// counting from the appropriate time.
  	ticker := time.NewTicker(cu.updatePeriod)
  	atTime := cu.clk.Now()
@@ -49,7 +49,7 @@ index cf58b3e6f..75ee6f338 100644
  	if err != nil {
  		// We only log, rather than return, so that the long-lived process can
  		// continue and try again at the next tick.
-@@ -359,7 +383,7 @@ func (cu *crlUpdater) tickShard(ctx context.Context, atTime time.Time, issuerNam
+@@ -398,7 +422,7 @@ func (cu *crlUpdater) tickShard(ctx context.Context, atTime time.Time, issuerNam
  			crlEntries = append(crlEntries, entry)
  		}
  

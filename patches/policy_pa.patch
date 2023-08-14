@@ -1,5 +1,5 @@
 diff --git a/policy/pa.go b/policy/pa.go
-index 7da498f3..e24663de 100644
+index ff497a240..c21af1b23 100644
 --- a/policy/pa.go
 +++ b/policy/pa.go
 @@ -32,6 +32,8 @@ type AuthorityImpl struct {
@@ -46,12 +46,12 @@ index 7da498f3..e24663de 100644
  // * exactly equal to an IANA registered TLD
  //
  // It does _not_ check that the domain isn't on any PA blocked lists.
--func validDomain(domain string) error {
+-func ValidDomain(domain string) error {
 +func (pa *AuthorityImpl) ValidDomain(domain string) error {
  	if domain == "" {
  		return errEmptyName
  	}
-@@ -286,6 +301,14 @@ func validDomain(domain string) error {
+@@ -286,6 +301,14 @@ func ValidDomain(domain string) error {
  		}
  	}
  
@@ -79,7 +79,7 @@ index 7da498f3..e24663de 100644
  	}
  	splitEmail := strings.SplitN(email.Address, "@", -1)
  	domain := strings.ToLower(splitEmail[len(splitEmail)-1])
--	err = validDomain(domain)
+-	err = ValidDomain(domain)
 +	err = pa.ValidDomain(domain)
  	if err != nil {
  		return berrors.InvalidEmailError(
@@ -88,7 +88,7 @@ index 7da498f3..e24663de 100644
  	}
  	domain := id.Value
  
--	err := validDomain(domain)
+-	err := ValidDomain(domain)
 +	err := pa.ValidDomain(domain)
  	if err != nil {
  		return err

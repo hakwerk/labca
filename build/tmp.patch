@@ -1,12 +1,12 @@
 diff --git a/docker-compose.yml b/docker-compose.yml
-index 81ece4913..869b7d5de 100644
+index df62bf8b..748d81cc 100644
 --- a/docker-compose.yml
 +++ b/docker-compose.yml
 @@ -3,7 +3,7 @@ name: labca
  services:
    boulder:
      # Should match one of the GO_DEV_VERSIONS in test/boulder-tools/tag_and_upload.sh.
--    image: &boulder_image letsencrypt/boulder-tools:${BOULDER_TOOLS_TAG:-go1.20.5_2023-06-20}
+-    image: &boulder_image letsencrypt/boulder-tools:${BOULDER_TOOLS_TAG:-go1.20.7_2023-08-02}
 +    image: ghcr.io/hakwerk/labca-boulder:${LABCA_IMAGE_VERSION:-latest}
      environment:
        # To solve HTTP-01 and TLS-ALPN-01 challenges, change the IP in FAKE_DNS
@@ -38,7 +38,7 @@ index 81ece4913..869b7d5de 100644
 @@ -77,8 +75,10 @@ services:
  
    bconsul:
-     image: hashicorp/consul:1.14.2
+     image: hashicorp/consul:1.15.4
 +    depends_on:
 +      - control
      volumes:

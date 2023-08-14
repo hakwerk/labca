@@ -74,7 +74,7 @@ services:
     restart: always
 
   bconsul:
-    image: hashicorp/consul:1.14.2
+    image: hashicorp/consul:1.15.4
     depends_on:
       - control
     volumes:

@@ -1,29 +1,24 @@
 diff --git a/cmd/boulder-va/main.go b/cmd/boulder-va/main.go
-index 8994b9b20..a0f0f9aa6 100644
+index 1c998bc97..0665bdf4b 100644
 --- a/cmd/boulder-va/main.go
 +++ b/cmd/boulder-va/main.go
-@@ -27,8 +27,9 @@ type Config struct {
+@@ -27,7 +27,8 @@ type Config struct {
  		// before giving up. May be short-circuited by deadlines. A zero value
  		// will be turned into 1.
  		DNSTries                  int
--		DNSResolver               string           `validate:"required_without=DNSProvider,excluded_with=DNSProvider,omitempty,hostname|hostname_port"`
--		DNSProvider               *cmd.DNSProvider `validate:"required_without=DNSResolver,excluded_with=DNSResolver,omitempty"`
-+		DNSResolver               string `validate:"omitempty,hostname|hostname_port"`
+-		DNSProvider               *cmd.DNSProvider `validate:"required"`
 +		DNSResolvers              []string
 +		DNSProvider               *cmd.DNSProvider `validate:"omitempty"`
  		DNSTimeout                config.Duration  `validate:"required"`
  		DNSAllowLoopbackAddresses bool
  
-@@ -87,7 +88,7 @@ func main() {
- 		cmd.Fail("Cannot specify both 'dnsResolver' and dnsProvider")
+@@ -80,13 +81,18 @@ func main() {
  	}
+ 	clk := cmd.Clock()
  
--	if c.VA.DNSResolver == "" && c.VA.DNSProvider == nil {
-+	if c.VA.DNSResolver == "" && c.VA.DNSProvider == nil && len(c.VA.DNSResolvers) == 0 {
- 		cmd.Fail("Must specify either 'dnsResolver' or dnsProvider")
- 	}
- 
-@@ -100,8 +101,13 @@ func main() {
+-	if c.VA.DNSProvider == nil {
++	if c.VA.DNSProvider == nil && len(c.VA.DNSResolvers) == 0 {
+ 		cmd.Fail("Must specify dnsProvider")
  	}
  
  	var servers bdns.ServerProvider
