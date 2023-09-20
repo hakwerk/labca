@@ -2,15 +2,10 @@ diff --git a/test/config/ca-a.json b/test/config/ca-a.json
 index 1233a9c95..3c4a0a3ca 100644
 --- a/test/config/ca-a.json
 +++ b/test/config/ca-a.json
-@@ -61,30 +61,7 @@
- 					"crlURL": "http://example.com/crl",
- 					"location": {
- 						"configFile": "test/test-ca.key-pkcs11.json",
--						"certFile": "/hierarchy/intermediate-cert-rsa-a.pem",
--						"numSessions": 2
--					}
--				},
--				{
+@@ -54,17 +54,6 @@
+ 			},
+ 			"issuers": [
+ 				{
 -					"useForRSALeaves": false,
 -					"useForECDSALeaves": true,
 -					"issuerURL": "http://127.0.0.1:4001/aia/issuer/5214744660557630",
@@ -18,6 +13,18 @@ index 1233a9c95..3c4a0a3ca 100644
 -					"location": {
 -						"configFile": "/hierarchy/intermediate-signing-key-ecdsa.pkcs11.json",
 -						"certFile": "/hierarchy/intermediate-cert-ecdsa-a.pem",
+-						"numSessions": 2
+-					}
+-				},
+-				{
+ 					"useForRSALeaves": true,
+ 					"useForECDSALeaves": true,
+ 					"issuerURL": "http://127.0.0.1:4001/aia/issuer/6605440498369741",
+@@ -72,19 +61,7 @@
+ 					"crlURL": "http://example.com/crl",
+ 					"location": {
+ 						"configFile": "test/test-ca.key-pkcs11.json",
+-						"certFile": "/hierarchy/intermediate-cert-rsa-a.pem",
 -						"numSessions": 2
 -					}
 -				},
