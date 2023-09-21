@@ -74,7 +74,7 @@ jobs:
           key: build-dockers-${{ github.sha }}
 
       - name: Set up docker buildx
-        uses: docker/setup-buildx-action@v2
+        uses: docker/setup-buildx-action@v3
 
       - name: Extract metadata (tags, labels) for Docker
         id: meta
