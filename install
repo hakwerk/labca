@@ -558,14 +558,17 @@ get_boulder() {
 
     if [ -e "$boulderDir" ]; then
         cd "$boulderDir"
-        sudo -u labca -H git checkout -- docker-compose.yml errors/errors.go policy/pa.go
-        sudo -u labca -H git reset --hard &>>$installLog
+        chown -R labca:labca .
+        rm -rf bin/orphan-finder bin/validate
+        sudo -u labca -H git reset --hard HEAD^1 &>>$installLog
     fi
 
     clone_or_pull "$GOPATH/src/github.com/letsencrypt/boulder" "$boulderUrl"
 
     cd "$boulderDir"
+    chown -R labca:labca .
     sudo -u labca -H git reset --hard $boulderTag &>>$installLog
+    sudo -u labca -H git prune &>>$installLog
     if [ -e "sa/_db-next/migrations/20190221140139_AddAuthz2.sql" ]; then
         sudo -u labca -H cp sa/_db-next/migrations/20190221140139_AddAuthz2.sql sa/_db/migrations/
     fi
