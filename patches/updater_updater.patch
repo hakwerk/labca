@@ -1,5 +1,5 @@
 diff --git a/crl/updater/updater.go b/crl/updater/updater.go
-index 7df31371..da92a3d3 100644
+index ab0cc7e0..256927e3 100644
 --- a/crl/updater/updater.go
 +++ b/crl/updater/updater.go
 @@ -228,7 +228,7 @@ func (cu *crlUpdater) updateShard(ctx context.Context, atTime time.Time, issuerN

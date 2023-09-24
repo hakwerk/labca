@@ -1,8 +1,8 @@
 diff --git a/linter/linter.go b/linter/linter.go
-index 82c3e238..bda07bd9 100644
+index b7a9d11d..8cdc5702 100644
 --- a/linter/linter.go
 +++ b/linter/linter.go
-@@ -194,10 +194,21 @@ func makeIssuer(realIssuer *x509.Certificate, lintSigner crypto.Signer) (*x509.C
+@@ -193,10 +193,21 @@ func makeIssuer(realIssuer *x509.Certificate, lintSigner crypto.Signer) (*x509.C
  		SubjectKeyId:                realIssuer.SubjectKeyId,
  		URIs:                        realIssuer.URIs,
  		UnknownExtKeyUsage:          realIssuer.UnknownExtKeyUsage,

@@ -1,5 +1,5 @@
 diff --git a/ca/crl.go b/ca/crl.go
-index 8600fe58..e15ff35a 100644
+index adb311f1..88dcdc71 100644
 --- a/ca/crl.go
 +++ b/ca/crl.go
 @@ -117,7 +117,7 @@ func (ci *crlImpl) GenerateCRL(stream capb.CRLGenerator_GenerateCRLServer) error
@@ -11,7 +11,7 @@ index 8600fe58..e15ff35a 100644
  	if err != nil {
  		return fmt.Errorf("creating IDP extension: %w", err)
  	}
-@@ -150,8 +150,10 @@ func (ci *crlImpl) GenerateCRL(stream capb.CRLGenerator_GenerateCRLServer) error
+@@ -146,8 +146,10 @@ func (ci *crlImpl) GenerateCRL(stream capb.CRLGenerator_GenerateCRLServer) error
  				builder = strings.Builder{}
  			}
  		}
@@ -23,8 +23,8 @@ index 8600fe58..e15ff35a 100644
 +		}
  	}
  
- 	template.RevokedCertificates = rcs
-@@ -256,14 +258,14 @@ type issuingDistributionPoint struct {
+ 	template.RevokedCertificateEntries = rcs
+@@ -246,14 +248,14 @@ type issuingDistributionPoint struct {
  // makeIDPExt returns a critical IssuingDistributionPoint extension containing a
  // URI built from the base url, the issuer's NameID, and the shard number. It
  // also sets the OnlyContainsUserCerts boolean to true.

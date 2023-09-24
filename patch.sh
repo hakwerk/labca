@@ -28,7 +28,6 @@ $SUDO patch -p1 < $cloneDir/patches/config_duration.patch
 $SUDO patch -p1 < $cloneDir/patches/contact-auditor_main.patch
 $SUDO patch -p1 < $cloneDir/patches/core_interfaces.patch
 $SUDO patch -p1 < $cloneDir/patches/crl-storer_main.patch
-$SUDO patch -p1 < $cloneDir/patches/crl_x509_crl.patch
 $SUDO patch -p1 < $cloneDir/patches/db_migrations.patch
 $SUDO patch -p1 < $cloneDir/patches/errors_errors.patch
 $SUDO patch -p1 < $cloneDir/patches/expiration-mailer_main.patch

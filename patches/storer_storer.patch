@@ -1,8 +1,8 @@
 diff --git a/crl/storer/storer.go b/crl/storer/storer.go
-index 055c0f028..8f909ee49 100644
+index d1470c7a..e58e46a8 100644
 --- a/crl/storer/storer.go
 +++ b/crl/storer/storer.go
-@@ -9,6 +9,9 @@ import (
+@@ -10,6 +10,9 @@ import (
  	"fmt"
  	"io"
  	"math/big"
