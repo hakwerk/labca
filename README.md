@@ -38,6 +38,10 @@ Getting Boulder up and running has quite a learning curve though and that is whe
 
 NOTE: LabCA cannot run on a Raspberry Pi.
 
+NOTE2: The hostname of your LabCA machine must be in local DNS for the boulder engine to be able to give out a certificate for it.
+
+**NEW**: It is now possible to run LabCA on an existing docker server, see [README_dockeronly](README_dockeronly.md)
+
 LabCA is best run on its own server / virtual machine to prevent any issues caused by conflicting applications. On a freshly installed Linux machine (currently tested with Debian 12/bookworm, Debian 11/bullseye, and Ubuntu 22.04) run this command as root user (or as a regular user that already is in the sudo group):
 
 ```sh
@@ -50,8 +54,6 @@ Or a combination: run the above curl command, but abort (ctrl-c) the script afte
 The first-time install will take a while, depending on the power of your server and your internet speed. On my machine it takes about 12 minutes. It will install the latest versions of some packages, download the relevant programs and configure everything. If all goes well it should look like this:
 
 <img src="https://user-images.githubusercontent.com/44847421/48658718-dc557b00-ea46-11e8-8596-00709fad9197.jpg" width="300">
-
-**NEW**: It is now possible to run LabCA on an existing docker server, see [README_dockeronly](README_dockeronly.md)
 
 ### Setup
 
