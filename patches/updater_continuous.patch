@@ -1,16 +1,16 @@
 diff --git a/crl/updater/continuous.go b/crl/updater/continuous.go
-index c4b8f1a4..d78ebf18 100644
+index 05f1d1bf..1c678a9c 100644
 --- a/crl/updater/continuous.go
 +++ b/crl/updater/continuous.go
-@@ -4,6 +4,7 @@ import (
+@@ -3,6 +3,7 @@ package updater
+ import (
  	"context"
- 	"math/big"
  	"math/rand"
 +	"os"
  	"sync"
  	"time"
  
-@@ -17,6 +18,29 @@ import (
+@@ -16,6 +17,29 @@ import (
  func (cu *crlUpdater) Run(ctx context.Context) error {
  	var wg sync.WaitGroup
  
@@ -34,7 +34,7 @@ index c4b8f1a4..d78ebf18 100644
 +		case <-time.After(2 * time.Minute):
 +		}
 +
-+		cu.RunOnce(ctx, cu.clk.Now())
++		cu.RunOnce(ctx)
 +	}
 +
  	shardWorker := func(issuerNameID issuance.IssuerNameID, shardIdx int) {

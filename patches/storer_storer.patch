@@ -1,8 +1,8 @@
 diff --git a/crl/storer/storer.go b/crl/storer/storer.go
-index d1470c7a..e58e46a8 100644
+index cd0bf86c..dd492aec 100644
 --- a/crl/storer/storer.go
 +++ b/crl/storer/storer.go
-@@ -10,6 +10,9 @@ import (
+@@ -12,6 +12,9 @@ import (
  	"fmt"
  	"io"
  	"math/big"
@@ -12,23 +12,23 @@ index d1470c7a..e58e46a8 100644
  	"time"
  
  	"github.com/aws/aws-sdk-go-v2/service/s3"
-@@ -34,6 +37,7 @@ type crlStorer struct {
+@@ -38,6 +41,7 @@ type crlStorer struct {
  	cspb.UnimplementedCRLStorerServer
- 	s3Client         s3Putter
+ 	s3Client         simpleS3
  	s3Bucket         string
 +	localStorePath   string
  	issuers          map[issuance.IssuerNameID]*issuance.Certificate
  	uploadCount      *prometheus.CounterVec
  	sizeHistogram    *prometheus.HistogramVec
-@@ -46,6 +50,7 @@ func New(
+@@ -50,6 +54,7 @@ func New(
  	issuers []*issuance.Certificate,
- 	s3Client s3Putter,
+ 	s3Client simpleS3,
  	s3Bucket string,
 +	localStorePath string,
  	stats prometheus.Registerer,
  	log blog.Logger,
  	clk clock.Clock,
-@@ -79,6 +84,7 @@ func New(
+@@ -83,6 +88,7 @@ func New(
  		issuers:          issuersByNameID,
  		s3Client:         s3Client,
  		s3Bucket:         s3Bucket,
@@ -36,7 +36,7 @@ index d1470c7a..e58e46a8 100644
  		uploadCount:      uploadCount,
  		sizeHistogram:    sizeHistogram,
  		latencyHistogram: latencyHistogram,
-@@ -157,15 +163,19 @@ func (cs *crlStorer) UploadCRL(stream cspb.CRLStorer_UploadCRLServer) error {
+@@ -203,15 +209,19 @@ func (cs *crlStorer) UploadCRL(stream cspb.CRLStorer_UploadCRLServer) error {
  	checksum := sha256.Sum256(crlBytes)
  	checksumb64 := base64.StdEncoding.EncodeToString(checksum[:])
  	crlContentType := "application/pkix-crl"
@@ -65,9 +65,9 @@ index d1470c7a..e58e46a8 100644
  
  	latency := cs.clk.Now().Sub(start)
  	cs.latencyHistogram.WithLabelValues(issuer.Subject.CommonName).Observe(latency.Seconds())
-@@ -184,3 +194,46 @@ func (cs *crlStorer) UploadCRL(stream cspb.CRLStorer_UploadCRLServer) error {
- 
- 	return stream.SendAndClose(&emptypb.Empty{})
+@@ -240,3 +250,46 @@ func getIDPExt(exts []pkix.Extension) []byte {
+ 	}
+ 	return nil
  }
 +
 +func storeLocalFile(path string, nameID issuance.IssuerNameID, crlNumber *big.Int, shardIdx int64, crlBytes io.Reader) error {

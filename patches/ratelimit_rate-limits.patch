@@ -1,8 +1,8 @@
 diff --git a/ratelimit/rate-limits.go b/ratelimit/rate-limits.go
-index bbca3dc4..37d08b66 100644
+index 0d52801d..bd451521 100644
 --- a/ratelimit/rate-limits.go
 +++ b/ratelimit/rate-limits.go
-@@ -56,6 +56,7 @@ type Limits interface {
+@@ -57,6 +57,7 @@ type Limits interface {
  	CertificatesPerFQDNSetFast() RateLimitPolicy
  	NewOrdersPerAccount() RateLimitPolicy
  	LoadPolicies(contents []byte) error
@@ -10,7 +10,7 @@ index bbca3dc4..37d08b66 100644
  }
  
  // limitsImpl is an unexported implementation of the Limits interface. It acts
-@@ -139,6 +140,15 @@ func (r *limitsImpl) NewOrdersPerAccount() RateLimitPolicy {
+@@ -140,6 +141,15 @@ func (r *limitsImpl) NewOrdersPerAccount() RateLimitPolicy {
  	return r.rlPolicy.NewOrdersPerAccount
  }
  
@@ -26,7 +26,7 @@ index bbca3dc4..37d08b66 100644
  // LoadPolicies loads various rate limiting policies from a byte array of
  // YAML configuration (typically read from disk by a reloader)
  func (r *limitsImpl) LoadPolicies(contents []byte) error {
-@@ -193,6 +203,8 @@ type rateLimitConfig struct {
+@@ -194,6 +204,8 @@ type rateLimitConfig struct {
  	// lower threshold and smaller window), so that clients don't have to wait
  	// a long time after a small burst of accidental duplicate issuance.
  	CertificatesPerFQDNSetFast RateLimitPolicy `yaml:"certificatesPerFQDNSetFast"`

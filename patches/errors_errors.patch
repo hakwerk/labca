@@ -1,8 +1,8 @@
 diff --git a/errors/errors.go b/errors/errors.go
-index f531782e8..4e59a7259 100644
+index 206857bd..9b185064 100644
 --- a/errors/errors.go
 +++ b/errors/errors.go
-@@ -166,10 +166,10 @@ func NotFoundError(msg string, args ...interface{}) error {
+@@ -168,10 +168,10 @@ func NotFoundError(msg string, args ...interface{}) error {
  	return New(NotFound, msg, args...)
  }
  

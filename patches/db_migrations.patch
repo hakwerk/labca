@@ -200,7 +200,7 @@ index 34d6f151c..1e065a7a6 100644
    `id` bigint(20) NOT NULL AUTO_INCREMENT,
    `jwk` mediumblob NOT NULL,
    `jwk_sha256` varchar(255) NOT NULL,
-@@ -203,20 +206,20 @@ CREATE TABLE `registrations` (
+@@ -203,20 +206,32 @@ CREATE TABLE `registrations` (
    KEY `initialIP_createdAt` (`initialIP`,`createdAt`)
  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
  
@@ -215,6 +215,18 @@ index 34d6f151c..1e065a7a6 100644
 -) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
 - PARTITION BY RANGE(id)
 -(PARTITION p_start VALUES LESS THAN (MAXVALUE));
++) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
++
++CREATE TABLE `revokedCertificates` (
++  `id` bigint(20) NOT NULL AUTO_INCREMENT,
++  `issuerID` bigint(20) NOT NULL,
++  `serial` varchar(255) NOT NULL,
++  `notAfterHour` datetime NOT NULL,
++  `shardIdx` bigint(20) NOT NULL,
++  `revokedDate` datetime NOT NULL,
++  `revokedReason` int(11) NOT NULL,
++  PRIMARY KEY (`id`),
++  KEY `issuerID_shardIdx_notAfterHour_idx` (`issuerID`, `shardIdx`, `notAfterHour`)
 +) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
  
  -- Tables below have foreign key constraints, so are created after all other tables.
