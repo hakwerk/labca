@@ -30,7 +30,7 @@ dockerComposeVersion="v2.5.0"
 
 labcaUrl="https://github.com/hakwerk/labca/"
 boulderUrl="https://github.com/letsencrypt/boulder/"
-boulderTag="release-2023-10-04"
+boulderTag="release-2023-10-30"
 
 # Feature flags
 flag_skip_redis=true
@@ -622,7 +622,6 @@ config_boulder() {
     cp core/interfaces.go "$boulderLabCADir/.backup/"
     cp policy/pa.go "$boulderLabCADir/.backup/"
     cp ra/ra.go "$boulderLabCADir/.backup/"
-    cp reloader/reloader.go "$boulderLabCADir/.backup/"
     cp mail/mailer.go "$boulderLabCADir/.backup/"
     cp cmd/expiration-mailer/main.go "$boulderLabCADir/.backup/"
     cp cmd/notify-mailer/main.go "$boulderLabCADir/.backup/"

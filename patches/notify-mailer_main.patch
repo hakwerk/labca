@@ -39,7 +39,7 @@ index a05366c3..da9d78c8 100644
 +	logger := cmd.NewLogger(cmd.SyslogConfig{StdoutLevel: 7})
 +	pa, err := policy.New(cfg.PA.Challenges, logger)
 +	cmd.FailOnError(err, "Failed to create PA")
-+	err = pa.SetHostnamePolicyFile(cfg.NotifyMailer.HostnamePolicyFile)
++	err = pa.LoadHostnamePolicyFile(cfg.NotifyMailer.HostnamePolicyFile)
 +	cmd.FailOnError(err, "Failed to load HostnamePolicyFile")
 +
  	var mailClient bmail.Mailer

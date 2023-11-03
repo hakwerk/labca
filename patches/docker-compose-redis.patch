@@ -1,5 +1,5 @@
 diff --git a/docker-compose.yml b/docker-compose.yml
-index 5be626d6..4c28fe96 100644
+index 3c174f334..4020f447d 100644
 --- a/docker-compose.yml
 +++ b/docker-compose.yml
 @@ -22,8 +22,6 @@ services:
@@ -65,7 +65,7 @@ index 5be626d6..4c28fe96 100644
    bconsul:
      image: hashicorp/consul:1.15.4
      volumes:
-@@ -168,13 +126,6 @@ networks:
+@@ -166,13 +124,6 @@ networks:
        config:
          - subnet: 10.88.88.0/24
  

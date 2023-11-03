@@ -13,7 +13,7 @@ jobs:
       fail-fast: false
       matrix:
         GO_VERSION:
-          - 1.21.1
+          - 1.21.3
 
     steps:
       - name: Checkout
