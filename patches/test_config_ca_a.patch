@@ -2,7 +2,7 @@ diff --git a/test/config/ca-a.json b/test/config/ca-a.json
 index 1233a9c95..3c4a0a3ca 100644
 --- a/test/config/ca-a.json
 +++ b/test/config/ca-a.json
-@@ -54,17 +54,6 @@
+@@ -54,35 +54,13 @@
  			},
  			"issuers": [
  				{
@@ -20,8 +20,7 @@ index 1233a9c95..3c4a0a3ca 100644
  					"useForRSALeaves": true,
  					"useForECDSALeaves": true,
  					"issuerURL": "http://127.0.0.1:4001/aia/issuer/6605440498369741",
-@@ -72,19 +61,7 @@
- 					"crlURL": "http://example.com/crl",
+ 					"ocspURL": "http://127.0.0.1:4002/",
  					"location": {
  						"configFile": "test/test-ca.key-pkcs11.json",
 -						"certFile": "/hierarchy/intermediate-cert-rsa-a.pem",
@@ -33,7 +32,6 @@ index 1233a9c95..3c4a0a3ca 100644
 -					"useForECDSALeaves": false,
 -					"issuerURL": "http://127.0.0.1:4001/aia/issuer/41127673797486028",
 -					"ocspURL": "http://127.0.0.1:4002/",
--					"crlURL": "http://example.com/crl",
 -					"location": {
 -						"configFile": "test/test-ca.key-pkcs11.json",
 -						"certFile": "/hierarchy/intermediate-cert-rsa-b.pem",

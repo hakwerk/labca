@@ -1,17 +1,17 @@
 diff --git a/docker-compose.yml b/docker-compose.yml
-index 06ee3b61f..7d9fb59c6 100644
+index 74f1cf0f8..da119321b 100644
 --- a/docker-compose.yml
 +++ b/docker-compose.yml
 @@ -3,7 +3,7 @@ name: labca
  services:
    boulder:
      # Should match one of the GO_DEV_VERSIONS in test/boulder-tools/tag_and_upload.sh.
--    image: &boulder_image letsencrypt/boulder-tools:${BOULDER_TOOLS_TAG:-go1.21.3_2023-10-12}
+-    image: &boulder_image letsencrypt/boulder-tools:${BOULDER_TOOLS_TAG:-go1.21.4_2023-11-09}
 +    image: ghcr.io/hakwerk/labca-boulder:${LABCA_IMAGE_VERSION:-latest}
      environment:
        # To solve HTTP-01 and TLS-ALPN-01 challenges, change the IP in FAKE_DNS
        # to the IP address where your ACME client's solver is listening.
-@@ -14,12 +14,9 @@ services:
+@@ -15,12 +15,9 @@ services:
        # Forward the parent env's GOEXPERIMENT value into the container.
        GOEXPERIMENT: ${GOEXPERIMENT:-}
      volumes:
@@ -27,7 +27,7 @@ index 06ee3b61f..7d9fb59c6 100644
      networks:
        bluenet:
          ipv4_address: 10.77.77.77
-@@ -43,6 +40,7 @@ services:
+@@ -44,6 +41,7 @@ services:
      depends_on:
        - bmysql
        - bconsul
@@ -35,7 +35,7 @@ index 06ee3b61f..7d9fb59c6 100644
      entrypoint: labca/entrypoint.sh
      working_dir: &boulder_working_dir /opt/boulder
      logging:
-@@ -77,8 +75,10 @@ services:
+@@ -78,8 +76,10 @@ services:
  
    bconsul:
      image: hashicorp/consul:1.15.4
@@ -47,7 +47,7 @@ index 06ee3b61f..7d9fb59c6 100644
      networks:
        consulnet:
          ipv4_address: 10.55.55.10
-@@ -86,27 +86,28 @@ services:
+@@ -87,27 +87,28 @@ services:
          ipv4_address: 10.77.77.10
        rednet:
          ipv4_address: 10.88.88.10
@@ -86,7 +86,7 @@ index 06ee3b61f..7d9fb59c6 100644
      logging:
        driver: "json-file"
        options:
-@@ -123,27 +124,26 @@ services:
+@@ -124,27 +125,26 @@ services:
        - 80:80
        - 443:443
      volumes:
@@ -128,7 +128,7 @@ index 06ee3b61f..7d9fb59c6 100644
      expose:
        - 3030
      environment:
-@@ -154,6 +154,14 @@ services:
+@@ -155,6 +155,14 @@ services:
  
  volumes:
    dbdata:

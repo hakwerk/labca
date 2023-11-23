@@ -1,5 +1,5 @@
 diff --git a/cmd/cert-checker/main.go b/cmd/cert-checker/main.go
-index d6403a04..ee3dcf38 100644
+index 03f66481f..17f0839a4 100644
 --- a/cmd/cert-checker/main.go
 +++ b/cmd/cert-checker/main.go
 @@ -108,6 +108,7 @@ type certChecker struct {
@@ -26,7 +26,7 @@ index d6403a04..ee3dcf38 100644
  	}
  }
  
-@@ -403,7 +406,7 @@ func (c *certChecker) checkCert(ctx context.Context, cert core.Certificate, igno
+@@ -412,7 +415,7 @@ func (c *certChecker) checkCert(ctx context.Context, cert core.Certificate, igno
  			err = c.pa.WillingToIssueWildcards([]identifier.ACMEIdentifier{id})
  			if err != nil {
  				problems = append(problems, fmt.Sprintf("Policy Authority isn't willing to issue for '%s': %s", name, err))
@@ -35,7 +35,7 @@ index d6403a04..ee3dcf38 100644
  				// For defense-in-depth, even if the PA was willing to issue for a name
  				// we double check it against a list of forbidden domains. This way even
  				// if the hostnamePolicyFile malfunctions we will flag the forbidden
-@@ -483,9 +486,10 @@ type Config struct {
+@@ -492,9 +495,10 @@ type Config struct {
  
  		Workers int `validate:"required,min=1"`
  		// Deprecated: this is ignored, and cert checker always checks both expired and unexpired.
@@ -49,7 +49,7 @@ index d6403a04..ee3dcf38 100644
  
  		// AcceptableValidityDurations is a list of durations which are
  		// acceptable for certificates we issue.
-@@ -553,6 +557,8 @@ func main() {
+@@ -562,6 +566,8 @@ func main() {
  		acceptableValidityDurations[ninetyDays] = true
  	}
  
@@ -58,7 +58,7 @@ index d6403a04..ee3dcf38 100644
  	// Validate PA config and set defaults if needed.
  	cmd.FailOnError(config.PA.CheckChallenges(), "Invalid PA configuration")
  
-@@ -593,6 +599,7 @@ func main() {
+@@ -602,6 +608,7 @@ func main() {
  		config.CertChecker.CheckPeriod.Duration,
  		acceptableValidityDurations,
  		logger,

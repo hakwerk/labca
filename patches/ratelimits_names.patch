@@ -1,31 +1,31 @@
 diff --git a/ratelimits/names.go b/ratelimits/names.go
-index b2663982..f1de06b0 100644
+index b0d581e76..a4774ae10 100644
 --- a/ratelimits/names.go
 +++ b/ratelimits/names.go
-@@ -127,7 +127,11 @@ func validateRegIdDomain(id string) error {
- 		return fmt.Errorf(
- 			"invalid regId, %q must be formatted 'regId:domain'", id)
- 	}
--	if policy.ValidDomain(parts[1]) != nil {
+@@ -135,7 +135,11 @@ func validateRegId(id string) error {
+ // validateDomain validates that the provided string is formatted 'domain',
+ // where domain is a domain name.
+ func validateDomain(id string) error {
+-	err := policy.ValidDomain(id)
 +	pa, err := policy.New(nil, nil)
 +	if err != nil {
 +		return fmt.Errorf("cannot create policy authority implementation")
 +	}
-+	if pa.ValidDomain(parts[1]) != nil {
- 		return fmt.Errorf(
- 			"invalid domain, %q must be formatted 'regId:domain'", id)
++	err = pa.ValidDomain(id)
+ 	if err != nil {
+ 		return fmt.Errorf("invalid domain, %q must be formatted 'domain'", id)
  	}
-@@ -152,8 +156,12 @@ func validateRegIdFQDNSet(id string) error {
+@@ -150,8 +154,12 @@ func validateFQDNSet(id string) error {
  		return fmt.Errorf(
- 			"invalid fqdnSet, %q must be formatted 'regId:fqdnSet'", id)
+ 			"invalid fqdnSet, %q must be formatted 'fqdnSet'", id)
  	}
 +	pa, err := policy.New(nil, nil)
 +	if err != nil {
 +		return fmt.Errorf("cannot create policy authority implementation")
 +	}
  	for _, domain := range domains {
--		if policy.ValidDomain(domain) != nil {
-+		if pa.ValidDomain(domain) != nil {
+-		err := policy.ValidDomain(domain)
++		err = pa.ValidDomain(domain)
+ 		if err != nil {
  			return fmt.Errorf(
- 				"invalid domain, %q must be formatted 'regId:fqdnSet'", id)
- 		}
+ 				"invalid domain, %q must be formatted 'fqdnSet'", id)
