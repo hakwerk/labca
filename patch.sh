@@ -29,6 +29,7 @@ $SUDO patch -p1 < $cloneDir/patches/contact-auditor_main.patch
 $SUDO patch -p1 < $cloneDir/patches/core_interfaces.patch
 $SUDO patch -p1 < $cloneDir/patches/crl-storer_main.patch
 $SUDO patch -p1 < $cloneDir/patches/db_migrations.patch
+$SUDO patch -p1 < $cloneDir/patches/db_migrations2.patch
 $SUDO patch -p1 < $cloneDir/patches/errors_errors.patch
 $SUDO patch -p1 < $cloneDir/patches/expiration-mailer_main.patch
 $SUDO patch -p1 < $cloneDir/patches/linter_linter.patch

@@ -1,0 +1,13 @@
+diff --git a/sa/db/boulder_sa/20230519000000_CrlShards.sql b/sa/db/boulder_sa/20230519000000_CrlShards.sql
+index 6c0d0f9eb..8f4152299 100644
+--- a/sa/db/boulder_sa/20230519000000_CrlShards.sql
++++ b/sa/db/boulder_sa/20230519000000_CrlShards.sql
+@@ -1,7 +1,7 @@
+ -- +migrate Up
+ -- SQL in section 'Up' is executed when this migration is applied
+ 
+-CREATE TABLE `crlShards` (
++CREATE TABLE IF NOT EXISTS `crlShards` (
+   `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+   `issuerID` bigint(20) NOT NULL,
+   `idx` int UNSIGNED NOT NULL,

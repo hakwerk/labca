@@ -1,5 +1,5 @@
 diff --git a/sa/db/boulder_sa/20230419000000_CombinedSchema.sql b/sa/db/boulder_sa/20230419000000_CombinedSchema.sql
-index 34d6f151c..1e065a7a6 100644
+index 34d6f151c..3641d1f7c 100644
 --- a/sa/db/boulder_sa/20230419000000_CombinedSchema.sql
 +++ b/sa/db/boulder_sa/20230419000000_CombinedSchema.sql
 @@ -1,7 +1,9 @@
@@ -151,10 +151,10 @@ index 34d6f151c..1e065a7a6 100644
 - PARTITION BY RANGE(id)
 -(PARTITION p_start VALUES LESS THAN (MAXVALUE));
 +) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
++
++DROP TABLE IF EXISTS `orderToAuthz`;
  
 -CREATE TABLE `orderToAuthz2` (
-+DROP TABLE IF EXISTS `orderToAuthz`;
-+
 +CREATE TABLE IF NOT EXISTS `orderToAuthz2` (
    `orderID` bigint(20) NOT NULL,
    `authzID` bigint(20) NOT NULL,
@@ -217,7 +217,7 @@ index 34d6f151c..1e065a7a6 100644
 -(PARTITION p_start VALUES LESS THAN (MAXVALUE));
 +) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 +
-+CREATE TABLE `revokedCertificates` (
++CREATE TABLE IF NOT EXISTS `revokedCertificates` (
 +  `id` bigint(20) NOT NULL AUTO_INCREMENT,
 +  `issuerID` bigint(20) NOT NULL,
 +  `serial` varchar(255) NOT NULL,
@@ -238,7 +238,7 @@ index 34d6f151c..1e065a7a6 100644
    `id` bigint(20) NOT NULL AUTO_INCREMENT,
    `registrationID` bigint(20) NOT NULL,
    `serial` varchar(255) NOT NULL,
-@@ -234,6 +237,18 @@ CREATE TABLE `serials` (
+@@ -234,6 +249,18 @@ CREATE TABLE `serials` (
  -- First set of tables have foreign key constraints, so are dropped first.
  DROP TABLE `serials`;
  
@@ -257,7 +257,7 @@ index 34d6f151c..1e065a7a6 100644
  DROP TABLE `authz2`;
  DROP TABLE `blockedKeys`;
  DROP TABLE `certificateStatus`;
-@@ -244,8 +259,44 @@ DROP TABLE `issuedNames`;
+@@ -244,8 +271,44 @@ DROP TABLE `issuedNames`;
  DROP TABLE `keyHashToSerial`;
  DROP TABLE `newOrdersRL`;
  DROP TABLE `orderFqdnSets`;
