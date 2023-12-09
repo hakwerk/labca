@@ -34,7 +34,7 @@ $SUDO patch -p1 < $cloneDir/patches/expiration-mailer_main.patch
 $SUDO patch -p1 < $cloneDir/patches/linter_linter.patch
 $SUDO patch -p1 < $cloneDir/patches/log_prod_prefix.patch
 $SUDO patch -p1 < $cloneDir/patches/log_test_prefix.patch
-$SUDO patch -p1 < $cloneDir/patches/log-validator_main.patch
+$SUDO patch -p1 < $cloneDir/patches/log_validator_validator.patch
 $SUDO patch -p1 < $cloneDir/patches/mail_mailer.patch
 $SUDO patch -p1 < $cloneDir/patches/makefile.patch
 $SUDO patch -p1 < $cloneDir/patches/notify-mailer_main.patch

@@ -1,5 +1,5 @@
 diff --git a/ca/crl.go b/ca/crl.go
-index adb311f1..88dcdc71 100644
+index 10cbde3e2..91db977c4 100644
 --- a/ca/crl.go
 +++ b/ca/crl.go
 @@ -117,7 +117,7 @@ func (ci *crlImpl) GenerateCRL(stream capb.CRLGenerator_GenerateCRLServer) error
@@ -24,7 +24,7 @@ index adb311f1..88dcdc71 100644
  	}
  
  	template.RevokedCertificateEntries = rcs
-@@ -246,14 +248,14 @@ type issuingDistributionPoint struct {
+@@ -247,14 +249,14 @@ type issuingDistributionPoint struct {
  // makeIDPExt returns a critical IssuingDistributionPoint extension containing a
  // URI built from the base url, the issuer's NameID, and the shard number. It
  // also sets the OnlyContainsUserCerts boolean to true.
