@@ -124,12 +124,24 @@ td.pad-low-top {
     width: 10em;
 }
 
+.btn-new-issuer {
+    width: 7em;
+}
+
+.btn-6em {
+    width: 6em;
+}
+
 .btn-right {
     float: right;
 }
 
 .vmiddle {
     vertical-align: middle !important;
+}
+
+.center {
+    text-align: center !important;
 }
 
 .bd-modal-lg .modal-dialog {
@@ -146,11 +158,11 @@ td.pad-low-top {
 
 .modal-content {
     padding: 6px;
-    width: 614px;
+    width: 674px;
 }
 
 .modal-content > textarea {
-    width: 600px;
+    width: 660px;
     height: 550px;
 }
 
@@ -196,4 +208,17 @@ pre.json {
 
 .hide-overflow {
     overflow: hidden;
+}
+
+#modal-spinner {
+    z-index: 10000;
+}
+
+button.close {
+    margin-top: -40px;
+}
+
+.form-small-inline {
+    display: inline-block;
+    width: 5em !important;
 }

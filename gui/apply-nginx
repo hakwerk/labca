@@ -2,7 +2,7 @@
 
 set -e
 
-baseDir=$(dirname $0)
+baseDir=$(cd $(dirname $0) && pwd)
 dataDir="$baseDir/data"
 
 PKI_WEB_TITLE=$(grep web_title $dataDir/config.json | sed -e 's/.*:[ ]*//' | sed -e 's/\",//g' | sed -e 's/\"//g')

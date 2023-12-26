@@ -1,10 +1,12 @@
 diff --git a/crl/storer/storer.go b/crl/storer/storer.go
-index cd0bf86c..dd492aec 100644
+index cd0bf86c0..26e52f789 100644
 --- a/crl/storer/storer.go
 +++ b/crl/storer/storer.go
-@@ -12,6 +12,9 @@ import (
+@@ -11,7 +11,11 @@ import (
+ 	"errors"
  	"fmt"
  	"io"
++	"io/fs"
  	"math/big"
 +	"os"
 +	"path/filepath"
@@ -12,7 +14,7 @@ index cd0bf86c..dd492aec 100644
  	"time"
  
  	"github.com/aws/aws-sdk-go-v2/service/s3"
-@@ -38,6 +41,7 @@ type crlStorer struct {
+@@ -38,6 +42,7 @@ type crlStorer struct {
  	cspb.UnimplementedCRLStorerServer
  	s3Client         simpleS3
  	s3Bucket         string
@@ -20,7 +22,7 @@ index cd0bf86c..dd492aec 100644
  	issuers          map[issuance.IssuerNameID]*issuance.Certificate
  	uploadCount      *prometheus.CounterVec
  	sizeHistogram    *prometheus.HistogramVec
-@@ -50,6 +54,7 @@ func New(
+@@ -50,6 +55,7 @@ func New(
  	issuers []*issuance.Certificate,
  	s3Client simpleS3,
  	s3Bucket string,
@@ -28,7 +30,7 @@ index cd0bf86c..dd492aec 100644
  	stats prometheus.Registerer,
  	log blog.Logger,
  	clk clock.Clock,
-@@ -83,6 +88,7 @@ func New(
+@@ -83,6 +89,7 @@ func New(
  		issuers:          issuersByNameID,
  		s3Client:         s3Client,
  		s3Bucket:         s3Bucket,
@@ -36,7 +38,7 @@ index cd0bf86c..dd492aec 100644
  		uploadCount:      uploadCount,
  		sizeHistogram:    sizeHistogram,
  		latencyHistogram: latencyHistogram,
-@@ -203,15 +209,19 @@ func (cs *crlStorer) UploadCRL(stream cspb.CRLStorer_UploadCRLServer) error {
+@@ -203,15 +210,19 @@ func (cs *crlStorer) UploadCRL(stream cspb.CRLStorer_UploadCRLServer) error {
  	checksum := sha256.Sum256(crlBytes)
  	checksumb64 := base64.StdEncoding.EncodeToString(checksum[:])
  	crlContentType := "application/pkix-crl"
@@ -65,7 +67,7 @@ index cd0bf86c..dd492aec 100644
  
  	latency := cs.clk.Now().Sub(start)
  	cs.latencyHistogram.WithLabelValues(issuer.Subject.CommonName).Observe(latency.Seconds())
-@@ -240,3 +250,46 @@ func getIDPExt(exts []pkix.Extension) []byte {
+@@ -240,3 +251,46 @@ func getIDPExt(exts []pkix.Extension) []byte {
  	}
  	return nil
  }
@@ -89,7 +91,7 @@ index cd0bf86c..dd492aec 100644
 +	lntmp := ln + ".new"
 +	fn = fmt.Sprintf("%d-%d-%d.crl", nameID, crlNumber, shardIdx)
 +
-+	if err = os.Remove(lntmp); err != nil && !os.IsNotExist(err) {
++	if err = os.Remove(lntmp); err != nil && !errors.Is(err, fs.ErrNotExist) {
 +		return fmt.Errorf("removing symlink: %w", err)
 +	}
 +	if err = os.Symlink(fn, lntmp); err != nil {

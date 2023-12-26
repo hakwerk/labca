@@ -3,6 +3,9 @@
 <div class="col-md-6 col-sm-12">
 {{with .CertificateInfo}}
     <h3>{{ if .IsRoot }}<b>Root</b>{{ else }}<b>Issuer</b> (2nd level){{ end }} Certificate</h3>
+    {{ if not .IsRoot }}
+    Root Subject: <span id="root-subject-display">{{ .RootSubject }}</span><br><br>
+    {{ end }}
 
 <ul class="nav nav-tabs">
   <li class="{{ if eq .CreateType "generate" }}active{{ end }}">
@@ -19,13 +22,17 @@
 <div class="tab-content">
   <div class="tab-pane fade {{ if eq .CreateType "generate" }}active in{{ end }}" id="generate">
   <br/>
-<form role="form" class="form-cert" action="{{ .RequestBase }}/setup" enctype="multipart/form-data" method="POST">
+<form role="form" class="form-cert" enctype="multipart/form-data" method="POST">
   <input type="hidden" name="cert" value="{{ if .IsRoot }}root{{ else }}issuer{{ end }}">
   <input type="hidden" name="createtype" value="generate">
   <input type="hidden" name="keep-root-online" id="keep-root-online">
   <input type="hidden" name="ack-rootkey" id="ack-rootkey">
   <input type="hidden" name="rootkey" id="rootkey">
   <input type="hidden" name="rootpassphrase" id="rootpassphrase">
+  {{ if not .IsRoot }}
+  <input type="hidden" name="root-subject" id="root-subject" value="{{ .RootSubject }}">
+  <input type="hidden" name="root-enddate" id="root-enddate" value="{{ .RootEnddate }}">
+  {{ end }}
   <div class="form-group">
     <label for="keytype">Key type and size:</label>
     <select class="form-control" id="keytype" name="keytype" required autocomplete="off">
@@ -66,6 +73,12 @@
     <span class="error">{{ . }}</span>
     {{ end }}
   </div>
+  <div class="form-group">
+    <label for="numdays">Validity (days):</label>
+    <input class="form-control" type="text" id="numdays" name="numdays" value="{{ .NumDays }}" required>
+    End date: <span id="validity-enddate"></span><br>
+    <span class="error hidden" id="numdays-error">{{ .Errors.numdays }}</span>
+  </div>
   <div>
     {{ with .Errors.Generate }}
     <span class="error">{{ . }}</span><br/>
@@ -74,7 +87,7 @@
     {{ if and (not .IsRoot) (not .IsRootGenerated) }}
     <input class="btn btn-default" type="submit" value="Get CSR" name="getcsr">
     {{ end }}
-    {{ if not .IsRoot }}
+    {{ if and (not .IsRoot) .IsFirst }}
     <input class="btn btn-danger btn-right" type="submit" value="Revert Root" name="revertroot" id="revertroot">
     {{ end }}
   </div>
@@ -83,7 +96,7 @@
 
   <div class="tab-pane fade {{ if eq .CreateType "import" }}active in{{ end }}" id="import">
   <br/>
-<form role="form" class="form-cert" action="{{ .RequestBase }}/setup" enctype="multipart/form-data" method="POST">
+<form role="form" class="form-cert" enctype="multipart/form-data" method="POST">
   <input type="hidden" name="cert" value="{{ if .IsRoot }}root{{ else }}issuer{{ end }}">
   <input type="hidden" name="createtype" value="import">
   <p>
@@ -111,7 +124,7 @@
 
   <div class="tab-pane fade {{ if eq .CreateType "upload" }}active in{{ end }}" id="upload">
   <br/>
-<form role="form" class="form-cert" action="{{ .RequestBase }}/setup" enctype="multipart/form-data" method="POST">
+<form role="form" class="form-cert" enctype="multipart/form-data" method="POST">
   <input type="hidden" name="cert" value="{{ if .IsRoot }}root{{ else }}issuer{{ end }}">
   <input type="hidden" name="createtype" value="upload">
   <div class="form-group">
@@ -151,7 +164,7 @@
     {{ with .Errors.Upload }}
     <span class="error">{{ . }}</span><br/>
     {{ end }}
-    <input class="btn btn-default" type="submit" value="Upload">
+    <input class="btn btn-default" type="submit" id="cert-submit" value="Upload">
   </div>
 </form>
   </div>
@@ -268,11 +281,76 @@
             });
 
 {{ if not .CertificateInfo.IsRoot }}
-
             $(".form-cert").submit(function() {
                 $("#processing").removeClass("hidden");
             });
 {{end}}
+
+            function updateEndDate() {
+                // Determine new end date
+                x = new Date();
+                x.setDate(x.getDate() + parseInt($('#numdays').val()))
+                $('#validity-enddate').text(x.toUTCString());
+
+                try {
+                    if (($("#root-enddate").val() != undefined) && ($("#root-enddate").val().length > 0)) {
+                        r = new Date($("#root-enddate").val());
+                        if (x > r) {
+                            $("#numdays-error").text("Validity cannot exceed root certificate end date");
+                            $("#numdays-error").removeClass('hidden').show();
+                        } else {
+                            $("#numdays-error").text("");
+                            if (!$("#numdays-error").hasClass('hidden')) {
+                                $("#numdays-error").hide().addClass('hidden');
+                            }
+                        }
+                    } else {
+                        $("#numdays-error").text("");
+                        if (!$("#numdays-error").hasClass('hidden')) {
+                            $("#numdays-error").hide().addClass('hidden');
+                        }
+                    }
+                } catch(e) {
+                    console.log(e);
+                }
+
+                $("#cert-submit").prop('disabled', !$("#numdays-error").hasClass('hidden'));
+            }
+
+            $.fn.inputFilter = function(callback, errMsg) {
+                return this.on("input keydown keyup mousedown mouseup select contextmenu drop focusout", function(e) {
+                    if (callback(this.value)) {
+                        // Accepted value
+                        if (["keydown","mousedown","focusout"].indexOf(e.type) >= 0){
+                            $("#numdays-error").text("");
+                            if (!$("#numdays-error").hasClass('hidden')) {
+                                $("#numdays-error").hide().addClass('hidden');
+                            }
+                        }
+                        this.oldValue = this.value;
+                        this.oldSelectionStart = this.selectionStart;
+                        this.oldSelectionEnd = this.selectionEnd;
+                        updateEndDate();
+                    } else if (this.hasOwnProperty("oldValue")) {
+                        // Rejected value - restore the previous one
+                        $("#numdays-error").text(errMsg);
+                        if ($("#numdays-error").hasClass('hidden')) {
+                            $("#numdays-error").removeClass('hidden').show();
+                        }
+                        this.value = this.oldValue;
+                        this.setSelectionRange(this.oldSelectionStart, this.oldSelectionEnd);
+                      } else {
+                          // Rejected value - nothing to restore
+                          this.value = "";
+                    }
+                });
+            };
+
+            $("#numdays").inputFilter(function(value) {
+                return /^\d*$/.test(value);    // Allow digits only, using a RegExp
+            },"Only digits are allowed");
+
+            updateEndDate();
         });
     </script>
 {{end}}

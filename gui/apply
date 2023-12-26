@@ -8,9 +8,10 @@ dataDir="$baseDir/data"
 export PKI_ROOT_CERT_BASE="$dataDir/root-ca"
 export PKI_INT_CERT_BASE="$dataDir/issuer/ca-int"
 
-cd /opt/wwwstatic
+cd /opt/boulder/labca
+$baseDir/apply-boulder
 
-$baseDir/apply-nginx
+cd /opt/wwwstatic
 
 if [ -e "$PKI_ROOT_CERT_BASE.crl" ]; then
     cp $PKI_ROOT_CERT_BASE.crl crl/
@@ -18,10 +19,10 @@ else
     echo "WARNING: no Root CRL file present - please upload one from the manage page"
 fi
 cp $PKI_ROOT_CERT_BASE.pem certs/
+ln -sf root-ca.pem certs/test-root.pem
 cp $PKI_ROOT_CERT_BASE.der certs/
 cp $PKI_INT_CERT_BASE.pem certs/
+ln -sf ca-int.pem certs/test-ca.pem
 cp $PKI_INT_CERT_BASE.der certs/
 
-
-cd /opt/boulder/labca
-$baseDir/apply-boulder
+$baseDir/apply-nginx

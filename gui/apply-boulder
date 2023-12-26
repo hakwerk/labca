@@ -2,7 +2,7 @@
 
 set -e
 
-baseDir=$(dirname $0)
+baseDir=$(cd $(dirname $0) && pwd)
 dataDir="$baseDir/data"
 
 PKI_DNS=$(grep dns $dataDir/config.json | perl -p0e 's/.*?:\s+(.*)/\1/' | sed -e 's/\",//g' | sed -e 's/\"//g')

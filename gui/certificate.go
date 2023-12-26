@@ -2,25 +2,36 @@ package main
 
 import (
 	"crypto/rand"
+	"crypto/x509"
+	"encoding/pem"
 	"errors"
 	"fmt"
 	"io"
+	"io/fs"
+	"math"
 	"math/big"
 	"mime/multipart"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"runtime/debug"
+	"strconv"
 	"strings"
+	"time"
 )
 
 // CertificateInfo contains all data related to a certificate (file)
 type CertificateInfo struct {
 	IsRoot          bool
+	IsFirst         bool
 	KeyTypes        map[string]string
 	KeyType         string
 	CreateType      string
 	IsRootGenerated bool
+	RootSubject     string
+	RootEnddate     string
+	NumDays         int
 
 	Country      string
 	Organization string
@@ -115,7 +126,7 @@ func reportError(param interface{}) error {
 
 	fmt.Println(strings.Join(lines, "\n"))
 
-	res := errors.New("Error! See LabCA logs for details")
+	res := errors.New("error: see LabCA logs for details")
 	switch v := param.(type) {
 	case error:
 		res = errors.New("Error (" + v.Error() + ")! See LabCA logs for details")
@@ -151,7 +162,7 @@ func preCreateTasks(path string) error {
 		return reportError(err)
 	}
 
-	if _, err := os.Stat(path + "serial"); os.IsNotExist(err) {
+	if _, err := os.Stat(path + "serial"); errors.Is(err, fs.ErrNotExist) {
 		s, err := getRandomSerial()
 		if err != nil {
 			return err
@@ -160,7 +171,7 @@ func preCreateTasks(path string) error {
 			return err
 		}
 	}
-	if _, err := os.Stat(path + "crlnumber"); os.IsNotExist(err) {
+	if _, err := os.Stat(path + "crlnumber"); errors.Is(err, fs.ErrNotExist) {
 		if err = os.WriteFile(path+"crlnumber", []byte("1000\n"), 0644); err != nil {
 			return err
 		}
@@ -168,6 +179,23 @@ func preCreateTasks(path string) error {
 
 	if _, err := exeCmd("mkdir -p " + path + "certs"); err != nil {
 		return reportError(err)
+	}
+
+	return nil
+}
+
+func updateRootCRLDays(filename string, numDays int) error {
+	read, err := os.ReadFile(filename)
+	if err != nil {
+		fmt.Println(err)
+		return errors.New("could not read '" + filename + "': " + err.Error())
+	}
+	re := regexp.MustCompile(`(default_crl_days\s*=).*`)
+	res := re.ReplaceAll(read, []byte("$1 "+strconv.Itoa(numDays)))
+
+	if err = os.WriteFile(filename, res, 0640); err != nil {
+		fmt.Println(err)
+		return errors.New("could not write '" + filename + "': " + err.Error())
 	}
 
 	return nil
@@ -217,14 +245,18 @@ func (ci *CertificateInfo) Generate(path string, certBase string) error {
 	subject = strings.Replace(subject, " ", "\\\\", -1)
 
 	if ci.IsRoot {
-		if _, err := exeCmd("openssl req -config " + path + "openssl.cnf -days 3650 -new -utf8 -x509 -extensions v3_ca -subj " + subject + " -key " + path + certBase + ".key -out " + path + certBase + ".pem"); err != nil {
+		if _, err := exeCmd("openssl req -config " + path + "openssl.cnf -days " + strconv.Itoa(ci.NumDays) + " -new -utf8 -x509 -extensions v3_ca -subj " + subject + " -key " + path + certBase + ".key -out " + path + certBase + ".pem"); err != nil {
+			return reportError(err)
+		}
+
+		if err := updateRootCRLDays(path+"openssl.cnf", ci.NumDays); err != nil {
 			return reportError(err)
 		}
 	} else {
 		if _, err := exeCmd("openssl req -config " + path + "openssl.cnf -new -utf8 -subj " + subject + " -key " + path + certBase + ".key -out " + path + certBase + ".csr"); err != nil {
 			return reportError(err)
 		}
-		if out, err := exeCmd("openssl ca -config " + path + "../openssl.cnf -extensions v3_intermediate_ca -days 3600 -md sha384 -notext -batch -in " + path + certBase + ".csr -out " + path + certBase + ".pem"); err != nil {
+		if out, err := exeCmd("openssl ca -config " + path + "../openssl.cnf -extensions v3_intermediate_ca -days " + strconv.Itoa(ci.NumDays) + " -md sha384 -notext -batch -in " + path + certBase + ".csr -out " + path + certBase + ".pem"); err != nil {
 			if strings.Contains(string(out), "root-ca.key for reading, No such file or directory") {
 				return errors.New("NO_ROOT_KEY")
 			}
@@ -321,7 +353,7 @@ func (ci *CertificateInfo) Import(tmpDir string, tmpKey string, tmpCert string) 
 			return err
 		}
 
-	} else if contentType == "application/zip" {
+	} else if contentType == "application/zip" || contentType == "application/x-zip-compressed" {
 		err := ci.ImportZip(tmpFile, tmpDir)
 		if err != nil {
 			return err
@@ -377,7 +409,7 @@ func (ci *CertificateInfo) Upload(tmpKey string, tmpCert string) error {
 func parseSubjectDn(subject string) map[string]string {
 	trackerResultMap := map[string]string{"C=": "", "C =": "", "O=": "", "O =": "", "CN=": "", "CN =": "", "OU=": "", "OU =": ""}
 
-	for tracker, _ := range trackerResultMap {
+	for tracker := range trackerResultMap {
 		index := strings.Index(subject, tracker)
 
 		if index < 0 {
@@ -449,7 +481,7 @@ func (ci *CertificateInfo) ImportCerts(path string, rootCert string, rootKey str
 		}
 
 		keyFileExists := true
-		if _, err := os.Stat(rootKey); os.IsNotExist(err) {
+		if _, err := os.Stat(rootKey); errors.Is(err, fs.ErrNotExist) {
 			keyFileExists = false
 		}
 		if keyFileExists {
@@ -499,7 +531,7 @@ func (ci *CertificateInfo) ImportCerts(path string, rootCert string, rootKey str
 			return errors.New("issuer not issued by our Root CA")
 		}
 
-		r, err = exeCmd("openssl verify -CAfile data/root-ca.pem " + issuerCert)
+		_, err = exeCmd("openssl verify -CAfile data/root-ca.pem " + issuerCert)
 		if err != nil {
 			return errors.New("could not verify that issuer was issued by our Root CA")
 		}
@@ -524,7 +556,7 @@ func (ci *CertificateInfo) MoveFiles(path string, rootCert string, rootKey strin
 	}
 	if rootKey != "" {
 		keyFileExists := true
-		if _, err := os.Stat(rootKey); os.IsNotExist(err) {
+		if _, err := os.Stat(rootKey); errors.Is(err, fs.ErrNotExist) {
 			keyFileExists = false
 		}
 		if keyFileExists {
@@ -564,26 +596,60 @@ func (ci *CertificateInfo) Extract(path string, certBase string, tmpDir string, 
 		rootCert = filepath.Join(tmpDir, "root-ca.pem")
 		rootKey = filepath.Join(tmpDir, "root-ca.key")
 
-		if _, err := os.Stat(rootCert); os.IsNotExist(err) {
-			return errors.New("file does not contain root-ca.pem")
+		if _, err := os.Stat(rootCert); errors.Is(err, fs.ErrNotExist) {
+			altCert := filepath.Join(tmpDir, "test-root.pem")
+			if _, err = os.Stat(altCert); err == nil {
+				if _, err := exeCmd("mv " + altCert + " " + rootCert); err != nil {
+					return err
+				}
+			}
+
+			altKey := filepath.Join(tmpDir, "test-root.key")
+			if _, err = os.Stat(altKey); err == nil {
+				if _, err := exeCmd("mv " + altKey + " " + rootKey); err != nil {
+					return err
+				}
+			}
+
+			if _, err := os.Stat(rootCert); errors.Is(err, fs.ErrNotExist) {
+				return errors.New("file does not contain root-ca.pem")
+			}
 		}
 	}
 
 	issuerCert = filepath.Join(tmpDir, "ca-int.pem")
 	issuerKey = filepath.Join(tmpDir, "ca-int.key")
 
-	if _, err := os.Stat(issuerCert); os.IsNotExist(err) {
+	if _, err := os.Stat(issuerCert); errors.Is(err, fs.ErrNotExist) {
 		if ci.IsRoot {
 			issuerCert = ""
 		} else {
-			return errors.New("file does not contain ca-int.pem")
+			altCert := filepath.Join(tmpDir, "test-ca.pem")
+			if _, err = os.Stat(altCert); err == nil {
+				if _, err := exeCmd("mv " + altCert + " " + issuerCert); err != nil {
+					return err
+				}
+			}
+
+			if _, err := os.Stat(issuerCert); errors.Is(err, fs.ErrNotExist) {
+				return errors.New("file does not contain ca-int.pem")
+			}
 		}
 	}
-	if _, err := os.Stat(issuerKey); os.IsNotExist(err) {
+	if _, err := os.Stat(issuerKey); errors.Is(err, fs.ErrNotExist) {
 		if ci.IsRoot || wasCSR {
 			issuerKey = ""
 		} else {
-			return errors.New("file does not contain ca-int.key")
+			altKey := filepath.Join(tmpDir, "test-ca.key")
+			if _, err = os.Stat(altKey); err == nil {
+				if _, err := exeCmd("mv " + altKey + " " + issuerKey); err != nil {
+					return err
+				}
+			}
+
+			if _, err := os.Stat(issuerKey); errors.Is(err, fs.ErrNotExist) {
+				return errors.New("file does not contain ca-int.key")
+			}
 		}
 	}
 
@@ -596,6 +662,29 @@ func (ci *CertificateInfo) Extract(path string, certBase string, tmpDir string, 
 	err = ci.MoveFiles(path, rootCert, rootKey, issuerCert, issuerKey)
 	if err != nil {
 		return err
+	}
+
+	// Extract enddate to determine what the default CRL validity should be
+	if ci.IsRoot {
+		certFile := path + filepath.Base(rootCert)
+		read, err := os.ReadFile(certFile)
+		if err != nil {
+			fmt.Println(err)
+			return errors.New("could not read '" + certFile + "': " + err.Error())
+		}
+		block, _ := pem.Decode(read)
+		if block == nil || block.Type != "CERTIFICATE" {
+			fmt.Println(block)
+			return errors.New("failed to decode PEM block containing certificate")
+		}
+		crt, err := x509.ParseCertificate(block.Bytes)
+		if err != nil {
+			return err
+		}
+		numDays := time.Until(crt.NotAfter).Hours() / 24
+		if err := updateRootCRLDays("data/openssl.cnf", int(math.Ceil(numDays))); err != nil {
+			return err
+		}
 	}
 
 	return nil
@@ -646,7 +735,7 @@ func (ci *CertificateInfo) Create(path string, certBase string, wasCSR bool) err
 		return fmt.Errorf("unknown CreateType")
 	}
 
-	// This is shared between pfx/zip upload and pem text upload
+	// This is shared between pfx/zip import and pem text upload
 	if ci.CreateType != "generate" {
 		err := ci.Extract(path, certBase, tmpDir, wasCSR)
 		if err != nil {
@@ -660,7 +749,7 @@ func (ci *CertificateInfo) Create(path string, certBase string, wasCSR bool) err
 
 	if ci.IsRoot {
 		keyFileExists := true
-		if _, err := os.Stat(path + certBase + ".key"); os.IsNotExist(err) {
+		if _, err := os.Stat(path + certBase + ".key"); errors.Is(err, fs.ErrNotExist) {
 			keyFileExists = false
 		}
 		if keyFileExists {
@@ -687,6 +776,48 @@ func postCreateTasks(path string, certBase string, isRoot bool) error {
 	return nil
 }
 
+func storeRootKey(path, certName, tmpDir, keyData, passphrase string) (bool, string) {
+	tmpKey := filepath.Join(tmpDir, certName+".key")
+
+	if err := os.WriteFile(tmpKey, []byte(keyData), 0600); err != nil {
+		return false, err.Error()
+	}
+
+	if passphrase != "" {
+		pwd := "pass:" + strings.Replace(passphrase, " ", "\\\\", -1)
+
+		if out, err := exeCmd("openssl pkey -passin " + pwd + " -in " + tmpKey + " -out " + tmpKey + "-out"); err != nil {
+			if strings.Contains(string(out), ":bad decrypt:") {
+				return false, "Incorrect password"
+			}
+
+			return false, "Unable to load Root CA key"
+		}
+
+		if _, err := exeCmd("mv " + tmpKey + "-out " + tmpKey); err != nil {
+			return false, err.Error()
+		}
+	}
+
+	modKey, err := exeCmd("openssl rsa -noout -modulus -in " + tmpKey)
+	if err != nil {
+		return false, "Not a private key"
+	}
+	modCert, err := exeCmd("openssl x509 -noout -modulus -in " + path + certName + ".pem")
+	if err != nil {
+		return false, "Unable to load Root CA certificate"
+	}
+	if string(modKey) != string(modCert) {
+		return false, "Key does not match the Root CA certificate"
+	}
+
+	if _, err := exeCmd("mv " + tmpKey + " " + path); err != nil {
+		return false, err.Error()
+	}
+
+	return true, ""
+}
+
 func (ci *CertificateInfo) StoreRootKey(path string) bool {
 	if ci.Errors == nil {
 		ci.Errors = make(map[string]string)
@@ -704,54 +835,13 @@ func (ci *CertificateInfo) StoreRootKey(path string) bool {
 
 	defer os.RemoveAll(tmpDir)
 
-	tmpKey := filepath.Join(tmpDir, "root-ca.key")
-
-	if err := os.WriteFile(tmpKey, []byte(ci.Key), 0644); err != nil {
-		ci.Errors["Modal"] = err.Error()
-		return false
-	}
-
-	if ci.Passphrase != "" {
-		pwd := "pass:" + strings.Replace(ci.Passphrase, " ", "\\\\", -1)
-
-		if out, err := exeCmd("openssl pkey -passin " + pwd + " -in " + tmpKey + " -out " + tmpKey + "-out"); err != nil {
-			if strings.Contains(string(out), ":bad decrypt:") {
-				ci.Errors["Modal"] = "Incorrect password"
-				return false
-			}
-
-			ci.Errors["Modal"] = "Unable to load Root CA key"
-			return false
-		}
-
-		if _, err := exeCmd("mv " + tmpKey + "-out " + tmpKey); err != nil {
-			ci.Errors["Modal"] = err.Error()
-			return false
-		}
-	}
-
-	modKey, err := exeCmd("openssl rsa -noout -modulus -in " + tmpKey)
-	if err != nil {
-		ci.Errors["Modal"] = "Not a private key"
-		return false
-	}
-	modCert, err := exeCmd("openssl x509 -noout -modulus -in " + path + "root-ca.pem")
-	if err != nil {
-		ci.Errors["Modal"] = "Unable to load Root CA certificate"
-		return false
-	}
-	if string(modKey) != string(modCert) {
-		ci.Errors["Modal"] = "Key does not match the Root CA certificate"
-		return false
-	}
-
-	if _, err := exeCmd("mv " + tmpKey + " " + path); err != nil {
-		ci.Errors["Modal"] = err.Error()
+	certBase := "root-ca"
+	if res, newError := storeRootKey(path, certBase, tmpDir, ci.Key, ci.Passphrase); !res {
+		ci.Errors["Modal"] = newError
 		return false
 	}
 
 	// Create root CRL file now that we have the key
-	certBase := "root-ca"
 	if _, err := exeCmd("openssl ca -config " + path + "openssl.cnf -gencrl -keyfile " + path + certBase + ".key -cert " + path + certBase + ".pem -out " + path + certBase + ".crl"); err != nil {
 		fmt.Printf("StoreRootKey: %s\n", err.Error())
 		return false
@@ -806,6 +896,147 @@ func (ci *CertificateInfo) StoreCRL(path string) bool {
 	}
 
 	return true
+}
+
+func renewCertificate(certname string, days int, rootname string, rootkeyfile string, passphrase string) error {
+	certFile := locateFile(certname + ".pem")
+	path := filepath.Dir(certFile) + "/"
+	certBase := path + certname
+	keyFile := certBase + ".key"
+	rootCert := ""
+	rootKey := keyFile
+
+	if strings.HasPrefix(certname, "ca-int") || strings.HasPrefix(certname, "test-ca") {
+		rootCert = locateFile(rootname + ".pem")
+		rootKey = locateFile(rootname + ".key")
+
+		// Make sure openssl allows us to add certificates with the same subject
+		attrFile := "data/index.txt.attr"
+		read, err := os.ReadFile(attrFile)
+		if err != nil {
+			fmt.Println(err)
+			return errors.New("could not read index.txt.attr file: " + err.Error())
+		}
+		re := regexp.MustCompile(`unique_subject = yes`)
+		res := re.ReplaceAll(read, []byte("unique_subject = no"))
+
+		if string(res) != string(read) {
+			if err = os.WriteFile(attrFile, res, 0640); err != nil {
+				fmt.Println(err)
+				return errors.New("could not write index.txt.attr file: " + err.Error())
+			}
+		}
+	}
+
+	tmpDir, err := os.MkdirTemp("", "labca")
+	if err != nil {
+		return err
+	}
+
+	defer os.RemoveAll(tmpDir)
+
+	if _, err := os.Stat(rootKey); errors.Is(err, fs.ErrNotExist) {
+		if rootkeyfile == "" {
+			return errors.New("NO_ROOT_KEY")
+		} else {
+			if res, newError := storeRootKey(path, certname, tmpDir, rootkeyfile, passphrase); !res {
+				return errors.New("NO_ROOT_KEY:" + newError)
+			}
+			defer exeCmd("rm " + rootKey)
+		}
+	}
+
+	r, err := exeCmd("openssl x509 -noout -subject -nameopt utf8 -in " + certFile)
+	if err != nil {
+		return err
+	}
+	subject := string(r[8 : len(r)-1])
+	subject = "/" + strings.ReplaceAll(subject, ", ", "/")
+	subject = strings.Replace(subject, " ", "\\\\", -1)
+
+	if rootKey == keyFile {
+		if _, err := exeCmd("openssl req -config data/openssl.cnf -days " + strconv.Itoa(days) + " -new -utf8 -x509 -extensions v3_ca -subj " + subject +
+			" -key " + keyFile + " -out " + certFile + ".tmp"); err != nil {
+			return reportError(err)
+		}
+
+		if err := updateRootCRLDays("data/openssl.cnf", days); err != nil {
+			return reportError(err)
+		}
+
+		if _, err := exeCmd("openssl ca -config data/openssl.cnf -gencrl -keyfile " + keyFile + " -cert " + certFile + ".tmp -out " + certBase + ".crl"); err != nil {
+			return reportError(err)
+		}
+
+	} else {
+		if _, err := exeCmd("openssl req -config data/issuer/openssl.cnf -new -utf8 -subj " + subject + " -key " + keyFile + " -out " + certBase + ".csr"); err != nil {
+			return reportError(err)
+		}
+		if out, err := exeCmd("openssl ca -config data/openssl.cnf -cert " + rootCert + " -keyfile " + rootKey + " -extensions v3_intermediate_ca -days " +
+			strconv.Itoa(days) + " -md sha384 -notext -batch -in " + certBase + ".csr -out " + certFile + ".tmp"); err != nil {
+			if strings.Contains(string(out), ".key for reading, No such file or directory") {
+				fmt.Println(out)
+				return errors.New("NO_ROOT_KEY")
+			}
+			return reportError(err)
+		}
+
+	}
+	if _, err := exeCmd("mv " + certFile + ".tmp " + certFile); err != nil {
+		return reportError(err)
+	}
+
+	// TODO: need to get rid of this!
+	if rootKey == keyFile {
+		if strings.HasPrefix(certname, "test-root") {
+			dataFile := locateFile("root-ca.pem")
+			if _, err := exeCmd("cp " + certFile + " " + dataFile); err != nil {
+				fmt.Println(err)
+			}
+			dataKeyFile := strings.TrimSuffix(dataFile, filepath.Ext(dataFile)) + ".key"
+			if _, err := exeCmd("cp " + keyFile + " " + dataKeyFile); err != nil {
+				fmt.Println(err)
+			}
+			crlFile := strings.TrimSuffix(dataFile, filepath.Ext(dataFile)) + ".crl"
+			if _, err := exeCmd("cp " + certBase + ".crl " + crlFile); err != nil {
+				fmt.Println(err)
+			}
+		}
+	} else {
+		if strings.HasPrefix(certname, "test-ca") {
+			dataFile := locateFile("ca-int.pem")
+			if _, err := exeCmd("cp " + certFile + " " + dataFile); err != nil {
+				fmt.Println(err)
+			}
+			dataKeyFile := strings.TrimSuffix(dataFile, filepath.Ext(dataFile)) + ".key"
+			if _, err := exeCmd("cp " + keyFile + " " + dataKeyFile); err != nil {
+				fmt.Println(err)
+			}
+		}
+	}
+
+	return nil
+}
+
+func locateFileIn(path, name string) string {
+	if _, err := os.Stat(path + name); err == nil {
+		return path + name
+	}
+	return ""
+}
+
+// TODO: sort out the file naming/locations properly to not need this and be future proof!!
+// Most is found in /opt/boulder/ and some in /opt/boulder/labca/
+func locateFile(name string) string {
+
+	for _, path := range []string{"", "data/", "data/issuer", "/go/src/labca/data/", "/go/src/labca/data/issuer/", "labca/", "/opt/boulder/", "/opt/boulder/labca/"} {
+		if res := locateFileIn(path, name); res != "" {
+			return res
+		}
+	}
+
+	fmt.Printf("WARNING: could not find '%s'!\n", name)
+	return ""
 }
 
 func exeCmd(cmd string) ([]byte, error) {

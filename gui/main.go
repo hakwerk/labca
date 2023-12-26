@@ -18,7 +18,7 @@ import (
 	"fmt"
 	"html/template"
 	"io"
-	"io/ioutil"
+	"io/fs"
 	"log"
 	"math"
 	"math/big"
@@ -497,6 +497,8 @@ func _sendCmdOutput(w http.ResponseWriter, r *http.Request, cmd string) {
 
 	out, err := exec.Command(head, parts...).Output()
 	if err != nil {
+		fmt.Println(err)
+		fmt.Println(out)
 		errorHandler(w, r, err, http.StatusInternalServerError)
 		return
 	}
@@ -963,49 +965,31 @@ func _emailSendHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func _exportHandler(w http.ResponseWriter, r *http.Request) {
-	basename := "certificates"
-	if r.Form.Get("root") != "true" {
-		basename = "issuer"
-	}
-	if r.Form.Get("issuer") != "true" {
-		basename = "root"
-	}
+	certname := r.Form.Get("certname")
+
+	certFile := locateFile(certname + ".pem")
+	keyFile := strings.TrimSuffix(certFile, filepath.Ext(certFile)) + ".key"
 
 	if r.Form.Get("type") == "pfx" {
 		w.Header().Set("Content-Type", "application/x-pkcs12")
-		w.Header().Set("Content-Disposition", "attachment; filename=labca_"+basename+".pfx")
+		w.Header().Set("Content-Disposition", "attachment; filename=labca_"+certname+".pfx")
 
-		var certBase string
-		if basename == "root" {
-			certBase = "data/root-ca"
-		} else {
-			certBase = "data/issuer/ca-int"
-		}
-
-		cmd := "openssl pkcs12 -export -inkey " + certBase + ".key -in " + certBase + ".pem -passout pass:" + r.Form.Get("export-pwd")
+		cmd := "openssl pkcs12 -export -inkey " + keyFile + " -in " + certFile + " -passout pass:" + r.Form.Get("export-pwd")
 
 		_sendCmdOutput(w, r, cmd)
 	}
 
 	if r.Form.Get("type") == "zip" {
 		w.Header().Set("Content-Type", "application/zip")
-		w.Header().Set("Content-Disposition", "attachment; filename=labca_"+basename+".zip")
+		w.Header().Set("Content-Disposition", "attachment; filename=labca_"+certname+".zip")
 
-		cmd := "zip -j -P " + r.Form.Get("export-pwd") + " - "
-		var certBase string
-		if r.Form.Get("root") == "true" {
-			certBase = "data/root-ca"
-			cmd = cmd + certBase + ".key " + certBase + ".pem "
-		}
-		if r.Form.Get("issuer") == "true" {
-			certBase = "data/issuer/ca-int"
-			cmd = cmd + certBase + ".key " + certBase + ".pem "
-		}
+		cmd := "zip -j -P " + r.Form.Get("export-pwd") + " - " + keyFile + " " + certFile
 
 		_sendCmdOutput(w, r, cmd)
 	}
 }
 
+/*
 func _doCmdOutput(w http.ResponseWriter, r *http.Request, cmd string) string {
 	parts := strings.Fields(cmd)
 	for i := 0; i < len(parts); i++ {
@@ -1022,6 +1006,7 @@ func _doCmdOutput(w http.ResponseWriter, r *http.Request, cmd string) string {
 
 	return string(out)
 }
+*/
 
 func _encrypt(plaintext []byte) (string, error) {
 	key := []byte(viper.GetString("keys.enc"))
@@ -1126,7 +1111,7 @@ func generateCRLHandler(w http.ResponseWriter, r *http.Request, isRoot bool) {
 		path := "data/"
 		certBase := "root-ca"
 		keyFileExists := true
-		if _, err := os.Stat(path + certBase + ".key"); os.IsNotExist(err) {
+		if _, err := os.Stat(path + certBase + ".key"); errors.Is(err, fs.ErrNotExist) {
 			keyFileExists = false
 		}
 		if keyFileExists {
@@ -1155,13 +1140,13 @@ func generateCRLHandler(w http.ResponseWriter, r *http.Request, isRoot bool) {
 					}
 					// Remove the Root Key if we want to keep it offline
 					if viper.GetBool("keep_root_offline") {
-						if _, err := os.Stat(path + certBase + ".key"); !os.IsNotExist(err) {
+						if _, err := os.Stat(path + certBase + ".key"); !errors.Is(err, fs.ErrNotExist) {
 							fmt.Println("Removing private Root key from the system...")
 							if _, err := exeCmd("rm " + path + certBase + ".key"); err != nil {
 								log.Printf("_certCreate: error deleting root key: %v", err)
 							}
 						}
-						if _, err := os.Stat(path + certBase + ".key.der"); !os.IsNotExist(err) {
+						if _, err := os.Stat(path + certBase + ".key.der"); !errors.Is(err, fs.ErrNotExist) {
 							if _, err := exeCmd("rm " + path + certBase + ".key.der"); err != nil {
 								log.Printf("_certCreate: error deleting root key (DER format): %v", err)
 							}
@@ -1200,6 +1185,63 @@ func uploadCRLHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	_hostCommand(w, r, "check-crl")
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(res)
+}
+
+func updateLeaveIssuersHandler(w http.ResponseWriter, r *http.Request) {
+	res := struct {
+		Success bool
+		Error   string
+	}{Success: true}
+
+	if err := setUseForLeaves(r.Form.Get("rsa"), r.Form.Get("ecdsa")); err != nil {
+		res.Success = false
+		res.Error = err.Error()
+	} else {
+		defer func() {
+			if !_hostCommand(w, r, "boulder-restart") {
+				log.Printf("updateLeaveIssuersHandler: error restarting boulder: %v", err)
+			}
+		}()
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(res)
+}
+
+func renewCertHandler(w http.ResponseWriter, r *http.Request) {
+	res := struct {
+		Success bool
+		Error   string
+	}{Success: true}
+
+	days, err := strconv.Atoi(r.Form.Get("days"))
+	if err != nil {
+		fmt.Printf("'%v' is not a number", r.Form.Get("days"))
+		errorHandler(w, r, err, http.StatusBadRequest)
+		return
+	}
+
+	if err := renewCertificate(r.Form.Get("certname"), days, r.Form.Get("rootname"), r.Form.Get("root_key"), r.Form.Get("passphrase")); err != nil {
+		res.Success = false
+		res.Error = err.Error()
+	}
+
+	ex, _ := os.Executable()
+	exePath := filepath.Dir(ex)
+	path, _ := filepath.Abs(exePath + "/..")
+	if _, err := exeCmd(path + "/apply"); err != nil {
+		fmt.Println(err)
+		res.Success = false
+		res.Error = "Could not apply: " + err.Error()
+	}
+
+	if !_hostCommand(w, r, "boulder-restart") {
+		res.Success = false
+		res.Error = "Error restarting Boulder (ACME)"
+	}
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(res)
@@ -1266,6 +1308,16 @@ func _managePostDispatch(w http.ResponseWriter, r *http.Request, action string) 
 		return true
 	}
 
+	if action == "update-leave-issuers" {
+		updateLeaveIssuersHandler(w, r)
+		return true
+	}
+
+	if action == "renew-cert" {
+		renewCertHandler(w, r)
+		return true
+	}
+
 	if action == "svc-restart" {
 		if _, err := exeCmd("./restart_control"); err != nil {
 			log.Printf("_managePostDispatch: error restarting control container: %v", err)
@@ -1319,6 +1371,8 @@ func _managePost(w http.ResponseWriter, r *http.Request) {
 		"upload-root-crl",
 		"gen-root-crl",
 		"gen-issuer-crl",
+		"update-leave-issuers",
+		"renew-cert",
 	} {
 		if a == action {
 			actionKnown = true
@@ -1509,8 +1563,8 @@ func _manageGet(w http.ResponseWriter, r *http.Request) {
 		backupFiles = backupFiles[:len(backupFiles)-1]
 		manageData["BackupFiles"] = backupFiles
 
-		manageData["RootDetails"] = _doCmdOutput(w, r, "openssl x509 -noout -text -nameopt utf8 -in data/root-ca.pem")
-		manageData["IssuerDetails"] = _doCmdOutput(w, r, "openssl x509 -noout -text -nameopt utf8 -in data/issuer/ca-int.pem")
+		chains := getChains()
+		manageData["CertificateChains"] = chains
 
 		if viper.Get("crl_interval") == nil || viper.GetString("crl_interval") == "" {
 			manageData["CRLInterval"] = "24h"
@@ -1574,6 +1628,54 @@ func manageHandler(w http.ResponseWriter, r *http.Request) {
 		_manageGet(w, r)
 	}
 }
+
+/*
+func manageNewRootHandler(w http.ResponseWriter, r *http.Request) {
+	if !viper.GetBool("config.complete") {
+		http.Redirect(w, r, r.Header.Get("X-Request-Base")+"/setup", http.StatusFound)
+		return
+	}
+
+	// TODO: dynamically determine next filename (root-ca-2, root-ca-3, etc.)
+
+	if !_certCreate(w, r, "root-ca-3", true) {
+		// Cleanup the cert (if it even exists) so we will retry on the next run
+		if _, err := os.Stat("data/root-ca-3.pem"); !errors.Is(err, fs.ErrNotExist) {
+			exeCmd("mv data/root-ca-3.pem data/root-ca-3.pem_TMP")
+		}
+		return
+	}
+
+	// TODO: actually add the newly created key to the relevant config files (ca-a, ca-b, wfe2, possibly others)
+
+	// TODO: reload boulder!
+
+	http.Redirect(w, r, r.Header.Get("X-Request-Base")+"/manage#certs", http.StatusSeeOther)
+}
+
+func manageNewIssuerHandler(w http.ResponseWriter, r *http.Request) {
+	if !viper.GetBool("config.complete") {
+		http.Redirect(w, r, r.Header.Get("X-Request-Base")+"/setup", http.StatusFound)
+		return
+	}
+
+	// TODO: dynamically determine next filename (ca-int-2, ca-int-3, etc.)
+
+	// Is revertroot at all relevant in this scenario?
+
+	if !_certCreate(w, r, "ca-int-3", false) {
+		// Cleanup the cert (if it even exists) so we will retry on the next run
+		os.Remove("data/issuer/ca-int-3.pem")
+		return
+	}
+
+	// TODO: actually add the newly created key to the relevant config files (ca-a, ca-b, wfe2, possibly others)
+
+	// TODO: reload boulder!
+
+	http.Redirect(w, r, r.Header.Get("X-Request-Base")+"/manage#certs", http.StatusSeeOther)
+}
+*/
 
 func logsHandler(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
@@ -1749,9 +1851,11 @@ func _buildCI(r *http.Request, session *sessions.Session, isRoot bool) *Certific
 		CreateType:  "generate",
 		CommonName:  "Root CA",
 		RequestBase: r.Header.Get("X-Request-Base"),
+		NumDays:     3652, // 10 years
 	}
 	if !isRoot {
 		ci.CommonName = "CA"
+		ci.NumDays = 1826 // 5 years
 	}
 	ci.Initialize()
 
@@ -1834,7 +1938,7 @@ func _certCreate(w http.ResponseWriter, r *http.Request, certBase string, isRoot
 			// Undo what setupHandler did when showing the public key...
 			_, errPem := os.Stat("data/root-ca.pem")
 			_, errTmp := os.Stat("data/root-ca.pem_TMP")
-			if os.IsNotExist(errPem) && !os.IsNotExist(errTmp) {
+			if errors.Is(errPem, fs.ErrNotExist) && !errors.Is(errTmp, fs.ErrNotExist) {
 				exeCmd("mv data/root-ca.pem_TMP data/root-ca.pem")
 			}
 
@@ -1848,11 +1952,54 @@ func _certCreate(w http.ResponseWriter, r *http.Request, certBase string, isRoot
 		path = path + "issuer/"
 	}
 
-	if _, err := os.Stat(path + certBase + ".pem"); os.IsNotExist(err) {
+	if _, err := os.Stat(path + certBase + ".pem"); errors.Is(err, fs.ErrNotExist) {
 		session, _ := sessionStore.Get(r, "labca")
 
 		if r.Method == "GET" {
 			ci := _buildCI(r, session, isRoot)
+			if isRoot && (certBase == "root-ca" || certBase == "test-root") {
+				ci.IsFirst = true
+			} else if !isRoot && (certBase == "ca-int" || certBase == "test-ca") {
+				ci.IsFirst = true
+			}
+
+			if len(r.URL.Query()["root"]) > 0 {
+				certFile := locateFile(r.URL.Query()["root"][0] + ".pem")
+				ci.RootEnddate, err = getCertFileNotAFter(certFile)
+				if err != nil {
+					fmt.Println(err.Error())
+					errorHandler(w, r, err, http.StatusInternalServerError)
+					return false
+				}
+
+				ci.RootSubject, err = getCertFileSubject(certFile)
+				if err != nil {
+					fmt.Println(err.Error())
+					errorHandler(w, r, err, http.StatusInternalServerError)
+					return false
+				}
+				subjectMap := parseSubjectDn(ci.RootSubject)
+				if val, ok := subjectMap["C"]; ok {
+					ci.Country = val
+				}
+				if val, ok := subjectMap["O"]; ok {
+					ci.Organization = val
+				}
+			} else if !isRoot {
+				certFile := locateFile("root-ca.pem")
+				ci.RootEnddate, err = getCertFileNotAFter(certFile)
+				if err != nil {
+					fmt.Println(err.Error())
+					errorHandler(w, r, err, http.StatusInternalServerError)
+					return false
+				}
+				ci.RootSubject, err = getCertFileSubject(certFile)
+				if err != nil {
+					fmt.Println(err.Error())
+					errorHandler(w, r, err, http.StatusInternalServerError)
+					return false
+				}
+			}
 
 			render(w, r, "cert:manage", map[string]interface{}{"CertificateInfo": ci, "Progress": _progress(certBase), "HelpText": _helptext(certBase)})
 			return false
@@ -1876,6 +2023,19 @@ func _certCreate(w http.ResponseWriter, r *http.Request, certBase string, isRoot
 			ci.Organization = r.Form.Get("o")
 			ci.OrgUnit = r.Form.Get("ou")
 			ci.CommonName = r.Form.Get("cn")
+
+			ci.RootEnddate = r.Form.Get("root-enddate")
+			ci.RootSubject = r.Form.Get("root-subject")
+			if r.Form.Get("numdays") != "" {
+				ci.NumDays, err = strconv.Atoi(r.Form.Get("numdays"))
+				if err != nil {
+					if ci.IsRoot {
+						ci.NumDays = 3652
+					} else {
+						ci.NumDays = 1826
+					}
+				}
+			}
 
 			if ci.CreateType == "import" {
 				file, handler, err := r.FormFile("import")
@@ -1934,7 +2094,7 @@ func _certCreate(w http.ResponseWriter, r *http.Request, certBase string, isRoot
 							return false
 						}
 						defer csr.Close()
-						b, err := ioutil.ReadAll(csr)
+						b, _ := io.ReadAll(csr)
 
 						render(w, r, "cert:manage", map[string]interface{}{"CertificateInfo": ci, "CSR": string(b), "Progress": _progress(certBase), "HelpText": _helptext(certBase)})
 						return false
@@ -1973,7 +2133,7 @@ func _certCreate(w http.ResponseWriter, r *http.Request, certBase string, isRoot
 								return false
 							}
 							defer csr.Close()
-							b, err := ioutil.ReadAll(csr)
+							b, _ := io.ReadAll(csr)
 
 							session.Values["csr"] = true
 							if err = session.Save(r, w); err != nil {
@@ -2002,13 +2162,13 @@ func _certCreate(w http.ResponseWriter, r *http.Request, certBase string, isRoot
 				}
 
 				if viper.GetBool("keep_root_offline") {
-					if _, err := os.Stat(path + "../root-ca.key"); !os.IsNotExist(err) {
+					if _, err := os.Stat(path + "../root-ca.key"); !errors.Is(err, fs.ErrNotExist) {
 						fmt.Println("Removing private Root key from the system...")
 						if _, err := exeCmd("rm " + path + "../root-ca.key"); err != nil {
 							log.Printf("_certCreate: error deleting root key: %v", err)
 						}
 					}
-					if _, err := os.Stat(path + "../root-ca.key.der"); !os.IsNotExist(err) {
+					if _, err := os.Stat(path + "../root-ca.key.der"); !errors.Is(err, fs.ErrNotExist) {
 						if _, err := exeCmd("rm " + path + "../root-ca.key.der"); err != nil {
 							log.Printf("_certCreate: error deleting root key (DER format): %v", err)
 						}
@@ -2040,7 +2200,7 @@ func _certCreate(w http.ResponseWriter, r *http.Request, certBase string, isRoot
 					return false
 				}
 				defer key.Close()
-				b, err := ioutil.ReadAll(key)
+				b, _ := io.ReadAll(key)
 
 				render(w, r, "cert:manage", map[string]interface{}{"CertificateInfo": ci, "RootKey": string(b), "Progress": _progress(certBase), "HelpText": _helptext(certBase)})
 				return false
@@ -2160,9 +2320,9 @@ func _helptext(stage string) template.HTML {
 	if stage == "register" {
 		return template.HTML(fmt.Sprint("<p class=\"form-register\">You need to create an admin account for\n",
 			"managing this instance of LabCA. There can only be one admin account, but you can configure all\n",
-			"its attributes once the initial setup has completed.<br><br>Instead, you can also\n",
+			"its attributes once the initial setup has completed.<br><br><b>Instead, you can also\n",
 			"<a href=\"#\" onclick=\"false\" class=\"toggle-restore\">restore from a backup file</a> of a\n",
-			"previous LabCA installation.</p>\n",
+			"previous LabCA installation.</b></p>\n",
 			"<p class=\"form-restore\">If you have a backup file from a previous LabCA installation and want to\n",
 			"restore this instance with the exact same configuration, use that backup file here.\n",
 			"<br><br>Otherwise you should follow the <a href=\"#\" onclick=\"false\"\n",
@@ -2544,7 +2704,7 @@ func setupHandler(w http.ResponseWriter, r *http.Request) {
 	// 3. Setup root CA certificate
 	if !_certCreate(w, r, "root-ca", true) {
 		// Cleanup the cert (if it even exists) so we will retry on the next run
-		if _, err := os.Stat("data/root-ca.pem"); !os.IsNotExist(err) {
+		if _, err := os.Stat("data/root-ca.pem"); !errors.Is(err, fs.ErrNotExist) {
 			exeCmd("mv data/root-ca.pem data/root-ca.pem_TMP")
 		}
 		return
@@ -3147,11 +3307,14 @@ func init() {
 
 	if *configFile == "" {
 		viper.SetConfigName("config")
-		viper.AddConfigPath("data")
-		configPath = "./data"
+		ex, _ := os.Executable()
+		exePath := filepath.Dir(ex)
+		path, _ := filepath.Abs(exePath + "/..")
+		configPath = path + "/data"
+		viper.AddConfigPath(configPath)
 	} else {
 		_, err := os.Stat(*configFile)
-		if os.IsNotExist(err) {
+		if errors.Is(err, fs.ErrNotExist) {
 			viper.WriteConfigAs(*configFile)
 		}
 
@@ -3260,6 +3423,27 @@ func init() {
 	listenAddress = fmt.Sprintf("%s:%d", a, p)
 
 	updateAvailable = false
+
+	/*
+		// TODO: Still needs to be done for this!
+		// Store boulder chains if we don't have them already
+		doWrite := false
+		if viper.GetString("certs.ca") == "" {
+			caChains := getRawCAChains()
+			viper.Set("certs.ca", caChains)
+			doWrite = true
+		}
+		if viper.GetString("certs.wfe") == "" {
+			chains := getRawWFEChains()
+			viper.Set("certs.wfe", chains)
+			doWrite = true
+		}
+		if doWrite {
+			viper.WriteConfig()
+		}
+
+		// TODO: also apply from here if different?? How exaclty is a code upgrade delaing with this??
+	*/
 }
 
 func main() {
@@ -3286,6 +3470,8 @@ func main() {
 	r.HandleFunc("/stats", statsHandler).Methods("GET")
 	r.HandleFunc("/about", aboutHandler).Methods("GET")
 	r.HandleFunc("/manage", manageHandler).Methods("GET", "POST")
+	// r.HandleFunc("/manage/newissuer", manageNewIssuerHandler).Methods("GET", "POST")
+	// r.HandleFunc("/manage/newroot", manageNewRootHandler).Methods("GET", "POST")
 	r.HandleFunc("/final", finalHandler).Methods("GET")
 	r.HandleFunc("/error", showErrorHandler).Methods("GET")
 	r.HandleFunc("/login", loginHandler).Methods("GET", "POST")
@@ -3329,9 +3515,11 @@ func main() {
 			r.PathPrefix("/accounts/static/").Handler(http.StripPrefix("/accounts/static/", sfs))
 			r.PathPrefix("/authz/static/").Handler(http.StripPrefix("/authz/static/", sfs))
 			r.PathPrefix("/challenges/static/").Handler(http.StripPrefix("/challenges/static/", sfs))
+			r.PathPrefix("/certs/static/").Handler(http.StripPrefix("/certs/static/", sfs))
 			r.PathPrefix("/certificates/static/").Handler(http.StripPrefix("/certificates/static/", sfs))
 			r.PathPrefix("/orders/static/").Handler(http.StripPrefix("/orders/static/", sfs))
 			r.PathPrefix("/logs/static/").Handler(http.StripPrefix("/logs/static/", sfs))
+			r.PathPrefix("/manage/static/").Handler(http.StripPrefix("/manage/static/", sfs))
 			r.PathPrefix("/static/").Handler(http.StripPrefix("/static/", sfs))
 		}
 	}

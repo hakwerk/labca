@@ -13,7 +13,7 @@ fi
 
 export DEBIAN_FRONTEND=noninteractive
 apt-get update
-apt-get install -y iproute2 zip
+apt-get install -y iproute2 zip unzip
 apt-get install -y apt-transport-https ca-certificates curl software-properties-common gnupg
 install -m 0755 -d /etc/apt/keyrings
 [ ! -e /etc/apt/keyrings/docker.gpg ] || mv /etc/apt/keyrings/docker.gpg /etc/apt/keyrings/docker.gpg_PREV

@@ -448,7 +448,7 @@ install_pkg() {
 }
 
 install_extra() {
-    local packages=(apt-transport-https ca-certificates curl gnupg net-tools tzdata ucspi-tcp zip python lsb-release)
+    local packages=(apt-transport-https ca-certificates curl gnupg net-tools tzdata ucspi-tcp zip unzip python lsb-release)
     for package in "${packages[@]}"; do
         install_pkg "$package"
     done
@@ -519,8 +519,10 @@ static_web() {
     cp -rp $cloneDir/gui/static/* .
     [ -e $adminDir/data/root-ca.crl ] && cp $adminDir/data/root-ca.crl crl/ || true
     [ -e $adminDir/data/root-ca.pem ] && cp $adminDir/data/root-ca.pem certs/ || true
+    [ -e $adminDir/data/root-ca.pem ] && ln -sf root-ca.pem certs/test-root.pem || true
     [ -e $adminDir/data/root-ca.der ] && cp $adminDir/data/root-ca.der certs/ || true
     [ -e $adminDir/data/issuer/ca-int.pem ] && cp $adminDir/data/issuer/ca-int.pem certs/ || true
+    [ -e $adminDir/data/issuer/ca-int.pem ] && ln -sf ca-int.pem certs/test-ca.pem || true
     [ -e $adminDir/data/issuer/ca-int.der ] && cp $adminDir/data/issuer/ca-int.der certs/ || true
 
     local have_config=$(grep restarted $adminDir/data/config.json | grep true)

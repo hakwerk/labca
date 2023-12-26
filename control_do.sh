@@ -58,8 +58,10 @@ setup_nginx_data() {
 
     [ -e /opt/labca/data/root-ca.crl ] && cp /opt/labca/data/root-ca.crl crl/ || true
     [ -e /opt/labca/data/root-ca.pem ] && cp /opt/labca/data/root-ca.pem certs/ || true
+    [ -e /opt/labca/data/root-ca.pem ] && ln -sf root-ca.pem certs/test-root.pem || true
     [ -e /opt/labca/data/root-ca.der ] && cp /opt/labca/data/root-ca.der certs/ || true
     [ -e /opt/labca/data/issuer/ca-int.pem ] && cp /opt/labca/data/issuer/ca-int.pem certs/ || true
+    [ -e /opt/labca/data/issuer/ca-int.pem ] && ln -sf ca-int.pem certs/test-ca.pem || true
     [ -e /opt/labca/data/issuer/ca-int.pem ] && cp /opt/labca/data/issuer/ca-int.der certs/ || true
 
     if [ ! -e /etc/nginx/ssl/labca_cert.pem ]; then
