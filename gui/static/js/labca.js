@@ -153,7 +153,7 @@ $(function() {
     $('#o').blur(function() {
         var prefix = $(this).val().split(" ")[0];
 
-        if ((prefix != "") && (($("#cn").val() == "Root CA") || ($("#cn").val() == "CA")) && ($(this).parent().parent().find(".error").length == 0)) {
+        if ((prefix != "") && (($("#cn").val() == "Root CA") || ($("#cn").val() == "CA")) && ($(this).parent().parent().find(".error").length == 1)) {
             $("#cn").val(prefix + " " + $("#cn").val());
         }
     });
