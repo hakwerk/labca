@@ -1,17 +1,21 @@
 diff --git a/docker-compose.yml b/docker-compose.yml
-index 6ff3f70c6..74f1cf0f8 100644
+index c580176cd..aeb34b387 100644
 --- a/docker-compose.yml
 +++ b/docker-compose.yml
-@@ -1,20 +1,23 @@
+@@ -1,10 +1,11 @@
  version: '3'
 +name: labca
  services:
    boulder:
-     # Should match one of the GO_DEV_VERSIONS in test/boulder-tools/tag_and_upload.sh.
--    image: letsencrypt/boulder-tools:${BOULDER_TOOLS_TAG:-go1.21.4_2023-11-09}
-+    image: &boulder_image letsencrypt/boulder-tools:${BOULDER_TOOLS_TAG:-go1.21.4_2023-11-09}
-     environment:
-       # To solve HTTP-01 and TLS-ALPN-01 challenges, change the IP in FAKE_DNS
+     # The `letsencrypt/boulder-tools:latest` tag is automatically built in local
+     # dev environments. In CI a specific BOULDER_TOOLS_TAG is passed, and it is
+     # pulled with `docker compose pull`.
+-    image: letsencrypt/boulder-tools:${BOULDER_TOOLS_TAG:-latest}
++    image: &boulder_image letsencrypt/boulder-tools:${BOULDER_TOOLS_TAG:-go1.21.5_2023-12-11}
+     build:
+       context: test/boulder-tools/
+       # Should match one of the GO_DEV_VERSIONS in test/boulder-tools/tag_and_upload.sh.
+@@ -15,13 +16,15 @@ services:
        # to the IP address where your ACME client's solver is listening.
        # FAKE_DNS: 172.17.0.1
        FAKE_DNS: 10.77.77.77
@@ -30,7 +34,7 @@ index 6ff3f70c6..74f1cf0f8 100644
        - ./.gocache:/root/.cache/go-build:cached
        - ./.hierarchy:/hierarchy/:cached
        - ./.softhsm-tokens/:/var/lib/softhsm/tokens/:cached
-@@ -34,20 +37,26 @@ services:
+@@ -41,20 +44,26 @@ services:
      # TODO: Remove this when ServerAddress is deprecated in favor of SRV records
      # and DNSAuthority.
      dns: 10.55.55.10
@@ -65,7 +69,7 @@ index 6ff3f70c6..74f1cf0f8 100644
      networks:
        bluenet:
          aliases:
-@@ -61,22 +70,11 @@ services:
+@@ -68,22 +77,11 @@ services:
      # small.
      command: mysqld --bind-address=0.0.0.0 --slow-query-log --log-output=TABLE --log-queries-not-using-indexes=ON
      logging:
@@ -93,7 +97,7 @@ index 6ff3f70c6..74f1cf0f8 100644
  
    bconsul:
      image: hashicorp/consul:1.15.4
-@@ -90,12 +88,73 @@ services:
+@@ -97,12 +95,73 @@ services:
        rednet:
          ipv4_address: 10.88.88.10
      command: "consul agent -dev -config-format=hcl -config-file=/test/consul/config.hcl"

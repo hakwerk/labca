@@ -1,5 +1,5 @@
 diff --git a/cmd/bad-key-revoker/main.go b/cmd/bad-key-revoker/main.go
-index e4e7b5a8..e0337a96 100644
+index e7015e0c8..860c3d0dd 100644
 --- a/cmd/bad-key-revoker/main.go
 +++ b/cmd/bad-key-revoker/main.go
 @@ -18,6 +18,7 @@ import (
@@ -22,7 +22,7 @@ index e4e7b5a8..e0337a96 100644
  		// MaximumRevocations specifies the maximum number of certificates associated with
  		// a key hash that bad-key-revoker will attempt to revoke. If the number of certificates
  		// is higher than MaximumRevocations bad-key-revoker will error out and refuse to
-@@ -462,6 +468,29 @@ func main() {
+@@ -467,6 +473,30 @@ func main() {
  	cmd.FailOnError(err, "Failed to load credentials and create gRPC connection to RA")
  	rac := rapb.NewRegistrationAuthorityClient(conn)
  
@@ -42,17 +42,18 @@ index e4e7b5a8..e0337a96 100644
 +			scope,
 +			clk,
 +			dnsTries,
-+			logger)
++			logger,
++			tlsConfig)
 +		resolver = r
 +	} else {
-+		r := bdns.NewTest(dnsTimeout, servers, scope, clk, dnsTries, logger)
++		r := bdns.NewTest(dnsTimeout, servers, scope, clk, dnsTries, logger, tlsConfig)
 +		resolver = r
 +	}
 +
  	var smtpRoots *x509.CertPool
  	if config.BadKeyRevoker.Mailer.SMTPTrustedRootFile != "" {
  		pem, err := os.ReadFile(config.BadKeyRevoker.Mailer.SMTPTrustedRootFile)
-@@ -483,6 +512,7 @@ func main() {
+@@ -488,6 +518,7 @@ func main() {
  		config.BadKeyRevoker.Mailer.Username,
  		smtpPassword,
  		smtpRoots,

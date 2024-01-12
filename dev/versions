@@ -1,0 +1,96 @@
+#!/bin/sh
+
+set -e
+
+COL_NC='\\e\[0m' # No Color
+COL_LIGHT_GREEN='\\e\[1;32m'
+COL_YELLOW='\\e\[1;33m'
+COL_LIGHT_RED='\\e\[1;31m'
+
+colorBoulderTag() {
+    local fileName="$1"
+    local expectVersion="$2"
+
+    actualVersion=$(grep -R boulderTag= $fileName | sed -e "s/boulderTag=\"\(.*\)\"/\1/")
+    sub=$(echo $actualVersion | cut -c1-8)
+    if [ "$actualVersion" = "$expectVersion" ]; then
+        actualVersion="${COL_LIGHT_GREEN}${actualVersion}${COL_NC}"
+    elif [ "$sub" = "release-" ]; then
+        actualVersion="${COL_LIGHT_RED}${actualVersion}${COL_NC}"
+    else
+        actualVersion="${COL_YELLOW}${actualVersion}${COL_NC}"
+    fi
+    result=$(grep -R boulderTag= $fileName | sed -e "s/\(boulderTag=\"\).*\(\"\)/\1${actualVersion}\2/")
+    echo "$fileName: $result"
+}
+
+colorCITag() {
+    local fileName="$1"
+
+    first=$(grep go1. ../boulder/.github/workflows/boulder-ci.yml | head -1 | sed -e "s/\s*-\s*//")
+    second=$(grep go1. ../boulder/.github/workflows/boulder-ci.yml | head -2 | tail -1 | sed -e "s/\s*-\s*//")
+
+    if [ ! -z "$(grep -R boulder-tools: $fileName | grep -v automatically | grep $first || echo "")" ]; then
+        res=$(grep -R boulder-tools: $fileName | grep -v automatically | sed -e "s/$first/${COL_LIGHT_GREEN}$first${COL_NC}/")
+    elif [ ! -z "$(grep -R boulder-tools: $fileName | grep -v automatically | grep $second || echo "")" ]; then
+        res=$(grep -R boulder-tools: $fileName | grep -v automatically | sed -e "s/$second/${COL_YELLOW}$second${COL_NC}/")
+    else
+        res=$(grep -R boulder-tools: $fileName | grep -v automatically | sed -e "s/\(:-*\)\([cgor\.0-9_-]*\)/\1${COL_LIGHT_RED}\2${COL_NC}/g")
+    fi
+
+    echo "$fileName:$res"
+}
+
+colorNGTag() {
+    local fileName="$1"
+    local expectVersion="$2"
+
+    if [ ! -z "$(grep -R nginx: $fileName | egrep "[\"0-9]+" | grep $expectVersion || echo "")" ]; then
+        res=$(grep -R nginx: $fileName | egrep "[\"0-9]+" | sed -e "s/$expectVersion/${COL_LIGHT_GREEN}$expectVersion${COL_NC}/")
+    else
+        res=$(grep -R nginx: $fileName | egrep "[\"0-9]+" | sed -e "s/\(.*:\)\([0-9\.]*\)/\1${COL_LIGHT_RED}\2${COL_NC}/")
+    fi
+    echo "$fileName:$res"
+}
+
+colorGoVersion() {
+    local fileName="$1"
+    local expectVersion="$2"
+
+    if [ ! -z "$(grep GO_VERSION -A 3 $fileName | egrep "\- [\"0-9]+" | grep $expectVersion || echo "")" ]; then
+        res=$(grep GO_VERSION -A 3 $fileName | egrep "\- [\"0-9]+" | sed -e "s/$expectVersion/${COL_LIGHT_GREEN}$expectVersion${COL_NC}/")
+    else
+        res=$(grep GO_VERSION -A 3 $fileName | egrep "\- [\"0-9]+" | sed -e "s/\([0-9\.]*\)/${COL_LIGHT_RED}\1${COL_NC}/g")
+    fi
+    echo "$fileName:$res"
+}
+
+echo
+
+cd ../boulder
+bversion=$(git describe --tags $(git rev-list --tags --max-count=1))
+cd - >/dev/null
+echo "Boulder tag: $bversion"
+colorBoulderTag install $bversion
+colorBoulderTag build/build.sh $bversion
+echo
+
+echo "Boulder CI tag(s):"
+grep go1. ../boulder/.github/workflows/boulder-ci.yml
+colorCITag build/tmp.patch
+colorCITag build/Dockerfile-boulder
+echo
+
+ngversion=$(grep -R nginx: .github/Dockerfile | egrep "[\"0-9]+" | sed -e  "s/.*:\([0-9\.]*\)/\1/")
+echo -n ".github/Dockerfile:"
+grep -R nginx: .github/Dockerfile | egrep "[\"0-9]+"
+colorNGTag build/docker-compose.yml $ngversion
+colorNGTag patches/docker-compose.patch $ngversion
+echo
+
+goversion=$(grep GO_VERSION -A 3 ../boulder/.github/workflows/release.yml | egrep "\- [\"0-9]+" | sed -e "s/\s*-\s*//" | sed -e "s/\"//g")
+echo -n "../boulder/.github/workflows/release.yml"
+grep GO_VERSION -A 3 ../boulder/.github/workflows/release.yml | egrep "\- [\"0-9]+" | sed -e "s/yml-/yml/"
+colorGoVersion .github/workflows/release.yml $goversion
+echo
+

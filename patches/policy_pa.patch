@@ -1,5 +1,5 @@
 diff --git a/policy/pa.go b/policy/pa.go
-index 86f79703d..59d42879a 100644
+index d872d5cbe..49daeb7d4 100644
 --- a/policy/pa.go
 +++ b/policy/pa.go
 @@ -32,6 +32,8 @@ type AuthorityImpl struct {
@@ -42,16 +42,16 @@ index 86f79703d..59d42879a 100644
  	pa.blocklistMu.Unlock()
  	return nil
  }
-@@ -205,7 +220,7 @@ var (
- // * exactly equal to an IANA registered TLD
+@@ -203,7 +218,7 @@ var (
+ //   - exactly equal to an IANA registered TLD
  //
- // It does _not_ check that the domain isn't on any PA blocked lists.
--func ValidDomain(domain string) error {
-+func (pa *AuthorityImpl) ValidDomain(domain string) error {
+ // It does NOT ensure that the domain is absent from any PA blocked lists.
+-func ValidNonWildcardDomain(domain string) error {
++func (pa *AuthorityImpl) ValidNonWildcardDomain(domain string) error {
  	if domain == "" {
  		return errEmptyName
  	}
-@@ -281,6 +296,14 @@ func ValidDomain(domain string) error {
+@@ -279,6 +294,14 @@ func ValidNonWildcardDomain(domain string) error {
  		}
  	}
  
@@ -66,7 +66,28 @@ index 86f79703d..59d42879a 100644
  	// Names must end in an ICANN TLD, but they must not be equal to an ICANN TLD.
  	icannTLD, err := iana.ExtractSuffix(domain)
  	if err != nil {
-@@ -308,7 +331,7 @@ var forbiddenMailDomains = map[string]bool{
+@@ -294,9 +317,9 @@ func ValidNonWildcardDomain(domain string) error {
+ // ValidDomain checks that a domain is valid and that it doesn't contain any
+ // invalid wildcard characters. It does NOT ensure that the domain is absent
+ // from any PA blocked lists.
+-func ValidDomain(domain string) error {
++func (pa *AuthorityImpl) ValidDomain(domain string) error {
+ 	if strings.Count(domain, "*") <= 0 {
+-		return ValidNonWildcardDomain(domain)
++		return pa.ValidNonWildcardDomain(domain)
+ 	}
+ 
+ 	// Names containing more than one wildcard are invalid.
+@@ -323,7 +346,7 @@ func ValidDomain(domain string) error {
+ 	if baseDomain == icannTLD {
+ 		return errICANNTLDWildcard
+ 	}
+-	return ValidNonWildcardDomain(baseDomain)
++	return pa.ValidNonWildcardDomain(baseDomain)
+ }
+ 
+ // forbiddenMailDomains is a map of domain names we do not allow after the
+@@ -341,7 +364,7 @@ var forbiddenMailDomains = map[string]bool{
  // ValidEmail returns an error if the input doesn't parse as an email address,
  // the domain isn't a valid hostname in Preferred Name Syntax, or its on the
  // list of domains forbidden for mail (because they are often used in examples).
@@ -75,33 +96,42 @@ index 86f79703d..59d42879a 100644
  	email, err := mail.ParseAddress(address)
  	if err != nil {
  		if len(address) > 254 {
-@@ -318,7 +341,7 @@ func ValidEmail(address string) error {
+@@ -351,7 +374,7 @@ func ValidEmail(address string) error {
  	}
  	splitEmail := strings.SplitN(email.Address, "@", -1)
  	domain := strings.ToLower(splitEmail[len(splitEmail)-1])
--	err = ValidDomain(domain)
-+	err = pa.ValidDomain(domain)
+-	err = ValidNonWildcardDomain(domain)
++	err = pa.ValidNonWildcardDomain(domain)
  	if err != nil {
  		return berrors.InvalidEmailError(
  			"contact email %q has invalid domain : %s",
-@@ -358,11 +381,15 @@ func (pa *AuthorityImpl) willingToIssue(id identifier.ACMEIdentifier) error {
- 	}
- 	domain := id.Value
- 
--	err := ValidDomain(domain)
-+	err := pa.ValidDomain(domain)
- 	if err != nil {
- 		return err
- 	}
- 
-+	if ok, _ := pa.checkWhitelist(domain); ok {
-+		return nil
-+	}
-+
- 	// Require no match against hostname block lists
- 	err = pa.checkHostLists(domain)
- 	if err != nil {
-@@ -372,6 +399,31 @@ func (pa *AuthorityImpl) willingToIssue(id identifier.ACMEIdentifier) error {
+@@ -416,7 +439,7 @@ func (pa *AuthorityImpl) WillingToIssue(domains []string) error {
+ 	for _, domain := range domains {
+ 		if strings.Count(domain, "*") > 0 {
+ 			// Domain contains a wildcard, check that it is valid.
+-			err := ValidDomain(domain)
++			err := pa.ValidDomain(domain)
+ 			if err != nil {
+ 				appendSubError(domain, err)
+ 				continue
+@@ -433,12 +456,15 @@ func (pa *AuthorityImpl) WillingToIssue(domains []string) error {
+ 			}
+ 		} else {
+ 			// Validate that the domain is well-formed.
+-			err := ValidNonWildcardDomain(domain)
++			err := pa.ValidNonWildcardDomain(domain)
+ 			if err != nil {
+ 				appendSubError(domain, err)
+ 				continue
+ 			}
+ 		}
++		if ok, _ := pa.checkWhitelist(domain); ok {
++			return nil
++		}
+ 		// Require no match against hostname block lists
+ 		err := pa.checkHostLists(domain)
+ 		if err != nil {
+@@ -471,6 +497,31 @@ func (pa *AuthorityImpl) WillingToIssue(domains []string) error {
  	return nil
  }
  
@@ -130,6 +160,6 @@ index 86f79703d..59d42879a 100644
 +	}
 +}
 +
- // WillingToIssueWildcards is an extension of WillingToIssue that accepts DNS
- // identifiers for well formed wildcard domains in addition to regular
- // identifiers.
+ // checkWildcardHostList checks the wildcardExactBlocklist for a given domain.
+ // If the domain is not present on the list nil is returned, otherwise
+ // errPolicyForbidden is returned.

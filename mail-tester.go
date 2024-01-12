@@ -56,7 +56,7 @@ type config struct {
 		// during the SMTP connection (as opposed to the gRPC connections).
 		SMTPTrustedRootFile string
 
-		Features map[string]bool
+		Features features.Config
 	}
 
 	Syslog        cmd.SyslogConfig
@@ -81,8 +81,8 @@ func main() {
 	var c config
 	err := cmd.ReadConfigFile(*configFile, &c)
 	cmd.FailOnError(err, "Reading JSON config file into config structure")
-	err = features.Set(c.Mailer.Features)
-	cmd.FailOnError(err, "Failed to set feature flags")
+
+	features.Set(c.Mailer.Features)
 
 	scope, logger, oTelShutdown := cmd.StatsAndLogging(c.Syslog, c.OpenTelemetry, c.Mailer.DebugAddr)
 	defer oTelShutdown(context.Background())
@@ -99,6 +99,8 @@ func main() {
 	var resolver bdns.Client
 	servers, err := bdns.NewStaticProvider(c.Mailer.DNSResolvers)
 	cmd.FailOnError(err, "Couldn't parse static DNS server(s)")
+	tlsConfig, err := c.Mailer.TLS.Load(scope)
+	cmd.FailOnError(err, "TLS config")
 	if !c.Mailer.DNSAllowLoopbackAddresses {
 		r := bdns.New(
 			dnsTimeout,
@@ -106,10 +108,11 @@ func main() {
 			scope,
 			clk,
 			dnsTries,
-			logger)
+			logger,
+			tlsConfig)
 		resolver = r
 	} else {
-		r := bdns.NewTest(dnsTimeout, servers, scope, clk, dnsTries, logger)
+		r := bdns.NewTest(dnsTimeout, servers, scope, clk, dnsTries, logger, tlsConfig)
 		resolver = r
 	}
 

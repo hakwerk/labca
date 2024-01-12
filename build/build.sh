@@ -8,13 +8,13 @@ TMP_DIR=$(pwd)/tmp
 rm -rf $TMP_DIR && mkdir -p $TMP_DIR/{admin,bin,logs,src}
 
 boulderDir=$TMP_DIR/src
-boulderTag="release-2023-12-04"
+boulderTag="release-2024-01-08"
 boulderUrl="https://github.com/letsencrypt/boulder/"
 cloneDir=$(pwd)/..
 
 GIT_VERSION=$(git describe --always --tags 2>/dev/null)
 BUILD_HOST=labca-$GIT_VERSION
-BUILD_IMAGE=$(eval echo $(grep boulder-tools ../patches/docker-compose.patch | head -1 | sed -e "s/image://" | sed -e "s/&boulder_image//"))
+BUILD_IMAGE=$(eval echo $(grep boulder-tools ../patches/docker-compose.patch | head -3 | tail -1 | sed -e "s/\+\s*image://" | sed -e "s/&boulder_image//"))
 
 git clone --branch $boulderTag --depth 1 $boulderUrl $boulderDir 2>/dev/null
 cd $boulderDir
