@@ -748,6 +748,9 @@ startup() {
 
     docker compose pull -q &>>$installLog
 
+    export BOULDER_TOOLS_TAG=$(grep go1. .github/workflows/boulder-ci.yml | head -1 | sed -e "s/\s*- //")
+    docker pull -q letsencrypt/boulder-tools:$BOULDER_TOOLS_TAG &>>$installLog
+
     # Cleanup any remaining containers with old names
     docker compose -p boulder stop &>>$installLog || true
     docker compose -p boulder rm -f &>>$installLog || true
