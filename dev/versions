@@ -77,7 +77,6 @@ echo
 
 echo "Boulder CI tag(s):"
 grep go1. ../boulder/.github/workflows/boulder-ci.yml
-colorCITag build/tmp.patch
 colorCITag build/Dockerfile-boulder
 echo
 

@@ -6,7 +6,7 @@ index aeb34b387..16db397ae 100644
      # The `letsencrypt/boulder-tools:latest` tag is automatically built in local
      # dev environments. In CI a specific BOULDER_TOOLS_TAG is passed, and it is
      # pulled with `docker compose pull`.
--    image: &boulder_image letsencrypt/boulder-tools:${BOULDER_TOOLS_TAG:-go1.21.5_2023-12-11}
+-    image: &boulder_image letsencrypt/boulder-tools:${BOULDER_TOOLS_TAG:-latest}
 +    image: ghcr.io/hakwerk/labca-boulder:${LABCA_IMAGE_VERSION:-latest}
      build:
        context: test/boulder-tools/

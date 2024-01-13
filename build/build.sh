@@ -26,6 +26,9 @@ if [ "$BUILD_IMAGE" == "" ]; then
     BUILD_IMAGE=$(eval echo $(grep boulder-tools $TMP_DIR/src/docker-compose.yml | grep "image:" | head -1 | sed -e "s/image://" | sed -e "s/&boulder_image//"))
 fi
 
+BOULDER_TOOLS_TAG=$(grep go1. $TMP_DIR/src/.github/workflows/boulder-ci.yml | head -1 | sed -e "s/\s*- //")
+BUILD_IMAGE=${BUILD_IMAGE/latest/$BOULDER_TOOLS_TAG}
+
 echo
 $cloneDir/patch.sh
 cp -r test labca
