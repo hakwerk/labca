@@ -26,8 +26,8 @@ args:
 
 type config struct {
 	Mailer struct {
-		cmd.ServiceConfig
-		DB cmd.DBConfig
+		DebugAddr string
+		DB        cmd.DBConfig
 		cmd.SMTPConfig
 
 		From    string
