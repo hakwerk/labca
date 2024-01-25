@@ -935,13 +935,18 @@ func renewCertificate(certname string, days int, rootname string, rootkeyfile st
 
 	defer os.RemoveAll(tmpDir)
 
-	if _, err := os.Stat(rootKey); errors.Is(err, fs.ErrNotExist) {
+	if rootKey != "" {
+		_, err = os.Stat(rootKey)
+	}
+
+	if rootKey == "" || errors.Is(err, fs.ErrNotExist) {
 		if rootkeyfile == "" {
 			return errors.New("NO_ROOT_KEY")
 		} else {
-			if res, newError := storeRootKey(path, certname, tmpDir, rootkeyfile, passphrase); !res {
+			if res, newError := storeRootKey(path, rootname, tmpDir, rootkeyfile, passphrase); !res {
 				return errors.New("NO_ROOT_KEY:" + newError)
 			}
+			rootKey = path + rootname + ".key"
 			defer exeCmd("rm " + rootKey)
 		}
 	}

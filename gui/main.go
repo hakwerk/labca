@@ -1227,20 +1227,20 @@ func renewCertHandler(w http.ResponseWriter, r *http.Request) {
 	if err := renewCertificate(r.Form.Get("certname"), days, r.Form.Get("rootname"), r.Form.Get("root_key"), r.Form.Get("passphrase")); err != nil {
 		res.Success = false
 		res.Error = err.Error()
-	}
+	} else {
+		ex, _ := os.Executable()
+		exePath := filepath.Dir(ex)
+		path, _ := filepath.Abs(exePath + "/..")
+		if _, err := exeCmd(path + "/apply"); err != nil {
+			fmt.Println(err)
+			res.Success = false
+			res.Error = "Could not apply: " + err.Error()
+		}
 
-	ex, _ := os.Executable()
-	exePath := filepath.Dir(ex)
-	path, _ := filepath.Abs(exePath + "/..")
-	if _, err := exeCmd(path + "/apply"); err != nil {
-		fmt.Println(err)
-		res.Success = false
-		res.Error = "Could not apply: " + err.Error()
-	}
-
-	if !_hostCommand(w, r, "boulder-restart") {
-		res.Success = false
-		res.Error = "Error restarting Boulder (ACME)"
+		if !_hostCommand(w, r, "boulder-restart") {
+			res.Success = false
+			res.Error = "Error restarting Boulder (ACME)"
+		}
 	}
 
 	w.Header().Set("Content-Type", "application/json")

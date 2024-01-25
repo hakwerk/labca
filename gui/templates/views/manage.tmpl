@@ -1449,7 +1449,8 @@
                     };
 
                     req.send("action=renew-cert&certname=" + $('#modal-renew-cert').val() + "&days=" + $("#renew-numdays").val() +
-                        "&rootname=" + $('#renew-rootcert').val() + "&root_key=" + $("#modal-rootkey").val() + "&passphrase=" + $("#modal-rootpassphrase").val());
+                        "&rootname=" + $('#renew-rootcert').val() + "&root_key=" + encodeURIComponent($("#modal-rootkey").val()) +
+                        "&passphrase=" + encodeURIComponent($("#modal-rootpassphrase").val()));
 
                     return false;
 
