@@ -1,8 +1,8 @@
-diff --git a/test/config/ca-a.json b/test/config/ca-a.json
+diff --git a/test/config/ca.json b/test/config/ca.json
 index 1233a9c95..3c4a0a3ca 100644
---- a/test/config/ca-a.json
-+++ b/test/config/ca-a.json
-@@ -54,35 +54,13 @@
+--- a/test/config/ca.json
++++ b/test/config/ca.json
+@@ -59,35 +59,13 @@
  			},
  			"issuers": [
  				{

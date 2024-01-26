@@ -16,7 +16,7 @@ index f4696dc2..b9c19ce3 100644
  		"tls": {
  			"caCertFile": "test/grpc-creds/minica.pem",
  			"certFile": "test/grpc-creds/bad-key-revoker.boulder/cert.pem",
-@@ -27,7 +34,7 @@
+@@ -32,7 +39,7 @@
  		},
  		"maximumRevocations": 15,
  		"findCertificatesBatchSize": 10,

@@ -69,14 +69,12 @@ sed -i -e "s/\"directoryCAAIdentity\": \".*\"/\"directoryCAAIdentity\": \"$PKI_D
 if ([ "$PKI_DOMAIN_MODE" == "lockdown" ] && [ "$PKI_LOCKDOWN_DOMAINS" != "" ]) || ([ "$PKI_DOMAIN_MODE" == "whitelist" ] && [ "$PKI_WHITELIST_DOMAINS" != "" ]); then
     perl -i -p0e "s/(\"badResultsOnly\":[^\n]*).*?(\s+)(\"checkPeriod\":)/\1\2\"skipForbiddenDomains\": true,\2\3/igs" config/cert-checker.json
     perl -i -p0e "s/(\"ignoredLints\": \[).*?(\s+)(\"n_subject_common_name_included\")/\1\2\"e_dnsname_not_valid_tld\",\2\3/igs" config/cert-checker.json
-    perl -i -p0e "s/(\"ignoredLints\": \[).*?(\s+)(\"n_subject_common_name_included\")/\1\2\"e_dnsname_not_valid_tld\",\2\3/igs" config/ca-a.json
-    perl -i -p0e "s/(\"ignoredLints\": \[).*?(\s+)(\"n_subject_common_name_included\")/\1\2\"e_dnsname_not_valid_tld\",\2\3/igs" config/ca-b.json
+    perl -i -p0e "s/(\"ignoredLints\": \[).*?(\s+)(\"n_subject_common_name_included\")/\1\2\"e_dnsname_not_valid_tld\",\2\3/igs" config/ca.json
 fi
 
 [ -e ../test/hostname-policy.yaml ] && cp ../test/hostname-policy.yaml ./ || true
 [ -e ../boulder/test/hostname-policy.yaml ] && cp ../boulder/test/hostname-policy.yaml ./ || true
 [ -e hostname-policy.json ] && rm hostname-policy.json || true
-[ -e config/ca.json ] && rm config/ca.json || true
 [ -e config/expired-authz-purger2.json ] && rm config/expired-authz-purger2.json || true
 [ -e config/janitor.json ] && rm config/janitor.json || true
 cat hostname-policy.yaml | tr '\n' '\r' | sed -e "s/\r# Lockdown.*//" | tr '\r' '\n' > hostname-policy.yaml.bak && mv hostname-policy.yaml.bak hostname-policy.yaml
@@ -99,8 +97,7 @@ if [ "$PKI_DOMAIN_MODE" == "whitelist" ] && [ "$PKI_WHITELIST_DOMAINS" != "" ]; 
     done
 fi
 if [ "$PKI_DOMAIN_MODE" == "lockdown" ] || [ "$PKI_DOMAIN_MODE" == "whitelist" ]; then
-    sed -i -e "s/\(\"n_subject_common_name_included\"\).*\]/\1,\"e_dnsname_not_valid_tld\"\]/" config/ca-a.json
-    sed -i -e "s/\(\"n_subject_common_name_included\"\).*\]/\1,\"e_dnsname_not_valid_tld\"\]/" config/ca-b.json
+    sed -i -e "s/\(\"n_subject_common_name_included\"\).*\]/\1,\"e_dnsname_not_valid_tld\"\]/" config/ca.json
 
     REPLACEMENT=""
     if [ "$PKI_DOMAIN_MODE" == "lockdown" ] && [ "$PKI_LOCKDOWN_DOMAINS" != "" ]; then
@@ -127,23 +124,21 @@ fi
 sed -i -e "s/\"shardWidth\": \".*\"/\"shardWidth\": \"$CRLINT\"/" config/crl-updater.json
 sed -i -e "s/\"updatePeriod\": \".*\"/\"updatePeriod\": \"$CRLINT\"/" config/crl-updater.json
 sed -i -e "s/\"lookbackPeriod\": \".*\"/\"lookbackPeriod\": \"$CRLLIFE\"/" config/crl-updater.json
-sed -i -e "s/\"lifespanCRL\": \".*\"/\"lifespanCRL\": \"$CRLLIFE\"/" config/ca-a.json
-sed -i -e "s/\"lifespanCRL\": \".*\"/\"lifespanCRL\": \"$CRLLIFE\"/" config/ca-b.json
+sed -i -e "s/\"lifespanCRL\": \".*\"/\"lifespanCRL\": \"$CRLLIFE\"/" config/ca.json
 rm -f config/contact-exporter.json
 rm -f config/nonce.json
 rm -f config/ocsp-updater.json
 rm -f config/wfe.json
+rm -f config/orphan-finder.json
+rm -f config/ca-a.json
+rm -f config/ca-b.json
 
-sed -i -e "s|\"issuerURL\": \".*\"|\"issuerURL\": \"http://$PKI_FQDN/aia/issuer/$PKI_ISSUER_NAME_ID\"|" config/ca-a.json
-sed -i -e "s|\"issuerURL\": \".*\"|\"issuerURL\": \"http://$PKI_FQDN/aia/issuer/$PKI_ISSUER_NAME_ID\"|" config/ca-b.json
-sed -i -e "s|\"crlURL\": \".*\"|\"crlURL\": \"http://$PKI_FQDN/crl/$PKI_ISSUER_NAME_ID.crl\"|" config/ca-a.json
-sed -i -e "s|\"crlURL\": \".*\"|\"crlURL\": \"http://$PKI_FQDN/crl/$PKI_ISSUER_NAME_ID.crl\"|" config/ca-b.json
-sed -i -e "s|\"crldpBase\": \".*\"|\"crldpBase\": \"http://$PKI_FQDN/crl\"|" config/ca-a.json
-sed -i -e "s|\"crldpBase\": \".*\"|\"crldpBase\": \"http://$PKI_FQDN/crl\"|" config/ca-b.json
+sed -i -e "s|\"issuerURL\": \".*\"|\"issuerURL\": \"http://$PKI_FQDN/aia/issuer/$PKI_ISSUER_NAME_ID\"|" config/ca.json
+sed -i -e "s|\"crlURL\": \".*\"|\"crlURL\": \"http://$PKI_FQDN/crl/$PKI_ISSUER_NAME_ID.crl\"|" config/ca.json
+sed -i -e "s|\"crldpBase\": \".*\"|\"crldpBase\": \"http://$PKI_FQDN/crl\"|" config/ca.json
 
 if [ "$PKI_EXTENDED_TIMEOUT" == "1" ]; then
-    sed -i -e "s/\"timeout\": \"15s\"/\"timeout\": \"30s\"/" config/ca-a.json
-    sed -i -e "s/\"timeout\": \"15s\"/\"timeout\": \"30s\"/" config/ca-b.json
+    sed -i -e "s/\"timeout\": \"15s\"/\"timeout\": \"30s\"/" config/ca.json
     sed -i -e "s/\"timeout\": \"15s\"/\"timeout\": \"30s\"/" config/admin-revoker.json
     sed -i -e "s/\"timeout\": \"15s\"/\"timeout\": \"30s\"/" config/wfe2.json
     sed -i -e "s/\"timeout\": \"20s\"/\"timeout\": \"40s\"/" config/wfe2.json

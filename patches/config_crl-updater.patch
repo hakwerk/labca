@@ -2,7 +2,7 @@ diff --git a/test/config/crl-updater.json b/test/config/crl-updater.json
 index f6b70123f..a6c1471e5 100644
 --- a/test/config/crl-updater.json
 +++ b/test/config/crl-updater.json
-@@ -22,16 +22,14 @@
+@@ -36,16 +36,14 @@
  			"hostOverride": "crl-storer.boulder"
  		},
  		"issuerCerts": [

@@ -1,5 +1,5 @@
 diff --git a/crl/storer/storer.go b/crl/storer/storer.go
-index cd0bf86c0..26e52f789 100644
+index 296852415..00dc7da90 100644
 --- a/crl/storer/storer.go
 +++ b/crl/storer/storer.go
 @@ -11,7 +11,11 @@ import (
@@ -19,7 +19,7 @@ index cd0bf86c0..26e52f789 100644
  	s3Client         simpleS3
  	s3Bucket         string
 +	localStorePath   string
- 	issuers          map[issuance.IssuerNameID]*issuance.Certificate
+ 	issuers          map[issuance.NameID]*issuance.Certificate
  	uploadCount      *prometheus.CounterVec
  	sizeHistogram    *prometheus.HistogramVec
 @@ -50,6 +55,7 @@ func New(
@@ -72,7 +72,7 @@ index cd0bf86c0..26e52f789 100644
  	return nil
  }
 +
-+func storeLocalFile(path string, nameID issuance.IssuerNameID, crlNumber *big.Int, shardIdx int64, crlBytes io.Reader) error {
++func storeLocalFile(path string, nameID issuance.NameID, crlNumber *big.Int, shardIdx int64, crlBytes io.Reader) error {
 +	// Write the file
 +	fn := fmt.Sprintf("%s%c%d-%d-%d.crl", path, os.PathSeparator, nameID, crlNumber, shardIdx)
 +	out, err := os.Create(fn)

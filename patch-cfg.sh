@@ -15,8 +15,7 @@ boulderLabCADir="${2:-labca}"
 $SUDO patch -p1 -o "$boulderLabCADir/entrypoint.sh" < $cloneDir/patches/entrypoint.patch
 cp test/startservers.py "$boulderLabCADir/startservers.py"
 
-$SUDO patch -p1 -o "$boulderLabCADir/config/ca-a.json" < $cloneDir/patches/test_config_ca_a.patch
-$SUDO patch -p1 -o "$boulderLabCADir/config/ca-b.json" < $cloneDir/patches/test_config_ca_b.patch
+$SUDO patch -p1 -o "$boulderLabCADir/config/ca.json" < $cloneDir/patches/test_config_ca.patch
 
 $SUDO patch -p1 -o "$boulderLabCADir/config/expiration-mailer.json" < $cloneDir/patches/config_expiration-mailer.patch
 $SUDO patch -p1 -o "$boulderLabCADir/config/notify-mailer.json" < $cloneDir/patches/config_notify-mailer.patch
@@ -68,15 +67,13 @@ sed -i -e "s/5002/80/g" config/va-remote-a.json
 sed -i -e "s/5001/443/g" config/va-remote-b.json
 sed -i -e "s/5002/80/g" config/va-remote-b.json
 sed -i -e "s|letsencrypt/boulder|hakwerk/labca|" config/wfe2.json
-sed -i -e "s|1.2.3.4|1.3.6.1.4.1.44947.1.1.1|g" config/ca-a.json
-sed -i -e "s|1.2.3.4|1.3.6.1.4.1.44947.1.1.1|g" config/ca-b.json
+sed -i -e "s|1.2.3.4|1.3.6.1.4.1.44947.1.1.1|g" config/ca.json
 sed -i -e "s/ocspURL.Path = encodedReq/ocspURL.Path += encodedReq/" ocsp/helper/helper.go
 sed -i -e "s/\"dnsTimeout\": \".*\"/\"dnsTimeout\": \"3s\"/" config/ra.json
 sed -i -e "s/\"dnsTimeout\": \".*\"/\"dnsTimeout\": \"3s\"/" config/va.json
 sed -i -e "s/\"dnsTimeout\": \".*\"/\"dnsTimeout\": \"3s\"/" config/va-remote-a.json
 sed -i -e "s/\"dnsTimeout\": \".*\"/\"dnsTimeout\": \"3s\"/" config/va-remote-b.json
-sed -i -e "s/\"stdoutlevel\": 4,/\"stdoutlevel\": 6,/" config/ca-a.json
-sed -i -e "s/\"stdoutlevel\": 4,/\"stdoutlevel\": 6,/" config/ca-b.json
+sed -i -e "s/\"stdoutlevel\": 4,/\"stdoutlevel\": 6,/" config/ca.json
 sed -i -e "s/\"stdoutlevel\": 4,/\"stdoutlevel\": 6,/" config/va-remote-a.json
 sed -i -e "s/\"stdoutlevel\": 4,/\"stdoutlevel\": 6,/" config/va-remote-b.json
 

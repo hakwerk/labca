@@ -1,5 +1,5 @@
 diff --git a/crl/updater/continuous.go b/crl/updater/continuous.go
-index 05f1d1bf..1c678a9c 100644
+index e4552f68f..7aaef33c0 100644
 --- a/crl/updater/continuous.go
 +++ b/crl/updater/continuous.go
 @@ -3,6 +3,7 @@ package updater
@@ -37,6 +37,6 @@ index 05f1d1bf..1c678a9c 100644
 +		cu.RunOnce(ctx)
 +	}
 +
- 	shardWorker := func(issuerNameID issuance.IssuerNameID, shardIdx int) {
+ 	shardWorker := func(issuerNameID issuance.NameID, shardIdx int) {
  		defer wg.Done()
  

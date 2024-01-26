@@ -14,8 +14,7 @@ import (
 	"github.com/spf13/viper"
 )
 
-const caaConfFile = "/opt/boulder/labca/config/ca-a.json"
-const cabConfFile = "/opt/boulder/labca/config/ca-b.json"
+const caConfFile = "/opt/boulder/labca/config/ca.json"
 const wfeConfFile = "/opt/boulder/labca/config/wfe2.json"
 
 // From boulder: cmd/boulder-wfe2/main.go
@@ -118,7 +117,7 @@ func getCertFileSubject(certFile string) (string, error) {
 }
 
 func getRawCAChains() []IssuerConfig {
-	caConf, err := os.Open(caaConfFile)
+	caConf, err := os.Open(caConfFile)
 	if err != nil {
 		fmt.Println(err)
 		return nil
@@ -304,26 +303,16 @@ func setUseForLeavesFile(filename, forRSA, forECDSA string) error {
 }
 
 func setUseForLeaves(forRSA, forECDSA string) error {
-	if err := exec.Command("cp", "-f", caaConfFile, caaConfFile+"_BAK").Run(); err != nil {
-		return errors.New("could not create ca-a backup file: " + err.Error())
-	}
-	if err := exec.Command("cp", "-f", cabConfFile, cabConfFile+"_BAK").Run(); err != nil {
-		return errors.New("could not create ca-b backup file: " + err.Error())
+	if err := exec.Command("cp", "-f", caConfFile, caConfFile+"_BAK").Run(); err != nil {
+		return errors.New("could not create ca backup file: " + err.Error())
 	}
 
-	if err := setUseForLeavesFile(caaConfFile, forRSA, forECDSA); err != nil {
-		exec.Command("mv", caaConfFile+"_BAK", caaConfFile).Run()
-		exec.Command("mv", cabConfFile+"_BAK", cabConfFile).Run()
-		return err
-	}
-	if err := setUseForLeavesFile(cabConfFile, forRSA, forECDSA); err != nil {
-		exec.Command("mv", caaConfFile+"_BAK", caaConfFile).Run()
-		exec.Command("mv", cabConfFile+"_BAK", cabConfFile).Run()
+	if err := setUseForLeavesFile(caConfFile, forRSA, forECDSA); err != nil {
+		exec.Command("mv", caConfFile+"_BAK", caConfFile).Run()
 		return err
 	}
 
-	exec.Command("rm", caaConfFile+"_BAK").Run()
-	exec.Command("rm", cabConfFile+"_BAK").Run()
+	exec.Command("rm", caConfFile+"_BAK").Run()
 
 	if forRSA != "" {
 		viper.Set("certs.issuerRSA", forRSA)
