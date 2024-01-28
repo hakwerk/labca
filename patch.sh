@@ -50,6 +50,7 @@ if [ "$SUDO" == "" ]; then
     $SUDO patch -p1 < $cloneDir/build/tmp2.patch
 fi
 $SUDO patch -p1 < $cloneDir/patches/storer_storer.patch
+$SUDO patch -p1 < $cloneDir/patches/test_health-checker_main.patch
 $SUDO patch -p1 < $cloneDir/patches/updater_updater.patch
 $SUDO patch -p1 < $cloneDir/patches/updater_continuous.patch
 $SUDO patch -p1 < $cloneDir/patches/wfe2_main.patch

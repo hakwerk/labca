@@ -1,0 +1,13 @@
+diff --git a/test/health-checker/main.go b/test/health-checker/main.go
+index 0331d59e5..d2f9fbbd9 100644
+--- a/test/health-checker/main.go
++++ b/test/health-checker/main.go
+@@ -56,7 +56,7 @@ func main() {
+ 	clk := cmd.Clock()
+ 
+ 	// Health check retry and timeout.
+-	ticker := time.NewTicker(100 * time.Millisecond)
++	ticker := time.NewTicker(1 * time.Second)
+ 	ctx, cancel := context.WithTimeout(context.Background(), 10*c.GRPC.Timeout.Duration)
+ 	defer cancel()
+ 
