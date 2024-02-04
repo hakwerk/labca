@@ -165,8 +165,10 @@ $(function() {
 
         if ($("input[type=radio]#whitelist").prop('checked') || $("input[type=radio]#standard").prop('checked') ) {
             $("#domain_mode_warning").show();
+            $("#ld_options").hide();
         } else {
             $("#domain_mode_warning").hide();
+            $("#ld_options").show();
         }
     }
 
@@ -175,6 +177,7 @@ $(function() {
     });
 
     $("#domain_mode_warning").hide();
+    $("#ld_options").show();
     radioDisable();
 
 

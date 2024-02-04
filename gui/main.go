@@ -176,6 +176,7 @@ type SetupConfig struct {
 	DomainMode       string
 	LockdownDomains  string
 	WhitelistDomains string
+	LDPublicContacts bool
 	ExtendedTimeout  bool
 	RequestBase      string
 	Errors           map[string]string
@@ -666,6 +667,7 @@ func _configUpdateHandler(w http.ResponseWriter, r *http.Request) {
 		DomainMode:       r.Form.Get("domain_mode"),
 		LockdownDomains:  r.Form.Get("lockdown_domains"),
 		WhitelistDomains: r.Form.Get("whitelist_domains"),
+		LDPublicContacts: (r.Form.Get("ld_public_contacts") == "true"),
 		ExtendedTimeout:  (r.Form.Get("extended_timeout") == "true"),
 	}
 
@@ -714,6 +716,11 @@ func _configUpdateHandler(w http.ResponseWriter, r *http.Request) {
 			if cfg.LockdownDomains != viper.GetString("labca.lockdown") {
 				delta = true
 				viper.Set("labca.lockdown", cfg.LockdownDomains)
+			}
+
+			if cfg.LDPublicContacts != viper.GetBool("labca.ld_public_contacts") {
+				delta = true
+				viper.Set("labca.ld_public_contacts", cfg.LDPublicContacts)
 			}
 		}
 		if domainMode == "whitelist" {
@@ -1585,6 +1592,7 @@ func _manageGet(w http.ResponseWriter, r *http.Request) {
 		manageData["DomainMode"] = domainMode
 		if domainMode == "lockdown" {
 			manageData["LockdownDomains"] = viper.GetString("labca.lockdown")
+			manageData["LDPublicContacts"] = viper.GetBool("labca.ld_public_contacts")
 		}
 		if domainMode == "whitelist" {
 			manageData["WhitelistDomains"] = viper.GetString("labca.whitelist")
@@ -2536,6 +2544,7 @@ func _setupBaseConfig(w http.ResponseWriter, r *http.Request) bool {
 			DomainMode:       "lockdown",
 			LockdownDomains:  domain,
 			WhitelistDomains: domain,
+			LDPublicContacts: true,
 			RequestBase:      r.Header.Get("X-Request-Base"),
 		}
 
@@ -2553,6 +2562,7 @@ func _setupBaseConfig(w http.ResponseWriter, r *http.Request) bool {
 			DomainMode:       r.Form.Get("domain_mode"),
 			LockdownDomains:  r.Form.Get("lockdown_domains"),
 			WhitelistDomains: r.Form.Get("whitelist_domains"),
+			LDPublicContacts: (r.Form.Get("ld_public_contacts") == "true"),
 			RequestBase:      r.Header.Get("X-Request-Base"),
 		}
 
@@ -2571,6 +2581,7 @@ func _setupBaseConfig(w http.ResponseWriter, r *http.Request) bool {
 		viper.Set("labca.domain_mode", cfg.DomainMode)
 		if cfg.DomainMode == "lockdown" {
 			viper.Set("labca.lockdown", cfg.LockdownDomains)
+			viper.Set("labca.ld_public_contacts", cfg.LDPublicContacts)
 		}
 		if cfg.DomainMode == "whitelist" {
 			viper.Set("labca.whitelist", cfg.WhitelistDomains)

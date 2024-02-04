@@ -86,6 +86,15 @@ if [ "$PKI_DOMAIN_MODE" == "lockdown" ] && [ "$PKI_LOCKDOWN_DOMAINS" != "" ]; th
     for d in $(echo $PKI_LOCKDOWN_DOMAINS | sed -e "s/\\\r/ /g" | sed -e "s/\\\n/ /g" | tr '\r' ' '); do
         echo "  - \"$d\"" >> hostname-policy.yaml
     done
+
+    allow_public="false"
+    ld_public_contacts=$(grep ld_public_contacts $dataDir/config.json | grep true || echo "")
+    if [ "$ld_public_contacts" != "" ]; then
+        allow_public="true"
+    fi
+
+    echo >> hostname-policy.yaml
+    echo "LockdownAllowPublicContacts: $allow_public" >> hostname-policy.yaml
 fi
 if [ "$PKI_DOMAIN_MODE" == "whitelist" ] && [ "$PKI_WHITELIST_DOMAINS" != "" ]; then
     echo >> hostname-policy.yaml

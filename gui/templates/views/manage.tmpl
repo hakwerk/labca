@@ -295,17 +295,26 @@
         <span class="error config-error hidden" id="whitelistdomains-error"></span>
         <br/>
 
-        <input type="radio" id="standard" name="domain_mode" value="standard" {{ if eq .DomainMode "standard"}}checked{{ end }}/> Standard - any official domains<br/>
+        <input type="radio" id="standard" name="domain_mode" value="standard" {{ if eq .DomainMode "standard"}}checked{{ end }}/> Standard - any official domains
       </div>
+
+      <div class="form-group" id="ld_options">
+        <label>Lockdown options:</label><br/>
+        <input type="checkbox" id="ld_public_contacts" name="ld_public_contacts" value="true" {{ if .LDPublicContacts }}checked{{ end }}></input>
+        &nbsp;Still allow all public domain names in contact email addresses when creating new ACME accounts
+      </div>
+
       <div class="form-group">
         <label>Extended timeout:</label><br/>
         <input type="checkbox" class="extended_timeout" id="extended_timeout" value="extend" {{ if .ExtendedTimeout }}checked{{ end }}></input>
         &nbsp;If you see timeout related errors on the Dashboard / Audit Log, try checking this box.
       </div>
+      <div class="form-group" id="domain_mode_warning">
+        <img src="static/img/warning.png"> Are you sure? This facilitates man-in-the-middle attacks!
+      </div>
       <div class="form-group">
         <span class="hidden" id="update-config-result"></span>
         <button class="btn btn-default" type="button" id="update-config" title="Update the system configuration">Update</button>
-        <span id="domain_mode_warning">&nbsp;<img src="static/img/warning.png"> Are you sure? This facilitates man-in-the-middle attacks!<br/></span>
       </div>
     </form>
   </div>
@@ -1001,6 +1010,7 @@
                             domain_mode: ($("#standard").prop('checked') ? 'standard' : ($("#whitelist").prop('checked') ? 'whitelist' : 'lockdown')),
                             lockdown_domains: $("#lockdown_domains").val(),
                             whitelist_domains: $("#whitelist_domains").val(),
+                            ld_public_contacts: $("#ld_public_contacts").prop("checked"),
                             extended_timeout: $("#extended_timeout").prop("checked"),
                         },
                     })

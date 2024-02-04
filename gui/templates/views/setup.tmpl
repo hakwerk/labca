@@ -37,11 +37,18 @@
     <span class="error">{{ . }}</span><br/>
     {{ end }}
 
-    <input type="radio" id="standard" name="domain_mode" value="standard" {{ if eq .DomainMode "standard"}}checked{{ end }}/> Standard - any official domains<br/><br/>
+    <input type="radio" id="standard" name="domain_mode" value="standard" {{ if eq .DomainMode "standard"}}checked{{ end }}/> Standard - any official domains<br/>
+  </div>
+  <div class="form-group" id="ld_options">
+    <label>Lockdown options:</label><br/>
+    <input type="checkbox" id="ld_public_contacts" name="ld_public_contacts" value="true" {{ if .LDPublicContacts }}checked{{ end }}></input>
+    &nbsp;Still allow all public domain names in contact email addresses when creating new ACME accounts
+  </div>
+  <div class="form-group" id="domain_mode_warning">
+    <img src="static/img/warning.png"> Are you sure? This facilitates man-in-the-middle attacks!
   </div>
   <div class="form-group">
     <input class="btn btn-default" type="submit" value="Create">
-    <span id="domain_mode_warning">&nbsp;<img src="static/img/warning.png"> Are you sure? This facilitates man-in-the-middle attacks!</span><br/>
   </div>
 </form>
 {{end}}
