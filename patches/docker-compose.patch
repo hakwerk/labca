@@ -1,5 +1,5 @@
 diff --git a/docker-compose.yml b/docker-compose.yml
-index c580176cd..aeb34b387 100644
+index 2ce16d12c..b61c84199 100644
 --- a/docker-compose.yml
 +++ b/docker-compose.yml
 @@ -1,10 +1,11 @@
@@ -97,9 +97,9 @@ index c580176cd..aeb34b387 100644
  
    bconsul:
      image: hashicorp/consul:1.15.4
-@@ -97,12 +95,73 @@ services:
-       rednet:
-         ipv4_address: 10.88.88.10
+@@ -95,12 +93,73 @@ services:
+       bluenet:
+         ipv4_address: 10.77.77.10
      command: "consul agent -dev -config-format=hcl -config-file=/test/consul/config.hcl"
 +    restart: always
  

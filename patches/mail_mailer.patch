@@ -60,7 +60,7 @@ index 4249108e..ee8b6fb4 100644
 +	ctx, cancel := context.WithDeadline(context.Background(), deadline)
 +	defer cancel()
 +
-+	addrs, err := di.dnsClient.LookupHost(ctx, di.server)
++	addrs, _, err := di.dnsClient.LookupHost(ctx, di.server)
  	if err != nil {
 -		return nil, err
 +		problem := probs.DNS("%v")

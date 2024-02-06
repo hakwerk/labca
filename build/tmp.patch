@@ -1,5 +1,5 @@
 diff --git a/docker-compose.yml b/docker-compose.yml
-index aeb34b387..16db397ae 100644
+index b61c84199..a0c99bed4 100644
 --- a/docker-compose.yml
 +++ b/docker-compose.yml
 @@ -5,7 +5,7 @@ services:
@@ -35,7 +35,7 @@ index aeb34b387..16db397ae 100644
      entrypoint: labca/entrypoint.sh
      working_dir: &boulder_working_dir /opt/boulder
      logging:
-@@ -85,8 +83,10 @@ services:
+@@ -85,34 +83,37 @@ services:
  
    bconsul:
      image: hashicorp/consul:1.15.4
@@ -47,10 +47,8 @@ index aeb34b387..16db397ae 100644
      networks:
        consulnet:
          ipv4_address: 10.55.55.10
-@@ -94,27 +94,28 @@ services:
+       bluenet:
          ipv4_address: 10.77.77.10
-       rednet:
-         ipv4_address: 10.88.88.10
 -    command: "consul agent -dev -config-format=hcl -config-file=/test/consul/config.hcl"
 +    command: "consul agent -dev -config-format=hcl -config-file=/opt/boulder/labca/consul/config.hcl"
 +    working_dir: /opt/boulder
@@ -86,7 +84,7 @@ index aeb34b387..16db397ae 100644
      logging:
        driver: "json-file"
        options:
-@@ -131,27 +132,26 @@ services:
+@@ -129,27 +130,26 @@ services:
        - 80:80
        - 443:443
      volumes:
@@ -128,7 +126,7 @@ index aeb34b387..16db397ae 100644
      expose:
        - 3030
      environment:
-@@ -162,6 +162,14 @@ services:
+@@ -160,6 +160,14 @@ services:
  
  volumes:
    dbdata:
