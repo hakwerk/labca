@@ -1,11 +1,12 @@
 diff --git a/test/config/ca.json b/test/config/ca.json
-index 1233a9c95..3c4a0a3ca 100644
+index 53ae91f2d..1937e5580 100644
 --- a/test/config/ca.json
 +++ b/test/config/ca.json
-@@ -59,35 +59,13 @@
+@@ -58,36 +58,14 @@
+ 				"maxValidityBackdate": "1h5m"
  			},
  			"issuers": [
- 				{
+-				{
 -					"useForRSALeaves": false,
 -					"useForECDSALeaves": true,
 -					"issuerURL": "http://127.0.0.1:4001/aia/issuer/5214744660557630",
@@ -16,13 +17,13 @@ index 1233a9c95..3c4a0a3ca 100644
 -						"numSessions": 2
 -					}
 -				},
--				{
+ 				{
  					"useForRSALeaves": true,
  					"useForECDSALeaves": true,
  					"issuerURL": "http://127.0.0.1:4001/aia/issuer/6605440498369741",
  					"ocspURL": "http://127.0.0.1:4002/",
  					"location": {
- 						"configFile": "test/test-ca.key-pkcs11.json",
+-						"configFile": "/hierarchy/intermediate-signing-key-rsa.pkcs11.json",
 -						"certFile": "/hierarchy/intermediate-cert-rsa-a.pem",
 -						"numSessions": 2
 -					}
@@ -33,8 +34,9 @@ index 1233a9c95..3c4a0a3ca 100644
 -					"issuerURL": "http://127.0.0.1:4001/aia/issuer/41127673797486028",
 -					"ocspURL": "http://127.0.0.1:4002/",
 -					"location": {
--						"configFile": "test/test-ca.key-pkcs11.json",
+-						"configFile": "/hierarchy/intermediate-signing-key-rsa.pkcs11.json",
 -						"certFile": "/hierarchy/intermediate-cert-rsa-b.pem",
++						"configFile": "test/test-ca.key-pkcs11.json",
 +						"certFile": "test/test-ca.pem",
  						"numSessions": 2
  					}

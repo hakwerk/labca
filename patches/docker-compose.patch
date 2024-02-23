@@ -1,5 +1,5 @@
 diff --git a/docker-compose.yml b/docker-compose.yml
-index 2ce16d12c..b61c84199 100644
+index 0d59c1228..85791692b 100644
 --- a/docker-compose.yml
 +++ b/docker-compose.yml
 @@ -1,10 +1,11 @@
@@ -67,7 +67,7 @@ index 2ce16d12c..b61c84199 100644
 +    volumes:
 +      - dbdata:/var/lib/mysql
      networks:
-       bluenet:
+       bouldernet:
          aliases:
 @@ -68,22 +77,11 @@ services:
      # small.
@@ -86,7 +86,7 @@ index 2ce16d12c..b61c84199 100644
 -    depends_on:
 -      - bmysql
 -    networks:
--      bluenet:
+-      bouldernet:
 -        aliases:
 -          - boulder-proxysql
 +      driver: "json-file"
@@ -98,19 +98,15 @@ index 2ce16d12c..b61c84199 100644
    bconsul:
      image: hashicorp/consul:1.15.4
 @@ -95,12 +93,73 @@ services:
-       bluenet:
+       bouldernet:
          ipv4_address: 10.77.77.10
      command: "consul agent -dev -config-format=hcl -config-file=/test/consul/config.hcl"
 +    restart: always
- 
--  bjaeger:
--    image: jaegertracing/all-in-one:1.50
++
 +  gui:
 +    image: *boulder_image
-     networks:
--      bluenet:
--        ipv4_address: 10.77.77.17
-+      - bluenet
++    networks:
++      - bouldernet
 +    volumes:
 +      - /var/run/docker.sock:/var/run/docker.sock
 +      - /home/labca/admin:/go/src/labca
@@ -131,12 +127,16 @@ index 2ce16d12c..b61c84199 100644
 +        max-size: "500k"
 +        max-file: "5"
 +    restart: always
-+
+ 
+-  bjaeger:
+-    image: jaegertracing/all-in-one:1.50
 +  nginx:
 +    image: nginx:1.25.3
 +    restart: always
-+    networks:
-+      - bluenet
+     networks:
+-      bouldernet:
+-        ipv4_address: 10.77.77.17
++      - bouldernet
 +    ports:
 +      - 80:80
 +      - 443:443
@@ -148,7 +148,7 @@ index 2ce16d12c..b61c84199 100644
 +  control:
 +    image: *boulder_image
 +    networks:
-+      - bluenet
++      - bouldernet
 +    volumes:
 +      - /var/run/docker.sock:/var/run/docker.sock
 +      - /home/labca/admin/data:/opt/labca/data
@@ -174,4 +174,4 @@ index 2ce16d12c..b61c84199 100644
 +  dbdata:
  
  networks:
-   bluenet:
+   # This network is primarily used for boulder services. It is also used by

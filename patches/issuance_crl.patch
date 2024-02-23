@@ -1,0 +1,13 @@
+diff --git a/issuance/crl.go b/issuance/crl.go
+index 2f36d695c..c9c2a6548 100644
+--- a/issuance/crl.go
++++ b/issuance/crl.go
+@@ -90,7 +90,7 @@ func (i *Issuer) IssueCRL(prof *CRLProfile, req *CRLRequest) ([]byte, error) {
+ 	if req.DeprecatedIDPBaseURL != "" {
+ 		// TODO(#7296): Remove this fallback once CCADB and all non-expired certs
+ 		// contain the new-style CRLDP URL instead.
+-		idps = append(idps, fmt.Sprintf("%s/%d/%d.crl", req.DeprecatedIDPBaseURL, i.NameID(), req.Shard))
++		idps = append(idps, fmt.Sprintf("%s/%d.crl", req.DeprecatedIDPBaseURL, i.NameID()))
+ 	}
+ 	idp, err := makeIDPExt(idps)
+ 	if err != nil {

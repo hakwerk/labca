@@ -1,17 +1,8 @@
 diff --git a/ca/crl.go b/ca/crl.go
-index 3232ab419..ce6f76e36 100644
+index 35b7caff7..31d27857f 100644
 --- a/ca/crl.go
 +++ b/ca/crl.go
-@@ -117,7 +117,7 @@ func (ci *crlImpl) GenerateCRL(stream capb.CRLGenerator_GenerateCRLServer) error
- 	}
- 
- 	// Add the Issuing Distribution Point extension.
--	idp, err := makeIDPExt(ci.idpBase, issuer.NameID(), shard)
-+	idp, err := makeIDPExt(ci.idpBase, issuer.NameID())
- 	if err != nil {
- 		return fmt.Errorf("creating IDP extension: %w", err)
- 	}
-@@ -146,8 +146,10 @@ func (ci *crlImpl) GenerateCRL(stream capb.CRLGenerator_GenerateCRLServer) error
+@@ -143,8 +143,10 @@ func (ci *crlImpl) GenerateCRL(stream capb.CRLGenerator_GenerateCRLServer) error
  				builder = strings.Builder{}
  			}
  		}
@@ -23,21 +14,4 @@ index 3232ab419..ce6f76e36 100644
 +		}
  	}
  
- 	template.RevokedCertificateEntries = rcs
-@@ -247,14 +249,14 @@ type issuingDistributionPoint struct {
- // makeIDPExt returns a critical IssuingDistributionPoint extension containing a
- // URI built from the base url, the issuer's NameID, and the shard number. It
- // also sets the OnlyContainsUserCerts boolean to true.
--func makeIDPExt(base string, issuer issuance.NameID, shardIdx int64) (*pkix.Extension, error) {
-+func makeIDPExt(base string, issuer issuance.NameID) (*pkix.Extension, error) {
- 	val := issuingDistributionPoint{
- 		DistributionPoint: distributionPointName{
- 			[]asn1.RawValue{ // GeneralNames
- 				{ // GeneralName
- 					Class: 2, // context-specific
- 					Tag:   6, // uniformResourceIdentifier, IA5String
--					Bytes: []byte(fmt.Sprintf("%s/%d/%d.crl", base, issuer, shardIdx)),
-+					Bytes: []byte(fmt.Sprintf("%s/%d.crl", base, issuer)),
- 				},
- 			},
- 		},
+ 	req.Entries = rcs

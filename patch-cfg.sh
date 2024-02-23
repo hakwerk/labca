@@ -90,4 +90,14 @@ done
 
 sed -i -e "s/names/name\(s\)/" config/expiration-mailer.gotmpl
 
-rm test-ca2.pem
+if [ ! -e "test-ca.key-pkcs11.json" ]; then
+    cat > test-ca.key-pkcs11.json <<EOL
+{
+    "module": "/usr/lib/softhsm/libsofthsm2.so",
+    "tokenLabel": "intermediate signing key (rsa)",
+    "pin": "1234"
+}
+EOL
+fi
+
+rm -f test-ca2.pem

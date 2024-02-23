@@ -1,8 +1,8 @@
 diff --git a/va/http.go b/va/http.go
-index 8700b2a03..6583710fe 100644
+index 78df8bf42..db281855c 100644
 --- a/va/http.go
 +++ b/va/http.go
-@@ -333,7 +333,16 @@ func (va *ValidationAuthorityImpl) extractRequestTarget(req *http.Request) (stri
+@@ -332,7 +332,16 @@ func (va *ValidationAuthorityImpl) extractRequestTarget(req *http.Request) (stri
  	}
  
  	if _, err := iana.ExtractSuffix(reqHost); err != nil {
