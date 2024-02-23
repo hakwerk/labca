@@ -1,0 +1,22 @@
+diff --git a/va/http.go b/va/http.go
+index 8700b2a03..6583710fe 100644
+--- a/va/http.go
++++ b/va/http.go
+@@ -333,7 +333,16 @@ func (va *ValidationAuthorityImpl) extractRequestTarget(req *http.Request) (stri
+ 	}
+ 
+ 	if _, err := iana.ExtractSuffix(reqHost); err != nil {
+-		return "", 0, berrors.ConnectionFailureError("Invalid hostname in redirect target, must end in IANA registered TLD")
++		isLabca := false
++		for _, domain := range va.labcaDomains {
++			if strings.HasSuffix(reqHost, "."+domain) {
++				isLabca = true
++			}
++		}
++
++		if !isLabca {
++			return "", 0, berrors.ConnectionFailureError("Invalid hostname in redirect target, must end in IANA registered TLD")
++		}
+ 	}
+ 
+ 	return reqHost, reqPort, nil

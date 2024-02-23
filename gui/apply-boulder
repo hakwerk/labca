@@ -53,11 +53,11 @@ else
 fi
 
 
-perl -i -p0e "s/(\"dnsResolvers\": \[\n).*?(\s+\],)/\1      \"$PKI_DNS\"\2/igs" config/va.json
-perl -i -p0e "s/(\"dnsResolvers\": \[\n).*?(\s+\],)/\1      \"$PKI_DNS\"\2/igs" config/va-remote-a.json
-perl -i -p0e "s/(\"dnsResolvers\": \[\n).*?(\s+\],)/\1      \"$PKI_DNS\"\2/igs" config/va-remote-b.json
-perl -i -p0e "s/(\"dnsResolvers\": \[\n).*?(\s+\],)/\1      \"$PKI_DNS\"\2/igs" config/bad-key-revoker.json
-perl -i -p0e "s/(\"dnsResolvers\": \[\n).*?(\s+\],)/\1      \"$PKI_DNS\"\2/igs" config/expiration-mailer.json
+perl -i -p0e "s/(\"dnsResolvers\": \[\n).*?(\s+\],)/\1\t\t\t\"$PKI_DNS\"\2/igs" config/va.json
+perl -i -p0e "s/(\"dnsResolvers\": \[\n).*?(\s+\],)/\1\t\t\t\"$PKI_DNS\"\2/igs" config/va-remote-a.json
+perl -i -p0e "s/(\"dnsResolvers\": \[\n).*?(\s+\],)/\1\t\t\t\"$PKI_DNS\"\2/igs" config/va-remote-b.json
+perl -i -p0e "s/(\"dnsResolvers\": \[\n).*?(\s+\],)/\1\t\t\t\"$PKI_DNS\"\2/igs" config/bad-key-revoker.json
+perl -i -p0e "s/(\"dnsResolvers\": \[\n).*?(\s+\],)/\1\t\t\t\"$PKI_DNS\"\2/igs" config/expiration-mailer.json
 for fl in $(grep -Rl maxConnectionAge config/); do
     perl -i -p0e "s/(\s+\"maxConnectionAge\":[^\n]+)//igs" $fl
 done
@@ -109,18 +109,31 @@ if [ "$PKI_DOMAIN_MODE" == "lockdown" ] || [ "$PKI_DOMAIN_MODE" == "whitelist" ]
     sed -i -e "s/\(\"n_subject_common_name_included\"\).*\]/\1,\"e_dnsname_not_valid_tld\"\]/" config/ca.json
 
     REPLACEMENT=""
+    LABCA_DOMAINS=""
     if [ "$PKI_DOMAIN_MODE" == "lockdown" ] && [ "$PKI_LOCKDOWN_DOMAINS" != "" ]; then
         for d in $(echo $PKI_LOCKDOWN_DOMAINS | sed -e "s/\\\r/ /g" | sed -e "s/\\\n/ /g" | tr '\r' ' '); do
             REPLACEMENT+="    $d: 10000\r"
+            if [ "$LABCA_DOMAINS" != "" ]; then
+                LABCA_DOMAINS+=",\n"
+            fi
+            LABCA_DOMAINS+="\t\t\t\"$d\""
         done
     fi
     if [ "$PKI_DOMAIN_MODE" == "whitelist" ] && [ "$PKI_WHITELIST_DOMAINS" != "" ]; then
         for d in $(echo $PKI_WHITELIST_DOMAINS | sed -e "s/\\\r/ /g" | sed -e "s/\\\n/ /g" | tr '\r' ' '); do
             REPLACEMENT+="    $d: 10000\r"
+            if [ "$LABCA_DOMAINS" != "" ]; then
+                LABCA_DOMAINS+=",\n"
+            fi
+            LABCA_DOMAINS+="\t\t\t\"$d\""
         done
     fi
     cat rate-limit-policies.yml | tr '\n' '\r' | sed -e "s/\(must-staple.le.wtf: 10000\).*\(  registrationOverrides:\)/\1\n$REPLACEMENT\2/" | tr '\r' '\n' > rate-limit-policies.yml.bak && mv rate-limit-policies.yml.bak rate-limit-policies.yml
     cat rate-limit-policies.yml | tr '\n' '\r' | sed -e "s|\(certificatesPerFQDNSet:.*must-staple.le.wtf: 10000\).*\(certificatesPerFQDNSetFast:.*\)|\1\n${REPLACEMENT}rateLimitsURL: http://$PKI_FQDN/rate-limits\n\2|" | tr '\r' '\n' > rate-limit-policies.yml.bak && mv rate-limit-policies.yml.bak rate-limit-policies.yml
+
+    perl -i -p0e "s/(\"labcaDomains\": \[\n).*?(\])/\1$LABCA_DOMAINS\n\t\t\2/igs" config/va.json
+    perl -i -p0e "s/(\"labcaDomains\": \[\n).*?(\])/\1$LABCA_DOMAINS\n\t\t\2/igs" config/va-remote-a.json
+    perl -i -p0e "s/(\"labcaDomains\": \[\n).*?(\])/\1$LABCA_DOMAINS\n\t\t\2/igs" config/va-remote-b.json
 fi
 
 CRLINT=24h

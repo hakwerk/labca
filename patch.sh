@@ -53,6 +53,8 @@ $SUDO patch -p1 < $cloneDir/patches/storer_storer.patch
 $SUDO patch -p1 < $cloneDir/patches/test_health-checker_main.patch
 $SUDO patch -p1 < $cloneDir/patches/updater_updater.patch
 $SUDO patch -p1 < $cloneDir/patches/updater_continuous.patch
+$SUDO patch -p1 < $cloneDir/patches/va_http.patch
+$SUDO patch -p1 < $cloneDir/patches/va_va.patch
 $SUDO patch -p1 < $cloneDir/patches/wfe2_main.patch
 
 sed -i -e "s|./test|./labca|" start.py

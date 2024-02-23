@@ -32,6 +32,9 @@ cp test/config/va*.json "$boulderLabCADir/config/"
 perl -i -p0e "s/\"dnsProvider\": \{.*?\t\t},/\"dnsResolvers\": [\n\t\t\t\"127.0.0.1:8053\",\n\t\t\t\"127.0.0.1:8054\"\n\t\t],/igs" $boulderLabCADir/config/va.json
 perl -i -p0e "s/\"dnsProvider\": \{.*?\t\t},/\"dnsResolvers\": [\n\t\t\t\"127.0.0.1:8053\",\n\t\t\t\"127.0.0.1:8054\"\n\t\t],/igs" $boulderLabCADir/config/va-remote-a.json
 perl -i -p0e "s/\"dnsProvider\": \{.*?\t\t},/\"dnsResolvers\": [\n\t\t\t\"127.0.0.1:8053\",\n\t\t\t\"127.0.0.1:8054\"\n\t\t],/igs" $boulderLabCADir/config/va-remote-b.json
+perl -i -p0e "s/(\"accountURIPrefixes\": \[\n.*?\s+\])/\1,\n\t\t\"labcaDomains\": [\n\t\t]/igs" $boulderLabCADir/config/va.json
+perl -i -p0e "s/(\"accountURIPrefixes\": \[\n.*?\s+\])/\1,\n\t\t\"labcaDomains\": [\n\t\t]/igs" $boulderLabCADir/config/va-remote-a.json
+perl -i -p0e "s/(\"accountURIPrefixes\": \[\n.*?\s+\])/\1,\n\t\t\"labcaDomains\": [\n\t\t]/igs" $boulderLabCADir/config/va-remote-b.json
 
 if [ "$flag_skip_redis" == true ]; then
     perl -i -p0e "s/\n    \"redis\": \{\n.*?    \},//igs" $boulderLabCADir/config/ocsp-responder.json

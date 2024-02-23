@@ -1,5 +1,5 @@
 diff --git a/cmd/boulder-va/main.go b/cmd/boulder-va/main.go
-index b28ec1134..78f5a7879 100644
+index 495acf823..7dfc2ae89 100644
 --- a/cmd/boulder-va/main.go
 +++ b/cmd/boulder-va/main.go
 @@ -27,7 +27,8 @@ type Config struct {
@@ -12,7 +12,15 @@ index b28ec1134..78f5a7879 100644
  		DNSTimeout                config.Duration  `validate:"required"`
  		DNSAllowLoopbackAddresses bool
  
-@@ -79,7 +80,7 @@ func main() {
+@@ -37,6 +38,7 @@ type Config struct {
+ 		Features features.Config
+ 
+ 		AccountURIPrefixes []string `validate:"min=1,dive,required,url"`
++		LabCADomains       []string
+ 	}
+ 
+ 	Syslog        cmd.SyslogConfig
+@@ -79,7 +81,7 @@ func main() {
  	}
  	clk := cmd.Clock()
  
@@ -21,7 +29,7 @@ index b28ec1134..78f5a7879 100644
  		cmd.Fail("Must specify dnsProvider")
  	}
  
-@@ -88,8 +89,13 @@ func main() {
+@@ -88,8 +90,13 @@ func main() {
  	if features.Get().DOH {
  		proto = "tcp"
  	}
@@ -37,3 +45,13 @@ index b28ec1134..78f5a7879 100644
  	defer servers.Stop()
  
  	tlsConfig, err := c.VA.TLS.Load(scope)
+@@ -144,7 +151,8 @@ func main() {
+ 		scope,
+ 		clk,
+ 		logger,
+-		c.VA.AccountURIPrefixes)
++		c.VA.AccountURIPrefixes,
++		c.VA.LabCADomains)
+ 	cmd.FailOnError(err, "Unable to create VA server")
+ 
+ 	start, err := bgrpc.NewServer(c.VA.GRPC, logger).Add(
