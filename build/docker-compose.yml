@@ -26,9 +26,9 @@ services:
       - nginx_html:/opt/wwwstatic
       - softhsm:/var/lib/softhsm/tokens:cached
     networks:
-      bluenet:
+      bouldernet:
         ipv4_address: 10.77.77.77
-      rednet:
+      integrationtestnet:
         ipv4_address: 10.88.88.88
       consulnet:
         ipv4_address: 10.55.55.55
@@ -63,7 +63,7 @@ services:
     volumes:
       - dbdata:/var/lib/mysql
     networks:
-      bluenet:
+      bouldernet:
         aliases:
           - boulder-mysql
     environment:
@@ -90,7 +90,7 @@ services:
     networks:
       consulnet:
         ipv4_address: 10.55.55.10
-      bluenet:
+      bouldernet:
         ipv4_address: 10.77.77.10
     command: "consul agent -dev -config-format=hcl -config-file=/opt/boulder/labca/consul/config.hcl"
     working_dir: /opt/boulder
@@ -99,7 +99,7 @@ services:
   gui:
     image: ghcr.io/hakwerk/labca-gui:${LABCA_IMAGE_VERSION:-latest}
     networks:
-      - bluenet
+      - bouldernet
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - ./docker-compose.yml:/opt/boulder/docker-compose.yml
@@ -125,7 +125,7 @@ services:
     image: nginx:1.25.4
     restart: always
     networks:
-      - bluenet
+      - bouldernet
     ports:
       - 80:80
       - 443:443
@@ -139,7 +139,7 @@ services:
   control:
     image: ghcr.io/hakwerk/labca-control:${LABCA_IMAGE_VERSION:-latest}
     networks:
-      - bluenet
+      - bouldernet
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - ./docker-compose.yml:/opt/boulder/docker-compose.yml
@@ -170,14 +170,26 @@ volumes:
   softhsm:
 
 networks:
-  bluenet:
+  # This network is primarily used for boulder services. It is also used by
+  # challtestsrv, which is used in the integration tests.
+  bouldernet:
     driver: bridge
     ipam:
       driver: default
       config:
         - subnet: 10.77.77.0/24
 
-  rednet:
+  # This network is used for two things in the integration tests:
+  #  - challtestsrv binds to 10.88.88.88:443 for its tls-alpn-01 challenge
+  #    responder, to avoid interfering with the HTTPS port used for testing
+  #    HTTP->HTTPS redirects during http-01 challenges. Note: this could
+  #    probably be updated in the future so that challtestsrv can handle
+  #    both tls-alpn-01 and HTTPS on the same port.
+  #  - test/v2_integration.py has some test cases that start their own HTTP
+  #    server instead of relying on challtestsrv, because they want very
+  #    specific behavior. For these cases, v2_integration.py creates a Python
+  #    HTTP server and binds it to 10.88.88.88:80.
+  integrationtestnet:
     driver: bridge
     ipam:
       driver: default
