@@ -131,7 +131,7 @@ index 0d59c1228..85791692b 100644
 -  bjaeger:
 -    image: jaegertracing/all-in-one:1.50
 +  nginx:
-+    image: nginx:1.25.3
++    image: nginx:1.25.4
 +    restart: always
      networks:
 -      bouldernet:
