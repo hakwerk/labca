@@ -1,5 +1,5 @@
 diff --git a/cmd/expiration-mailer/main.go b/cmd/expiration-mailer/main.go
-index e1014ebab..db289ca96 100644
+index e1014ebab..4cf2fdbfc 100644
 --- a/cmd/expiration-mailer/main.go
 +++ b/cmd/expiration-mailer/main.go
 @@ -23,6 +23,7 @@ import (
@@ -38,7 +38,7 @@ index e1014ebab..db289ca96 100644
  		SAService *cmd.GRPCClientConfig
  
 +		DNSTries                  int
-+		DNSResolvers              []string
++		DNSStaticResolvers        []string
 +		DNSTimeout                string
 +		DNSAllowLoopbackAddresses bool
 +
@@ -56,8 +56,8 @@ index e1014ebab..db289ca96 100644
 +		dnsTries = 1
 +	}
 +	var resolver bdns.Client
-+	servers, err := bdns.NewStaticProvider(c.Mailer.DNSResolvers)
-+	cmd.FailOnError(err, "Couldn't parse static DNS server(s)")
++	servers, err := bdns.NewStaticProvider(c.Mailer.DNSStaticResolvers)
++	cmd.FailOnError(err, "Couldn't start static DNS server resolver")
 +	if !c.Mailer.DNSAllowLoopbackAddresses {
 +		r := bdns.New(
 +			dnsTimeout,

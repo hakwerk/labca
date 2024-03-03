@@ -1,5 +1,5 @@
 diff --git a/cmd/bad-key-revoker/main.go b/cmd/bad-key-revoker/main.go
-index e7015e0c8..860c3d0dd 100644
+index e7015e0c8..5e4e73a12 100644
 --- a/cmd/bad-key-revoker/main.go
 +++ b/cmd/bad-key-revoker/main.go
 @@ -18,6 +18,7 @@ import (
@@ -15,7 +15,7 @@ index e7015e0c8..860c3d0dd 100644
  		RAService *cmd.GRPCClientConfig
  
 +		DNSTries                  int
-+		DNSResolvers              []string
++		DNSStaticResolvers        []string
 +		DNSTimeout                string
 +		DNSAllowLoopbackAddresses bool
 +
@@ -33,8 +33,8 @@ index e7015e0c8..860c3d0dd 100644
 +		dnsTries = 1
 +	}
 +	var resolver bdns.Client
-+	servers, err := bdns.NewStaticProvider(config.BadKeyRevoker.DNSResolvers)
-+	cmd.FailOnError(err, "Couldn't parse static DNS server(s)")
++	servers, err := bdns.NewStaticProvider(config.BadKeyRevoker.DNSStaticResolvers)
++	cmd.FailOnError(err, "Couldn't start static DNS server resolver")
 +	if !config.BadKeyRevoker.DNSAllowLoopbackAddresses {
 +		r := bdns.New(
 +			dnsTimeout,

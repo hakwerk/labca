@@ -30,7 +30,7 @@ dockerComposeVersion="v2.5.0"
 
 labcaUrl="https://github.com/hakwerk/labca/"
 boulderUrl="https://github.com/letsencrypt/boulder/"
-boulderTag="release-2024-02-20"
+boulderTag="release-2024-02-26"
 
 # Feature flags
 flag_skip_redis=true
@@ -786,7 +786,7 @@ startup() {
 
     [ -d /home/labca/control_logs ] || mkdir -p /home/labca/control_logs
 
-    docker network rm -f labca_bluenet &>>$installLog || true
+    docker network rm -f labca_bluenet labca_rednet &>>$installLog || true
 
     # Restore MySQL data when moving from boulder-bmysql-1 to labca-bmysql-1
     if [ -z "$(docker volume ls | grep labca_dbdata)" ] && [ ! -z "$(docker volume ls | grep boulder_dbdata)" ]; then

@@ -7,7 +7,7 @@ index 3b813060..6c709172 100644
  		"emailTemplate": "test/config/expiration-mailer.gotmpl",
  		"debugAddr": ":8008",
 +		"dnsTries": 3,
-+		"dnsResolvers": [
++		"dnsStaticResolvers": [
 +			"127.0.0.1:8053",
 +			"127.0.0.1:8054"
 +		],

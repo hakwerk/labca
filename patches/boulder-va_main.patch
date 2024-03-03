@@ -1,18 +1,8 @@
 diff --git a/cmd/boulder-va/main.go b/cmd/boulder-va/main.go
-index 495acf823..7dfc2ae89 100644
+index 0bef1d4f1..ec03f44e7 100644
 --- a/cmd/boulder-va/main.go
 +++ b/cmd/boulder-va/main.go
-@@ -27,7 +27,8 @@ type Config struct {
- 		// before giving up. May be short-circuited by deadlines. A zero value
- 		// will be turned into 1.
- 		DNSTries                  int
--		DNSProvider               *cmd.DNSProvider `validate:"required"`
-+		DNSResolvers              []string
-+		DNSProvider               *cmd.DNSProvider `validate:"omitempty"`
- 		DNSTimeout                config.Duration  `validate:"required"`
- 		DNSAllowLoopbackAddresses bool
- 
-@@ -37,6 +38,7 @@ type Config struct {
+@@ -41,6 +41,7 @@ type Config struct {
  		Features features.Config
  
  		AccountURIPrefixes []string `validate:"min=1,dive,required,url"`
@@ -20,32 +10,7 @@ index 495acf823..7dfc2ae89 100644
  	}
  
  	Syslog        cmd.SyslogConfig
-@@ -79,7 +81,7 @@ func main() {
- 	}
- 	clk := cmd.Clock()
- 
--	if c.VA.DNSProvider == nil {
-+	if c.VA.DNSProvider == nil && len(c.VA.DNSResolvers) == 0 {
- 		cmd.Fail("Must specify dnsProvider")
- 	}
- 
-@@ -88,8 +90,13 @@ func main() {
- 	if features.Get().DOH {
- 		proto = "tcp"
- 	}
--	servers, err = bdns.StartDynamicProvider(c.VA.DNSProvider, 60*time.Second, proto)
--	cmd.FailOnError(err, "Couldn't start dynamic DNS server resolver")
-+	if len(c.VA.DNSResolvers) > 0 {
-+		servers, err = bdns.NewStaticProvider(c.VA.DNSResolvers)
-+		cmd.FailOnError(err, "Couldn't parse static DNS server(s)")
-+	} else {
-+		servers, err = bdns.StartDynamicProvider(c.VA.DNSProvider, 60*time.Second, proto)
-+		cmd.FailOnError(err, "Couldn't start dynamic DNS server resolver")
-+	}
- 	defer servers.Stop()
- 
- 	tlsConfig, err := c.VA.TLS.Load(scope)
-@@ -144,7 +151,8 @@ func main() {
+@@ -150,7 +151,8 @@ func main() {
  		scope,
  		clk,
  		logger,

@@ -48,7 +48,7 @@ type config struct {
 		SAService *cmd.GRPCClientConfig
 
 		DNSTries                  int
-		DNSResolvers              []string
+		DNSStaticResolvers        []string
 		DNSTimeout                string
 		DNSAllowLoopbackAddresses bool
 
@@ -97,8 +97,8 @@ func main() {
 		dnsTries = 1
 	}
 	var resolver bdns.Client
-	servers, err := bdns.NewStaticProvider(c.Mailer.DNSResolvers)
-	cmd.FailOnError(err, "Couldn't parse static DNS server(s)")
+	servers, err := bdns.NewStaticProvider(c.Mailer.DNSStaticResolvers)
+	cmd.FailOnError(err, "Couldn't start static DNS server resolver")
 	tlsConfig, err := c.Mailer.TLS.Load(scope)
 	cmd.FailOnError(err, "TLS config")
 	if !c.Mailer.DNSAllowLoopbackAddresses {

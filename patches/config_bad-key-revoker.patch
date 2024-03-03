@@ -7,7 +7,7 @@ index f4696dc2..b9c19ce3 100644
  		},
  		"debugAddr": ":8020",
 +		"dnsTries": 3,
-+		"dnsResolvers": [
++		"dnsStaticResolvers": [
 +			"127.0.0.1:8053",
 +			"127.0.0.1:8054"
 +		],

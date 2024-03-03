@@ -53,11 +53,11 @@ else
 fi
 
 
-perl -i -p0e "s/(\"dnsResolvers\": \[\n).*?(\s+\],)/\1\t\t\t\"$PKI_DNS\"\2/igs" config/va.json
-perl -i -p0e "s/(\"dnsResolvers\": \[\n).*?(\s+\],)/\1\t\t\t\"$PKI_DNS\"\2/igs" config/va-remote-a.json
-perl -i -p0e "s/(\"dnsResolvers\": \[\n).*?(\s+\],)/\1\t\t\t\"$PKI_DNS\"\2/igs" config/va-remote-b.json
-perl -i -p0e "s/(\"dnsResolvers\": \[\n).*?(\s+\],)/\1\t\t\t\"$PKI_DNS\"\2/igs" config/bad-key-revoker.json
-perl -i -p0e "s/(\"dnsResolvers\": \[\n).*?(\s+\],)/\1\t\t\t\"$PKI_DNS\"\2/igs" config/expiration-mailer.json
+perl -i -p0e "s/(\"dnsStaticResolvers\": \[\n).*?(\s+\],)/\1\t\t\t\"$PKI_DNS\"\2/igs" config/va.json
+perl -i -p0e "s/(\"dnsStaticResolvers\": \[\n).*?(\s+\],)/\1\t\t\t\"$PKI_DNS\"\2/igs" config/va-remote-a.json
+perl -i -p0e "s/(\"dnsStaticResolvers\": \[\n).*?(\s+\],)/\1\t\t\t\"$PKI_DNS\"\2/igs" config/va-remote-b.json
+perl -i -p0e "s/(\"dnsStaticResolvers\": \[\n).*?(\s+\],)/\1\t\t\t\"$PKI_DNS\"\2/igs" config/bad-key-revoker.json
+perl -i -p0e "s/(\"dnsStaticResolvers\": \[\n).*?(\s+\],)/\1\t\t\t\"$PKI_DNS\"\2/igs" config/expiration-mailer.json
 for fl in $(grep -Rl maxConnectionAge config/); do
     perl -i -p0e "s/(\s+\"maxConnectionAge\":[^\n]+)//igs" $fl
 done
