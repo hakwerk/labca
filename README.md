@@ -138,6 +138,8 @@ foo.internal. CAA 0 issue "foo.internal"
 The value in the issue field should be the domain of your LabCA instance, not the hostname. This value can be found in the issuerDomain property in the /home/labca/boulder_labca/config/va.json file.
 See also the [Let's Encrypt&trade; page on CAA](https://letsencrypt.org/docs/caa/).
 
+If all seems to be working at first, but you hit the **rate limit** after successfully issueing two certificates, make sure that in your list of whitelisted/lockdown domains (in the Manage section on the Config tab) you include all the subdomains that you want to use. So if you want to issue for `abc.dev.lan` and `def.dev.lan`, as well as `xyz.home.lan`, then you should include both `dev.lan` and `home.lan`. Only using `lan` in this example will trigger that rate limit.
+
 ### NOTE
 
 Although LabCA tries to be as robust as possible, use it at your own risk. If you depend on it, make sure that you know what you are doing!
