@@ -36,7 +36,7 @@ Getting Boulder up and running has quite a learning curve though and that is whe
 
 ## Install
 
-NOTE: LabCA cannot run on a Raspberry Pi.
+NOTE: LabCA depends on the boulder engine which cannot run on a Raspberry Pi.
 
 NOTE2: The hostname of your LabCA machine must be in local DNS for the boulder engine to be able to give out a certificate for it.
 
