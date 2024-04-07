@@ -1,8 +1,8 @@
 diff --git a/docker-compose.yml b/docker-compose.yml
-index a6d1db857..169ded339 100644
+index 1918202dd..ebfa30dbe 100644
 --- a/docker-compose.yml
 +++ b/docker-compose.yml
-@@ -5,7 +5,7 @@ services:
+@@ -4,7 +4,7 @@ services:
      # The `letsencrypt/boulder-tools:latest` tag is automatically built in local
      # dev environments. In CI a specific BOULDER_TOOLS_TAG is passed, and it is
      # pulled with `docker compose pull`.
@@ -11,7 +11,7 @@ index a6d1db857..169ded339 100644
      build:
        context: test/boulder-tools/
        # Should match one of the GO_CI_VERSIONS in test/boulder-tools/tag_and_upload.sh.
-@@ -22,12 +22,9 @@ services:
+@@ -21,12 +21,9 @@ services:
        # Forward the parent env's GOEXPERIMENT value into the container.
        GOEXPERIMENT: ${GOEXPERIMENT:-}
      volumes:
@@ -27,7 +27,7 @@ index a6d1db857..169ded339 100644
      networks:
        bouldernet:
          ipv4_address: 10.77.77.77
-@@ -51,6 +48,7 @@ services:
+@@ -50,6 +47,7 @@ services:
      depends_on:
        - bmysql
        - bconsul
@@ -35,7 +35,7 @@ index a6d1db857..169ded339 100644
      entrypoint: labca/entrypoint.sh
      working_dir: &boulder_working_dir /opt/boulder
      logging:
-@@ -85,34 +83,37 @@ services:
+@@ -84,34 +82,37 @@ services:
  
    bconsul:
      image: hashicorp/consul:1.15.4
@@ -84,7 +84,7 @@ index a6d1db857..169ded339 100644
      logging:
        driver: "json-file"
        options:
-@@ -129,27 +130,26 @@ services:
+@@ -128,27 +129,26 @@ services:
        - 80:80
        - 443:443
      volumes:
@@ -126,7 +126,7 @@ index a6d1db857..169ded339 100644
      expose:
        - 3030
      environment:
-@@ -160,6 +160,14 @@ services:
+@@ -159,6 +159,14 @@ services:
  
  volumes:
    dbdata:
