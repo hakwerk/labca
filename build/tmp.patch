@@ -1,5 +1,5 @@
 diff --git a/docker-compose.yml b/docker-compose.yml
-index 423aed0ff..e3389ca21 100644
+index a6d1db857..169ded339 100644
 --- a/docker-compose.yml
 +++ b/docker-compose.yml
 @@ -5,7 +5,7 @@ services:
@@ -10,7 +10,7 @@ index 423aed0ff..e3389ca21 100644
 +    image: ghcr.io/hakwerk/labca-boulder:${LABCA_IMAGE_VERSION:-latest}
      build:
        context: test/boulder-tools/
-       # Should match one of the GO_DEV_VERSIONS in test/boulder-tools/tag_and_upload.sh.
+       # Should match one of the GO_CI_VERSIONS in test/boulder-tools/tag_and_upload.sh.
 @@ -22,12 +22,9 @@ services:
        # Forward the parent env's GOEXPERIMENT value into the container.
        GOEXPERIMENT: ${GOEXPERIMENT:-}

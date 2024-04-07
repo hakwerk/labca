@@ -1,5 +1,5 @@
 diff --git a/docker-compose.yml b/docker-compose.yml
-index 0d59c1228..85791692b 100644
+index 8971dbdb4..a6d1db857 100644
 --- a/docker-compose.yml
 +++ b/docker-compose.yml
 @@ -1,10 +1,11 @@
@@ -14,7 +14,7 @@ index 0d59c1228..85791692b 100644
 +    image: &boulder_image letsencrypt/boulder-tools:${BOULDER_TOOLS_TAG:-latest}
      build:
        context: test/boulder-tools/
-       # Should match one of the GO_DEV_VERSIONS in test/boulder-tools/tag_and_upload.sh.
+       # Should match one of the GO_CI_VERSIONS in test/boulder-tools/tag_and_upload.sh.
 @@ -15,13 +16,15 @@ services:
        # to the IP address where your ACME client's solver is listening.
        # FAKE_DNS: 172.17.0.1
@@ -102,10 +102,14 @@ index 0d59c1228..85791692b 100644
          ipv4_address: 10.77.77.10
      command: "consul agent -dev -config-format=hcl -config-file=/test/consul/config.hcl"
 +    restart: always
-+
+ 
+-  bjaeger:
+-    image: jaegertracing/all-in-one:1.50
 +  gui:
 +    image: *boulder_image
-+    networks:
+     networks:
+-      bouldernet:
+-        ipv4_address: 10.77.77.17
 +      - bouldernet
 +    volumes:
 +      - /var/run/docker.sock:/var/run/docker.sock
@@ -127,15 +131,11 @@ index 0d59c1228..85791692b 100644
 +        max-size: "500k"
 +        max-file: "5"
 +    restart: always
- 
--  bjaeger:
--    image: jaegertracing/all-in-one:1.50
++
 +  nginx:
 +    image: nginx:1.25.4
 +    restart: always
-     networks:
--      bouldernet:
--        ipv4_address: 10.77.77.17
++    networks:
 +      - bouldernet
 +    ports:
 +      - 80:80

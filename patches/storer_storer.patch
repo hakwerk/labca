@@ -1,8 +1,8 @@
 diff --git a/crl/storer/storer.go b/crl/storer/storer.go
-index 296852415..00dc7da90 100644
+index 10b1753c7..2cbc2eb17 100644
 --- a/crl/storer/storer.go
 +++ b/crl/storer/storer.go
-@@ -11,7 +11,11 @@ import (
+@@ -9,8 +9,12 @@ import (
  	"errors"
  	"fmt"
  	"io"
@@ -10,6 +10,7 @@ index 296852415..00dc7da90 100644
  	"math/big"
 +	"os"
 +	"path/filepath"
+ 	"slices"
 +	"sort"
  	"time"
  
@@ -38,7 +39,7 @@ index 296852415..00dc7da90 100644
  		uploadCount:      uploadCount,
  		sizeHistogram:    sizeHistogram,
  		latencyHistogram: latencyHistogram,
-@@ -203,15 +210,19 @@ func (cs *crlStorer) UploadCRL(stream cspb.CRLStorer_UploadCRLServer) error {
+@@ -218,15 +225,19 @@ func (cs *crlStorer) UploadCRL(stream cspb.CRLStorer_UploadCRLServer) error {
  	checksum := sha256.Sum256(crlBytes)
  	checksumb64 := base64.StdEncoding.EncodeToString(checksum[:])
  	crlContentType := "application/pkix-crl"
@@ -67,9 +68,9 @@ index 296852415..00dc7da90 100644
  
  	latency := cs.clk.Now().Sub(start)
  	cs.latencyHistogram.WithLabelValues(issuer.Subject.CommonName).Observe(latency.Seconds())
-@@ -240,3 +251,46 @@ func getIDPExt(exts []pkix.Extension) []byte {
- 	}
- 	return nil
+@@ -245,3 +256,46 @@ func (cs *crlStorer) UploadCRL(stream cspb.CRLStorer_UploadCRLServer) error {
+ 
+ 	return stream.SendAndClose(&emptypb.Empty{})
  }
 +
 +func storeLocalFile(path string, nameID issuance.NameID, crlNumber *big.Int, shardIdx int64, crlBytes io.Reader) error {
