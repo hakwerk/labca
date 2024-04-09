@@ -6,10 +6,10 @@ index 6f0baae9..6ad0f08c 100644
  		},
  		"orderLifetime": "168h",
  		"issuerCerts": [
--			"/hierarchy/intermediate-cert-rsa-a.pem",
--			"/hierarchy/intermediate-cert-rsa-b.pem",
--			"/hierarchy/intermediate-cert-ecdsa-a.pem"
-+			"/hierarchy/intermediate-cert-rsa-a.pem"
+-			"/hierarchy/int-rsa-a.cert.pem",
+-			"/hierarchy/int-rsa-b.cert.pem",
+-			"/hierarchy/int-ecdsa-a.cert.pem"
++			"/hierarchy/int-rsa-a.cert.pem"
  		],
  		"tls": {
  			"caCertFile": "test/grpc-creds/minica.pem",

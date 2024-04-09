@@ -6,12 +6,12 @@ index ef70c2ffc..a53b75d86 100644
  			}
  		},
  		"issuerCerts": [
--			"/hierarchy/intermediate-cert-rsa-a.pem",
--			"/hierarchy/intermediate-cert-rsa-b.pem",
--			"/hierarchy/intermediate-cert-ecdsa-a.pem"
-+			"/hierarchy/intermediate-cert-rsa-a.pem"
+-			"/hierarchy/int-rsa-a.cert.pem",
+-			"/hierarchy/int-rsa-b.cert.pem",
+-			"/hierarchy/int-ecdsa-a.cert.pem"
++			"/hierarchy/int-rsa-a.cert.pem"
  		],
 +		"localStorePath": "/opt/wwwstatic/crl",
- 		"s3Endpoint": "http://localhost:7890",
+ 		"s3Endpoint": "http://localhost:4501",
  		"s3Bucket": "lets-encrypt-crls",
  		"awsConfigFile": "test/config/crl-storer.ini",
