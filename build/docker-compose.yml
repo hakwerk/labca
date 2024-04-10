@@ -24,6 +24,7 @@ services:
       - boulder_data:/opt/boulder/labca
       - nginx_html:/opt/wwwstatic
       - softhsm:/var/lib/softhsm/tokens:cached
+      - certificates:/hierarchy
     networks:
       bouldernet:
         ipv4_address: 10.77.77.77
@@ -167,6 +168,7 @@ volumes:
   backup:
   logs:
   softhsm:
+  certificates:
 
 networks:
   # This network is primarily used for boulder services. It is also used by

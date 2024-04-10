@@ -1,5 +1,5 @@
 diff --git a/docker-compose.yml b/docker-compose.yml
-index 1918202dd..ebfa30dbe 100644
+index 7efd16c4c..5f3d31f77 100644
 --- a/docker-compose.yml
 +++ b/docker-compose.yml
 @@ -4,7 +4,7 @@ services:
@@ -11,7 +11,7 @@ index 1918202dd..ebfa30dbe 100644
      build:
        context: test/boulder-tools/
        # Should match one of the GO_CI_VERSIONS in test/boulder-tools/tag_and_upload.sh.
-@@ -21,12 +21,9 @@ services:
+@@ -21,12 +21,10 @@ services:
        # Forward the parent env's GOEXPERIMENT value into the container.
        GOEXPERIMENT: ${GOEXPERIMENT:-}
      volumes:
@@ -24,10 +24,11 @@ index 1918202dd..ebfa30dbe 100644
 +      - boulder_data:/opt/boulder/labca
 +      - nginx_html:/opt/wwwstatic
 +      - softhsm:/var/lib/softhsm/tokens:cached
++      - certificates:/hierarchy
      networks:
        bouldernet:
          ipv4_address: 10.77.77.77
-@@ -50,6 +47,7 @@ services:
+@@ -50,6 +48,7 @@ services:
      depends_on:
        - bmysql
        - bconsul
@@ -35,7 +36,7 @@ index 1918202dd..ebfa30dbe 100644
      entrypoint: labca/entrypoint.sh
      working_dir: &boulder_working_dir /opt/boulder
      logging:
-@@ -84,34 +82,37 @@ services:
+@@ -84,34 +83,37 @@ services:
  
    bconsul:
      image: hashicorp/consul:1.15.4
@@ -84,7 +85,7 @@ index 1918202dd..ebfa30dbe 100644
      logging:
        driver: "json-file"
        options:
-@@ -128,27 +129,26 @@ services:
+@@ -128,27 +130,26 @@ services:
        - 80:80
        - 443:443
      volumes:
@@ -126,7 +127,7 @@ index 1918202dd..ebfa30dbe 100644
      expose:
        - 3030
      environment:
-@@ -159,6 +159,14 @@ services:
+@@ -159,6 +160,15 @@ services:
  
  volumes:
    dbdata:
@@ -138,6 +139,7 @@ index 1918202dd..ebfa30dbe 100644
 +  backup:
 +  logs:
 +  softhsm:
++  certificates:
  
  networks:
    # This network is primarily used for boulder services. It is also used by
