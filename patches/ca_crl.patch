@@ -1,8 +1,8 @@
 diff --git a/ca/crl.go b/ca/crl.go
-index 35b7caff7..31d27857f 100644
+index 23d8d3ab1..bc28fc618 100644
 --- a/ca/crl.go
 +++ b/ca/crl.go
-@@ -143,8 +143,10 @@ func (ci *crlImpl) GenerateCRL(stream capb.CRLGenerator_GenerateCRLServer) error
+@@ -134,8 +134,10 @@ func (ci *crlImpl) GenerateCRL(stream capb.CRLGenerator_GenerateCRLServer) error
  				builder = strings.Builder{}
  			}
  		}

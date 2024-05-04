@@ -1,8 +1,8 @@
 diff --git a/cmd/cert-checker/main.go b/cmd/cert-checker/main.go
-index 6cf2dee45..008f383d3 100644
+index 37ce5933a..c32225212 100644
 --- a/cmd/cert-checker/main.go
 +++ b/cmd/cert-checker/main.go
-@@ -107,6 +107,7 @@ type certChecker struct {
+@@ -106,6 +106,7 @@ type certChecker struct {
  	checkPeriod                 time.Duration
  	acceptableValidityDurations map[time.Duration]bool
  	logger                      blog.Logger
@@ -10,7 +10,7 @@ index 6cf2dee45..008f383d3 100644
  }
  
  func newChecker(saDbMap certDB,
-@@ -116,6 +117,7 @@ func newChecker(saDbMap certDB,
+@@ -115,6 +116,7 @@ func newChecker(saDbMap certDB,
  	period time.Duration,
  	avd map[time.Duration]bool,
  	logger blog.Logger,
@@ -18,7 +18,7 @@ index 6cf2dee45..008f383d3 100644
  ) certChecker {
  	precertGetter := func(ctx context.Context, serial string) ([]byte, error) {
  		precertPb, err := sa.SelectPrecertificate(ctx, saDbMap, serial)
-@@ -136,6 +138,7 @@ func newChecker(saDbMap certDB,
+@@ -135,6 +137,7 @@ func newChecker(saDbMap certDB,
  		checkPeriod:                 period,
  		acceptableValidityDurations: avd,
  		logger:                      logger,
@@ -26,7 +26,7 @@ index 6cf2dee45..008f383d3 100644
  	}
  }
  
-@@ -410,7 +413,7 @@ func (c *certChecker) checkCert(ctx context.Context, cert core.Certificate, igno
+@@ -409,7 +412,7 @@ func (c *certChecker) checkCert(ctx context.Context, cert core.Certificate, igno
  			err = c.pa.WillingToIssue([]string{name})
  			if err != nil {
  				problems = append(problems, fmt.Sprintf("Policy Authority isn't willing to issue for '%s': %s", name, err))
@@ -35,7 +35,7 @@ index 6cf2dee45..008f383d3 100644
  				// For defense-in-depth, even if the PA was willing to issue for a name
  				// we double check it against a list of forbidden domains. This way even
  				// if the hostnamePolicyFile malfunctions we will flag the forbidden
-@@ -490,9 +493,10 @@ type Config struct {
+@@ -489,9 +492,10 @@ type Config struct {
  
  		Workers int `validate:"required,min=1"`
  		// Deprecated: this is ignored, and cert checker always checks both expired and unexpired.
@@ -49,7 +49,7 @@ index 6cf2dee45..008f383d3 100644
  
  		// AcceptableValidityDurations is a list of durations which are
  		// acceptable for certificates we issue.
-@@ -559,6 +563,8 @@ func main() {
+@@ -546,6 +550,8 @@ func main() {
  		acceptableValidityDurations[ninetyDays] = true
  	}
  
@@ -58,7 +58,7 @@ index 6cf2dee45..008f383d3 100644
  	// Validate PA config and set defaults if needed.
  	cmd.FailOnError(config.PA.CheckChallenges(), "Invalid PA configuration")
  
-@@ -599,6 +605,7 @@ func main() {
+@@ -586,6 +592,7 @@ func main() {
  		config.CertChecker.CheckPeriod.Duration,
  		acceptableValidityDurations,
  		logger,

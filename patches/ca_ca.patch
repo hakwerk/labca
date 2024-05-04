@@ -1,0 +1,17 @@
+diff --git a/ca/ca.go b/ca/ca.go
+index 252fa87d9..6630b731c 100644
+--- a/ca/ca.go
++++ b/ca/ca.go
+@@ -118,10 +118,10 @@ func makeIssuerMaps(issuers []*issuance.Issuer) (issuerMaps, error) {
+ 		}
+ 	}
+ 	if i, ok := issuersByAlg[x509.ECDSA]; !ok || len(i) == 0 {
+-		return issuerMaps{}, errors.New("no ECDSA issuers configured")
++		fmt.Println("WARNING: no ECDSA issuers configured")
+ 	}
+ 	if i, ok := issuersByAlg[x509.RSA]; !ok || len(i) == 0 {
+-		return issuerMaps{}, errors.New("no RSA issuers configured")
++		fmt.Println("WARNING: no RSA issuers configured")
+ 	}
+ 	return issuerMaps{issuersByAlg, issuersByNameID}, nil
+ }
