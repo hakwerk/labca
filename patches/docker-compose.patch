@@ -122,7 +122,7 @@ index 235330460..176d452e0 100644
 -  bpkilint:
 -    image: ghcr.io/digicert/pkilint:v0.10.1
 +  nginx:
-+    image: nginx:1.25.4
++    image: nginx:1.26.0
 +    restart: always
      networks:
 -      bouldernet:
