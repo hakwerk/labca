@@ -27,9 +27,12 @@ setup_boulder_data() {
 
     sed -i -e "s|https://boulder.service.consul:4431/terms/v7|https://$LABCA_FQDN/terms/v1|" config/wfe2.json
     sed -i -e "s|boulder.service.consul:4000|$LABCA_FQDN|g" config/wfe2.json
-    sed -i -e "s|http://127.0.0.1:4002/|http://$LABCA_FQDN/ocsp/|g" config/ca.json
-    sed -i -e "s|http://example.com/cps|http://$LABCA_FQDN/cps/|g" config/ca.json
-    sed -i -e "s|http://example.com/crl|http://$LABCA_FQDN/crl/|g" config/ca.json
+    sed -i -e "s|http://ca.example.org:4002/|http://$LABCA_FQDN/ocsp/|g" config/ca.json
+    sed -i -e "s|http://ca.example.org:4501/rsa-a/|http://$LABCA_FQDN/crl/|g" config/ca.json
+    sed -i -e "s|boulder.service.consul:4000|$LABCA_FQDN|g" config/remoteva-a.json
+    sed -i -e "s|boulder.service.consul:4001|$LABCA_FQDN|g" config/remoteva-a.json
+    sed -i -e "s|boulder.service.consul:4000|$LABCA_FQDN|g" config/remoteva-b.json
+    sed -i -e "s|boulder.service.consul:4001|$LABCA_FQDN|g" config/remoteva-b.json
     sed -i -e "s|boulder.service.consul:4000|$LABCA_FQDN|g" config/va.json
     sed -i -e "s|boulder.service.consul:4001|$LABCA_FQDN|g" config/va.json
     sed -i -e "s|boulder.service.consul:4000|$LABCA_FQDN|g" config/va-remote-a.json

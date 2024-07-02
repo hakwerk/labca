@@ -53,6 +53,8 @@ else
 fi
 
 
+perl -i -p0e "s/(\"dnsStaticResolvers\": \[\n).*?(\s+\],)/\1\t\t\t\"$PKI_DNS\"\2/igs" config/remoteva-a.json
+perl -i -p0e "s/(\"dnsStaticResolvers\": \[\n).*?(\s+\],)/\1\t\t\t\"$PKI_DNS\"\2/igs" config/remoteva-b.json
 perl -i -p0e "s/(\"dnsStaticResolvers\": \[\n).*?(\s+\],)/\1\t\t\t\"$PKI_DNS\"\2/igs" config/va.json
 perl -i -p0e "s/(\"dnsStaticResolvers\": \[\n).*?(\s+\],)/\1\t\t\t\"$PKI_DNS\"\2/igs" config/va-remote-a.json
 perl -i -p0e "s/(\"dnsStaticResolvers\": \[\n).*?(\s+\],)/\1\t\t\t\"$PKI_DNS\"\2/igs" config/va-remote-b.json
@@ -61,6 +63,8 @@ perl -i -p0e "s/(\"dnsStaticResolvers\": \[\n).*?(\s+\],)/\1\t\t\t\"$PKI_DNS\"\2
 for fl in $(grep -Rl maxConnectionAge config/); do
     perl -i -p0e "s/(\s+\"maxConnectionAge\":[^\n]+)//igs" $fl
 done
+sed -i -e "s/\"issuerDomain\": \".*\"/\"issuerDomain\": \"$PKI_DOMAIN\"/" config/remoteva-a.json
+sed -i -e "s/\"issuerDomain\": \".*\"/\"issuerDomain\": \"$PKI_DOMAIN\"/" config/remoteva-b.json
 sed -i -e "s/\"issuerDomain\": \".*\"/\"issuerDomain\": \"$PKI_DOMAIN\"/" config/va.json
 sed -i -e "s/\"issuerDomain\": \".*\"/\"issuerDomain\": \"$PKI_DOMAIN\"/" config/va-remote-a.json
 sed -i -e "s/\"issuerDomain\": \".*\"/\"issuerDomain\": \"$PKI_DOMAIN\"/" config/va-remote-b.json
@@ -131,6 +135,8 @@ if [ "$PKI_DOMAIN_MODE" == "lockdown" ] || [ "$PKI_DOMAIN_MODE" == "whitelist" ]
     cat rate-limit-policies.yml | tr '\n' '\r' | sed -e "s/\(must-staple.le.wtf: 10000\).*\(  registrationOverrides:\)/\1\n$REPLACEMENT\2/" | tr '\r' '\n' > rate-limit-policies.yml.bak && mv rate-limit-policies.yml.bak rate-limit-policies.yml
     cat rate-limit-policies.yml | tr '\n' '\r' | sed -e "s|\(certificatesPerFQDNSet:.*must-staple.le.wtf: 10000\).*\(certificatesPerFQDNSetFast:.*\)|\1\n${REPLACEMENT}rateLimitsURL: http://$PKI_FQDN/rate-limits\n\2|" | tr '\r' '\n' > rate-limit-policies.yml.bak && mv rate-limit-policies.yml.bak rate-limit-policies.yml
 
+    perl -i -p0e "s/(\"labcaDomains\": \[\n).*?(\])/\1$LABCA_DOMAINS\n\t\t\2/igs" config/remoteva-a.json
+    perl -i -p0e "s/(\"labcaDomains\": \[\n).*?(\])/\1$LABCA_DOMAINS\n\t\t\2/igs" config/remoteva-b.json
     perl -i -p0e "s/(\"labcaDomains\": \[\n).*?(\])/\1$LABCA_DOMAINS\n\t\t\2/igs" config/va.json
     perl -i -p0e "s/(\"labcaDomains\": \[\n).*?(\])/\1$LABCA_DOMAINS\n\t\t\2/igs" config/va-remote-a.json
     perl -i -p0e "s/(\"labcaDomains\": \[\n).*?(\])/\1$LABCA_DOMAINS\n\t\t\2/igs" config/va-remote-b.json
@@ -156,8 +162,8 @@ rm -f config/ca-a.json
 rm -f config/ca-b.json
 
 sed -i -e "s|\"issuerURL\": \".*\"|\"issuerURL\": \"http://$PKI_FQDN/aia/issuer/$PKI_ISSUER_NAME_ID\"|" config/ca.json
-sed -i -e "s|\"crlURL\": \".*\"|\"crlURL\": \"http://$PKI_FQDN/crl/$PKI_ISSUER_NAME_ID.crl\"|" config/ca.json
-sed -i -e "s|\"crldpBase\": \".*\"|\"crldpBase\": \"http://$PKI_FQDN/crl\"|" config/ca.json
+sed -i -e "s|\"ocspURL\": \".*\"|\"ocspURL\": \"http://$PKI_FQDN/ocsp/\"|" config/ca.json
+sed -i -e "s|\"crlURLBase\": \".*\"|\"crlURLBase\": \"http://$PKI_FQDN/crl/\"|" config/ca.json
 
 if [ "$PKI_EXTENDED_TIMEOUT" == "1" ]; then
     sed -i -e "s/\"timeout\": \"15s\"/\"timeout\": \"30s\"/" config/ca.json

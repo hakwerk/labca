@@ -1,0 +1,24 @@
+diff --git a/cmd/remoteva/main.go b/cmd/remoteva/main.go
+index e83642477..6efab1ca3 100644
+--- a/cmd/remoteva/main.go
++++ b/cmd/remoteva/main.go
+@@ -18,7 +18,8 @@ import (
+ type Config struct {
+ 	RVA struct {
+ 		vaConfig.Common
+-		Features features.Config
++		Features     features.Config
++		LabCADomains []string
+ 	}
+ 
+ 	Syslog        cmd.SyslogConfig
+@@ -95,7 +96,8 @@ func main() {
+ 		scope,
+ 		clk,
+ 		logger,
+-		c.RVA.AccountURIPrefixes)
++		c.RVA.AccountURIPrefixes,
++		c.RVA.LabCADomains)
+ 	cmd.FailOnError(err, "Unable to create Remote-VA server")
+ 
+ 	start, err := bgrpc.NewServer(c.RVA.GRPC, logger).Add(

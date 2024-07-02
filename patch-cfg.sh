@@ -30,8 +30,12 @@ $SUDO patch -p1 -o "$boulderLabCADir/config/akamai-purger.json" < $cloneDir/patc
 
 cp test/config/va*.json "$boulderLabCADir/config/"
 perl -i -p0e "s/\"dnsProvider\": \{.*?\t\t},/\"dnsStaticResolvers\": [\n\t\t\t\"127.0.0.1:8053\",\n\t\t\t\"127.0.0.1:8054\"\n\t\t],/igs" $boulderLabCADir/config/va.json
+perl -i -p0e "s/\"dnsProvider\": \{.*?\t\t},/\"dnsStaticResolvers\": [\n\t\t\t\"127.0.0.1:8053\",\n\t\t\t\"127.0.0.1:8054\"\n\t\t],/igs" $boulderLabCADir/config/remoteva-a.json
+perl -i -p0e "s/\"dnsProvider\": \{.*?\t\t},/\"dnsStaticResolvers\": [\n\t\t\t\"127.0.0.1:8053\",\n\t\t\t\"127.0.0.1:8054\"\n\t\t],/igs" $boulderLabCADir/config/remoteva-b.json
 perl -i -p0e "s/\"dnsProvider\": \{.*?\t\t},/\"dnsStaticResolvers\": [\n\t\t\t\"127.0.0.1:8053\",\n\t\t\t\"127.0.0.1:8054\"\n\t\t],/igs" $boulderLabCADir/config/va-remote-a.json
 perl -i -p0e "s/\"dnsProvider\": \{.*?\t\t},/\"dnsStaticResolvers\": [\n\t\t\t\"127.0.0.1:8053\",\n\t\t\t\"127.0.0.1:8054\"\n\t\t],/igs" $boulderLabCADir/config/va-remote-b.json
+perl -i -p0e "s/(\"accountURIPrefixes\": \[\n.*?\s+\])/\1,\n\t\t\"labcaDomains\": [\n\t\t]/igs" $boulderLabCADir/config/remoteva-a.json
+perl -i -p0e "s/(\"accountURIPrefixes\": \[\n.*?\s+\])/\1,\n\t\t\"labcaDomains\": [\n\t\t]/igs" $boulderLabCADir/config/remoteva-b.json
 perl -i -p0e "s/(\"accountURIPrefixes\": \[\n.*?\s+\])/\1,\n\t\t\"labcaDomains\": [\n\t\t]/igs" $boulderLabCADir/config/va.json
 perl -i -p0e "s/(\"accountURIPrefixes\": \[\n.*?\s+\])/\1,\n\t\t\"labcaDomains\": [\n\t\t]/igs" $boulderLabCADir/config/va-remote-a.json
 perl -i -p0e "s/(\"accountURIPrefixes\": \[\n.*?\s+\])/\1,\n\t\t\"labcaDomains\": [\n\t\t]/igs" $boulderLabCADir/config/va-remote-b.json
@@ -63,20 +67,18 @@ sed -i -e "s|/hierarchy/root-rsa.cert.pem|labca/test-root.pem|" config/publisher
 sed -i -e "s|/hierarchy/root-rsa.cert.pem|labca/test-root.pem|" config/wfe2.json
 sed -i -e "s|/hierarchy/root-rsa.cert.pem|labca/test-root.pem|" integration-test.py
 sed -i -e "s|/hierarchy/root-rsa.cert.pem|labca/test-root.pem|" helpers.py
-sed -i -e "s/5001/443/g" config/va.json
-sed -i -e "s/5002/80/g" config/va.json
-sed -i -e "s/5001/443/g" config/va-remote-a.json
-sed -i -e "s/5002/80/g" config/va-remote-a.json
-sed -i -e "s/5001/443/g" config/va-remote-b.json
-sed -i -e "s/5002/80/g" config/va-remote-b.json
 sed -i -e "s|letsencrypt/boulder|hakwerk/labca|" config/wfe2.json
 sed -i -e "s|1.2.3.4|1.3.6.1.4.1.44947.1.1.1|g" config/ca.json
 sed -i -e "s/ocspURL.Path = encodedReq/ocspURL.Path += encodedReq/" ocsp/helper/helper.go
+sed -i -e "s/\"dnsTimeout\": \".*\"/\"dnsTimeout\": \"3s\"/" config/remoteva-a.json
+sed -i -e "s/\"dnsTimeout\": \".*\"/\"dnsTimeout\": \"3s\"/" config/remoteva-b.json
 sed -i -e "s/\"dnsTimeout\": \".*\"/\"dnsTimeout\": \"3s\"/" config/ra.json
 sed -i -e "s/\"dnsTimeout\": \".*\"/\"dnsTimeout\": \"3s\"/" config/va.json
 sed -i -e "s/\"dnsTimeout\": \".*\"/\"dnsTimeout\": \"3s\"/" config/va-remote-a.json
 sed -i -e "s/\"dnsTimeout\": \".*\"/\"dnsTimeout\": \"3s\"/" config/va-remote-b.json
 sed -i -e "s/\"stdoutlevel\": 4,/\"stdoutlevel\": 6,/" config/ca.json
+sed -i -e "s/\"stdoutlevel\": 4,/\"stdoutlevel\": 6,/" config/remoteva-a.json
+sed -i -e "s/\"stdoutlevel\": 4,/\"stdoutlevel\": 6,/" config/remoteva-b.json
 sed -i -e "s/\"stdoutlevel\": 4,/\"stdoutlevel\": 6,/" config/va-remote-a.json
 sed -i -e "s/\"stdoutlevel\": 4,/\"stdoutlevel\": 6,/" config/va-remote-b.json
 

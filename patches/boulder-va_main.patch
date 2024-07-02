@@ -1,16 +1,16 @@
 diff --git a/cmd/boulder-va/main.go b/cmd/boulder-va/main.go
-index 0bef1d4f1..ec03f44e7 100644
+index 032435fac..d3961512b 100644
 --- a/cmd/boulder-va/main.go
 +++ b/cmd/boulder-va/main.go
-@@ -41,6 +41,7 @@ type Config struct {
- 		Features features.Config
- 
- 		AccountURIPrefixes []string `validate:"min=1,dive,required,url"`
-+		LabCADomains       []string
+@@ -21,6 +21,7 @@ type Config struct {
+ 		RemoteVAs                   []cmd.GRPCClientConfig `validate:"omitempty,dive"`
+ 		MaxRemoteValidationFailures int                    `validate:"omitempty,min=0,required_with=RemoteVAs"`
+ 		Features                    features.Config
++		LabCADomains                []string
  	}
  
  	Syslog        cmd.SyslogConfig
-@@ -150,7 +151,8 @@ func main() {
+@@ -115,7 +116,8 @@ func main() {
  		scope,
  		clk,
  		logger,

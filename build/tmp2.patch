@@ -1,8 +1,8 @@
 diff --git a/test/startservers.py b/test/startservers.py
-index e24e9085a..6262eccd0 100644
+index 5d19996ad..e1ccf8f45 100644
 --- a/test/startservers.py
 +++ b/test/startservers.py
-@@ -175,6 +175,9 @@ def setupHierarchyOriginal():
+@@ -183,6 +183,9 @@ def setupHierarchyOriginal():
  
  
  def install(race_detection):
