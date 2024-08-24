@@ -20,9 +20,9 @@ services:
       GOFLAGS: -mod=vendor
     volumes:
       - boulder_data:/opt/boulder/labca
+      - certificates:/opt/boulder/labca/certs
       - nginx_html:/opt/wwwstatic
       - softhsm:/var/lib/softhsm/tokens:cached
-      - certificates:/opt/boulder/labca/certs
     networks:
       bouldernet:
         ipv4_address: 10.77.77.77
@@ -65,8 +65,8 @@ services:
     image: ghcr.io/hakwerk/labca-boulder:${LABCA_IMAGE_VERSION:-latest}
     volumes:
       - boulder_data:/opt/boulder/labca
-      - softhsm:/var/lib/softhsm/tokens:cached
       - certificates:/opt/boulder/labca/certs
+      - softhsm:/var/lib/softhsm/tokens:cached
     entrypoint: labca/certs/generate.sh
     working_dir: *boulder_working_dir
     profiles:
@@ -104,6 +104,7 @@ services:
       - control
     volumes:
       - boulder_data:/opt/boulder/labca
+      - certificates:/opt/boulder/labca/certs
     networks:
       consulnet:
         ipv4_address: 10.55.55.10
@@ -124,6 +125,7 @@ services:
       - nginx_html:/opt/wwwstatic
       - backup:/opt/backup
       - boulder_data:/opt/boulder/labca
+      - certificates:/opt/boulder/labca/certs
     expose:
       - 3000
     depends_on:
@@ -164,6 +166,7 @@ services:
       - backup:/opt/backup
       - logs:/opt/logs
       - boulder_data:/opt/boulder/labca
+      - certificates:/opt/boulder/labca/certs
       - nginx_conf:/etc/nginx/conf.d
       - nginx_ssl:/etc/nginx/ssl
       - nginx_html:/var/www/html
