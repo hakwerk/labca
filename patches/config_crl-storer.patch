@@ -6,10 +6,10 @@ index ef70c2ffc..a53b75d86 100644
  			}
  		},
  		"issuerCerts": [
--			"/hierarchy/int-rsa-a.cert.pem",
--			"/hierarchy/int-rsa-b.cert.pem",
--			"/hierarchy/int-ecdsa-a.cert.pem"
-+			"/hierarchy/int-rsa-a.cert.pem"
+-			"test/certs/webpki/int-rsa-a.cert.pem",
+-			"test/certs/webpki/int-rsa-b.cert.pem",
+-			"test/certs/webpki/int-ecdsa-a.cert.pem"
++			"test/certs/webpki/int-rsa-a.cert.pem"
  		],
 +		"localStorePath": "/opt/wwwstatic/crl",
  		"s3Endpoint": "http://localhost:4501",

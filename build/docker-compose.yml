@@ -22,7 +22,7 @@ services:
       - boulder_data:/opt/boulder/labca
       - nginx_html:/opt/wwwstatic
       - softhsm:/var/lib/softhsm/tokens:cached
-      - certificates:/hierarchy
+      - certificates:/opt/boulder/labca/certs
     networks:
       bouldernet:
         ipv4_address: 10.77.77.77
@@ -60,6 +60,20 @@ services:
         max-size: "500k"
         max-file: "5"
     restart: always
+
+  bsetup:
+    image: ghcr.io/hakwerk/labca-boulder:${LABCA_IMAGE_VERSION:-latest}
+    volumes:
+      - boulder_data:/opt/boulder/labca
+      - softhsm:/var/lib/softhsm/tokens:cached
+      - certificates:/opt/boulder/labca/certs
+    entrypoint: labca/certs/generate.sh
+    working_dir: *boulder_working_dir
+    profiles:
+      # Adding a profile to this container means that it won't be started by a
+      # normal "docker compose up/run boulder", only when specifically invoked
+      # with a "docker compose up bsetup".
+      - setup
 
   bmysql:
     image: mariadb:10.5

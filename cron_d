@@ -4,5 +4,6 @@ PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
 
 1 7 * * * root /opt/labca/mailer &>>/opt/logs/cron.log
 5 7 * * * root /opt/labca/checkrenew &>>/opt/logs/cron.log
+7 7 * * Sun root /opt/boulder/labca/certs/generate.sh &>>/opt/logs/cron.log
 11 7 * * Mon root /opt/labca/backup cron &>>/opt/logs/cron.log
 */5 * * * * root /opt/labca/checkcrl &>>/opt/logs/cron.log

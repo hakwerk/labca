@@ -2,9 +2,9 @@ diff --git a/test/startservers.py b/test/startservers.py
 index 5d19996ad..e1ccf8f45 100644
 --- a/test/startservers.py
 +++ b/test/startservers.py
-@@ -183,6 +183,9 @@ def setupHierarchyOriginal():
- 
- 
+@@ -169,6 +169,9 @@ processes = []
+ challSrvProcess = None
+
  def install(race_detection):
 +    return True
 +

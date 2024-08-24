@@ -30,7 +30,7 @@ dockerComposeVersion="v2.5.0"
 
 labcaUrl="https://github.com/hakwerk/labca/"
 boulderUrl="https://github.com/letsencrypt/boulder/"
-boulderTag="release-2024-05-06"
+boulderTag="release-2024-05-20"
 
 # Feature flags
 flag_skip_redis=true
@@ -562,6 +562,8 @@ get_boulder() {
         cd "$boulderDir"
         chown -R labca:labca .
         rm -rf bin/orphan-finder bin/validate
+        mkdir -p $baseDir/backup
+        [ ! -d .softhsm-tokens ] || mv .softhsm-tokens $baseDir/backup/ &>>$installLog
         sudo -u labca -H git reset --hard HEAD^1 &>>$installLog
     fi
 
@@ -797,6 +799,8 @@ startup() {
         dimg=$(grep mariadb: docker-compose.yml | sed -e "s/\s*image:\s*//")
         docker run --rm -v boulder_dbdata:/old -v labca_dbdata:/new $dimg bash -c "cp -R /old/* /new/" &>>$installLog
     fi
+
+    [ ! -d $baseDir/backup/.softhsm-tokens ] || mkdir -p $boulderLabCADir/certs/; mv $baseDir/backup/.softhsm-tokens $boulderLabCADir/certs/ &>>$installLog
 
     COMPOSE_HTTP_TIMEOUT=180 docker compose up -d &>>$installLog
 

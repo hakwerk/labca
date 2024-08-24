@@ -14,8 +14,8 @@ index f4696dc2..b9c19ce3 100644
 +		"dnsTimeout": "3s",
 +		"dnsAllowLoopbackAddresses": true,
  		"tls": {
- 			"caCertFile": "test/grpc-creds/minica.pem",
- 			"certFile": "test/grpc-creds/bad-key-revoker.boulder/cert.pem",
+ 			"caCertFile": "test/certs/ipki/minica.pem",
+ 			"certFile": "test/certs/ipki/bad-key-revoker.boulder/cert.pem",
 @@ -32,7 +39,7 @@
  		},
  		"maximumRevocations": 15,

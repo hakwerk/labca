@@ -22,6 +22,7 @@ get_fqdn() {
 
 setup_boulder_data() {
     cp -rp /opt/staging/boulder_labca/* /opt/boulder/labca/
+    cp -rp /opt/staging/boulder_labca/certs/* /opt/boulder/labca/certs/
 
     cd /opt/boulder/labca
 

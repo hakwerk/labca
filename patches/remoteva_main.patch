@@ -1,18 +1,18 @@
 diff --git a/cmd/remoteva/main.go b/cmd/remoteva/main.go
-index e83642477..6efab1ca3 100644
+index 9ea068fc0..ef77eebfe 100644
 --- a/cmd/remoteva/main.go
 +++ b/cmd/remoteva/main.go
-@@ -18,7 +18,8 @@ import (
- type Config struct {
- 	RVA struct {
- 		vaConfig.Common
+@@ -37,7 +37,8 @@ type Config struct {
+ 		// For more information, see: https://pkg.go.dev/crypto/tls#ClientAuthType
+ 		SkipGRPCClientCertVerification bool
+ 
 -		Features features.Config
 +		Features     features.Config
 +		LabCADomains []string
  	}
  
  	Syslog        cmd.SyslogConfig
-@@ -95,7 +96,8 @@ func main() {
+@@ -118,7 +119,8 @@ func main() {
  		scope,
  		clk,
  		logger,

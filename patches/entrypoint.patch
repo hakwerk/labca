@@ -1,17 +1,20 @@
 diff --git a/test/entrypoint.sh b/test/entrypoint.sh
-index 5ca9929..f18e1d8 100755
+index 12d0397c4..23d9693de 100755
 --- a/test/entrypoint.sh
 +++ b/test/entrypoint.sh
-@@ -13,12 +13,21 @@
+@@ -13,12 +13,24 @@ service rsyslog start
  # make sure we can reach the mysqldb.
  ./test/wait-for-it.sh boulder-mysql 3306
-
+ 
 -# make sure we can reach the proxysql.
 -./test/wait-for-it.sh bproxysql 6032
 -
  # create the database
  MYSQL_CONTAINER=1 $DIR/create_db.sh
-
+ 
++# Generate the internal keys and certs
++./test/certs/generate.sh
++
 +fl=$(pwd)/labca/setup_complete
 +while [ ! -f $fl ]; do
 +    echo "Waiting for $fl to appear..."

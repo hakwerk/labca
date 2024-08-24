@@ -1,17 +1,17 @@
 diff --git a/docker-compose.yml b/docker-compose.yml
-index 176d452e0..d24e8738d 100644
+index 08d29d67c..33503bdfd 100644
 --- a/docker-compose.yml
 +++ b/docker-compose.yml
 @@ -4,7 +4,7 @@ services:
      # The `letsencrypt/boulder-tools:latest` tag is automatically built in local
      # dev environments. In CI a specific BOULDER_TOOLS_TAG is passed, and it is
      # pulled with `docker compose pull`.
--    image: &boulder_image letsencrypt/boulder-tools:${BOULDER_TOOLS_TAG:-latest}
+-    image: &boulder_tools_image letsencrypt/boulder-tools:${BOULDER_TOOLS_TAG:-latest}
 +    image: ghcr.io/hakwerk/labca-boulder:${LABCA_IMAGE_VERSION:-latest}
      build:
        context: test/boulder-tools/
        # Should match one of the GO_CI_VERSIONS in test/boulder-tools/tag_and_upload.sh.
-@@ -19,12 +19,10 @@ services:
+@@ -19,11 +19,10 @@ services:
        GOCACHE: /boulder/.gocache/go-build
        GOFLAGS: -mod=vendor
      volumes:
@@ -19,16 +19,15 @@ index 176d452e0..d24e8738d 100644
 -      - /home/labca/boulder_labca:/opt/boulder/labca
 -      - /home/labca/nginx_data/static:/opt/wwwstatic
 -      - ./.gocache:/root/.cache/go-build:cached
--      - ./.hierarchy:/hierarchy/:cached
--      - ./.softhsm-tokens/:/var/lib/softhsm/tokens/:cached
+-      - /home/labca/boulder_labca/certs/.softhsm-tokens/:/var/lib/softhsm/tokens/:cached
 +      - boulder_data:/opt/boulder/labca
++      - certificates:/opt/boulder/labca/certs
 +      - nginx_html:/opt/wwwstatic
 +      - softhsm:/var/lib/softhsm/tokens:cached
-+      - certificates:/hierarchy
      networks:
        bouldernet:
          ipv4_address: 10.77.77.77
-@@ -53,6 +51,7 @@ services:
+@@ -52,6 +51,7 @@ services:
      depends_on:
        - bmysql
        - bconsul
@@ -36,27 +35,44 @@ index 176d452e0..d24e8738d 100644
      entrypoint: labca/entrypoint.sh
      working_dir: &boulder_working_dir /opt/boulder
      logging:
-@@ -87,34 +86,37 @@ services:
+@@ -62,12 +62,11 @@ services:
+     restart: always
+ 
+   bsetup:
+-    image: *boulder_tools_image
++    image: ghcr.io/hakwerk/labca-boulder:${LABCA_IMAGE_VERSION:-latest}
+     volumes:
+-      - .:/opt/boulder:cached
+-      - /home/labca/boulder_labca:/opt/boulder/labca
+-      - ./.gocache:/root/.cache/go-build:cached
+-      - /home/labca/boulder_labca/certs/.softhsm-tokens/:/var/lib/softhsm/tokens/:cached
++      - boulder_data:/opt/boulder/labca
++      - certificates:/opt/boulder/labca/certs
++      - softhsm:/var/lib/softhsm/tokens:cached
+     entrypoint: labca/certs/generate.sh
+     working_dir: *boulder_working_dir
+     profiles:
+@@ -101,34 +100,39 @@ services:
  
    bconsul:
      image: hashicorp/consul:1.15.4
 +    depends_on:
 +      - control
      volumes:
--     - ./test/:/test/:cached
+-      - /home/labca/boulder_labca:/opt/boulder/labca
 +      - boulder_data:/opt/boulder/labca
++      - certificates:/opt/boulder/labca/certs
      networks:
        consulnet:
          ipv4_address: 10.55.55.10
        bouldernet:
          ipv4_address: 10.77.77.10
--    command: "consul agent -dev -config-format=hcl -config-file=/test/consul/config.hcl"
-+    command: "consul agent -dev -config-format=hcl -config-file=/opt/boulder/labca/consul/config.hcl"
+     command: "consul agent -dev -config-format=hcl -config-file=/opt/boulder/labca/consul/config.hcl"
 +    working_dir: /opt/boulder
      restart: always
  
    gui:
--    image: *boulder_image
+-    image: *boulder_tools_image
 +    image: ghcr.io/hakwerk/labca-gui:${LABCA_IMAGE_VERSION:-latest}
      networks:
        - bouldernet
@@ -73,6 +89,7 @@ index 176d452e0..d24e8738d 100644
 +      - nginx_html:/opt/wwwstatic
 +      - backup:/opt/backup
 +      - boulder_data:/opt/boulder/labca
++      - certificates:/opt/boulder/labca/certs
      expose:
        - 3000
      depends_on:
@@ -85,7 +102,7 @@ index 176d452e0..d24e8738d 100644
      logging:
        driver: "json-file"
        options:
-@@ -131,27 +133,26 @@ services:
+@@ -145,27 +149,27 @@ services:
        - 80:80
        - 443:443
      volumes:
@@ -99,7 +116,7 @@ index 176d452e0..d24e8738d 100644
 +      - control
  
    control:
--    image: *boulder_image
+-    image: *boulder_tools_image
 +    image: ghcr.io/hakwerk/labca-control:${LABCA_IMAGE_VERSION:-latest}
      networks:
        - bouldernet
@@ -121,13 +138,14 @@ index 176d452e0..d24e8738d 100644
 +      - backup:/opt/backup
 +      - logs:/opt/logs
 +      - boulder_data:/opt/boulder/labca
++      - certificates:/opt/boulder/labca/certs
 +      - nginx_conf:/etc/nginx/conf.d
 +      - nginx_ssl:/etc/nginx/ssl
 +      - nginx_html:/var/www/html
      expose:
        - 3030
      environment:
-@@ -162,6 +163,15 @@ services:
+@@ -176,6 +180,15 @@ services:
  
  volumes:
    dbdata:

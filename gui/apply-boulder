@@ -239,7 +239,7 @@ if [ -e $PKI_ROOT_CERT_BASE.pem ]; then
     cp -p $PKI_ROOT_CERT_BASE.pem test-root.pem
 fi
 
-chown -R `ls -l PKI.md | cut -d" " -f 3,4 | sed 's/ /:/g'` .
+chown -R `ls -l example-weak-keys.json | cut -d" " -f 3,4 | sed 's/ /:/g'` .
 
 if [ -e $PKI_INT_CERT_BASE.key ] && [ -e $PKI_ROOT_CERT_BASE.pem ]; then
     [ -f setup_complete ] || touch setup_complete

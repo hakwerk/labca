@@ -4,28 +4,28 @@ index c0093044..e8ba4263 100644
 +++ b/test/config/wfe2.json
 @@ -79,26 +79,6 @@
  			[
- 				"/hierarchy/int-rsa-a.cert.pem",
- 				"/hierarchy/root-rsa.cert.pem"
+ 				"test/certs/webpki/int-rsa-a.cert.pem",
+ 				"test/certs/webpki/root-rsa.cert.pem"
 -			],
 -			[
--				"/hierarchy/int-rsa-b.cert.pem",
--				"/hierarchy/root-rsa.cert.pem"
+-				"test/certs/webpki/int-rsa-b.cert.pem",
+-				"test/certs/webpki/root-rsa.cert.pem"
 -			],
 -			[
--				"/hierarchy/int-ecdsa-a.cert.pem",
--				"/hierarchy/root-ecdsa.cert.pem"
+-				"test/certs/webpki/int-ecdsa-a.cert.pem",
+-				"test/certs/webpki/root-ecdsa.cert.pem"
 -			],
 -			[
--				"/hierarchy/int-ecdsa-b.cert.pem",
--				"/hierarchy/root-ecdsa.cert.pem"
+-				"test/certs/webpki/int-ecdsa-b.cert.pem",
+-				"test/certs/webpki/root-ecdsa.cert.pem"
 -			],
 -			[
--				"/hierarchy/int-ecdsa-a-cross.cert.pem",
--				"/hierarchy/root-rsa.cert.pem"
+-				"test/certs/webpki/int-ecdsa-a-cross.cert.pem",
+-				"test/certs/webpki/root-rsa.cert.pem"
 -			],
 -			[
--				"/hierarchy/int-ecdsa-b-cross.cert.pem",
--				"/hierarchy/root-rsa.cert.pem"
+-				"test/certs/webpki/int-ecdsa-b-cross.cert.pem",
+-				"test/certs/webpki/root-rsa.cert.pem"
  			]
  		],
  		"staleTimeout": "5m",

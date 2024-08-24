@@ -6,10 +6,10 @@ index f6b70123f..a6c1471e5 100644
  			"hostOverride": "crl-storer.boulder"
  		},
  		"issuerCerts": [
--			"/hierarchy/int-rsa-a.cert.pem",
--			"/hierarchy/int-rsa-b.cert.pem",
--			"/hierarchy/int-ecdsa-a.cert.pem"
-+			"/hierarchy/int-rsa-a.cert.pem"
+-			"test/certs/webpki/int-rsa-a.cert.pem",
+-			"test/certs/webpki/int-rsa-b.cert.pem",
+-			"test/certs/webpki/int-ecdsa-a.cert.pem"
++			"test/certs/webpki/int-rsa-a.cert.pem"
  		],
 -		"numShards": 10,
 -		"shardWidth": "240h",

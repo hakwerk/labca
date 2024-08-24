@@ -1,4 +1,4 @@
-FROM letsencrypt/boulder-tools:go1.22.2_2024-04-04 AS boulder-tools
+FROM letsencrypt/boulder-tools:go1.22.3_2024-05-13 AS boulder-tools
 
 FROM ubuntu:focal
 
@@ -14,6 +14,7 @@ RUN apt-get update && \
 
 COPY --from=boulder-tools /usr/local/bin/sql-migrate /usr/local/bin/sql-migrate
 COPY --from=boulder-tools /usr/local/bin/pebble-challtestsrv /usr/local/bin/pebble-challtestsrv
+COPY --from=boulder-tools /usr/local/bin/minica /usr/local/bin/minica
 COPY tmp/bin /opt/boulder/bin
 COPY tmp/src/start.py /opt/boulder
 RUN sed -i -e "s|./test|./labca|" /opt/boulder/start.py

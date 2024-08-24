@@ -1,0 +1,31 @@
+diff --git a/test/certs/generate.sh b/test/certs/generate.sh
+index 0b33f8c18..3e447f6f5 100755
+--- a/test/certs/generate.sh
++++ b/test/certs/generate.sh
+@@ -64,7 +64,7 @@ webpki() (
+   # script.
+   cd ../..
+   mkdir ./test/certs/webpki
+-  go run ./test/certs/webpki.go
++  # go run ./test/certs/webpki.go
+ )
+ 
+ if ! [ -d ipki ]; then
+@@ -72,6 +72,17 @@ if ! [ -d ipki ]; then
+   ipki
+ fi
+ 
++end_date=$(openssl x509 -enddate -noout -in ipki/boulder/cert.pem | cut -d= -f2)
++end_date_seconds=$(date -d "$end_date" +%s)
++current_date_seconds=$(date +%s)
++remaining_days=$(( (end_date_seconds - current_date_seconds) / 86400 ))
++if [ $remaining_days -lt 60 ]; then
++  echo "Regenerating ipki/..."
++  [ -d ipki.prev ] && rm -rf ipki.prev
++  mv ipki ipki.prev
++  ipki
++fi
++
+ if ! [ -d webpki ]; then
+   echo "Generating webpki/..."
+   webpki

@@ -14,5 +14,5 @@ index 3b813060..6c709172 100644
 +		"dnsTimeout": "3s",
 +		"dnsAllowLoopbackAddresses": true,
  		"tls": {
- 			"caCertFile": "test/grpc-creds/minica.pem",
- 			"certFile": "test/grpc-creds/expiration-mailer.boulder/cert.pem",
+ 			"caCertFile": "test/certs/ipki/minica.pem",
+ 			"certFile": "test/certs/ipki/expiration-mailer.boulder/cert.pem",
