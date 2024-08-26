@@ -1,5 +1,5 @@
 diff --git a/crl/storer/storer.go b/crl/storer/storer.go
-index 10b1753c7..2cbc2eb17 100644
+index 9b41f560f..70bd63a3c 100644
 --- a/crl/storer/storer.go
 +++ b/crl/storer/storer.go
 @@ -9,8 +9,12 @@ import (
@@ -15,15 +15,15 @@ index 10b1753c7..2cbc2eb17 100644
  	"time"
  
  	"github.com/aws/aws-sdk-go-v2/service/s3"
-@@ -38,6 +42,7 @@ type crlStorer struct {
- 	cspb.UnimplementedCRLStorerServer
+@@ -39,6 +43,7 @@ type crlStorer struct {
+ 	cspb.UnsafeCRLStorerServer
  	s3Client         simpleS3
  	s3Bucket         string
 +	localStorePath   string
  	issuers          map[issuance.NameID]*issuance.Certificate
  	uploadCount      *prometheus.CounterVec
  	sizeHistogram    *prometheus.HistogramVec
-@@ -50,6 +55,7 @@ func New(
+@@ -53,6 +58,7 @@ func New(
  	issuers []*issuance.Certificate,
  	s3Client simpleS3,
  	s3Bucket string,
@@ -31,7 +31,7 @@ index 10b1753c7..2cbc2eb17 100644
  	stats prometheus.Registerer,
  	log blog.Logger,
  	clk clock.Clock,
-@@ -83,6 +89,7 @@ func New(
+@@ -86,6 +92,7 @@ func New(
  		issuers:          issuersByNameID,
  		s3Client:         s3Client,
  		s3Bucket:         s3Bucket,
@@ -39,7 +39,7 @@ index 10b1753c7..2cbc2eb17 100644
  		uploadCount:      uploadCount,
  		sizeHistogram:    sizeHistogram,
  		latencyHistogram: latencyHistogram,
-@@ -218,15 +225,19 @@ func (cs *crlStorer) UploadCRL(stream cspb.CRLStorer_UploadCRLServer) error {
+@@ -221,15 +228,19 @@ func (cs *crlStorer) UploadCRL(stream grpc.ClientStreamingServer[cspb.UploadCRLR
  	checksum := sha256.Sum256(crlBytes)
  	checksumb64 := base64.StdEncoding.EncodeToString(checksum[:])
  	crlContentType := "application/pkix-crl"
@@ -68,7 +68,7 @@ index 10b1753c7..2cbc2eb17 100644
  
  	latency := cs.clk.Now().Sub(start)
  	cs.latencyHistogram.WithLabelValues(issuer.Subject.CommonName).Observe(latency.Seconds())
-@@ -245,3 +256,46 @@ func (cs *crlStorer) UploadCRL(stream cspb.CRLStorer_UploadCRLServer) error {
+@@ -248,3 +259,46 @@ func (cs *crlStorer) UploadCRL(stream grpc.ClientStreamingServer[cspb.UploadCRLR
  
  	return stream.SendAndClose(&emptypb.Empty{})
  }

@@ -58,6 +58,7 @@ $SUDO patch -p1 < $cloneDir/patches/updater_continuous.patch
 $SUDO patch -p1 < $cloneDir/patches/va_http.patch
 $SUDO patch -p1 < $cloneDir/patches/va_va.patch
 $SUDO patch -p1 < $cloneDir/patches/wfe2_main.patch
+$SUDO patch -p1 < $cloneDir/patches/wfe2_wfe.patch
 
 sed -i -e "s|./test|./labca|" start.py
 

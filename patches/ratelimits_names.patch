@@ -1,5 +1,5 @@
 diff --git a/ratelimits/names.go b/ratelimits/names.go
-index 0037363b0..c2ddc6076 100644
+index fdfd8e81e..636720bf2 100644
 --- a/ratelimits/names.go
 +++ b/ratelimits/names.go
 @@ -150,7 +150,11 @@ func validateRegId(id string) error {
@@ -28,17 +28,16 @@ index 0037363b0..c2ddc6076 100644
  	if err != nil {
  		return fmt.Errorf(
  			"invalid domain, %q must be formatted 'regId:domain': %w", id, err)
-@@ -187,8 +195,12 @@ func validateFQDNSet(id string) error {
+@@ -187,7 +195,11 @@ func validateFQDNSet(id string) error {
  		return fmt.Errorf(
  			"invalid fqdnSet, %q must be formatted 'fqdnSet'", id)
  	}
+-	return policy.WellFormedDomainNames(domains)
 +	pa, err := policy.New(nil, nil)
 +	if err != nil {
 +		return fmt.Errorf("cannot create policy authority implementation")
 +	}
- 	for _, domain := range domains {
--		err := policy.ValidDomain(domain)
-+		err = pa.ValidDomain(domain)
- 		if err != nil {
- 			return fmt.Errorf(
- 				"invalid domain, %q must be formatted 'fqdnSet': %w", id, err)
++	return pa.WellFormedDomainNames(domains)
+ }
+ 
+ func validateIdForName(name Name, id string) error {

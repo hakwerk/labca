@@ -1,5 +1,5 @@
 diff --git a/policy/pa.go b/policy/pa.go
-index d872d5cbe..faa052d6c 100644
+index ce7857a7d..ef29cb60e 100644
 --- a/policy/pa.go
 +++ b/policy/pa.go
 @@ -32,6 +32,9 @@ type AuthorityImpl struct {
@@ -49,12 +49,12 @@ index d872d5cbe..faa052d6c 100644
  //   - exactly equal to an IANA registered TLD
  //
  // It does NOT ensure that the domain is absent from any PA blocked lists.
--func ValidNonWildcardDomain(domain string) error {
+-func validNonWildcardDomain(domain string) error {
 +func (pa *AuthorityImpl) ValidNonWildcardDomain(domain string, isContact bool) error {
  	if domain == "" {
  		return errEmptyName
  	}
-@@ -235,7 +253,9 @@ func ValidNonWildcardDomain(domain string) error {
+@@ -235,7 +253,9 @@ func validNonWildcardDomain(domain string) error {
  		return errTooManyLabels
  	}
  	if len(labels) < 2 {
@@ -65,7 +65,7 @@ index d872d5cbe..faa052d6c 100644
  	}
  	for _, label := range labels {
  		// Check that this is a valid LDH Label: "A string consisting of ASCII
-@@ -279,6 +299,14 @@ func ValidNonWildcardDomain(domain string) error {
+@@ -279,6 +299,14 @@ func validNonWildcardDomain(domain string) error {
  		}
  	}
  
@@ -80,14 +80,14 @@ index d872d5cbe..faa052d6c 100644
  	// Names must end in an ICANN TLD, but they must not be equal to an ICANN TLD.
  	icannTLD, err := iana.ExtractSuffix(domain)
  	if err != nil {
-@@ -294,9 +322,9 @@ func ValidNonWildcardDomain(domain string) error {
+@@ -294,9 +322,9 @@ func validNonWildcardDomain(domain string) error {
  // ValidDomain checks that a domain is valid and that it doesn't contain any
  // invalid wildcard characters. It does NOT ensure that the domain is absent
  // from any PA blocked lists.
 -func ValidDomain(domain string) error {
 +func (pa *AuthorityImpl) ValidDomain(domain string) error {
  	if strings.Count(domain, "*") <= 0 {
--		return ValidNonWildcardDomain(domain)
+-		return validNonWildcardDomain(domain)
 +		return pa.ValidNonWildcardDomain(domain, false)
  	}
  
@@ -105,7 +105,7 @@ index d872d5cbe..faa052d6c 100644
  	if baseDomain == icannTLD {
  		return errICANNTLDWildcard
  	}
--	return ValidNonWildcardDomain(baseDomain)
+-	return validNonWildcardDomain(baseDomain)
 +	return pa.ValidNonWildcardDomain(baseDomain, false)
  }
  
@@ -123,38 +123,45 @@ index d872d5cbe..faa052d6c 100644
  	}
  	splitEmail := strings.SplitN(email.Address, "@", -1)
  	domain := strings.ToLower(splitEmail[len(splitEmail)-1])
--	err = ValidNonWildcardDomain(domain)
+-	err = validNonWildcardDomain(domain)
 +	err = pa.ValidNonWildcardDomain(domain, true)
  	if err != nil {
  		return berrors.InvalidEmailError(
  			"contact email %q has invalid domain : %s",
-@@ -416,7 +444,7 @@ func (pa *AuthorityImpl) WillingToIssue(domains []string) error {
- 	for _, domain := range domains {
- 		if strings.Count(domain, "*") > 0 {
- 			// Domain contains a wildcard, check that it is valid.
--			err := ValidDomain(domain)
-+			err := pa.ValidDomain(domain)
- 			if err != nil {
- 				appendSubError(domain, err)
- 				continue
-@@ -433,12 +461,15 @@ func (pa *AuthorityImpl) WillingToIssue(domains []string) error {
- 			}
- 		} else {
- 			// Validate that the domain is well-formed.
--			err := ValidNonWildcardDomain(domain)
-+			err := pa.ValidNonWildcardDomain(domain, false)
- 			if err != nil {
- 				appendSubError(domain, err)
- 				continue
+@@ -395,7 +423,7 @@ func subError(name string, err error) berrors.SubBoulderError {
+ //
+ // Precondition: all input domain names must be in lowercase.
+ func (pa *AuthorityImpl) WillingToIssue(domains []string) error {
+-	err := WellFormedDomainNames(domains)
++	err := pa.WellFormedDomainNames(domains)
+ 	if err != nil {
+ 		return err
+ 	}
+@@ -414,6 +442,10 @@ func (pa *AuthorityImpl) WillingToIssue(domains []string) error {
  			}
  		}
+ 
 +		if ok, _ := pa.checkWhitelist(domain, false); ok {
 +			return nil
 +		}
- 		// Require no match against hostname block lists
++
+ 		// For both wildcard and non-wildcard domains, check whether any parent domain
+ 		// name is on the regular blocklist.
  		err := pa.checkHostLists(domain)
+@@ -447,10 +479,10 @@ func (pa *AuthorityImpl) WillingToIssue(domains []string) error {
+ //
+ // If multiple domains are invalid, the error will contain suberrors specific to
+ // each domain.
+-func WellFormedDomainNames(domains []string) error {
++func (pa *AuthorityImpl) WellFormedDomainNames(domains []string) error {
+ 	var subErrors []berrors.SubBoulderError
+ 	for _, domain := range domains {
+-		err := ValidDomain(domain)
++		err := pa.ValidDomain(domain)
  		if err != nil {
-@@ -471,6 +502,34 @@ func (pa *AuthorityImpl) WillingToIssue(domains []string) error {
+ 			subErrors = append(subErrors, subError(domain, err))
+ 		}
+@@ -484,6 +516,34 @@ func combineSubErrors(subErrors []berrors.SubBoulderError) error {
  	return nil
  }
  
@@ -189,7 +196,7 @@ index d872d5cbe..faa052d6c 100644
  // checkWildcardHostList checks the wildcardExactBlocklist for a given domain.
  // If the domain is not present on the list nil is returned, otherwise
  // errPolicyForbidden is returned.
-@@ -500,6 +559,9 @@ func (pa *AuthorityImpl) checkHostLists(domain string) error {
+@@ -513,6 +573,9 @@ func (pa *AuthorityImpl) checkHostLists(domain string) error {
  	labels := strings.Split(domain, ".")
  	for i := range labels {
  		joined := strings.Join(labels[i:], ".")

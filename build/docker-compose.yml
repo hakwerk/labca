@@ -51,6 +51,7 @@ services:
     depends_on:
       - bmysql
       - bconsul
+      - bpkilint
       - control
     entrypoint: labca/entrypoint.sh
     working_dir: &boulder_working_dir /opt/boulder
@@ -177,6 +178,13 @@ services:
     working_dir: /opt/labca
     command: ./control.sh
     restart: always
+
+  bpkilint:
+    image: ghcr.io/digicert/pkilint:v0.10.1
+    networks:
+      bouldernet:
+        ipv4_address: 10.77.77.9
+    command: "gunicorn -w 1 -k uvicorn.workers.UvicornWorker -b 0.0.0.0:80 pkilint.rest:app"
 
 volumes:
   dbdata:

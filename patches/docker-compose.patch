@@ -1,5 +1,5 @@
 diff --git a/docker-compose.yml b/docker-compose.yml
-index 79ed8c4e4..08d29d67c 100644
+index 79ed8c4e4..3562b8fb8 100644
 --- a/docker-compose.yml
 +++ b/docker-compose.yml
 @@ -1,3 +1,4 @@
@@ -26,14 +26,14 @@ index 79ed8c4e4..08d29d67c 100644
      networks:
        bouldernet:
          ipv4_address: 10.77.77.77
-@@ -48,20 +51,24 @@ services:
+@@ -48,20 +51,25 @@ services:
        - 4003:4003 # OCSP
      depends_on:
        - bmysql
 -      - bproxysql
        - bconsul
 -      - bjaeger
--      - bpkilint
+       - bpkilint
 -    entrypoint: test/entrypoint.sh
 -    working_dir: &boulder_working_dir /boulder
 +    entrypoint: labca/entrypoint.sh
@@ -59,7 +59,7 @@ index 79ed8c4e4..08d29d67c 100644
      working_dir: *boulder_working_dir
      profiles:
        # Adding a profile to this container means that it won't be started by a
-@@ -71,6 +78,8 @@ services:
+@@ -71,6 +79,8 @@ services:
  
    bmysql:
      image: mariadb:10.5
@@ -68,7 +68,7 @@ index 79ed8c4e4..08d29d67c 100644
      networks:
        bouldernet:
          aliases:
-@@ -84,46 +93,89 @@ services:
+@@ -84,46 +94,96 @@ services:
      # small.
      command: mysqld --bind-address=0.0.0.0 --slow-query-log --log-output=TABLE --log-queries-not-using-indexes=ON
      logging:
@@ -136,16 +136,11 @@ index 79ed8c4e4..08d29d67c 100644
 +        max-size: "500k"
 +        max-file: "5"
 +    restart: always
- 
--  bpkilint:
--    image: ghcr.io/digicert/pkilint:v0.10.1
++
 +  nginx:
 +    image: nginx:1.26.0
 +    restart: always
-     networks:
--      bouldernet:
--        ipv4_address: 10.77.77.9
--    command: "gunicorn -w 8 -k uvicorn.workers.UvicornWorker -b 0.0.0.0:80 pkilint.rest:app"
++    networks:
 +      - bouldernet
 +    ports:
 +      - 80:80
@@ -179,6 +174,14 @@ index 79ed8c4e4..08d29d67c 100644
 +    working_dir: /opt/labca
 +    command: ./control.sh
 +    restart: always
+ 
+   bpkilint:
+     image: ghcr.io/digicert/pkilint:v0.10.1
+     networks:
+       bouldernet:
+         ipv4_address: 10.77.77.9
+-    command: "gunicorn -w 8 -k uvicorn.workers.UvicornWorker -b 0.0.0.0:80 pkilint.rest:app"
++    command: "gunicorn -w 1 -k uvicorn.workers.UvicornWorker -b 0.0.0.0:80 pkilint.rest:app"
 +
 +volumes:
 +  dbdata:

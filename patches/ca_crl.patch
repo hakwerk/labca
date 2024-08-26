@@ -1,8 +1,8 @@
 diff --git a/ca/crl.go b/ca/crl.go
-index 35bf4c07d..36316235e 100644
+index 5937046fe..15c144984 100644
 --- a/ca/crl.go
 +++ b/ca/crl.go
-@@ -122,8 +122,10 @@ func (ci *crlImpl) GenerateCRL(stream capb.CRLGenerator_GenerateCRLServer) error
+@@ -132,8 +132,10 @@ func (ci *crlImpl) GenerateCRL(stream grpc.BidiStreamingServer[capb.GenerateCRLR
  				builder = strings.Builder{}
  			}
  		}

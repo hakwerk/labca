@@ -30,7 +30,7 @@ dockerComposeVersion="v2.5.0"
 
 labcaUrl="https://github.com/hakwerk/labca/"
 boulderUrl="https://github.com/letsencrypt/boulder/"
-boulderTag="release-2024-05-20"
+boulderTag="release-2024-06-10"
 
 # Feature flags
 flag_skip_redis=true
@@ -773,6 +773,7 @@ startup() {
     wait_down $PS_NGINX &>>$installLog || true
     wait_down $PS_MYSQL &>>$installLog || true
     wait_down $PS_CONSUL &>>$installLog || true
+    wait_down $PS_PKILINT &>>$installLog || true
     wait_down $PS_LABCA &>>$installLog || true
     wait_down $PS_CONTROL &>>$installLog || true
     wait_down $PS_BOULDER &>>$installLog || true
@@ -807,6 +808,7 @@ startup() {
     wait_up $PS_NGINX &>>$installLog || true
     wait_up $PS_MYSQL &>>$installLog || true
     wait_up $PS_CONSUL 2 &>>$installLog || true
+    wait_up $PS_PKILINT &>>$installLog || true
     wait_up $PS_LABCA &>>$installLog || true
     wait_up $PS_CONTROL &>>$installLog || true
     docker exec -i labca-bmysql-1 mysql_upgrade &>>$installLog

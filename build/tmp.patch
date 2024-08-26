@@ -1,5 +1,5 @@
 diff --git a/docker-compose.yml b/docker-compose.yml
-index 08d29d67c..33503bdfd 100644
+index 1bffccd61..f7860d6f9 100644
 --- a/docker-compose.yml
 +++ b/docker-compose.yml
 @@ -4,7 +4,7 @@ services:
@@ -27,15 +27,15 @@ index 08d29d67c..33503bdfd 100644
      networks:
        bouldernet:
          ipv4_address: 10.77.77.77
-@@ -52,6 +51,7 @@ services:
-     depends_on:
+@@ -53,6 +52,7 @@ services:
        - bmysql
        - bconsul
+       - bpkilint
 +      - control
      entrypoint: labca/entrypoint.sh
      working_dir: &boulder_working_dir /opt/boulder
      logging:
-@@ -62,12 +62,11 @@ services:
+@@ -63,12 +63,11 @@ services:
      restart: always
  
    bsetup:
@@ -52,7 +52,7 @@ index 08d29d67c..33503bdfd 100644
      entrypoint: labca/certs/generate.sh
      working_dir: *boulder_working_dir
      profiles:
-@@ -101,34 +100,39 @@ services:
+@@ -102,34 +101,39 @@ services:
  
    bconsul:
      image: hashicorp/consul:1.15.4
@@ -102,7 +102,7 @@ index 08d29d67c..33503bdfd 100644
      logging:
        driver: "json-file"
        options:
-@@ -145,27 +149,27 @@ services:
+@@ -146,27 +150,27 @@ services:
        - 80:80
        - 443:443
      volumes:
@@ -145,7 +145,7 @@ index 08d29d67c..33503bdfd 100644
      expose:
        - 3030
      environment:
-@@ -176,6 +180,15 @@ services:
+@@ -184,6 +188,15 @@ services:
  
  volumes:
    dbdata:

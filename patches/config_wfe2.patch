@@ -1,8 +1,16 @@
 diff --git a/test/config/wfe2.json b/test/config/wfe2.json
-index c0093044..e8ba4263 100644
+index 05d46fe95..c0e4a2a27 100644
 --- a/test/config/wfe2.json
 +++ b/test/config/wfe2.json
-@@ -79,26 +79,6 @@
+@@ -12,6 +12,7 @@
+ 		"debugAddr": ":8013",
+ 		"directoryCAAIdentity": "happy-hacker-ca.invalid",
+ 		"directoryWebsite": "https://github.com/letsencrypt/boulder",
++		"hostnamePolicyFile": "test/hostname-policy.yaml",
+ 		"legacyKeyIDPrefix": "http://boulder.service.consul:4000/reg/",
+ 		"goodkey": {
+ 			"blockedKeyFile": "test/example-blocked-keys.yaml"
+@@ -79,26 +80,6 @@
  			[
  				"test/certs/webpki/int-rsa-a.cert.pem",
  				"test/certs/webpki/root-rsa.cert.pem"

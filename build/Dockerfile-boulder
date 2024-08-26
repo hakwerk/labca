@@ -1,4 +1,4 @@
-FROM letsencrypt/boulder-tools:go1.22.3_2024-05-13 AS boulder-tools
+FROM letsencrypt/boulder-tools:go1.22.3_2024-05-22 AS boulder-tools
 
 FROM ubuntu:focal
 
@@ -6,6 +6,7 @@ RUN apt-get update && \
     apt-get install -y --no-install-recommends \
         ca-certificates \
         mariadb-client-core-10.3 \
+        net-tools \
         python3-pip \
         rsyslog \
         softhsm2 \

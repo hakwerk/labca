@@ -74,6 +74,8 @@ if ([ "$PKI_DOMAIN_MODE" == "lockdown" ] && [ "$PKI_LOCKDOWN_DOMAINS" != "" ]) |
     perl -i -p0e "s/(\"badResultsOnly\":[^\n]*).*?(\s+)(\"checkPeriod\":)/\1\2\"skipForbiddenDomains\": true,\2\3/igs" config/cert-checker.json
     perl -i -p0e "s/(\"ignoredLints\": \[).*?(\s+)(\"w_subject_common_name_included\")/\1\2\"e_dnsname_not_valid_tld\",\2\3/igs" config/cert-checker.json
     perl -i -p0e "s/(\"ignoredLints\": \[).*?(\s+)(\"w_subject_common_name_included\")/\1\2\"e_dnsname_not_valid_tld\",\2\3/igs" config/ca.json
+
+    perl -i -p0e "s/(\"SubscriberKeyUsageValidator:cabf.serverauth.subscriber_rsa_digitalsignature_and_keyencipherment_present\",).*(\])/\1\n  \"GeneralNameDnsNameInternalDomainNameValidator:cabf.internal_domain_name\",\n  \"GeneralNameUriInternalDomainNameValidator:cabf.internal_domain_name\",\n\2/igs" config/zlint.toml
 fi
 
 [ -e ../test/hostname-policy.yaml ] && cp ../test/hostname-policy.yaml ./ || true
@@ -161,7 +163,7 @@ rm -f config/orphan-finder.json
 rm -f config/ca-a.json
 rm -f config/ca-b.json
 
-sed -i -e "s|\"issuerURL\": \".*\"|\"issuerURL\": \"http://$PKI_FQDN/aia/issuer/$PKI_ISSUER_NAME_ID\"|" config/ca.json
+sed -i -e "s|\"issuerURL\": \".*\"|\"issuerURL\": \"http://$PKI_FQDN/certs/ca-int.pem\"|" config/ca.json
 sed -i -e "s|\"ocspURL\": \".*\"|\"ocspURL\": \"http://$PKI_FQDN/ocsp/\"|" config/ca.json
 sed -i -e "s|\"crlURLBase\": \".*\"|\"crlURLBase\": \"http://$PKI_FQDN/crl/\"|" config/ca.json
 
@@ -175,6 +177,10 @@ if [ "$PKI_EXTENDED_TIMEOUT" == "1" ]; then
     sed -i -e "s/\"timeout\": \"20s\"/\"timeout\": \"40s\"/" config/ra.json
     sed -i -e "s/\"timeout\": \"15s\"/\"timeout\": \"30s\"/" config/crl-storer.json
     sed -i -e "s/\"timeout\": \"15s\"/\"timeout\": \"30s\"/" config/crl-updater.json
+
+    sed -i -e "s/pkilint_timeout = .*/pkilint_timeout = 30000000000 # 30 seconds/" config/zlint.toml
+else
+    sed -i -e "s/pkilint_timeout = .*/pkilint_timeout = 10000000000 # 10 seconds/" config/zlint.toml
 fi
 sed -i -e "s/\"timeout\": \"1s\"/\"timeout\": \"5s\"/" config/health-checker.json
 

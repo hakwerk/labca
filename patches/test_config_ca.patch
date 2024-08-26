@@ -1,14 +1,13 @@
 diff --git a/test/config/ca.json b/test/config/ca.json
-index cbb84f385..ec28cd37d 100644
+index cc4728363..2eb95ad81 100644
 --- a/test/config/ca.json
 +++ b/test/config/ca.json
-@@ -58,18 +58,6 @@
+@@ -58,39 +58,6 @@
  				"maxValidityBackdate": "1h5m"
  			},
  			"issuers": [
 -				{
--					"useForRSALeaves": false,
--					"useForECDSALeaves": true,
+-					"active": true,
 -					"issuerURL": "http://ca.example.org:4502/int-ecdsa-a",
 -					"ocspURL": "http://ca.example.org:4002/",
 -					"crlURLBase": "http://ca.example.org:4501/ecdsa-a/",
@@ -18,25 +17,57 @@ index cbb84f385..ec28cd37d 100644
 -						"numSessions": 2
 -					}
 -				},
+-				{
+-					"active": true,
+-					"issuerURL": "http://ca.example.org:4502/int-ecdsa-b",
+-					"ocspURL": "http://ca.example.org:4002/",
+-					"crlURLBase": "http://ca.example.org:4501/ecdsa-b/",
+-					"location": {
+-						"configFile": "test/certs/webpki/int-ecdsa-b.pkcs11.json",
+-						"certFile": "test/certs/webpki/int-ecdsa-b.cert.pem",
+-						"numSessions": 2
+-					}
+-				},
+-				{
+-					"active": false,
+-					"issuerURL": "http://ca.example.org:4502/int-ecdsa-c",
+-					"ocspURL": "http://ca.example.org:4002/",
+-					"crlURLBase": "http://ca.example.org:4501/ecdsa-c/",
+-					"location": {
+-						"configFile": "test/certs/webpki/int-ecdsa-c.pkcs11.json",
+-						"certFile": "test/certs/webpki/int-ecdsa-c.cert.pem",
+-						"numSessions": 2
+-					}
+-				},
  				{
- 					"useForRSALeaves": true,
- 					"useForECDSALeaves": true,
-@@ -81,18 +69,6 @@
+ 					"active": true,
+ 					"issuerURL": "http://ca.example.org:4502/int-rsa-a",
+@@ -101,28 +68,6 @@
  						"certFile": "test/certs/webpki/int-rsa-a.cert.pem",
  						"numSessions": 2
  					}
 -				},
 -				{
--					"useForRSALeaves": false,
--					"useForECDSALeaves": false,
+-					"active": true,
 -					"issuerURL": "http://ca.example.org:4502/int-rsa-b",
--					"ocspURL": "http://ca.example.org:4003/",
+-					"ocspURL": "http://ca.example.org:4002/",
 -					"crlURLBase": "http://ca.example.org:4501/rsa-b/",
 -					"location": {
 -						"configFile": "test/certs/webpki/int-rsa-b.pkcs11.json",
 -						"certFile": "test/certs/webpki/int-rsa-b.cert.pem",
 -						"numSessions": 2
 -					}
+-				},
+-				{
+-					"active": false,
+-					"issuerURL": "http://ca.example.org:4502/int-rsa-c",
+-					"ocspURL": "http://ca.example.org:4002/",
+-					"crlURLBase": "http://ca.example.org:4501/rsa-c/",
+-					"location": {
+-						"configFile": "test/certs/webpki/int-rsa-c.pkcs11.json",
+-						"certFile": "test/certs/webpki/int-rsa-c.cert.pem",
+-						"numSessions": 2
+-					}
  				}
  			],
- 			"ignoredLints": [
+ 			"lintConfig": "test/config/zlint.toml",

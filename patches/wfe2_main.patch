@@ -1,8 +1,8 @@
 diff --git a/cmd/boulder-wfe2/main.go b/cmd/boulder-wfe2/main.go
-index 13e362c8..c16b0c56 100644
+index 83ff247f8..8f0449b9f 100644
 --- a/cmd/boulder-wfe2/main.go
 +++ b/cmd/boulder-wfe2/main.go
-@@ -106,7 +106,7 @@ type Config struct {
+@@ -96,7 +96,7 @@ type Config struct {
  		// DirectoryCAAIdentity is used for the /directory response's "meta"
  		// element's "caaIdentities" field. It should match the VA's "issuerDomain"
  		// configuration value (this value is the one used to enforce CAA)
@@ -11,3 +11,20 @@ index 13e362c8..c16b0c56 100644
  		// DirectoryWebsite is used for the /directory response's "meta" element's
  		// "website" field.
  		DirectoryWebsite string `validate:"required,url"`
+@@ -164,6 +164,8 @@ type Config struct {
+ 		// list will be rejected. This field is optional; if unset, no profile
+ 		// names are accepted.
+ 		CertificateProfileNames []string `validate:"omitempty,dive,alphanum,min=1,max=32"`
++
++		cmd.HostnamePolicyConfig
+ 	}
+ 
+ 	Syslog        cmd.SyslogConfig
+@@ -382,6 +384,7 @@ func main() {
+ 		txnBuilder,
+ 		maxNames,
+ 		c.WFE.CertificateProfileNames,
++		c.WFE.HostnamePolicyFile,
+ 	)
+ 	cmd.FailOnError(err, "Unable to create WFE")
+ 
