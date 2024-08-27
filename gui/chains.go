@@ -33,8 +33,7 @@ type IssuerLoc struct {
 
 // From boulder: issuance/issuer.go
 type IssuerConfig struct {
-	UseForRSALeaves   bool `json:"useForRSALeaves"`
-	UseForECDSALeaves bool `json:"useForECDSALeaves"`
+	Active bool `json:"active"`
 
 	IssuerURL string `validate:"required,url" json:"issuerURL,omitempty"`
 	OCSPURL   string `validate:"required,url" json:"ocspURL,omitempty"`
@@ -56,14 +55,13 @@ type CAConfig struct {
 
 // CertDetails contains info about each certificate for use in the GUI
 type CertDetails struct {
-	CertFile    string
-	BaseName    string
-	Subject     string
-	IsRoot      bool
-	UseForRSA   bool
-	UseForECDSA bool
-	NotAfter    string
-	Details     string
+	CertFile     string
+	BaseName     string
+	Subject      string
+	IsRoot       bool
+	ActiveIssuer bool
+	NotAfter     string
+	Details      string
 }
 
 type CertChain struct {
@@ -139,8 +137,7 @@ func enhanceChains(chains []CertChain) []CertChain {
 		for k := 0; k < len(chains); k++ {
 			for n := 0; n < len(chains[k].IssuerCerts); n++ {
 				if chains[k].IssuerCerts[n].CertFile == rawChains[i].Location.CertFile {
-					chains[k].IssuerCerts[n].UseForRSA = rawChains[i].UseForRSALeaves
-					chains[k].IssuerCerts[n].UseForECDSA = rawChains[i].UseForECDSALeaves
+					chains[k].IssuerCerts[n].ActiveIssuer = rawChains[i].Active
 					certFile := locateFile(rawChains[i].Location.CertFile)
 					if d, err := getCertFileDetails(certFile); err == nil {
 						chains[k].IssuerCerts[n].Details = d
@@ -235,7 +232,7 @@ func getChains() []CertChain {
 	return chains
 }
 
-func setUseForLeavesFile(filename, forRSA, forECDSA string) error {
+func setUseForLeavesFile(filename, active string) error {
 	caConf, err := os.Open(filename)
 	if err != nil {
 		fmt.Println(err)
@@ -251,30 +248,20 @@ func setUseForLeavesFile(filename, forRSA, forECDSA string) error {
 	}
 
 	// Make sure that the named certificate(s) exist
-	foundRSA := false
-	foundECDSA := false
+	foundActive := false
 	for i := 0; i < len(result.CA.Issuance.Issuers); i++ {
-		if strings.Contains(result.CA.Issuance.Issuers[i].Location.CertFile, forRSA) {
-			foundRSA = true
-		}
-		if strings.Contains(result.CA.Issuance.Issuers[i].Location.CertFile, forECDSA) {
-			foundECDSA = true
+		if strings.Contains(result.CA.Issuance.Issuers[i].Location.CertFile, active) {
+			foundActive = true
 		}
 	}
-	if !foundRSA {
-		return errors.New("certificate '" + forRSA + "' not found in ca file")
-	}
-	if !foundECDSA {
-		return errors.New("certificate '" + forECDSA + "' not found in ca file")
+	if !foundActive {
+		return errors.New("certificate '" + active + "' not found in ca file")
 	}
 
 	// Now set the flags for the named certificate(s)
 	for i := 0; i < len(result.CA.Issuance.Issuers); i++ {
-		if forRSA != "" {
-			result.CA.Issuance.Issuers[i].UseForRSALeaves = strings.Contains(result.CA.Issuance.Issuers[i].Location.CertFile, forRSA)
-		}
-		if forECDSA != "" {
-			result.CA.Issuance.Issuers[i].UseForECDSALeaves = strings.Contains(result.CA.Issuance.Issuers[i].Location.CertFile, forECDSA)
+		if active != "" {
+			result.CA.Issuance.Issuers[i].Active = strings.Contains(result.CA.Issuance.Issuers[i].Location.CertFile, active)
 		}
 	}
 
@@ -302,25 +289,22 @@ func setUseForLeavesFile(filename, forRSA, forECDSA string) error {
 	return nil
 }
 
-func setUseForLeaves(forRSA, forECDSA string) error {
+func setUseForLeaves(active string) error {
 	if err := exec.Command("cp", "-f", caConfFile, caConfFile+"_BAK").Run(); err != nil {
 		return errors.New("could not create ca backup file: " + err.Error())
 	}
 
-	if err := setUseForLeavesFile(caConfFile, forRSA, forECDSA); err != nil {
+	if err := setUseForLeavesFile(caConfFile, active); err != nil {
 		exec.Command("mv", caConfFile+"_BAK", caConfFile).Run()
 		return err
 	}
 
 	exec.Command("rm", caConfFile+"_BAK").Run()
 
-	if forRSA != "" {
-		viper.Set("certs.issuerRSA", forRSA)
+	if active != "" {
+		viper.Set("certs.activeIssuer", active)
 	}
-	if forECDSA != "" {
-		viper.Set("certs.issuerECDSA", forECDSA)
-	}
-	if forRSA != "" || forECDSA != "" {
+	if active != "" {
 		viper.WriteConfig()
 	}
 

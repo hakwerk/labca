@@ -194,6 +194,7 @@ func _parseComponents(data string) []Component {
 	if len(parts) < 6 {
 		components = append(components, Component{Name: "Boulder (ACME)"})
 		components = append(components, Component{Name: "Consul (Boulder)"})
+		components = append(components, Component{Name: "pkilint (Boulder)"})
 		components = append(components, Component{Name: "LabCA Application"})
 		components = append(components, Component{Name: "LabCA Controller"})
 		components = append(components, Component{Name: "MySQL Database"})
@@ -261,8 +262,19 @@ func _parseComponents(data string) []Component {
 		consulClass = ""
 	}
 
+	pkilint, err := time.Parse(time.RFC3339Nano, parts[6])
+	pkilintReal := ""
+	pkilintNice := "stopped"
+	pkilintClass := "error"
+	if err == nil {
+		pkilintReal = pkilint.Format("02-Jan-2006 15:04:05 MST")
+		pkilintNice = humanize.RelTime(pkilint, time.Now(), "", "")
+		pkilintClass = ""
+	}
+
 	components = append(components, Component{Name: "Boulder (ACME)", Timestamp: boulderReal, TimestampRel: boulderNice, Class: boulderClass})
 	components = append(components, Component{Name: "Consul (Boulder)", Timestamp: consulReal, TimestampRel: consulNice, Class: consulClass})
+	components = append(components, Component{Name: "pkilint (Boulder)", Timestamp: pkilintReal, TimestampRel: pkilintNice, Class: pkilintClass})
 	components = append(components, Component{Name: "LabCA Application", Timestamp: labcaReal, TimestampRel: labcaNice, Class: labcaClass})
 	components = append(components, Component{Name: "LabCA Controller", Timestamp: svcReal, TimestampRel: svcNice, Class: svcClass})
 	components = append(components, Component{Name: "MySQL Database", Timestamp: mysqlReal, TimestampRel: mysqlNice, Class: mysqlClass})
@@ -471,6 +483,9 @@ func parseDockerStats(data string) []AjaxStat {
 		}
 		if strings.Contains(docker.Name, "-bconsul-") {
 			stat.Name = "Consul (Boulder)"
+		}
+		if strings.Contains(docker.Name, "-bpkilint-") {
+			stat.Name = "pkilint (Boulder)"
 		}
 		if strings.Contains(docker.Name, "labca-gui-") {
 			stat.Name = "LabCA Application"

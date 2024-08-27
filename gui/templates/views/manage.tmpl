@@ -165,8 +165,7 @@
             <tr>
               <th>Subject</th>
               <th></th>
-              <th>Issue RSA</th>
-              <th>Issue ECDSA</th>
+              <th>Active</th>
               <th></th>
             </tr>
             {{ range $item := .CertificateChains }}
@@ -178,7 +177,6 @@
               <td class="vmiddle">
                 <a href="/certs/{{ $item.RootCert.BaseName }}.pem" title="Download this certificate">download</a>
               </td>
-              <td class="vmiddle"></td>
               <td class="vmiddle"></td>
               <td class="vmiddle">
                 <button class="btn btn-outline btn-reg btn-success export-cert-key" type="button" title="Export this certificate and key" data-name="{{ $item.RootCert.BaseName }}" data-subject="{{ $item.RootCert.Subject }}">Export</button>
@@ -198,8 +196,7 @@
               <td class="vmiddle">
                 <a href="/certs/{{ $subitem.BaseName }}.pem" title="Download this certificate">download</a>
               </td>
-              <td class="vmiddle center"><input type="radio" id="rsa-{{ $subitem.BaseName }}" name="issue-rsa" value="{{ $subitem.BaseName }}" title="Use this certificate for issueing RSA leave certificates" {{ if $subitem.UseForRSA }}data-orig="true" checked{{ end }}/></td>
-              <td class="vmiddle center"><input type="radio" id="ecdsa-{{ $subitem.BaseName }}" name="issue-ecdsa" value="{{ $subitem.BaseName }}" title="Use this certificate for issueing ECDSA leave certificates" {{ if $subitem.UseForECDSA }}data-orig="true" checked{{ end }}/></td>
+              <td class="vmiddle center"><input type="radio" id="active-{{ $subitem.BaseName }}" name="issue-active" value="{{ $subitem.BaseName }}" title="Use this certificate for issueing leave certificates" {{ if $subitem.ActiveIssuer }}data-orig="true" checked{{ end }}/></td>
               <td class="vmiddle">
                 <button class="btn btn-outline btn-reg btn-success export-cert-key" type="button" title="Export this certificate and key" data-name="{{ $subitem.BaseName }}" data-subject="{{ $subitem.Subject }}">Export</button>
                 <button class="btn btn-outline btn-reg btn-warning renew-cert" type="button" title="Generate new version with extended lifetime" data-name="{{ $subitem.BaseName }}" data-rootname="{{ $item.RootCert.BaseName }}" data-subject="{{ $subitem.Subject }}" data-rootsubject="{{ $item.RootCert.Subject }}" data-notbefore="{{ $subitem.NotAfter }}" data-notafter="{{ $item.RootCert.NotAfter }}" data-isroot="false">Renew</button>
@@ -527,10 +524,8 @@
       <h4>Are you sure?</h4>
       <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span>&times;</span></button>
       <form enctype="multipart/form-data" id="modal-leaves-form" method="POST">
-        <input type="hidden" id="new-rsa-issuer" name="new-rsa-issuer">
-        <input type="hidden" id="new-ecdsa-issuer" name="new-ecdsa-issuer">
-        <span id="want-new-rsa-issuer" class="hidden">&#x2022; Change the RSA issuer certificate<br/></span>
-        <span id="want-new-ecdsa-issuer" class="hidden">&#x2022; Change the ECDSA issuer certificate<br/></span>
+        <input type="hidden" id="new-active-issuer" name="new-active-issuer">
+        <span id="want-new-active-issuer" class="hidden">&#x2022; Change the active issuer certificate<br/></span>
         <span class="error" id="modal-leaves-error" style="display: none;"></span><br/>
         <input class="btn btn-default btn-reg btn-warning btn-6em" value="Change" id="modal-leaves-done"/>
         <button type="button" class="btn btn-default" data-dismiss="modal" id="cancel-leaves">Cancel</button>
@@ -614,49 +609,29 @@
             {{ end }}
 
             function leave_issuer_changed() {
-                iss_rsa = "";
-                iss_ecdsa = "";
-                iss_rsa_changed = false;
-                iss_ecdsa_changed = false;
+                iss_active = "";
+                iss_active_changed = false;
 
-                $('input[type=radio][name=issue-rsa]').each(function() {
+                $('input[type=radio][name=issue-active]').each(function() {
                     if ($(this).prop('checked') && !$(this).data('orig')) {
-                        iss_rsa = $(this).val();
-                        iss_rsa_changed = true;
-                    }
-                });
-                $('input[type=radio][name=issue-ecdsa]').each(function() {
-                    if ($(this).prop('checked') && !$(this).data('orig')) {
-                        iss_ecdsa = $(this).val();
-                        iss_ecdsa_changed = true;
+                        iss_active = $(this).val();
+                        iss_active_changed = true;
                     }
                 });
 
-                if (iss_rsa_changed || iss_ecdsa_changed) {
-                    $("#new-rsa-issuer").val(iss_rsa);
-                    if (iss_rsa_changed) {
-                        $("#want-new-rsa-issuer").removeClass("hidden").show();
-                    } else {
-                        $("#want-new-rsa-issuer").hide();
-                    }
-                    $("#new-ecdsa-issuer").val(iss_ecdsa);
-                    if (iss_ecdsa_changed) {
-                        $("#want-new-ecdsa-issuer").removeClass("hidden").show();
-                    } else {
-                        $("#want-new-ecdsa-issuer").hide();
-                    }
+                if (iss_active_changed) {
+                    $("#new-active-issuer").val(iss_active);
+                    $("#want-new-active-issuer").removeClass("hidden").show();
 
                     $('#modal-leaves').modal('show');
+                } else {
+                    $("#want-new-active-issuer").hide();
                 }
 
                 return false;
             }
 
-            $('input[type=radio][name=issue-rsa]').change(function() {
-                return leave_issuer_changed();
-            });
-
-            $('input[type=radio][name=issue-ecdsa]').change(function() {
+            $('input[type=radio][name=issue-active]').change(function() {
                 return leave_issuer_changed();
             });
 
@@ -1313,7 +1288,7 @@
                     return true;
 
                 } else if ($(evt.target).attr("id") == "modal-leaves-done") {
-                    if ($("#want-new-rsa-issuer").hasClass("hidden") && $("#want-new-ecdsa-issuer").hasClass("hidden")) {
+                    if ($("#want-new-active-issuer").hasClass("hidden")) {
                         $('#modal-spinner').modal('hide');
                         $('#modal-leaves').modal('hide');
                     } else {
@@ -1328,10 +1303,7 @@
                                 try {
                                     res = JSON.parse(req.response);
                                     if (res.Success) {
-                                        $('input[type=radio][name=issue-rsa]').each(function() {
-                                            $(this).data('orig', $(this).prop('checked'))
-                                        });
-                                        $('input[type=radio][name=issue-ecdsa]').each(function() {
+                                        $('input[type=radio][name=issue-active]').each(function() {
                                             $(this).data('orig', $(this).prop('checked'))
                                         });
                                         $('#modal-leaves').modal('hide');
@@ -1368,7 +1340,7 @@
                             $("#modal-leaves-error").removeClass("hidden").show().text("Error communicating with backend server");
                         };
 
-                        req.send("action=update-leave-issuers" + "&rsa=" + $("#new-rsa-issuer").val() + "&ecdsa=" + $("#new-ecdsa-issuer").val());
+                        req.send("action=update-leave-issuers" + "&active=" + $("#new-active-issuer").val());
                     }
                     return false;
 

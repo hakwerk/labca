@@ -1078,6 +1078,7 @@ func (res *Result) ManageComponents(w http.ResponseWriter, r *http.Request, acti
 			(components[i].Name == "Boulder (ACME)" && (action == "boulder-start" || action == "boulder-stop" || action == "boulder-restart")) ||
 			(components[i].Name == "LabCA Application" && action == "labca-restart") ||
 			(components[i].Name == "Consul (Boulder)" && action == "consul-restart") ||
+			(components[i].Name == "pkilint (Boulder)" && action == "pkilint-restart") ||
 			(components[i].Name == "MySQL Database" && action == "mysql-restart") {
 			res.Timestamp = components[i].Timestamp
 			res.TimestampRel = components[i].TimestampRel
@@ -1203,7 +1204,7 @@ func updateLeaveIssuersHandler(w http.ResponseWriter, r *http.Request) {
 		Error   string
 	}{Success: true}
 
-	if err := setUseForLeaves(r.Form.Get("rsa"), r.Form.Get("ecdsa")); err != nil {
+	if err := setUseForLeaves(r.Form.Get("active")); err != nil {
 		res.Success = false
 		res.Error = err.Error()
 	} else {
@@ -1359,6 +1360,7 @@ func _managePost(w http.ResponseWriter, r *http.Request) {
 		"cert-export",
 		"mysql-restart",
 		"consul-restart",
+		"pkilint-restart",
 		"nginx-reload",
 		"nginx-restart",
 		"svc-restart",
@@ -1548,6 +1550,18 @@ func _manageGet(w http.ResponseWriter, r *http.Request) {
 				btn["Class"] = "btn-warning"
 				btn["Id"] = "consul-restart"
 				btn["Title"] = "Restart the Consul internal DNS helper"
+				btn["Label"] = "Restart"
+				components[i].Buttons = append(components[i].Buttons, btn)
+			}
+
+			if components[i].Name == "pkilint (Boulder)" {
+				components[i].LogURL = ""
+				components[i].LogTitle = ""
+
+				btn := make(map[string]interface{})
+				btn["Class"] = "btn-warning"
+				btn["Id"] = "pkilint-restart"
+				btn["Title"] = "Restart the internal pkilint helper"
 				btn["Label"] = "Restart"
 				components[i].Buttons = append(components[i].Buttons, btn)
 			}
