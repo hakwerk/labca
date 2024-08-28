@@ -43,7 +43,7 @@ case $txt in
     sleep 45
     wait_up $PS_MYSQL &>>$LOGFILE
     wait_up $PS_CONSUL 2 &>>$LOGFILE
-    wait_up $PS_PKILINT 2 &>>$LOGFILE
+    wait_up $PS_PKILINT &>>$LOGFILE
     wait_up $PS_LABCA &>>$LOGFILE
     wait_up $PS_BOULDER $PS_BOULDER_COUNT &>>$LOGFILE
     ;;
@@ -176,7 +176,7 @@ case $txt in
     COMPOSE_HTTP_TIMEOUT=120 docker compose up -d bmysql bconsul bpkilint
     wait_up $PS_MYSQL &>>$LOGFILE
     wait_up $PS_CONSUL 2 &>>$LOGFILE
-    wait_up $PS_PKILINT 2 &>>$LOGFILE
+    wait_up $PS_PKILINT &>>$LOGFILE
     COMPOSE_HTTP_TIMEOUT=120 docker compose up -d boulder
     wait_up $PS_BOULDER $PS_BOULDER_COUNT &>>$LOGFILE
     ;;
@@ -195,7 +195,7 @@ case $txt in
     sleep 30
     wait_up $PS_MYSQL &>>$LOGFILE
     wait_up $PS_CONSUL 2 &>>$LOGFILE
-    wait_up $PS_PKILINT 2 &>>$LOGFILE
+    wait_up $PS_PKILINT &>>$LOGFILE
     wait_up $PS_BOULDER $PS_BOULDER_COUNT &>>$LOGFILE
     ;;
 "labca-restart")
