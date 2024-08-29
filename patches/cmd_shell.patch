@@ -1,8 +1,8 @@
 diff --git a/cmd/shell.go b/cmd/shell.go
-index 373bb0229..e660317d2 100644
+index ef4105500..e602adc56 100644
 --- a/cmd/shell.go
 +++ b/cmd/shell.go
-@@ -221,7 +221,7 @@ func NewLogger(logConf SyslogConfig) blog.Logger {
+@@ -222,7 +222,7 @@ func NewLogger(logConf SyslogConfig) blog.Logger {
  	// Boulder's conception of time.
  	go func() {
  		for {

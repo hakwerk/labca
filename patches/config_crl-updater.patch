@@ -1,14 +1,17 @@
 diff --git a/test/config/crl-updater.json b/test/config/crl-updater.json
-index f6b70123f..a6c1471e5 100644
+index 21f3603bb..77450c65f 100644
 --- a/test/config/crl-updater.json
 +++ b/test/config/crl-updater.json
-@@ -36,16 +36,14 @@
+@@ -36,19 +36,14 @@
  			"hostOverride": "crl-storer.boulder"
  		},
  		"issuerCerts": [
 -			"test/certs/webpki/int-rsa-a.cert.pem",
 -			"test/certs/webpki/int-rsa-b.cert.pem",
--			"test/certs/webpki/int-ecdsa-a.cert.pem"
+-			"test/certs/webpki/int-rsa-c.cert.pem",
+-			"test/certs/webpki/int-ecdsa-a.cert.pem",
+-			"test/certs/webpki/int-ecdsa-b.cert.pem",
+-			"test/certs/webpki/int-ecdsa-c.cert.pem"
 +			"test/certs/webpki/int-rsa-a.cert.pem"
  		],
 -		"numShards": 10,

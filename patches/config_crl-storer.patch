@@ -1,14 +1,17 @@
 diff --git a/test/config/crl-storer.json b/test/config/crl-storer.json
-index ef70c2ffc..a53b75d86 100644
+index 3ab267b0f..3c6f5c6a2 100644
 --- a/test/config/crl-storer.json
 +++ b/test/config/crl-storer.json
-@@ -23,10 +23,9 @@
+@@ -23,13 +23,9 @@
  			}
  		},
  		"issuerCerts": [
 -			"test/certs/webpki/int-rsa-a.cert.pem",
 -			"test/certs/webpki/int-rsa-b.cert.pem",
--			"test/certs/webpki/int-ecdsa-a.cert.pem"
+-			"test/certs/webpki/int-rsa-c.cert.pem",
+-			"test/certs/webpki/int-ecdsa-a.cert.pem",
+-			"test/certs/webpki/int-ecdsa-b.cert.pem",
+-			"test/certs/webpki/int-ecdsa-c.cert.pem"
 +			"test/certs/webpki/int-rsa-a.cert.pem"
  		],
 +		"localStorePath": "/opt/wwwstatic/crl",
