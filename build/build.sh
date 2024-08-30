@@ -8,7 +8,7 @@ TMP_DIR=$(pwd)/tmp
 rm -rf $TMP_DIR && mkdir -p $TMP_DIR/{admin,bin,logs,src}
 
 boulderDir=$TMP_DIR/src
-boulderTag="release-2024-07-10"
+boulderTag="release-2024-07-29"
 boulderUrl="https://github.com/letsencrypt/boulder/"
 cloneDir=$(pwd)/..
 
@@ -44,7 +44,6 @@ docker run -v $boulderDir:$BASEDIR:cached -v $TMP_DIR/bin:$BASEDIR/bin -w $BASED
 
 cp $cloneDir/nginx.conf $TMP_DIR/
 cp $cloneDir/proxy.inc $TMP_DIR/
-cp $cloneDir/utils/nameidtool.go $TMP_DIR/
 cp -rp $cloneDir/gui/* $TMP_DIR/admin/
 head -13 $cloneDir/gui/setup.sh > $TMP_DIR/admin/setup.sh
 sed -i '/^$/d' $TMP_DIR/admin/setup.sh
@@ -52,7 +51,6 @@ sed -i '/^$/d' $TMP_DIR/admin/setup.sh
 echo
 BASEDIR=/go/src/labca
 docker run -v $TMP_DIR/admin:$BASEDIR:cached -v $TMP_DIR:$BASEDIR/bin -w $BASEDIR -e GIT_VERSION=$GIT_VERSION $BUILD_IMAGE ./setup.sh
-docker run -v $TMP_DIR:/utils -w /utils $BUILD_IMAGE go build nameidtool.go
 
 cp -rp $cloneDir/gui/setup.sh $TMP_DIR/admin/
 cp -rp $cloneDir/acme_tiny.py $TMP_DIR/

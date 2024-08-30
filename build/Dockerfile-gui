@@ -40,7 +40,6 @@ COPY --from=builder /usr/bin/docker /usr/bin/docker
 COPY --from=builder /usr/libexec/docker/cli-plugins/docker-compose /usr/libexec/docker/cli-plugins/docker-compose
 
 COPY tmp/labca-gui /opt/labca/bin/
-COPY tmp/nameidtool /opt/labca/
 COPY tmp/admin/setup.sh /opt/labca/
 COPY tmp/admin/apply /opt/labca/
 COPY tmp/admin/apply-boulder /opt/labca/

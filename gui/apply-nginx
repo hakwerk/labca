@@ -13,7 +13,7 @@ PKI_ROOT_CERT_BASE="$dataDir/root-ca"
 PKI_INT_CERT_BASE="$dataDir/issuer/ca-int"
 PKI_ISSUER_NAME_ID=$(grep issuer_name_id $dataDir/config.json | sed -e 's/.*:[ ]*//' | sed -e 's/,//g' | sed -e 's/\"//g')
 if [ -z "$PKI_ISSUER_NAME_ID" ] && [ -e "$PKI_INT_CERT_BASE.pem" ]; then
-    nmid=$($baseDir/nameidtool $PKI_INT_CERT_BASE.pem)
+    nmid=$(/opt/boulder/bin/nameid -s $PKI_INT_CERT_BASE.pem)
     if [ $? == 0 ]; then
         PKI_ISSUER_NAME_ID=$nmid
         sed -i -e "s/\(^\s*\)\(\"keys\": {\)/\1\"issuer_name_id\": $PKI_ISSUER_NAME_ID,\n\1\2/g" $dataDir/config.json
@@ -93,3 +93,7 @@ sed -i -e "s|<\!-- BEGIN PKI_COMPANY_NAME -->.*<\!-- END PKI_COMPANY_NAME -->|<\
 sed -i -e "s|<title>.*</title>|<title>Terms \| $PKI_WEB_TITLE</title>|g" terms/v1.html
 sed -i -e "s|<\!-- BEGIN WEBTITLE -->.*<\!-- END WEBTITLE -->|<\!-- BEGIN WEBTITLE -->$PKI_WEB_TITLE<\!-- END WEBTITLE -->|g" terms/v1.html
 
+if [ -e /opt/boulder/sfe/templates/layout.html ]; then
+    # TODO: move the SFE pages to nginx static files ?
+    sed -i -e "s|<\!-- BEGIN WEBTITLE -->.*<\!-- END WEBTITLE -->|<\!-- BEGIN WEBTITLE -->$PKI_WEB_TITLE<\!-- END WEBTITLE -->|g" /opt/boulder/sfe/templates/layout.html
+fi

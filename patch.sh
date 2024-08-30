@@ -51,6 +51,7 @@ if [ "$SUDO" == "" ]; then
     # TODO: should include this into startservers.patch
     $SUDO patch -p1 < $cloneDir/build/tmp2.patch
 fi
+$SUDO patch -p1 < $cloneDir/patches/sfe_templates_layout.patch
 $SUDO patch -p1 < $cloneDir/patches/storer_storer.patch
 $SUDO patch -p1 < $cloneDir/patches/test_health-checker_main.patch
 $SUDO patch -p1 < $cloneDir/patches/updater_updater.patch
@@ -69,3 +70,8 @@ sed -i -e "s/proxysql:6033/mysql:3306/" sa/db/dbconfig.yml
 mkdir -p "cmd/mail-tester"
 cp $cloneDir/mail-tester.go cmd/mail-tester/main.go
 perl -i -p0e "s/(\n\t\"github.com\/letsencrypt\/boulder\/cmd\")/\t_ \"github.com\/letsencrypt\/boulder\/cmd\/mail-tester\"\n\1/igs"  cmd/boulder/main.go
+
+perl -i -p0e "s/If you continue to encounter.*for troubleshooting and advice.//igs" sfe/pages/index.html
+perl -i -p0e "s/<b>Note:<\/b> If you encounter.*troubleshooting and advice.//igs" sfe/pages/unpause-form.html
+perl -i -p0e "s/If you continue to encounter.*for troubleshooting and advice.//igs" sfe/pages/unpause-invalid-request.html
+perl -i -p0e "s/ If you face continued.*for troubleshooting and advice.//igs" sfe/pages/unpause-status.html

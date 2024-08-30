@@ -1,41 +1,41 @@
 diff --git a/wfe2/wfe.go b/wfe2/wfe.go
-index 708fbad94..6b7235659 100644
+index 59b33dd32..760babc29 100644
 --- a/wfe2/wfe.go
 +++ b/wfe2/wfe.go
-@@ -23,6 +23,7 @@ import (
- 	"go.opentelemetry.io/otel/trace"
+@@ -24,6 +24,7 @@ import (
+ 	"golang.org/x/exp/maps"
  	"google.golang.org/protobuf/types/known/emptypb"
  
 +	"github.com/letsencrypt/boulder/cmd"
  	"github.com/letsencrypt/boulder/core"
  	corepb "github.com/letsencrypt/boulder/core/proto"
  	berrors "github.com/letsencrypt/boulder/errors"
-@@ -169,6 +170,8 @@ type WebFrontEndImpl struct {
- 	// passed to the newOrder endpoint. If a profile name is not in this list,
- 	// the request will be rejected as malformed.
- 	certificateProfileNames []string
+@@ -173,6 +174,8 @@ type WebFrontEndImpl struct {
+ 	// descriptions (perhaps including URLs) of those profiles. NewOrder
+ 	// Requests with a profile name not present in this map will be rejected.
+ 	certProfiles map[string]string
 +
 +	hostnamePolicyFile string
  }
  
  // NewWebFrontEndImpl constructs a web service for Boulder
-@@ -193,6 +196,7 @@ func NewWebFrontEndImpl(
- 	txnBuilder *ratelimits.TransactionBuilder,
- 	maxNames int,
- 	certificateProfileNames []string,
+@@ -200,6 +203,7 @@ func NewWebFrontEndImpl(
+ 	unpauseSigner unpause.JWTSigner,
+ 	unpauseJWTLifetime time.Duration,
+ 	unpauseURL string,
 +	hostnamePolicyFile string,
  ) (WebFrontEndImpl, error) {
  	if len(issuerCertificates) == 0 {
  		return WebFrontEndImpl{}, errors.New("must provide at least one issuer certificate")
-@@ -231,6 +235,7 @@ func NewWebFrontEndImpl(
- 		txnBuilder:                   txnBuilder,
- 		maxNames:                     maxNames,
- 		certificateProfileNames:      certificateProfileNames,
+@@ -241,6 +245,7 @@ func NewWebFrontEndImpl(
+ 		unpauseSigner:                unpauseSigner,
+ 		unpauseJWTLifetime:           unpauseJWTLifetime,
+ 		unpauseURL:                   unpauseURL,
 +		hostnamePolicyFile:           hostnamePolicyFile,
  	}
  
  	return wfe, nil
-@@ -2260,8 +2265,25 @@ func (wfe *WebFrontEndImpl) NewOrder(
+@@ -2305,8 +2310,25 @@ func (wfe *WebFrontEndImpl) NewOrder(
  		names[i] = ident.Value
  	}
  

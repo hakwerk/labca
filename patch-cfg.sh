@@ -83,6 +83,8 @@ sed -i -e "s/\"stdoutlevel\": 4,/\"stdoutlevel\": 6,/" config/remoteva-a.json
 sed -i -e "s/\"stdoutlevel\": 4,/\"stdoutlevel\": 6,/" config/remoteva-b.json
 sed -i -e "s/\"stdoutlevel\": 4,/\"stdoutlevel\": 6,/" config/va-remote-a.json
 sed -i -e "s/\"stdoutlevel\": 4,/\"stdoutlevel\": 6,/" config/va-remote-b.json
+sed -i -e "s/\"endpoint\": \".*\"/\"endpoint\": \"\"/" config/sfe.json
+sed -i -e "s/sleep 1/sleep 5/g" wait-for-it.sh
 
 sed -i -e "s|test/certs|/opt/boulder/labca/certs|" consul/config.hcl
 

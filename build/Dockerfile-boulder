@@ -1,4 +1,4 @@
-FROM letsencrypt/boulder-tools:go1.22.3_2024-05-22 AS boulder-tools
+FROM letsencrypt/boulder-tools:go1.22.5_2024-07-03 AS boulder-tools
 
 FROM ubuntu:focal
 

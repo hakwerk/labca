@@ -1,12 +1,16 @@
 diff --git a/mail/mailer.go b/mail/mailer.go
-index 4249108e..ee8b6fb4 100644
+index 31ebd40b1..d8ab68969 100644
 --- a/mail/mailer.go
 +++ b/mail/mailer.go
-@@ -21,10 +21,14 @@ import (
- 	"time"
+@@ -2,6 +2,7 @@ package mail
  
- 	"github.com/jmhodges/clock"
-+	"golang.org/x/net/context"
+ import (
+ 	"bytes"
++	"context"
+ 	"crypto/rand"
+ 	"crypto/tls"
+ 	"crypto/x509"
+@@ -24,7 +25,10 @@ import (
  	"github.com/prometheus/client_golang/prometheus"
  
  	"github.com/letsencrypt/boulder/core"
