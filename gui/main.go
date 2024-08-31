@@ -3043,13 +3043,9 @@ func certRevokeHandler(w http.ResponseWriter, r *http.Request) {
 		}
 
 		serial := r.Form.Get("serial")
-		reason, err := strconv.Atoi(r.Form.Get("reason"))
-		if err != nil {
-			errorHandler(w, r, err, http.StatusBadRequest)
-			return
-		}
+		reason := r.Form.Get("reason")
 
-		if !_hostCommand(w, r, "revoke-cert", serial, strconv.Itoa(reason)) {
+		if !_hostCommand(w, r, "revoke-cert", serial, reason) {
 			return
 		}
 	}

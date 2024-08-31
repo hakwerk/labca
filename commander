@@ -162,9 +162,9 @@ case $txt in
     ;;
 "revoke-cert")
     read serial
-    read reasonCode
+    read reason
     cd /opt/boulder
-    docker compose exec boulder bin/admin-revoker serial-revoke --config labca/config/admin-revoker.json $serial $reasonCode 2>&1
+    docker compose exec boulder bin/admin -config labca/config/admin.json revoke-cert -serial $serial -reason $reason -dry-run=false 2>&1
     ;;
 "test-email")
     read recipient
