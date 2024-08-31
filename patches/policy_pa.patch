@@ -1,8 +1,8 @@
 diff --git a/policy/pa.go b/policy/pa.go
-index ce7857a7d..ef29cb60e 100644
+index 26edbdbdf..177fddba2 100644
 --- a/policy/pa.go
 +++ b/policy/pa.go
-@@ -32,6 +32,9 @@ type AuthorityImpl struct {
+@@ -31,6 +31,9 @@ type AuthorityImpl struct {
  	blocklist              map[string]bool
  	exactBlocklist         map[string]bool
  	wildcardExactBlocklist map[string]bool
@@ -12,7 +12,7 @@ index ce7857a7d..ef29cb60e 100644
  	blocklistMu            sync.RWMutex
  
  	enabledChallenges map[core.AcmeChallenge]bool
-@@ -72,6 +75,10 @@ type blockedNamesPolicy struct {
+@@ -64,6 +67,10 @@ type blockedNamesPolicy struct {
  	// time above and beyond the high-risk domains. Managing these entries separately
  	// from HighRiskBlockedNames makes it easier to vet changes accurately.
  	AdminBlockedNames []string `yaml:"AdminBlockedNames"`
@@ -23,7 +23,7 @@ index ce7857a7d..ef29cb60e 100644
  }
  
  // LoadHostnamePolicyFile will load the given policy file, returning an error if
-@@ -131,10 +138,21 @@ func (pa *AuthorityImpl) processHostnamePolicy(policy blockedNamesPolicy) error
+@@ -123,10 +130,21 @@ func (pa *AuthorityImpl) processHostnamePolicy(policy blockedNamesPolicy) error
  		// wildcardNameMap to block issuance for `*.`+parts[1]
  		wildcardNameMap[parts[1]] = true
  	}
@@ -45,7 +45,7 @@ index ce7857a7d..ef29cb60e 100644
  	pa.blocklistMu.Unlock()
  	return nil
  }
-@@ -203,7 +221,7 @@ var (
+@@ -195,7 +213,7 @@ var (
  //   - exactly equal to an IANA registered TLD
  //
  // It does NOT ensure that the domain is absent from any PA blocked lists.
@@ -54,7 +54,7 @@ index ce7857a7d..ef29cb60e 100644
  	if domain == "" {
  		return errEmptyName
  	}
-@@ -235,7 +253,9 @@ func validNonWildcardDomain(domain string) error {
+@@ -227,7 +245,9 @@ func validNonWildcardDomain(domain string) error {
  		return errTooManyLabels
  	}
  	if len(labels) < 2 {
@@ -65,7 +65,7 @@ index ce7857a7d..ef29cb60e 100644
  	}
  	for _, label := range labels {
  		// Check that this is a valid LDH Label: "A string consisting of ASCII
-@@ -279,6 +299,14 @@ func validNonWildcardDomain(domain string) error {
+@@ -271,6 +291,14 @@ func validNonWildcardDomain(domain string) error {
  		}
  	}
  
@@ -80,7 +80,7 @@ index ce7857a7d..ef29cb60e 100644
  	// Names must end in an ICANN TLD, but they must not be equal to an ICANN TLD.
  	icannTLD, err := iana.ExtractSuffix(domain)
  	if err != nil {
-@@ -294,9 +322,9 @@ func validNonWildcardDomain(domain string) error {
+@@ -286,9 +314,9 @@ func validNonWildcardDomain(domain string) error {
  // ValidDomain checks that a domain is valid and that it doesn't contain any
  // invalid wildcard characters. It does NOT ensure that the domain is absent
  // from any PA blocked lists.
@@ -92,7 +92,7 @@ index ce7857a7d..ef29cb60e 100644
  	}
  
  	// Names containing more than one wildcard are invalid.
-@@ -315,7 +343,7 @@ func ValidDomain(domain string) error {
+@@ -307,7 +335,7 @@ func ValidDomain(domain string) error {
  
  	// Names must end in an ICANN TLD, but they must not be equal to an ICANN TLD.
  	icannTLD, err := iana.ExtractSuffix(baseDomain)
@@ -101,7 +101,7 @@ index ce7857a7d..ef29cb60e 100644
  		return errNonPublic
  	}
  	// Names must have a non-wildcard label immediately adjacent to the ICANN
-@@ -323,7 +351,7 @@ func ValidDomain(domain string) error {
+@@ -315,7 +343,7 @@ func ValidDomain(domain string) error {
  	if baseDomain == icannTLD {
  		return errICANNTLDWildcard
  	}
@@ -110,7 +110,7 @@ index ce7857a7d..ef29cb60e 100644
  }
  
  // forbiddenMailDomains is a map of domain names we do not allow after the
-@@ -341,7 +369,7 @@ var forbiddenMailDomains = map[string]bool{
+@@ -333,7 +361,7 @@ var forbiddenMailDomains = map[string]bool{
  // ValidEmail returns an error if the input doesn't parse as an email address,
  // the domain isn't a valid hostname in Preferred Name Syntax, or its on the
  // list of domains forbidden for mail (because they are often used in examples).
@@ -119,7 +119,7 @@ index ce7857a7d..ef29cb60e 100644
  	email, err := mail.ParseAddress(address)
  	if err != nil {
  		if len(address) > 254 {
-@@ -351,7 +379,7 @@ func ValidEmail(address string) error {
+@@ -343,7 +371,7 @@ func ValidEmail(address string) error {
  	}
  	splitEmail := strings.SplitN(email.Address, "@", -1)
  	domain := strings.ToLower(splitEmail[len(splitEmail)-1])
@@ -128,7 +128,7 @@ index ce7857a7d..ef29cb60e 100644
  	if err != nil {
  		return berrors.InvalidEmailError(
  			"contact email %q has invalid domain : %s",
-@@ -395,7 +423,7 @@ func subError(name string, err error) berrors.SubBoulderError {
+@@ -387,7 +415,7 @@ func subError(name string, err error) berrors.SubBoulderError {
  //
  // Precondition: all input domain names must be in lowercase.
  func (pa *AuthorityImpl) WillingToIssue(domains []string) error {
@@ -137,7 +137,7 @@ index ce7857a7d..ef29cb60e 100644
  	if err != nil {
  		return err
  	}
-@@ -414,6 +442,10 @@ func (pa *AuthorityImpl) WillingToIssue(domains []string) error {
+@@ -406,6 +434,10 @@ func (pa *AuthorityImpl) WillingToIssue(domains []string) error {
  			}
  		}
  
@@ -148,7 +148,7 @@ index ce7857a7d..ef29cb60e 100644
  		// For both wildcard and non-wildcard domains, check whether any parent domain
  		// name is on the regular blocklist.
  		err := pa.checkHostLists(domain)
-@@ -447,10 +479,10 @@ func (pa *AuthorityImpl) WillingToIssue(domains []string) error {
+@@ -439,10 +471,10 @@ func (pa *AuthorityImpl) WillingToIssue(domains []string) error {
  //
  // If multiple domains are invalid, the error will contain suberrors specific to
  // each domain.
@@ -161,7 +161,7 @@ index ce7857a7d..ef29cb60e 100644
  		if err != nil {
  			subErrors = append(subErrors, subError(domain, err))
  		}
-@@ -484,6 +516,34 @@ func combineSubErrors(subErrors []berrors.SubBoulderError) error {
+@@ -476,6 +508,34 @@ func combineSubErrors(subErrors []berrors.SubBoulderError) error {
  	return nil
  }
  
@@ -196,7 +196,7 @@ index ce7857a7d..ef29cb60e 100644
  // checkWildcardHostList checks the wildcardExactBlocklist for a given domain.
  // If the domain is not present on the list nil is returned, otherwise
  // errPolicyForbidden is returned.
-@@ -513,6 +573,9 @@ func (pa *AuthorityImpl) checkHostLists(domain string) error {
+@@ -505,6 +565,9 @@ func (pa *AuthorityImpl) checkHostLists(domain string) error {
  	labels := strings.Split(domain, ".")
  	for i := range labels {
  		joined := strings.Join(labels[i:], ".")

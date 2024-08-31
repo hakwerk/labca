@@ -1,8 +1,8 @@
 diff --git a/ratelimits/names.go b/ratelimits/names.go
-index fdfd8e81e..636720bf2 100644
+index c70f39536..b0e14209c 100644
 --- a/ratelimits/names.go
 +++ b/ratelimits/names.go
-@@ -150,7 +150,11 @@ func validateRegId(id string) error {
+@@ -151,7 +151,11 @@ func validateRegId(id string) error {
  // validateDomain validates that the provided string is formatted 'domain',
  // where domain is a domain name.
  func validateDomain(id string) error {
@@ -15,7 +15,7 @@ index fdfd8e81e..636720bf2 100644
  	if err != nil {
  		return fmt.Errorf("invalid domain, %q must be formatted 'domain': %w", id, err)
  	}
-@@ -171,7 +175,11 @@ func validateRegIdDomain(id string) error {
+@@ -172,7 +176,11 @@ func validateRegIdDomain(id string) error {
  		return fmt.Errorf(
  			"invalid regId, %q must be formatted 'regId:domain'", id)
  	}
@@ -28,7 +28,7 @@ index fdfd8e81e..636720bf2 100644
  	if err != nil {
  		return fmt.Errorf(
  			"invalid domain, %q must be formatted 'regId:domain': %w", id, err)
-@@ -187,7 +195,11 @@ func validateFQDNSet(id string) error {
+@@ -188,7 +196,11 @@ func validateFQDNSet(id string) error {
  		return fmt.Errorf(
  			"invalid fqdnSet, %q must be formatted 'fqdnSet'", id)
  	}

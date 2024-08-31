@@ -1,0 +1,13 @@
+diff --git a/sa/db/boulder_sa/20240119000000_ReplacementOrders.sql b/sa/db/boulder_sa/20240119000000_ReplacementOrders.sql
+index c2bc65f9c..d331ca4fd 100644
+--- a/sa/db/boulder_sa/20240119000000_ReplacementOrders.sql
++++ b/sa/db/boulder_sa/20240119000000_ReplacementOrders.sql
+@@ -1,7 +1,7 @@
+ -- +migrate Up
+ -- SQL in section 'Up' is executed when this migration is applied
+ 
+-CREATE TABLE `replacementOrders` (
++CREATE TABLE IF NOT EXISTS `replacementOrders` (
+   `id` bigint(20) NOT NULL AUTO_INCREMENT,
+   `serial` varchar(255) NOT NULL,
+   `orderID` bigint(20) NOT NULL,

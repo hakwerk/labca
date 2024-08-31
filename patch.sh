@@ -31,6 +31,8 @@ $SUDO patch -p1 < $cloneDir/patches/core_interfaces.patch
 $SUDO patch -p1 < $cloneDir/patches/crl-storer_main.patch
 $SUDO patch -p1 < $cloneDir/patches/db_migrations.patch
 $SUDO patch -p1 < $cloneDir/patches/db_migrations2.patch
+$SUDO patch -p1 < $cloneDir/patches/db_migrations3.patch
+$SUDO patch -p1 < $cloneDir/patches/db_migrations4.patch
 $SUDO patch -p1 < $cloneDir/patches/errors_errors.patch
 $SUDO patch -p1 < $cloneDir/patches/expiration-mailer_main.patch
 $SUDO patch -p1 < $cloneDir/patches/issuance_crl.patch
@@ -64,6 +66,7 @@ $SUDO patch -p1 < $cloneDir/patches/wfe2_wfe.patch
 sed -i -e "s|./test|./labca|" start.py
 
 sed -i -e "s/berrors.RateLimitError(/berrors.RateLimitError(ra.rlPolicies.RateLimitsURL(), /g" ra/ra.go
+sed -i -e "s/berrors.RateLimitError(/berrors.RateLimitError(\"\", /g" ratelimits/limiter.go
 
 sed -i -e "s/proxysql:6033/mysql:3306/" sa/db/dbconfig.yml
 

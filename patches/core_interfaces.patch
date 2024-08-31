@@ -1,10 +1,10 @@
 diff --git a/core/interfaces.go b/core/interfaces.go
-index 003329c3..c01cd881 100644
+index 35ebf3896..61d2510e3 100644
 --- a/core/interfaces.go
 +++ b/core/interfaces.go
 @@ -11,4 +11,5 @@ type PolicyAuthority interface {
- 	ChallengesFor(identifier.ACMEIdentifier) ([]Challenge, error)
+ 	ChallengeTypesFor(identifier.ACMEIdentifier) ([]AcmeChallenge, error)
  	ChallengeTypeEnabled(AcmeChallenge) bool
- 	CheckAuthz(*Authorization) error
+ 	CheckAuthzChallenges(*Authorization) error
 +	ValidEmail(address string) error
  }

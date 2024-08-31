@@ -1,12 +1,12 @@
 diff --git a/sfe/templates/layout.html b/sfe/templates/layout.html
-index 30f947aac..2511e9e13 100644
+index 15d5e88d9..2511e9e13 100644
 --- a/sfe/templates/layout.html
 +++ b/sfe/templates/layout.html
 @@ -4,8 +4,8 @@
  <head>
      <meta charset="UTF-8">
      <meta name="viewport" content="width=device-width, initial-scale=1.0">
--    <title>Let's Encrypt - Self-Service Portal</title>
+-    <title>Let's Encrypt - Portal</title>
 -    <link rel="icon" type="image/x-icon" href="/static/favicon.ico">
 +    <title>Self-Service Portal | LabCA</title>
 +    <link rel="icon" type="image/png" href="/img/fav-public.png">

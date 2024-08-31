@@ -1,11 +1,11 @@
 diff --git a/crl/updater/continuous.go b/crl/updater/continuous.go
-index e4552f68f..7aaef33c0 100644
+index 4597fd60a..5ee00d765 100644
 --- a/crl/updater/continuous.go
 +++ b/crl/updater/continuous.go
 @@ -3,6 +3,7 @@ package updater
  import (
  	"context"
- 	"math/rand"
+ 	"math/rand/v2"
 +	"os"
  	"sync"
  	"time"
