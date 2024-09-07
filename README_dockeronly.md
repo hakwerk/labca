@@ -9,7 +9,6 @@ The `docker-compose.yml` file is located in the `build` subdirectory for now. Yo
 git clone https://github.com/hakwerk/labca.git
 cd labca/build
 export LABCA_FQDN=labca.example.com
-docker compose up bsetup
 docker compose up -d
 ```
 And to tail the logs, especially if there are any issues:
