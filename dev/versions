@@ -21,7 +21,7 @@ colorBoulderTag() {
         actualVersion="${COL_YELLOW}${actualVersion}${COL_NC}"
     fi
     result=$(grep -R boulderTag= $fileName | sed -e "s/\(boulderTag=\"\).*\(\"\)/\1${actualVersion}\2/")
-    echo "$fileName: $result"
+    echo "* $fileName: $result"
 }
 
 colorCITag() {
@@ -38,7 +38,7 @@ colorCITag() {
         res=$(grep -R boulder-tools: $fileName | grep -v automatically | sed -e "s/\(:-*\)\([cgor\.0-9_-]*\)/\1${COL_LIGHT_RED}\2${COL_NC}/g")
     fi
 
-    echo "$fileName:$res"
+    echo "* $fileName:$res"
 }
 
 colorNGTag() {
@@ -50,7 +50,7 @@ colorNGTag() {
     else
         res=$(grep -R nginx: $fileName | egrep "[\"0-9]+" | sed -e "s/\(.*:\)\([0-9\.]*\)/\1${COL_LIGHT_RED}\2${COL_NC}/")
     fi
-    echo "$fileName:$res"
+    echo "* $fileName:$res"
 }
 
 colorGoVersion() {
@@ -62,7 +62,7 @@ colorGoVersion() {
     else
         res=$(grep GO_VERSION -A 3 $fileName | egrep "\- [\"0-9]+" | sed -e "s/\([0-9\.]*\)/${COL_LIGHT_RED}\1${COL_NC}/g")
     fi
-    echo "$fileName:$res"
+    echo "* $fileName:$res"
 }
 
 colorGoVersion2() {
@@ -74,7 +74,7 @@ colorGoVersion2() {
     else
         res=$(grep GO_VERSION $fileName | sed -e "s/\s*GO_VERSION: /    /" | sed -e "s/\([0-9\.]*\)/${COL_LIGHT_RED}\1${COL_NC}/g")
     fi
-    echo "$fileName:$res"
+    echo "* $fileName:$res"
 }
 
 echo
@@ -93,20 +93,20 @@ colorCITag build/Dockerfile-boulder
 echo
 
 ngversion=$(grep -R nginx: .github/Dockerfile | egrep "[\"0-9]+" | sed -e  "s/.*:\([0-9\.]*\)/\1/")
-echo -n ".github/Dockerfile:"
+echo -n "Manual .github/Dockerfile: "
 grep -R nginx: .github/Dockerfile | egrep "[\"0-9]+"
 colorNGTag build/docker-compose.yml $ngversion
 colorNGTag patches/docker-compose.patch $ngversion
 echo
 
 goversion=$(grep GO_VERSION -A 3 ../boulder/.github/workflows/release.yml | egrep "\- [\"0-9]+" | sed -e "s/\s*-\s*//" | sed -e "s/\"//g")
-echo -n "../boulder/.github/workflows/release.yml"
+echo "Boulder .github/workflows/release.yml"
 grep GO_VERSION -A 3 ../boulder/.github/workflows/release.yml | egrep "\- [\"0-9]+" | sed -e "s/yml-/yml/"
 colorGoVersion .github/workflows/release.yml $goversion
 echo
 
 goversion=$(grep GO_VERSION ../boulder/docker-compose.yml | sed -e "s/\s*GO_VERSION://")
-echo -n "../boulder/docker-compose.yml"
+echo -n "Boulder docker-compose.yml"
 grep GO_VERSION ../boulder/docker-compose.yml | sed -e "s/\s*GO_VERSION:/    /"
 colorGoVersion2 build/docker-compose.yml $goversion
 echo
