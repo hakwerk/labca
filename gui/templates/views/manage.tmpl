@@ -349,6 +349,12 @@
         <span class="error email-error hidden" id="from-error"></span>
       </div>
       <div class="form-group">
+        <label for="rootfile">Root CAs for validating email server certficate:</label><br/>
+        <input type="radio" class="rootfile-rd" id="rootfile-public" name="rootfile-type" value="public" {{ if and (ne .TrustRoot "private") (ne .TrustRoot "skip")}}checked{{ end }}/> Trust standard public root CAs<br/>
+        <input type="radio" class="rootfile-rd" id="rootfile-private" name="rootfile-type" value="private" {{ if eq .TrustRoot "private"}}checked{{ end }}/> Trust the LabCA root CA<br/>
+        <input type="radio" class="rootfile-rd" id="rootfile-skip" name="rootfile-type" value="skip" {{ if eq .TrustRoot "skip"}}checked{{ end }}/> Do not check server certificate<br/>
+      </div>
+      <div class="form-group">
         <span class="hidden" id="update-email-result"></span>
         <button class="btn btn-default" type="button" id="update-email" title="Update the email configuration">Update</button>
       </div>
@@ -1038,6 +1044,7 @@
                                 email_user: $("#emailuser").val(),
                                 email_pwd: $("#emailpwd").val(),
                                 from: $("#from").val(),
+                                trust_root: $("#rootfile-private").prop('checked') ? "private" : ($("#rootfile-skip").prop('checked') ? "skip" : "public"),
                             },
                         })
                         .done(function(data) {

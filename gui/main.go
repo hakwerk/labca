@@ -582,6 +582,15 @@ func _backupHandler(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(res)
 }
 
+type ErrorsResponse struct {
+	Success bool
+	Errors  map[string]string
+}
+
+func makeErrorsResponse(success bool) ErrorsResponse {
+	return ErrorsResponse{Success: success, Errors: make(map[string]string)}
+}
+
 func _accountUpdateHandler(w http.ResponseWriter, r *http.Request) {
 	reg := &User{
 		Name:        r.Form.Get("username"),
@@ -591,10 +600,7 @@ func _accountUpdateHandler(w http.ResponseWriter, r *http.Request) {
 		Password:    r.Form.Get("password"),
 	}
 
-	res := struct {
-		Success bool
-		Errors  map[string]string
-	}{Success: true}
+	res := makeErrorsResponse(true)
 
 	if reg.Validate(false, true) {
 		viper.Set("user.name", reg.Name)
@@ -642,10 +648,7 @@ func backendUpdateHandler(w http.ResponseWriter, r *http.Request) {
 		RequestBase: r.Header.Get("X-Request-Base"),
 	}
 
-	res := struct {
-		Success bool
-		Errors  map[string]string
-	}{Success: true}
+	res := makeErrorsResponse(true)
 
 	if cfg.Validate() {
 		writeStandaloneConfig(cfg)
@@ -671,10 +674,7 @@ func _configUpdateHandler(w http.ResponseWriter, r *http.Request) {
 		ExtendedTimeout:  (r.Form.Get("extended_timeout") == "true"),
 	}
 
-	res := struct {
-		Success bool
-		Errors  map[string]string
-	}{Success: true}
+	res := makeErrorsResponse(true)
 
 	if cfg.Validate(true) {
 		delta := false
@@ -772,10 +772,7 @@ func _configUpdateHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func _crlIntervalUpdateHandler(w http.ResponseWriter, r *http.Request) {
-	res := struct {
-		Success bool
-		Errors  map[string]string
-	}{Success: true, Errors: make(map[string]string)}
+	res := makeErrorsResponse(true)
 
 	delta := false
 	crlInterval := r.Form.Get("crl_interval")
@@ -821,6 +818,7 @@ type EmailConfig struct {
 	EmailUser string
 	EmailPwd  []byte
 	From      string
+	TrustRoot string
 	Errors    map[string]string
 }
 
@@ -872,6 +870,10 @@ func (cfg *EmailConfig) Validate() bool {
 		cfg.Errors["From"] = "Please enter the from email address"
 	}
 
+	if strings.TrimSpace(cfg.TrustRoot) == "" {
+		cfg.Errors["From"] = "Please select what root CA to trust for validating the email server certificate"
+	}
+
 	return len(cfg.Errors) == 0
 }
 
@@ -883,12 +885,10 @@ func _emailUpdateHandler(w http.ResponseWriter, r *http.Request) {
 		EmailUser: r.Form.Get("email_user"),
 		EmailPwd:  []byte(r.Form.Get("email_pwd")),
 		From:      r.Form.Get("from"),
+		TrustRoot: r.Form.Get("trust_root"),
 	}
 
-	res := struct {
-		Success bool
-		Errors  map[string]string
-	}{Success: true}
+	res := makeErrorsResponse(true)
 
 	if cfg.Validate() {
 		delta := false
@@ -931,6 +931,11 @@ func _emailUpdateHandler(w http.ResponseWriter, r *http.Request) {
 			viper.Set("labca.email.from", cfg.From)
 		}
 
+		if cfg.TrustRoot != viper.GetString("labca.email.trust_root") {
+			delta = true
+			viper.Set("labca.email.trust_root", cfg.TrustRoot)
+		}
+
 		if delta {
 			viper.WriteConfig()
 
@@ -956,19 +961,14 @@ func _emailUpdateHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func _emailSendHandler(w http.ResponseWriter, r *http.Request) {
-	res := struct {
-		Success bool
-		Errors  map[string]string
-	}{Success: true, Errors: make(map[string]string)}
+	res := makeErrorsResponse(true)
 
 	recipient := viper.GetString("user.email")
-	if !_hostCommand(w, r, "test-email", recipient) {
-		res.Success = false
-		res.Errors["EmailSend"] = "Failed to send email - see logs"
+	if _hostCommand(w, r, "test-email", recipient) {
+		// Only on success, as when this returns false for this case the response has already been sent!
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(res)
 	}
-
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(res)
 }
 
 func _exportHandler(w http.ResponseWriter, r *http.Request) {
@@ -1110,10 +1110,7 @@ func _checkUpdatesHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func generateCRLHandler(w http.ResponseWriter, r *http.Request, isRoot bool) {
-	res := struct {
-		Success bool
-		Errors  map[string]string
-	}{Success: true, Errors: make(map[string]string)}
+	res := makeErrorsResponse(true)
 
 	if isRoot {
 		path := "data/"
@@ -1178,10 +1175,7 @@ func generateCRLHandler(w http.ResponseWriter, r *http.Request, isRoot bool) {
 }
 
 func uploadCRLHandler(w http.ResponseWriter, r *http.Request) {
-	res := struct {
-		Success bool
-		Errors  map[string]string
-	}{Success: true, Errors: make(map[string]string)}
+	res := makeErrorsResponse(true)
 
 	rootci := &CertificateInfo{
 		IsRoot: true,
@@ -1628,6 +1622,7 @@ func _manageGet(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 		manageData["From"] = viper.GetString("labca.email.from")
+		manageData["TrustRoot"] = viper.GetString("labca.email.trust_root")
 	}
 
 	manageData["Name"] = viper.GetString("user.name")
@@ -2275,6 +2270,18 @@ func _hostCommand(w http.ResponseWriter, r *http.Request, command string, params
 	}
 
 	log.Printf("ERROR: Message from server: '%s'", message)
+	if command == "test-email" {
+		// Want special error handling for this case
+		res := makeErrorsResponse(false)
+		if strings.Contains(string(message), "certificate signed by unknown authority") {
+			res.Errors["EmailSend"] = "Error: SMTP server certificate signed by unknown authority"
+		} else {
+			res.Errors["EmailSend"] = "Failed to send email - see logs"
+		}
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(res)
+		return false
+	}
 	errorHandler(w, r, errors.New(string(message)), http.StatusInternalServerError)
 	return false
 }

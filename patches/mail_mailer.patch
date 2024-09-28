@@ -1,5 +1,5 @@
 diff --git a/mail/mailer.go b/mail/mailer.go
-index 31ebd40b1..d8ab68969 100644
+index 31ebd40b1..61add3ec2 100644
 --- a/mail/mailer.go
 +++ b/mail/mailer.go
 @@ -2,6 +2,7 @@ package mail
@@ -10,34 +10,47 @@ index 31ebd40b1..d8ab68969 100644
  	"crypto/rand"
  	"crypto/tls"
  	"crypto/x509"
-@@ -24,7 +25,10 @@ import (
+@@ -23,8 +24,11 @@ import (
+ 	"github.com/jmhodges/clock"
  	"github.com/prometheus/client_golang/prometheus"
  
- 	"github.com/letsencrypt/boulder/core"
 +	"github.com/letsencrypt/boulder/bdns"
- 	blog "github.com/letsencrypt/boulder/log"
+ 	"github.com/letsencrypt/boulder/core"
 +	berrors "github.com/letsencrypt/boulder/errors"
+ 	blog "github.com/letsencrypt/boulder/log"
 +	"github.com/letsencrypt/boulder/probs"
  )
  
  type idGenerator interface {
-@@ -139,6 +143,7 @@ func New(
+@@ -139,6 +143,8 @@ func New(
  	username,
  	password string,
  	rootCAs *x509.CertPool,
++	insecureSkipVerify bool,
 +	resolver bdns.Client,
  	from mail.Address,
  	logger blog.Logger,
  	stats prometheus.Registerer,
-@@ -159,6 +164,7 @@ func New(
- 				server:   server,
- 				port:     port,
- 				rootCAs:  rootCAs,
-+				dnsClient: resolver,
+@@ -154,11 +160,13 @@ func New(
+ 	return &mailerImpl{
+ 		config: config{
+ 			dialer: &dialerImpl{
+-				username: username,
+-				password: password,
+-				server:   server,
+-				port:     port,
+-				rootCAs:  rootCAs,
++				username:           username,
++				password:           password,
++				server:             server,
++				port:               port,
++				rootCAs:            rootCAs,
++				insecureSkipVerify: insecureSkipVerify,
++				dnsClient:          resolver,
  			},
  			log:              logger,
  			from:             from,
-@@ -202,7 +208,7 @@ func (c config) generateMessage(to []string, subject, body string) ([]byte, erro
+@@ -202,7 +210,7 @@ func (c config) generateMessage(to []string, subject, body string) ([]byte, erro
  		fmt.Sprintf("To: %s", strings.Join(addrs, ", ")),
  		fmt.Sprintf("From: %s", c.from.String()),
  		fmt.Sprintf("Subject: %s", subject),
@@ -46,10 +59,11 @@ index 31ebd40b1..d8ab68969 100644
  		fmt.Sprintf("Message-Id: <%s.%s.%s>", now.Format("20060102T150405"), mid.String(), c.from.Address),
  		"MIME-Version: 1.0",
  		"Content-Type: text/plain; charset=UTF-8",
-@@ -259,23 +265,32 @@ func (m *mailerImpl) Connect() (Conn, error) {
+@@ -259,23 +267,41 @@ func (m *mailerImpl) Connect() (Conn, error) {
  type dialerImpl struct {
  	username, password, server, port string
  	rootCAs                          *x509.CertPool
++	insecureSkipVerify               bool
 +	dnsClient                        bdns.Client
  }
  
@@ -69,10 +83,20 @@ index 31ebd40b1..d8ab68969 100644
 -		return nil, err
 +		problem := probs.DNS("%v")
 +		return nil, problem
- 	}
--	client, err := smtp.NewClient(conn, di.server)
++	}
++
 +	if len(addrs) == 0 {
 +		return nil, berrors.DNSError("No valid IP addresses found for %s", di.server)
+ 	}
+-	client, err := smtp.NewClient(conn, di.server)
++
++	tlsconf := &tls.Config{
++		ServerName: di.server,
++	}
++	if di.insecureSkipVerify {
++		tlsconf.InsecureSkipVerify = true
++	} else {
++		tlsconf.RootCAs = di.rootCAs
 +	}
 +
 +	hostport := net.JoinHostPort(addrs[0].String(), di.port)
@@ -81,9 +105,7 @@ index 31ebd40b1..d8ab68969 100644
  		return nil, err
  	}
 -	auth := smtp.PlainAuth("", di.username, di.password, di.server)
-+	client.StartTLS( &tls.Config{
-+		ServerName: di.server,
-+	})
++	client.StartTLS(tlsconf)
 +	auth := smtp.PlainAuth("", di.username, di.password, addrs[0].String())
  	if err = client.Auth(auth); err != nil {
  		return nil, err

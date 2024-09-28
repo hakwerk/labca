@@ -1,5 +1,5 @@
 diff --git a/cmd/bad-key-revoker/main.go b/cmd/bad-key-revoker/main.go
-index e7015e0c8..5e4e73a12 100644
+index e7015e0c8..9e226d2fa 100644
 --- a/cmd/bad-key-revoker/main.go
 +++ b/cmd/bad-key-revoker/main.go
 @@ -18,6 +18,7 @@ import (
@@ -22,7 +22,7 @@ index e7015e0c8..5e4e73a12 100644
  		// MaximumRevocations specifies the maximum number of certificates associated with
  		// a key hash that bad-key-revoker will attempt to revoke. If the number of certificates
  		// is higher than MaximumRevocations bad-key-revoker will error out and refuse to
-@@ -467,6 +473,30 @@ func main() {
+@@ -467,8 +473,35 @@ func main() {
  	cmd.FailOnError(err, "Failed to load credentials and create gRPC connection to RA")
  	rac := rapb.NewRegistrationAuthorityClient(conn)
  
@@ -51,12 +51,19 @@ index e7015e0c8..5e4e73a12 100644
 +	}
 +
  	var smtpRoots *x509.CertPool
- 	if config.BadKeyRevoker.Mailer.SMTPTrustedRootFile != "" {
+-	if config.BadKeyRevoker.Mailer.SMTPTrustedRootFile != "" {
++	smtpSkipVerify := false
++	if config.BadKeyRevoker.Mailer.SMTPTrustedRootFile == "skipVerify" {
++		smtpSkipVerify = true
++	} else if config.BadKeyRevoker.Mailer.SMTPTrustedRootFile != "" {
  		pem, err := os.ReadFile(config.BadKeyRevoker.Mailer.SMTPTrustedRootFile)
-@@ -488,6 +518,7 @@ func main() {
+ 		cmd.FailOnError(err, "Loading trusted roots file")
+ 		smtpRoots = x509.NewCertPool()
+@@ -488,6 +521,8 @@ func main() {
  		config.BadKeyRevoker.Mailer.Username,
  		smtpPassword,
  		smtpRoots,
++		smtpSkipVerify,
 +		resolver,
  		*fromAddress,
  		logger,

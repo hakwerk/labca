@@ -1,8 +1,16 @@
 diff --git a/cmd/notify-mailer/main.go b/cmd/notify-mailer/main.go
-index a05366c3..da9d78c8 100644
+index 6c01efd64..23b1f4f9d 100644
 --- a/cmd/notify-mailer/main.go
 +++ b/cmd/notify-mailer/main.go
-@@ -37,6 +37,7 @@ type mailer struct {
+@@ -2,6 +2,7 @@ package notmain
+ 
+ import (
+ 	"context"
++	"crypto/x509"
+ 	"encoding/csv"
+ 	"encoding/json"
+ 	"errors"
+@@ -37,6 +38,7 @@ type mailer struct {
  	recipients    []recipient
  	targetRange   interval
  	sleepInterval time.Duration
@@ -10,7 +18,7 @@ index a05366c3..da9d78c8 100644
  	parallelSends uint
  }
  
-@@ -201,7 +202,7 @@ func (m *mailer) run(ctx context.Context) error {
+@@ -201,7 +203,7 @@ func (m *mailer) run(ctx context.Context) error {
  					continue
  				}
  
@@ -19,17 +27,20 @@ index a05366c3..da9d78c8 100644
  				if err != nil {
  					m.log.Infof("Skipping %q due to policy violation: %s", w.address, err)
  					continue
-@@ -502,7 +503,9 @@ type Config struct {
+@@ -502,7 +504,12 @@ type Config struct {
  	NotifyMailer struct {
  		DB cmd.DBConfig
  		cmd.SMTPConfig
++		// Path to a file containing a list of trusted root certificates for use
++		// during the SMTP connection (as opposed to the gRPC connections).
++		SMTPTrustedRootFile string
 +		cmd.HostnamePolicyConfig
  	}
-+	PA cmd.PAConfig
++	PA     cmd.PAConfig
  	Syslog cmd.SyslogConfig
  }
  
-@@ -570,6 +573,15 @@ func main() {
+@@ -570,6 +577,15 @@ func main() {
  		log.Infof("While reading the recipient list file %s", probs)
  	}
  
@@ -45,15 +56,34 @@ index a05366c3..da9d78c8 100644
  	var mailClient bmail.Mailer
  	if *dryRun {
  		log.Infof("Starting %s in dry-run mode", cmd.VersionString())
-@@ -585,6 +597,7 @@ func main() {
+@@ -579,11 +595,26 @@ func main() {
+ 		smtpPassword, err := cfg.NotifyMailer.PasswordConfig.Pass()
+ 		cmd.FailOnError(err, "Couldn't load SMTP password from file")
+ 
++		var smtpRoots *x509.CertPool
++		smtpSkipVerify := false
++		if cfg.NotifyMailer.SMTPTrustedRootFile == "InsecureSkipVerify" {
++			smtpSkipVerify = true
++		} else if cfg.NotifyMailer.SMTPTrustedRootFile != "" {
++			pem, err := os.ReadFile(cfg.NotifyMailer.SMTPTrustedRootFile)
++			cmd.FailOnError(err, "Loading trusted roots file")
++			smtpRoots = x509.NewCertPool()
++			if !smtpRoots.AppendCertsFromPEM(pem) {
++				cmd.FailOnError(nil, "Failed to parse root certs PEM")
++			}
++		}
++
+ 		mailClient = bmail.New(
+ 			cfg.NotifyMailer.Server,
+ 			cfg.NotifyMailer.Port,
  			cfg.NotifyMailer.Username,
  			smtpPassword,
++			smtpRoots,
++			smtpSkipVerify,
  			nil,
-+			nil,
  			*address,
  			log,
- 			metrics.NoopRegisterer,
-@@ -605,6 +618,7 @@ func main() {
+@@ -605,6 +636,7 @@ func main() {
  			end:   *end,
  		},
  		sleepInterval: *sleep,

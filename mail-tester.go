@@ -2,6 +2,7 @@ package notmain
 
 import (
 	"context"
+	"crypto/x509"
 	"flag"
 	"fmt"
 	netmail "net/mail"
@@ -88,6 +89,9 @@ func main() {
 	defer oTelShutdown(context.Background())
 	logger.Info(cmd.VersionString())
 
+	tlsConfig, err := c.Mailer.TLS.Load(scope)
+	cmd.FailOnError(err, "TLS config")
+
 	clk := cmd.Clock()
 
 	dnsTimeout, err := time.ParseDuration(c.Mailer.DNSTimeout)
@@ -99,8 +103,6 @@ func main() {
 	var resolver bdns.Client
 	servers, err := bdns.NewStaticProvider(c.Mailer.DNSStaticResolvers)
 	cmd.FailOnError(err, "Couldn't start static DNS server resolver")
-	tlsConfig, err := c.Mailer.TLS.Load(scope)
-	cmd.FailOnError(err, "TLS config")
 	if !c.Mailer.DNSAllowLoopbackAddresses {
 		r := bdns.New(
 			dnsTimeout,
@@ -116,6 +118,19 @@ func main() {
 		resolver = r
 	}
 
+	var smtpRoots *x509.CertPool
+	smtpSkipVerify := false
+	if c.Mailer.SMTPTrustedRootFile == "InsecureSkipVerify" {
+		smtpSkipVerify = true
+	} else if c.Mailer.SMTPTrustedRootFile != "" {
+		pem, err := os.ReadFile(c.Mailer.SMTPTrustedRootFile)
+		cmd.FailOnError(err, "Loading trusted roots file")
+		smtpRoots = x509.NewCertPool()
+		if !smtpRoots.AppendCertsFromPEM(pem) {
+			cmd.FailOnError(nil, "Failed to parse root certs PEM")
+		}
+	}
+
 	fromAddress, err := netmail.ParseAddress(c.Mailer.From)
 	cmd.FailOnError(err, fmt.Sprintf("Could not parse from address: %s", c.Mailer.From))
 
@@ -126,7 +141,8 @@ func main() {
 		c.Mailer.Port,
 		c.Mailer.Username,
 		smtpPassword,
-		nil,
+		smtpRoots,
+		smtpSkipVerify,
 		resolver,
 		*fromAddress,
 		logger,

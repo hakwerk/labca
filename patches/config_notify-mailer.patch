@@ -1,5 +1,5 @@
 diff --git a/test/config/notify-mailer.json b/test/config/notify-mailer.json
-index 261b689e4..15b2be0b8 100644
+index f6813a696..115d5b150 100644
 --- a/test/config/notify-mailer.json
 +++ b/test/config/notify-mailer.json
 @@ -2,13 +2,22 @@
@@ -8,8 +8,8 @@ index 261b689e4..15b2be0b8 100644
  		"port": "9380",
 +		"hostnamePolicyFile": "test/hostname-policy.yaml",
  		"username": "cert-manager@example.com",
-+		"from": "notify mailer <test@example.com>",
  		"passwordFile": "test/secrets/smtp_password",
++		"SMTPTrustedRootFile": "test/certs/ipki/minica.pem",
  		"db": {
  			"dbConnectFile": "test/secrets/mailer_dburl",
  			"maxOpenConns": 10

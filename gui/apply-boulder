@@ -43,13 +43,22 @@ if [ "$enabled" == "true," ]; then
         pwd=$([ -e ] && $baseDir/bin/labca-gui_prev -d $PKI_EMAIL_PASS || echo "")
     fi
     PKI_EMAIL_PASS=$pwd
-    PKI_EMAIL_FROM=$(grep from $dataDir/config.json | head -1 | perl -p0e 's/.*?:\s+(.*)/\1/' | sed -e 's/\",//g' | sed -e 's/\"//g')
+    PKI_EMAIL_FROM=$(grep from $dataDir/config.json | perl -p0e 's/.*?:\s+(.*)/\1/' | sed -e 's/\",//g' | sed -e 's/\"//g')
+    PKI_EMAIL_TRUST=$(grep trust_root $dataDir/config.json | perl -p0e 's/.*?:\s+(.*)/\1/' | sed -e 's/\",//g' | sed -e 's/\"//g')
+    if [ "$PKI_EMAIL_TRUST" == "private" ]; then
+        PKI_EMAIL_TRUST="labca/test-root.pem"
+    elif [ "$PKI_EMAIL_TRUST" == "skip" ]; then
+        PKI_EMAIL_TRUST="InsecureSkipVerify"
+    else
+        PKI_EMAIL_TRUST=""
+    fi
 else
     PKI_EMAIL_SERVER="localhost"
     PKI_EMAIL_PORT="9380"
     PKI_EMAIL_USER="cert-manager@example.com"
     PKI_EMAIL_PASS="password"
     PKI_EMAIL_FROM="Expiry bot <test@example.com>"
+    PKI_EMAIL_TRUST="labca/certs/ipki/minica.pem"
 fi
 
 
@@ -188,14 +197,18 @@ sed -i -e "s/\"server\": \".*\"/\"server\": \"$PKI_EMAIL_SERVER\"/" config/bad-k
 sed -i -e "s/\"port\": \".*\"/\"port\": \"$PKI_EMAIL_PORT\"/" config/bad-key-revoker.json
 sed -i -e "s/\"username\": \".*\"/\"username\": \"$PKI_EMAIL_USER\"/" config/bad-key-revoker.json
 sed -i -e "s/\"from\": \".*\"/\"from\": \"$PKI_EMAIL_FROM\"/" config/bad-key-revoker.json
+sed -i -e "s|\"SMTPTrustedRootFile\": \".*\"|\"SMTPTrustedRootFile\": \"$PKI_EMAIL_TRUST\"|" config/bad-key-revoker.json
 sed -i -e "s/\"server\": \".*\"/\"server\": \"$PKI_EMAIL_SERVER\"/" config/expiration-mailer.json
 sed -i -e "s/\"port\": \".*\"/\"port\": \"$PKI_EMAIL_PORT\"/" config/expiration-mailer.json
 sed -i -e "s/\"username\": \".*\"/\"username\": \"$PKI_EMAIL_USER\"/" config/expiration-mailer.json
 sed -i -e "s/\"from\": \".*\"/\"from\": \"$PKI_EMAIL_FROM\"/" config/expiration-mailer.json
+sed -i -e "s|\"SMTPTrustedRootFile\": \".*\"|\"SMTPTrustedRootFile\": \"$PKI_EMAIL_TRUST\"|" config/expiration-mailer.json
 sed -i -e "s/\"server\": \".*\"/\"server\": \"$PKI_EMAIL_SERVER\"/" config/notify-mailer.json
 sed -i -e "s/\"port\": \".*\"/\"port\": \"$PKI_EMAIL_PORT\"/" config/notify-mailer.json
 sed -i -e "s/\"username\": \".*\"/\"username\": \"$PKI_EMAIL_USER\"/" config/notify-mailer.json
 sed -i -e "s/\"from\": \".*\"/\"from\": \"$PKI_EMAIL_FROM\"/" config/notify-mailer.json
+sed -i -e "s|\"SMTPTrustedRootFile\": \".*\"|\"SMTPTrustedRootFile\": \"$PKI_EMAIL_TRUST\"|" config/notify-mailer.json
+
 sed -i -e "s/\"purgeInterval\": \".*\"/\"purgeInterval\": \"1s\"/" config/akamai-purger.json
 
 for fl in $(grep -Rl maxOpenConns config/); do
