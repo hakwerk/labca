@@ -140,6 +140,8 @@ See also the [Let's Encrypt&trade; page on CAA](https://letsencrypt.org/docs/caa
 
 If all seems to be working at first, but you hit the **rate limit** after successfully issueing two certificates, make sure that in your list of whitelisted/lockdown domains (in the Manage section on the Config tab) you include all the subdomains that you want to use. So if you want to issue for `abc.dev.lan` and `def.dev.lan`, as well as `xyz.home.lan`, then you should include both `dev.lan` and `home.lan`. Only using `lan` in this example will trigger that rate limit.
 
+When importing an existing CA certificate as the LabCA Root, you may get the error "**The organizationName field is different between CA certificate (MyOrg) and the request (MyOrg)**" when generating the issuing certificate. Although the printed names look identical, this means that on the binary level the imported CA certificate is using PRINTABLESTRING for the organization name where LabCA is using openssl which uses UTF8STRING. You can verify this with the commands `openssl asn1parse -in data/root-ca.pem` and `openssl asn1parse -in data/issuer/ca-int.csr`. You should probably generate the issuer certificate yourself using the existing CA, and then also upload that.
+
 ### NOTE
 
 Although LabCA tries to be as robust as possible, use it at your own risk. If you depend on it, make sure that you know what you are doing!
