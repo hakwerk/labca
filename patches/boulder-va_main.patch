@@ -1,5 +1,5 @@
 diff --git a/cmd/boulder-va/main.go b/cmd/boulder-va/main.go
-index 032435fac..d3961512b 100644
+index 60353424a..90dbe627a 100644
 --- a/cmd/boulder-va/main.go
 +++ b/cmd/boulder-va/main.go
 @@ -21,6 +21,7 @@ type Config struct {
@@ -10,12 +10,12 @@ index 032435fac..d3961512b 100644
  	}
  
  	Syslog        cmd.SyslogConfig
-@@ -115,7 +116,8 @@ func main() {
- 		scope,
- 		clk,
+@@ -117,7 +118,8 @@ func main() {
  		logger,
--		c.VA.AccountURIPrefixes)
-+		c.VA.AccountURIPrefixes,
+ 		c.VA.AccountURIPrefixes,
+ 		va.PrimaryPerspective,
+-		"")
++		"",
 +		c.VA.LabCADomains)
  	cmd.FailOnError(err, "Unable to create VA server")
  

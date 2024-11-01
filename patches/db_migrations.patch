@@ -1,5 +1,5 @@
 diff --git a/sa/db/boulder_sa/20230419000000_CombinedSchema.sql b/sa/db/boulder_sa/20230419000000_CombinedSchema.sql
-index 34d6f151c..3641d1f7c 100644
+index ff8e54320..347f72fff 100644
 --- a/sa/db/boulder_sa/20230419000000_CombinedSchema.sql
 +++ b/sa/db/boulder_sa/20230419000000_CombinedSchema.sql
 @@ -1,7 +1,9 @@
@@ -170,7 +170,7 @@ index 34d6f151c..3641d1f7c 100644
    `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
    `registrationID` bigint(20) NOT NULL,
    `expires` datetime NOT NULL,
-@@ -169,11 +174,9 @@ CREATE TABLE `orders` (
+@@ -169,14 +174,12 @@ CREATE TABLE `orders` (
    PRIMARY KEY (`id`),
    KEY `reg_status_expires` (`registrationID`,`expires`),
    KEY `regID_created_idx` (`registrationID`,`created`)
@@ -179,12 +179,15 @@ index 34d6f151c..3641d1f7c 100644
 -(PARTITION p_start VALUES LESS THAN (MAXVALUE));
 +) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
  
+ -- Note: This table's name is a historical artifact and it is now
+ -- used to store linting certificates, not precertificates.
+ -- See #6807.
 -CREATE TABLE `precertificates` (
 +CREATE TABLE IF NOT EXISTS `precertificates` (
    `id` bigint(20) NOT NULL AUTO_INCREMENT,
    `registrationID` bigint(20) NOT NULL,
    `serial` varchar(255) NOT NULL,
-@@ -184,11 +187,11 @@ CREATE TABLE `precertificates` (
+@@ -187,11 +190,11 @@ CREATE TABLE `precertificates` (
    KEY `serial` (`serial`),
    KEY `regId_precertificates_idx` (`registrationID`),
    KEY `issued_precertificates_idx` (`issued`)
@@ -200,7 +203,7 @@ index 34d6f151c..3641d1f7c 100644
    `id` bigint(20) NOT NULL AUTO_INCREMENT,
    `jwk` mediumblob NOT NULL,
    `jwk_sha256` varchar(255) NOT NULL,
-@@ -203,20 +206,32 @@ CREATE TABLE `registrations` (
+@@ -206,20 +209,32 @@ CREATE TABLE `registrations` (
    KEY `initialIP_createdAt` (`initialIP`,`createdAt`)
  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
  
@@ -238,7 +241,7 @@ index 34d6f151c..3641d1f7c 100644
    `id` bigint(20) NOT NULL AUTO_INCREMENT,
    `registrationID` bigint(20) NOT NULL,
    `serial` varchar(255) NOT NULL,
-@@ -234,6 +249,18 @@ CREATE TABLE `serials` (
+@@ -237,6 +252,18 @@ CREATE TABLE `serials` (
  -- First set of tables have foreign key constraints, so are dropped first.
  DROP TABLE `serials`;
  
@@ -257,7 +260,7 @@ index 34d6f151c..3641d1f7c 100644
  DROP TABLE `authz2`;
  DROP TABLE `blockedKeys`;
  DROP TABLE `certificateStatus`;
-@@ -244,8 +271,44 @@ DROP TABLE `issuedNames`;
+@@ -247,8 +274,44 @@ DROP TABLE `issuedNames`;
  DROP TABLE `keyHashToSerial`;
  DROP TABLE `newOrdersRL`;
  DROP TABLE `orderFqdnSets`;

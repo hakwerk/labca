@@ -24,7 +24,6 @@ $SUDO patch -p1 < $cloneDir/patches/ca_ca.patch
 $SUDO patch -p1 < $cloneDir/patches/ca_crl.patch
 $SUDO patch -p1 < $cloneDir/patches/cert-checker_main.patch
 $SUDO patch -p1 < $cloneDir/patches/cmd_config.patch
-$SUDO patch -p1 < $cloneDir/patches/cmd_shell.patch
 $SUDO patch -p1 < $cloneDir/patches/config_duration.patch
 $SUDO patch -p1 < $cloneDir/patches/contact-auditor_main.patch
 $SUDO patch -p1 < $cloneDir/patches/core_interfaces.patch

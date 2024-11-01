@@ -1,27 +1,27 @@
 diff --git a/va/va.go b/va/va.go
-index d43346bbc..e0784adcb 100644
+index 17c03cf6e..237d82c6b 100644
 --- a/va/va.go
 +++ b/va/va.go
-@@ -256,6 +256,7 @@ type ValidationAuthorityImpl struct {
- 	maxRemoteFailures  int
- 	accountURIPrefixes []string
+@@ -260,6 +260,7 @@ type ValidationAuthorityImpl struct {
  	singleDialTimeout  time.Duration
+ 	perspective        string
+ 	rir                string
 +	labcaDomains       []string
  
  	metrics *vaMetrics
  }
-@@ -274,6 +275,7 @@ func NewValidationAuthorityImpl(
- 	clk clock.Clock,
- 	logger blog.Logger,
+@@ -280,6 +281,7 @@ func NewValidationAuthorityImpl(
  	accountURIPrefixes []string,
+ 	perspective string,
+ 	rir string,
 +	labcaDomains []string,
  ) (*ValidationAuthorityImpl, error) {
  
  	if len(accountURIPrefixes) == 0 {
-@@ -300,6 +302,7 @@ func NewValidationAuthorityImpl(
- 		// used for the DialContext operations that take place during an
- 		// HTTP-01 challenge validation.
+@@ -308,6 +310,7 @@ func NewValidationAuthorityImpl(
  		singleDialTimeout: 10 * time.Second,
+ 		perspective:       perspective,
+ 		rir:               rir,
 +		labcaDomains:      labcaDomains,
  	}
  

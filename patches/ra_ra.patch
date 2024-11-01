@@ -1,5 +1,5 @@
 diff --git a/ra/ra.go b/ra/ra.go
-index 513f2d444..006de7f4f 100644
+index 63ed21376..018ed136c 100644
 --- a/ra/ra.go
 +++ b/ra/ra.go
 @@ -44,7 +44,6 @@ import (
@@ -10,7 +10,7 @@ index 513f2d444..006de7f4f 100644
  	"github.com/letsencrypt/boulder/probs"
  	pubpb "github.com/letsencrypt/boulder/publisher/proto"
  	rapb "github.com/letsencrypt/boulder/ra/proto"
-@@ -574,7 +573,7 @@ func (ra *RegistrationAuthorityImpl) validateContacts(contacts []string) error {
+@@ -508,7 +507,7 @@ func (ra *RegistrationAuthorityImpl) validateContacts(contacts []string) error {
  				contact,
  			)
  		}
