@@ -1,3 +1,5 @@
+FROM letsencrypt/boulder-tools:go1.23.1_2024-09-05 AS boulder-tools
+
 FROM ubuntu:focal as builder
 
 RUN export DEBIAN_FRONTEND=noninteractive \
@@ -38,6 +40,8 @@ RUN export DEBIAN_FRONTEND=noninteractive \
         tzdata \
         ucspi-tcp \
     && rm -rf /var/lib/apt/lists/*
+
+COPY --from=boulder-tools /usr/local/bin/minica /usr/local/bin/minica
 
 COPY --from=builder /usr/bin/docker /usr/bin/docker
 COPY --from=builder /usr/libexec/docker/cli-plugins/docker-compose /usr/libexec/docker/cli-plugins/docker-compose
