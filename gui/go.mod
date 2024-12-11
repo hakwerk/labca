@@ -17,8 +17,8 @@ require (
 	github.com/smallstep/certificates v0.24.2
 	github.com/spf13/viper v1.16.0
 	go.step.sm/crypto v0.32.3
-	golang.org/x/crypto v0.21.0
-	golang.org/x/text v0.14.0
+	golang.org/x/crypto v0.31.0
+	golang.org/x/text v0.21.0
 )
 
 require (
@@ -91,7 +91,7 @@ require (
 	go.step.sm/linkedca v0.19.1 // indirect
 	golang.org/x/exp v0.0.0-20230310171629-522b1b587ee0 // indirect
 	golang.org/x/net v0.23.0 // indirect
-	golang.org/x/sys v0.18.0 // indirect
+	golang.org/x/sys v0.28.0 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20230629202037-9506855d4529 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20230711160842-782d3b101e98 // indirect
 	google.golang.org/grpc v1.56.3 // indirect
