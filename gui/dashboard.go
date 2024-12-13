@@ -45,6 +45,21 @@ func _removeAnsiColors(line string) string {
 	return line
 }
 
+func toJson(line string) (map[string]interface{}, int) {
+	var obj map[string]interface{}
+
+	idx := strings.Index(line, "JSON={")
+	if idx > -1 {
+		jsonStr := line[idx+5:]
+		err := json.Unmarshal([]byte(jsonStr), &obj)
+		if err != nil {
+			fmt.Println(err)
+		}
+	}
+
+	return obj, idx
+}
+
 func _parseLine(line string, loc *time.Location) Activity {
 	var activity Activity
 
@@ -107,15 +122,34 @@ func _parseLine(line string, loc *time.Location) Activity {
 	}
 
 	message := result[6]
-	idx := strings.Index(message, ".well-known/acme-challenge")
-	if idx > -1 {
-		message = message[0:idx]
-	}
+	var idx int
+	//idx := strings.Index(message, ".well-known/acme-challenge")
+	//if idx > -1 {
+	//	message = message[0:idx]
+	//}
 	if strings.Contains(message, "Checked CAA records for") {
 		message = message[0:strings.Index(message, ",")]
 	}
+
+	msgJson, jsonIdx := toJson(message)
+
 	if strings.Contains(message, "Validation result") {
-		message = message[0:30]
+		var ctyp string
+		var cstat string
+		if chall, ok := msgJson["Challenge"].(map[string]interface{}); ok {
+			ctyp = fmt.Sprintf(" Type=%s", chall["type"])
+			cstat = fmt.Sprintf(" Status=%s", chall["status"])
+		}
+		message = message[0:jsonIdx-1] + ":" + fmt.Sprintf(" Identifier=%s", msgJson["Identifier"]) + ctyp + cstat
+	}
+	if strings.Contains(message, "Signing precert") || strings.Contains(message, "Signing cert") {
+		var comnm string
+		var dnsnms string
+		if issreq, ok := msgJson["IssuanceRequest"].(map[string]interface{}); ok {
+			comnm = fmt.Sprintf(" CommonName=%s", issreq["CommonName"])
+			dnsnms = fmt.Sprintf(" DNSNames=%s", issreq["DNSNames"])
+		}
+		message = message[0:jsonIdx-1] + ":" + comnm + dnsnms + fmt.Sprintf(" Issuer=%s", msgJson["Issuer"])
 	}
 	idx = strings.Index(message, " csr=[")
 	if idx > -1 {
