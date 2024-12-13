@@ -1,5 +1,5 @@
 diff --git a/cmd/remoteva/main.go b/cmd/remoteva/main.go
-index 49db5c179..7c5931a04 100644
+index 97320f971..6df388e3f 100644
 --- a/cmd/remoteva/main.go
 +++ b/cmd/remoteva/main.go
 @@ -60,7 +60,8 @@ type Config struct {
@@ -12,7 +12,7 @@ index 49db5c179..7c5931a04 100644
  	}
  
  	Syslog        cmd.SyslogConfig
-@@ -143,7 +144,8 @@ func main() {
+@@ -142,7 +143,8 @@ func main() {
  		logger,
  		c.RVA.AccountURIPrefixes,
  		c.RVA.Perspective,

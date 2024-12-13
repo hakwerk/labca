@@ -1,16 +1,16 @@
 diff --git a/wfe2/wfe.go b/wfe2/wfe.go
-index 1f4b11fa5..64239cf58 100644
+index 6b753b53d..e49164461 100644
 --- a/wfe2/wfe.go
 +++ b/wfe2/wfe.go
-@@ -25,6 +25,7 @@ import (
- 	"golang.org/x/exp/maps"
+@@ -23,6 +23,7 @@ import (
+ 	"go.opentelemetry.io/otel/trace"
  	"google.golang.org/protobuf/types/known/emptypb"
  
 +	"github.com/letsencrypt/boulder/cmd"
  	"github.com/letsencrypt/boulder/core"
  	corepb "github.com/letsencrypt/boulder/core/proto"
  	berrors "github.com/letsencrypt/boulder/errors"
-@@ -174,6 +175,8 @@ type WebFrontEndImpl struct {
+@@ -177,6 +178,8 @@ type WebFrontEndImpl struct {
  	// descriptions (perhaps including URLs) of those profiles. NewOrder
  	// Requests with a profile name not present in this map will be rejected.
  	certProfiles map[string]string
@@ -19,7 +19,7 @@ index 1f4b11fa5..64239cf58 100644
  }
  
  // NewWebFrontEndImpl constructs a web service for Boulder
-@@ -201,6 +204,7 @@ func NewWebFrontEndImpl(
+@@ -204,6 +207,7 @@ func NewWebFrontEndImpl(
  	unpauseSigner unpause.JWTSigner,
  	unpauseJWTLifetime time.Duration,
  	unpauseURL string,
@@ -27,7 +27,7 @@ index 1f4b11fa5..64239cf58 100644
  ) (WebFrontEndImpl, error) {
  	if len(issuerCertificates) == 0 {
  		return WebFrontEndImpl{}, errors.New("must provide at least one issuer certificate")
-@@ -242,6 +246,7 @@ func NewWebFrontEndImpl(
+@@ -245,6 +249,7 @@ func NewWebFrontEndImpl(
  		unpauseSigner:                unpauseSigner,
  		unpauseJWTLifetime:           unpauseJWTLifetime,
  		unpauseURL:                   unpauseURL,
@@ -35,7 +35,7 @@ index 1f4b11fa5..64239cf58 100644
  	}
  
  	return wfe, nil
-@@ -2308,8 +2313,25 @@ func (wfe *WebFrontEndImpl) NewOrder(
+@@ -2374,8 +2379,25 @@ func (wfe *WebFrontEndImpl) NewOrder(
  		names[i] = ident.Value
  	}
  

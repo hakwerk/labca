@@ -1,5 +1,5 @@
 diff --git a/cmd/bad-key-revoker/main.go b/cmd/bad-key-revoker/main.go
-index e7015e0c8..9e226d2fa 100644
+index c333b88c3..839437c4e 100644
 --- a/cmd/bad-key-revoker/main.go
 +++ b/cmd/bad-key-revoker/main.go
 @@ -18,6 +18,7 @@ import (
@@ -10,7 +10,7 @@ index e7015e0c8..9e226d2fa 100644
  	"github.com/letsencrypt/boulder/cmd"
  	"github.com/letsencrypt/boulder/config"
  	"github.com/letsencrypt/boulder/core"
-@@ -396,6 +397,11 @@ type Config struct {
+@@ -398,6 +399,11 @@ type Config struct {
  		TLS       cmd.TLSConfig
  		RAService *cmd.GRPCClientConfig
  
@@ -22,7 +22,7 @@ index e7015e0c8..9e226d2fa 100644
  		// MaximumRevocations specifies the maximum number of certificates associated with
  		// a key hash that bad-key-revoker will attempt to revoke. If the number of certificates
  		// is higher than MaximumRevocations bad-key-revoker will error out and refuse to
-@@ -467,8 +473,35 @@ func main() {
+@@ -469,8 +475,35 @@ func main() {
  	cmd.FailOnError(err, "Failed to load credentials and create gRPC connection to RA")
  	rac := rapb.NewRegistrationAuthorityClient(conn)
  
@@ -59,7 +59,7 @@ index e7015e0c8..9e226d2fa 100644
  		pem, err := os.ReadFile(config.BadKeyRevoker.Mailer.SMTPTrustedRootFile)
  		cmd.FailOnError(err, "Loading trusted roots file")
  		smtpRoots = x509.NewCertPool()
-@@ -488,6 +521,8 @@ func main() {
+@@ -490,6 +523,8 @@ func main() {
  		config.BadKeyRevoker.Mailer.Username,
  		smtpPassword,
  		smtpRoots,

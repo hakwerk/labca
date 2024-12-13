@@ -1,8 +1,8 @@
 diff --git a/ra/ra.go b/ra/ra.go
-index 63ed21376..018ed136c 100644
+index 64d494c74..7ae5bb471 100644
 --- a/ra/ra.go
 +++ b/ra/ra.go
-@@ -44,7 +44,6 @@ import (
+@@ -43,7 +43,6 @@ import (
  	"github.com/letsencrypt/boulder/issuance"
  	blog "github.com/letsencrypt/boulder/log"
  	"github.com/letsencrypt/boulder/metrics"
@@ -10,9 +10,9 @@ index 63ed21376..018ed136c 100644
  	"github.com/letsencrypt/boulder/probs"
  	pubpb "github.com/letsencrypt/boulder/publisher/proto"
  	rapb "github.com/letsencrypt/boulder/ra/proto"
-@@ -508,7 +507,7 @@ func (ra *RegistrationAuthorityImpl) validateContacts(contacts []string) error {
- 				contact,
- 			)
+@@ -464,7 +463,7 @@ func (ra *RegistrationAuthorityImpl) validateContacts(contacts []string) error {
+ 		if !core.IsASCII(contact) {
+ 			return berrors.InvalidEmailError("contact email contains non-ASCII characters")
  		}
 -		err = policy.ValidEmail(parsed.Opaque)
 +		err = ra.PA.ValidEmail(parsed.Opaque)

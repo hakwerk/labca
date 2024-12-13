@@ -1,8 +1,8 @@
 diff --git a/va/va.go b/va/va.go
-index 17c03cf6e..237d82c6b 100644
+index a1e2cd449..883298092 100644
 --- a/va/va.go
 +++ b/va/va.go
-@@ -260,6 +260,7 @@ type ValidationAuthorityImpl struct {
+@@ -215,6 +215,7 @@ type ValidationAuthorityImpl struct {
  	singleDialTimeout  time.Duration
  	perspective        string
  	rir                string
@@ -10,7 +10,7 @@ index 17c03cf6e..237d82c6b 100644
  
  	metrics *vaMetrics
  }
-@@ -280,6 +281,7 @@ func NewValidationAuthorityImpl(
+@@ -234,6 +235,7 @@ func NewValidationAuthorityImpl(
  	accountURIPrefixes []string,
  	perspective string,
  	rir string,
@@ -18,7 +18,7 @@ index 17c03cf6e..237d82c6b 100644
  ) (*ValidationAuthorityImpl, error) {
  
  	if len(accountURIPrefixes) == 0 {
-@@ -308,6 +310,7 @@ func NewValidationAuthorityImpl(
+@@ -271,6 +273,7 @@ func NewValidationAuthorityImpl(
  		singleDialTimeout: 10 * time.Second,
  		perspective:       perspective,
  		rir:               rir,

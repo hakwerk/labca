@@ -1,5 +1,5 @@
 diff --git a/cmd/expiration-mailer/main.go b/cmd/expiration-mailer/main.go
-index 46fa939a6..43f7c11b5 100644
+index eed765273..e17bfde1c 100644
 --- a/cmd/expiration-mailer/main.go
 +++ b/cmd/expiration-mailer/main.go
 @@ -23,6 +23,7 @@ import (
@@ -31,9 +31,9 @@ index 46fa939a6..43f7c11b5 100644
 -		err = policy.ValidEmail(address)
 +		err = pa.ValidEmail(address)
  		if err != nil {
- 			m.log.Debugf("skipping invalid email %q: %s", address, err)
+ 			m.log.Debugf("skipping invalid email: %s", err)
  			continue
-@@ -701,6 +706,11 @@ type Config struct {
+@@ -697,6 +702,11 @@ type Config struct {
  		TLS       cmd.TLSConfig
  		SAService *cmd.GRPCClientConfig
  
@@ -45,7 +45,7 @@ index 46fa939a6..43f7c11b5 100644
  		// Path to a file containing a list of trusted root certificates for use
  		// during the SMTP connection (as opposed to the gRPC connections).
  		SMTPTrustedRootFile string
-@@ -854,8 +864,35 @@ func main() {
+@@ -850,8 +860,35 @@ func main() {
  	cmd.FailOnError(err, "Failed to load credentials and create gRPC connection to SA")
  	sac := sapb.NewStorageAuthorityClient(conn)
  
@@ -82,7 +82,7 @@ index 46fa939a6..43f7c11b5 100644
  		pem, err := os.ReadFile(c.Mailer.SMTPTrustedRootFile)
  		cmd.FailOnError(err, "Loading trusted roots file")
  		smtpRoots = x509.NewCertPool()
-@@ -889,6 +926,8 @@ func main() {
+@@ -885,6 +922,8 @@ func main() {
  		c.Mailer.Username,
  		smtpPassword,
  		smtpRoots,

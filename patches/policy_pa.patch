@@ -1,5 +1,5 @@
 diff --git a/policy/pa.go b/policy/pa.go
-index 26edbdbdf..177fddba2 100644
+index fac69d3b9..217c465fe 100644
 --- a/policy/pa.go
 +++ b/policy/pa.go
 @@ -31,6 +31,9 @@ type AuthorityImpl struct {
@@ -110,7 +110,7 @@ index 26edbdbdf..177fddba2 100644
  }
  
  // forbiddenMailDomains is a map of domain names we do not allow after the
-@@ -333,7 +361,7 @@ var forbiddenMailDomains = map[string]bool{
+@@ -333,14 +361,14 @@ var forbiddenMailDomains = map[string]bool{
  // ValidEmail returns an error if the input doesn't parse as an email address,
  // the domain isn't a valid hostname in Preferred Name Syntax, or its on the
  // list of domains forbidden for mail (because they are often used in examples).
@@ -118,17 +118,16 @@ index 26edbdbdf..177fddba2 100644
 +func (pa *AuthorityImpl) ValidEmail(address string) error {
  	email, err := mail.ParseAddress(address)
  	if err != nil {
- 		if len(address) > 254 {
-@@ -343,7 +371,7 @@ func ValidEmail(address string) error {
+ 		return berrors.InvalidEmailError("unable to parse email address")
  	}
  	splitEmail := strings.SplitN(email.Address, "@", -1)
  	domain := strings.ToLower(splitEmail[len(splitEmail)-1])
 -	err = validNonWildcardDomain(domain)
 +	err = pa.ValidNonWildcardDomain(domain, true)
  	if err != nil {
- 		return berrors.InvalidEmailError(
- 			"contact email %q has invalid domain : %s",
-@@ -387,7 +415,7 @@ func subError(name string, err error) berrors.SubBoulderError {
+ 		return berrors.InvalidEmailError("contact email has invalid domain: %s", err)
+ 	}
+@@ -382,7 +410,7 @@ func subError(name string, err error) berrors.SubBoulderError {
  //
  // Precondition: all input domain names must be in lowercase.
  func (pa *AuthorityImpl) WillingToIssue(domains []string) error {
@@ -137,7 +136,7 @@ index 26edbdbdf..177fddba2 100644
  	if err != nil {
  		return err
  	}
-@@ -406,6 +434,10 @@ func (pa *AuthorityImpl) WillingToIssue(domains []string) error {
+@@ -401,6 +429,10 @@ func (pa *AuthorityImpl) WillingToIssue(domains []string) error {
  			}
  		}
  
@@ -148,7 +147,7 @@ index 26edbdbdf..177fddba2 100644
  		// For both wildcard and non-wildcard domains, check whether any parent domain
  		// name is on the regular blocklist.
  		err := pa.checkHostLists(domain)
-@@ -439,10 +471,10 @@ func (pa *AuthorityImpl) WillingToIssue(domains []string) error {
+@@ -434,10 +466,10 @@ func (pa *AuthorityImpl) WillingToIssue(domains []string) error {
  //
  // If multiple domains are invalid, the error will contain suberrors specific to
  // each domain.
@@ -161,7 +160,7 @@ index 26edbdbdf..177fddba2 100644
  		if err != nil {
  			subErrors = append(subErrors, subError(domain, err))
  		}
-@@ -476,6 +508,34 @@ func combineSubErrors(subErrors []berrors.SubBoulderError) error {
+@@ -471,6 +503,34 @@ func combineSubErrors(subErrors []berrors.SubBoulderError) error {
  	return nil
  }
  
@@ -196,7 +195,7 @@ index 26edbdbdf..177fddba2 100644
  // checkWildcardHostList checks the wildcardExactBlocklist for a given domain.
  // If the domain is not present on the list nil is returned, otherwise
  // errPolicyForbidden is returned.
-@@ -505,6 +565,9 @@ func (pa *AuthorityImpl) checkHostLists(domain string) error {
+@@ -500,6 +560,9 @@ func (pa *AuthorityImpl) checkHostLists(domain string) error {
  	labels := strings.Split(domain, ".")
  	for i := range labels {
  		joined := strings.Join(labels[i:], ".")

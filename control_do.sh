@@ -36,10 +36,6 @@ setup_boulder_data() {
     sed -i -e "s|boulder.service.consul:4001|$LABCA_FQDN|g" config/remoteva-b.json
     sed -i -e "s|boulder.service.consul:4000|$LABCA_FQDN|g" config/va.json
     sed -i -e "s|boulder.service.consul:4001|$LABCA_FQDN|g" config/va.json
-    sed -i -e "s|boulder.service.consul:4000|$LABCA_FQDN|g" config/va-remote-a.json
-    sed -i -e "s|boulder.service.consul:4001|$LABCA_FQDN|g" config/va-remote-a.json
-    sed -i -e "s|boulder.service.consul:4000|$LABCA_FQDN|g" config/va-remote-b.json
-    sed -i -e "s|boulder.service.consul:4001|$LABCA_FQDN|g" config/va-remote-b.json
 
     /opt/labca/apply-boulder
 }

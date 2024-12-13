@@ -1,8 +1,8 @@
 diff --git a/cmd/boulder-wfe2/main.go b/cmd/boulder-wfe2/main.go
-index 61698d16c..0bebc2d4b 100644
+index 699ed0d78..01ae1f741 100644
 --- a/cmd/boulder-wfe2/main.go
 +++ b/cmd/boulder-wfe2/main.go
-@@ -95,7 +95,7 @@ type Config struct {
+@@ -105,7 +105,7 @@ type Config struct {
  		// DirectoryCAAIdentity is used for the /directory response's "meta"
  		// element's "caaIdentities" field. It should match the VA's "issuerDomain"
  		// configuration value (this value is the one used to enforce CAA)
@@ -11,7 +11,7 @@ index 61698d16c..0bebc2d4b 100644
  		// DirectoryWebsite is used for the /directory response's "meta" element's
  		// "website" field.
  		DirectoryWebsite string `validate:"required,url"`
-@@ -182,6 +182,8 @@ type Config struct {
+@@ -192,6 +192,8 @@ type Config struct {
  			// to enable the pausing feature.
  			URL string `validate:"omitempty,required_with=HMACKey JWTLifetime,url,startswith=https://,endsnotwith=/"`
  		}
@@ -20,7 +20,7 @@ index 61698d16c..0bebc2d4b 100644
  	}
  
  	Syslog        cmd.SyslogConfig
-@@ -387,6 +389,7 @@ func main() {
+@@ -403,6 +405,7 @@ func main() {
  		unpauseSigner,
  		c.WFE.Unpause.JWTLifetime.Duration,
  		c.WFE.Unpause.URL,
