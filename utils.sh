@@ -4,7 +4,7 @@ set -e
 
 export PS_LABCA="bin/labca-gui"
 export PS_BOULDER="bin/boulder"
-export PS_BOULDER_COUNT=21
+export PS_BOULDER_COUNT=24
 export PS_MYSQL="mysqld"
 export PS_CONTROL="tcpserver"
 export PS_NGINX="nginx:"
@@ -40,7 +40,7 @@ count() {
             ;;
     esac
 
-    local res=$(${prefix}ps -eo pid,cmd 2>/dev/null | grep "$pattern" | grep -v grep | wc -l)
+    local res=$(${prefix}ps -eo pid,cmd 2>/dev/null | grep "$pattern" | grep -v grep | grep -v "go build" | wc -l)
     if [ "$pattern" == "$PS_CONSUL" ]; then
         res=$(${prefix}ps -eo pid,args 2>/dev/null | grep "$pattern" | grep -v grep | wc -l)
     fi
