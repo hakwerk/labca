@@ -22,7 +22,7 @@ endif
 # Build
 #########################################
 
-LDFLAGS := -ldflags='-w -X "main.standaloneVersion=$(VERSION)"'
+LDFLAGS := -ldflags='-w -X "main.standaloneVersion=$(VERSION)" -extldflags "-static"'
 
 download:
 	$Q cd gui; \
@@ -71,9 +71,16 @@ debian: changelog
 	rm -f $$OUTPUT; \
 	dpkg-buildpackage -b -rfakeroot -us -uc && cp $$OUTPUT $(RELEASE)/
 
+debian-arm64: changelog
+	$Q mkdir -p $(RELEASE); \
+	OUTPUT=../labca-gui*.deb; \
+	rm -f $$OUTPUT; \
+	GOOS_OVERRIDE="GOARCH=arm64" \
+	dpkg-buildpackage -b -rfakeroot -us -uc --host-arch arm64 && cp $$OUTPUT $(RELEASE)/
+
 distclean: clean
 
-.PHONY: changelog debian distclean
+.PHONY: changelog debian debian-arm64 distclean
 
 #########################################
 # Clean

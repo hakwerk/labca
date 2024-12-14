@@ -29,12 +29,15 @@ jobs:
 
       - name: APT Install
         id: aptInstall
-        run: sudo apt-get -y install build-essential debhelper fakeroot
+        run: |
+          sudo dpkg --add-architecture arm64
+          sudo apt-get -y install build-essential debhelper fakeroot crossbuild-essential-arm64
 
-      - name: Build Debian package
+      - name: Build Debian packages
         id: make_debian
         run: |
           make debian
+          make debian-arm64
 
       - name: Create changelog text
         id: changelog
