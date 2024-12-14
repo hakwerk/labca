@@ -128,7 +128,7 @@ services:
     restart: always
 
   nginx:
-    image: nginx:1.27.1
+    image: nginx:1.27.3
     restart: always
     networks:
       - bouldernet
