@@ -1,0 +1,9 @@
+FROM ubuntu:focal
+
+ARG TARGETARCH
+
+COPY labca-gui*.deb /tmp/
+
+RUN dpkg -i /tmp/labca-gui_*_$TARGETARCH.deb
+
+CMD ["labca-gui", "-config", "/usr/data/config.json"]

@@ -6,16 +6,18 @@ Getting started with step-ca is much easier than starting with boulder. But Smal
 
 As the structure of the ACME data is pretty standard anyway, this standalone version of the LabCA GUI was created to work with step-ca (and potentially other ACME implementations in the future). It only works with their MySQL backend, as the BadgerDB backend has several limitations.
 
-The standalone GUI is distributed as a single binary so that it can be easily installed and started.
+The standalone GUI is distributed as a single binary so that it can be easily installed and started. There is also a docker image available.
 
 
 ## Usage
 
-Download the latest .deb file from the latest [release](https://github.com/hakwerk/labca/releases) on GitHub.
+### Install package
+
+Download the latest .deb file for your platform architecture from the latest [release](https://github.com/hakwerk/labca/releases) on GitHub.
 
 Install the .deb file:
 ```
-dpkg -i labca-gui_<version>_amd64.deb
+dpkg -i labca-gui_<version>_<arch>.deb
 ```
 
 The first time you can use the -init flag to create the config file. The location of the config file (default data/config.json), the IP address to listen on (default 0.0.0.0) and the port number (default 3000) can be specified, e.g.:
@@ -29,6 +31,17 @@ labca-gui -config stepca.json
 ```
 
 The first time you connect to the application, you can create an admin account and specify the MySQL connection details for your step-ca database.
+
+### Docker
+
+When running a docker container you can map local filesystem files or directories as volumes to have the config data outside of the image, e.g.:
+```
+docker run -it --rm -v /home/username/acme/stepca_config.json:/usr/data/config.json ghcr.io/hakwerk/labca-standalone
+```
+or
+```
+docker run -it --rm -v /home/username/acme:/opt/acme ghcr.io/hakwerk/labca-standalone labca-gui -config /opt/acme/stepca.json
+```
 
 
 ## systemd service

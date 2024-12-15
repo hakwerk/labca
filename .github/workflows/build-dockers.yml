@@ -6,9 +6,6 @@ on:
       - "**"
     tags:
       - "v*"
-  #pull_request:
-  #  branches:
-  #    - "**"
   workflow_dispatch:
 
 jobs:

@@ -103,6 +103,7 @@ goversion=$(grep GO_VERSION -A 3 ../boulder/.github/workflows/release.yml | egre
 echo "Boulder .github/workflows/release.yml"
 grep GO_VERSION -A 3 ../boulder/.github/workflows/release.yml | egrep "\- [\"0-9]+" | sed -e "s/yml-/yml/"
 colorGoVersion .github/workflows/release.yml $goversion
+colorGoVersion .github/workflows/build-standalone.yml $goversion
 echo
 
 goversion=$(grep GO_VERSION ../boulder/docker-compose.yml | sed -e "s/\s*GO_VERSION://")
