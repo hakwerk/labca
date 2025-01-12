@@ -21,6 +21,7 @@ fi
 $SUDO patch -p1 < $cloneDir/patches/bad-key-revoker_main.patch
 $SUDO patch -p1 < $cloneDir/patches/boulder-va_main.patch
 $SUDO patch -p1 < $cloneDir/patches/ca_ca.patch
+$SUDO patch -p1 < $cloneDir/patches/ca_ca_keytype_hack.patch
 $SUDO patch -p1 < $cloneDir/patches/ca_crl.patch
 $SUDO patch -p1 < $cloneDir/patches/cert-checker_main.patch
 $SUDO patch -p1 < $cloneDir/patches/cmd_config.patch
