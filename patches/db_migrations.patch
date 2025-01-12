@@ -1,5 +1,5 @@
 diff --git a/sa/db/boulder_sa/20230419000000_CombinedSchema.sql b/sa/db/boulder_sa/20230419000000_CombinedSchema.sql
-index ff8e54320..347f72fff 100644
+index 42c489be9..d2b1eb43b 100644
 --- a/sa/db/boulder_sa/20230419000000_CombinedSchema.sql
 +++ b/sa/db/boulder_sa/20230419000000_CombinedSchema.sql
 @@ -1,7 +1,9 @@
@@ -88,7 +88,7 @@ index ff8e54320..347f72fff 100644
    `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
    `setHash` binary(32) NOT NULL,
    `serial` varchar(255) NOT NULL,
-@@ -91,11 +102,9 @@ CREATE TABLE `fqdnSets` (
+@@ -93,11 +104,9 @@ CREATE TABLE `fqdnSets` (
    PRIMARY KEY (`id`),
    KEY `serial` (`serial`),
    KEY `setHash_issued_idx` (`setHash`,`issued`)
@@ -102,7 +102,7 @@ index ff8e54320..347f72fff 100644
    `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
    `serialTable` varchar(128) NOT NULL,
    `url` varchar(1024) NOT NULL,
-@@ -104,7 +113,7 @@ CREATE TABLE `incidents` (
+@@ -106,7 +115,7 @@ CREATE TABLE `incidents` (
    PRIMARY KEY (`id`)
  ) CHARSET=utf8mb4;
  
@@ -111,7 +111,7 @@ index ff8e54320..347f72fff 100644
    `id` bigint(20) NOT NULL AUTO_INCREMENT,
    `reversedName` varchar(640) CHARACTER SET ascii NOT NULL,
    `notBefore` datetime NOT NULL,
-@@ -112,11 +121,9 @@ CREATE TABLE `issuedNames` (
+@@ -114,11 +123,9 @@ CREATE TABLE `issuedNames` (
    `renewal` tinyint(1) NOT NULL DEFAULT 0,
    PRIMARY KEY (`id`),
    KEY `reversedName_notBefore_Idx` (`reversedName`,`notBefore`)
@@ -125,7 +125,7 @@ index ff8e54320..347f72fff 100644
    `id` bigint(20) NOT NULL AUTO_INCREMENT,
    `keyHash` binary(32) NOT NULL,
    `certNotAfter` datetime NOT NULL,
-@@ -126,7 +133,7 @@ CREATE TABLE `keyHashToSerial` (
+@@ -128,7 +135,7 @@ CREATE TABLE `keyHashToSerial` (
    KEY `keyHash_certNotAfter` (`keyHash`,`certNotAfter`)
  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
  
@@ -134,7 +134,7 @@ index ff8e54320..347f72fff 100644
    `id` bigint(20) NOT NULL AUTO_INCREMENT,
    `regID` bigint(20) NOT NULL,
    `time` datetime NOT NULL,
-@@ -135,7 +142,7 @@ CREATE TABLE `newOrdersRL` (
+@@ -137,7 +144,7 @@ CREATE TABLE `newOrdersRL` (
    UNIQUE KEY `regID_time_idx` (`regID`,`time`)
  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
  
@@ -143,7 +143,7 @@ index ff8e54320..347f72fff 100644
    `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
    `setHash` binary(32) NOT NULL,
    `orderID` bigint(20) NOT NULL,
-@@ -145,20 +152,18 @@ CREATE TABLE `orderFqdnSets` (
+@@ -147,20 +154,18 @@ CREATE TABLE `orderFqdnSets` (
    KEY `setHash_expires_idx` (`setHash`,`expires`),
    KEY `orderID_idx` (`orderID`),
    KEY `orderFqdnSets_registrationID_registrations` (`registrationID`)
@@ -170,7 +170,7 @@ index ff8e54320..347f72fff 100644
    `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
    `registrationID` bigint(20) NOT NULL,
    `expires` datetime NOT NULL,
-@@ -169,14 +174,12 @@ CREATE TABLE `orders` (
+@@ -171,14 +176,12 @@ CREATE TABLE `orders` (
    PRIMARY KEY (`id`),
    KEY `reg_status_expires` (`registrationID`,`expires`),
    KEY `regID_created_idx` (`registrationID`,`created`)
@@ -187,7 +187,7 @@ index ff8e54320..347f72fff 100644
    `id` bigint(20) NOT NULL AUTO_INCREMENT,
    `registrationID` bigint(20) NOT NULL,
    `serial` varchar(255) NOT NULL,
-@@ -187,11 +190,11 @@ CREATE TABLE `precertificates` (
+@@ -189,11 +192,11 @@ CREATE TABLE `precertificates` (
    KEY `serial` (`serial`),
    KEY `regId_precertificates_idx` (`registrationID`),
    KEY `issued_precertificates_idx` (`issued`)
@@ -203,7 +203,7 @@ index ff8e54320..347f72fff 100644
    `id` bigint(20) NOT NULL AUTO_INCREMENT,
    `jwk` mediumblob NOT NULL,
    `jwk_sha256` varchar(255) NOT NULL,
-@@ -206,20 +209,32 @@ CREATE TABLE `registrations` (
+@@ -208,20 +211,32 @@ CREATE TABLE `registrations` (
    KEY `initialIP_createdAt` (`initialIP`,`createdAt`)
  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
  
@@ -241,7 +241,7 @@ index ff8e54320..347f72fff 100644
    `id` bigint(20) NOT NULL AUTO_INCREMENT,
    `registrationID` bigint(20) NOT NULL,
    `serial` varchar(255) NOT NULL,
-@@ -237,6 +252,18 @@ CREATE TABLE `serials` (
+@@ -239,6 +254,18 @@ CREATE TABLE `serials` (
  -- First set of tables have foreign key constraints, so are dropped first.
  DROP TABLE `serials`;
  
@@ -260,7 +260,7 @@ index ff8e54320..347f72fff 100644
  DROP TABLE `authz2`;
  DROP TABLE `blockedKeys`;
  DROP TABLE `certificateStatus`;
-@@ -247,8 +274,44 @@ DROP TABLE `issuedNames`;
+@@ -249,8 +276,44 @@ DROP TABLE `issuedNames`;
  DROP TABLE `keyHashToSerial`;
  DROP TABLE `newOrdersRL`;
  DROP TABLE `orderFqdnSets`;

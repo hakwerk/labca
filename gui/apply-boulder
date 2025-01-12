@@ -77,8 +77,8 @@ sed -i -e "s/\"directoryCAAIdentity\": \".*\"/\"directoryCAAIdentity\": \"$PKI_D
 
 if ([ "$PKI_DOMAIN_MODE" == "lockdown" ] && [ "$PKI_LOCKDOWN_DOMAINS" != "" ]) || ([ "$PKI_DOMAIN_MODE" == "whitelist" ] && [ "$PKI_WHITELIST_DOMAINS" != "" ]); then
     perl -i -p0e "s/(\"badResultsOnly\":[^\n]*).*?(\s+)(\"checkPeriod\":)/\1\2\"skipForbiddenDomains\": true,\2\3/igs" config/cert-checker.json
-    perl -i -p0e "s/(\"ignoredLints\": \[).*?(\s+)(\"w_subject_common_name_included\")/\1\2\"e_dnsname_not_valid_tld\",\2\3/igs" config/cert-checker.json
-    perl -i -p0e "s/(\"ignoredLints\": \[).*?(\s+)(\"w_subject_common_name_included\")/\1\2\"e_dnsname_not_valid_tld\",\2\3/igs" config/ca.json
+    perl -i -p0e "s/(\"ignoredLints\": \[).*?(\s+)(\"w_subject_common_name_included\")/\1\2\"e_dnsname_not_valid_tld\",\2\"w_sub_cert_aia_contains_internal_names\",\2\3/igs" config/cert-checker.json
+    perl -i -p0e "s/(\"ignoredLints\": \[).*?(\s+)(\"w_subject_common_name_included\")/\1\2\"e_dnsname_not_valid_tld\",\2\"w_sub_cert_aia_contains_internal_names\",\2\3/igs" config/ca.json
 
     perl -i -p0e "s/(\"SubscriberKeyUsageValidator:cabf.serverauth.subscriber_rsa_digitalsignature_and_keyencipherment_present\",).*(\])/\1\n  \"GeneralNameDnsNameInternalDomainNameValidator:cabf.internal_domain_name\",\n  \"GeneralNameUriInternalDomainNameValidator:cabf.internal_domain_name\",\n\2/igs" config/zlint.toml
 fi

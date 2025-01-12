@@ -1,17 +1,19 @@
 diff --git a/test/certs/generate.sh b/test/certs/generate.sh
-index 0b33f8c18..3e447f6f5 100755
+index 7386e7992..27d105017 100755
 --- a/test/certs/generate.sh
 +++ b/test/certs/generate.sh
-@@ -64,7 +64,7 @@ webpki() (
+@@ -64,8 +64,8 @@ webpki() (
    # script.
    cd ../..
-   mkdir ./test/certs/webpki
+   make build
+-  mkdir ./test/certs/webpki
 -  go run ./test/certs/webpki.go
-+  # go run ./test/certs/webpki.go
++  mkdir ./labca/certs/webpki
++  # go run ./labca/certs/webpki.go
  )
  
  if ! [ -d ipki ]; then
-@@ -72,6 +72,17 @@ if ! [ -d ipki ]; then
+@@ -73,6 +73,17 @@ if ! [ -d ipki ]; then
    ipki
  fi
  

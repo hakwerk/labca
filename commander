@@ -181,12 +181,12 @@ case $txt in
     read serial
     read reason
     cd /opt/boulder
-    docker compose exec boulder bin/admin -config labca/config/admin.json revoke-cert -serial $serial -reason $reason -dry-run=false 2>&1
+    docker compose exec boulder bin/boulder admin -config labca/config/admin.json revoke-cert -serial $serial -reason $reason -dry-run=false 2>&1
     ;;
 "test-email")
     read recipient
     cd /opt/boulder
-    docker compose exec boulder bin/mail-tester --config labca/config/expiration-mailer.json $recipient 2>&1
+    docker compose exec boulder bin/boulder mail-tester --config labca/config/expiration-mailer.json $recipient 2>&1
     ;;
 "boulder-start")
     cd /opt/boulder
