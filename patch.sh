@@ -33,6 +33,7 @@ $SUDO patch -p1 < $cloneDir/patches/db_migrations.patch
 $SUDO patch -p1 < $cloneDir/patches/db_migrations2.patch
 $SUDO patch -p1 < $cloneDir/patches/db_migrations3.patch
 $SUDO patch -p1 < $cloneDir/patches/db_migrations4.patch
+$SUDO patch -p1 < $cloneDir/patches/db_migrations5.patch
 $SUDO patch -p1 < $cloneDir/patches/errors_errors.patch
 $SUDO patch -p1 < $cloneDir/patches/expiration-mailer_main.patch
 $SUDO patch -p1 < $cloneDir/patches/issuance_crl.patch

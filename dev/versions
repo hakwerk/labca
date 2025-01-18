@@ -77,6 +77,20 @@ colorGoVersion2() {
     echo "* $fileName:$res"
 }
 
+colorEqual() {
+    local first="$1"
+    local second="$2"
+
+    if [ "$first" = "$second" ]; then
+        res=$(echo $first | sed -e "s/$first/${COL_LIGHT_GREEN}$first${COL_NC}/")
+        echo " $res"
+    else
+        res=$(echo $first | sed -e "s/$first/${COL_LIGHT_RED}$first${COL_NC}/")
+        echo " $res, but have $second"
+    fi
+
+}
+
 echo
 
 cd ../boulder
@@ -110,5 +124,11 @@ goversion=$(grep GO_VERSION ../boulder/docker-compose.yml | sed -e "s/\s*GO_VERS
 echo -n "Boulder docker-compose.yml"
 grep GO_VERSION ../boulder/docker-compose.yml | sed -e "s/\s*GO_VERSION:/    /"
 colorGoVersion2 build/docker-compose.yml $goversion
+echo
+
+db_migrs=$(ls -1 ../boulder/sa/db/boulder_sa/ | wc -l)
+db_patches=$(ls -1 ../labca/patches/db_migrations* | wc -l)
+echo -n "Database migrations "
+colorEqual $db_migrs $db_patches
 echo
 
