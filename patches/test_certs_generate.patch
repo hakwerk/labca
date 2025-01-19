@@ -1,13 +1,15 @@
 diff --git a/test/certs/generate.sh b/test/certs/generate.sh
-index 7386e7992..27d105017 100755
+index 7386e7992..50ec741f3 100755
 --- a/test/certs/generate.sh
 +++ b/test/certs/generate.sh
-@@ -64,8 +64,8 @@ webpki() (
+@@ -63,9 +63,9 @@ webpki() (
+   # This function executes in a subshell, so this cd does not affect the parent
    # script.
    cd ../..
-   make build
+-  make build
 -  mkdir ./test/certs/webpki
 -  go run ./test/certs/webpki.go
++  # make build
 +  mkdir ./labca/certs/webpki
 +  # go run ./labca/certs/webpki.go
  )
