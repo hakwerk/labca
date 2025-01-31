@@ -1,4 +1,4 @@
-FROM ubuntu:focal as builder
+FROM ubuntu:focal AS builder
 
 RUN export DEBIAN_FRONTEND=noninteractive \
     && apt-get update \
@@ -31,6 +31,7 @@ FROM ubuntu:focal
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
         ca-certificates \
+        softhsm2 \
         tzdata \
         unzip \
         zip \
@@ -46,3 +47,6 @@ COPY tmp/admin/apply-boulder /opt/labca/
 COPY tmp/admin/apply-nginx /opt/labca/
 COPY tmp/admin/restart_control /opt/labca/
 COPY tmp/admin/templates /opt/labca/templates/
+
+COPY tmp/bin/ceremony /opt/boulder/bin/
+COPY tmp/bin/nameid /opt/boulder/bin/

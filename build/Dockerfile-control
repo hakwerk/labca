@@ -37,6 +37,7 @@ RUN export DEBIAN_FRONTEND=noninteractive \
         cron \
         curl \
         python3 \
+        softhsm2 \
         tzdata \
         ucspi-tcp \
     && rm -rf /var/lib/apt/lists/*
@@ -59,6 +60,7 @@ COPY tmp/restore /opt/labca/
 COPY tmp/utils.sh /opt/labca/
 COPY tmp/src/labca /opt/staging/boulder_labca
 COPY tmp/admin/apply-boulder /opt/labca/
+COPY tmp/admin/apply /opt/labca/
 
 COPY tmp/admin/static /opt/staging/static
 COPY tmp/admin/data /opt/staging/data
@@ -68,7 +70,4 @@ COPY tmp/admin/apply-nginx /opt/labca/
 
 COPY tmp/bin/boulder /opt/boulder/bin/
 
-RUN cd /opt/boulder/bin/ \
-    && ln -s boulder admin-revoker \
-    && ln -s boulder mail-tester \
-    && mkdir /opt/logs
+RUN mkdir /opt/logs

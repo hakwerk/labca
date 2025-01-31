@@ -60,13 +60,6 @@
     {{ end }}
   </div>
   <div class="form-group">
-    <label for="ou">Org. Unit (optional):</label>
-    <input class="form-control" type="text" id="ou" name="ou" value="{{ .OrgUnit }}" {{ if and (ne .Organization "") (.IsRootGenerated) }}readonly{{ end }}>
-    {{ with .Errors.OrgUnit }}
-    <span class="error">{{ . }}</span>
-    {{ end }}
-  </div>
-  <div class="form-group">
     <label for="cn">Common Name:</label>
     <input class="form-control" type="text" id="cn" name="cn" value="{{ .CommonName }}" required>
     {{ with .Errors.CommonName }}
@@ -136,12 +129,12 @@
     <textarea class="form-control" id="certificate" name="certificate" rows="10" cols="80" required>{{ .Certificate }}</textarea>
   </div>
   <div class="form-group">
-    <label for="key">Key (in PEM format{{ if .IsRoot }}; optional{{ end }}):
+    <label for="key">Key (in PEM format):
     {{ with .Errors.Key }}
     <span class="error"><br/>{{ . }}</span>
     {{ end }}
     </label>
-    <textarea class="form-control" id="key" name="key" rows="10" cols="80">{{ .Key }}</textarea>
+    <textarea class="form-control" id="key" name="key" rows="10" cols="80" required>{{ .Key }}</textarea>
   </div>
   <div class="form-group">
     <label for="passphrase">Passphrase (optional):

@@ -1,0 +1,85 @@
+diff --git a/cmd/ceremony/main.go b/cmd/ceremony/main.go
+index f18979fef..0aa8eb0c7 100644
+--- a/cmd/ceremony/main.go
++++ b/cmd/ceremony/main.go
+@@ -98,6 +98,7 @@ type keyGenConfig struct {
+ 	Type         string `yaml:"type"`
+ 	RSAModLength uint   `yaml:"rsa-mod-length"`
+ 	ECDSACurve   string `yaml:"ecdsa-curve"`
++	Extractable  bool   `yaml:"extractable"`
+ }
+ 
+ var allowedCurves = map[string]bool{
+@@ -174,6 +175,7 @@ type rootConfig struct {
+ 	} `yaml:"outputs"`
+ 	CertProfile certProfile `yaml:"certificate-profile"`
+ 	SkipLints   []string    `yaml:"skip-lints"`
++	Renewal     bool        `yaml:"renewal"`
+ }
+ 
+ func (rc rootConfig) validate() error {
+@@ -189,9 +191,11 @@ func (rc rootConfig) validate() error {
+ 	}
+ 
+ 	// Output fields
+-	err = checkOutputFile(rc.Outputs.PublicKeyPath, "public-key-path")
+-	if err != nil {
+-		return err
++	if !rc.Renewal {
++		err = checkOutputFile(rc.Outputs.PublicKeyPath, "public-key-path")
++		if err != nil {
++			return err
++		}
+ 	}
+ 	err = checkOutputFile(rc.Outputs.CertificatePath, "certificate-path")
+ 	if err != nil {
+@@ -629,23 +633,42 @@ func rootCeremony(configBytes []byte) error {
+ 		return fmt.Errorf("failed to setup session and PKCS#11 context for slot %d: %s", config.PKCS11.StoreSlot, err)
+ 	}
+ 	log.Printf("Opened PKCS#11 session for slot %d\n", config.PKCS11.StoreSlot)
+-	keyInfo, err := generateKey(session, config.PKCS11.StoreLabel, config.Outputs.PublicKeyPath, config.Key)
+-	if err != nil {
+-		return err
++	var rKeyInfo *keyInfo
++	if config.Renewal {
++		// Reuse existing root key for a renewal
++		pub, _, err := loadPubKey(config.Outputs.PublicKeyPath)
++		if err != nil {
++			return err
++		}
++
++		der, err := x509.MarshalPKIXPublicKey(pub)
++		if err != nil {
++			return fmt.Errorf("Failed to marshal public key: %s", err)
++		}
++
++		rKeyInfo = &keyInfo{
++			key: pub,
++			der: der,
++		}
++	} else {
++		rKeyInfo, err = generateKey(session, config.PKCS11.StoreLabel, config.Outputs.PublicKeyPath, config.Key)
++		if err != nil {
++			return err
++		}
+ 	}
+-	signer, err := session.NewSigner(config.PKCS11.StoreLabel, keyInfo.key)
++	signer, err := session.NewSigner(config.PKCS11.StoreLabel, rKeyInfo.key)
+ 	if err != nil {
+ 		return fmt.Errorf("failed to retrieve signer: %s", err)
+ 	}
+-	template, err := makeTemplate(newRandReader(session), &config.CertProfile, keyInfo.der, nil, rootCert)
++	template, err := makeTemplate(newRandReader(session), &config.CertProfile, rKeyInfo.der, nil, rootCert)
+ 	if err != nil {
+ 		return fmt.Errorf("failed to create certificate profile: %s", err)
+ 	}
+-	lintCert, err := issueLintCertAndPerformLinting(template, template, keyInfo.key, signer, config.SkipLints)
++	lintCert, err := issueLintCertAndPerformLinting(template, template, rKeyInfo.key, signer, config.SkipLints)
+ 	if err != nil {
+ 		return err
+ 	}
+-	finalCert, err := signAndWriteCert(template, template, lintCert, keyInfo.key, signer, config.Outputs.CertificatePath)
++	finalCert, err := signAndWriteCert(template, template, lintCert, rKeyInfo.key, signer, config.Outputs.CertificatePath)
+ 	if err != nil {
+ 		return err
+ 	}

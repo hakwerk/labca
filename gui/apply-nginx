@@ -9,8 +9,10 @@ PKI_WEB_TITLE=$(grep web_title $dataDir/config.json | sed -e 's/.*:[ ]*//' | sed
 if [ "$PKI_WEB_TITLE" == "" ]; then
     export PKI_WEB_TITLE="LabCA"
 fi
-PKI_ROOT_CERT_BASE="$dataDir/root-ca"
-PKI_INT_CERT_BASE="$dataDir/issuer/ca-int"
+PKI_ROOT_CERT_BASE="/opt/boulder/labca/certs/webpki/root-01-cert"
+[ ! -d "/home/labca/boulder_labca/certs/webpki" ] || PKI_ROOT_CERT_BASE="/home/labca/boulder_labca/certs/webpki/root-01-cert"
+PKI_INT_CERT_BASE="/opt/boulder/labca/certs/webpki/issuer-01-cert"
+[ ! -d "/home/labca/boulder_labca/certs/webpki" ] || PKI_INT_CERT_BASE="/home/labca/boulder_labca/certs/webpki/issuer-01-cert"
 PKI_ISSUER_NAME_ID=$(grep issuer_name_id $dataDir/config.json | sed -e 's/.*:[ ]*//' | sed -e 's/,//g' | sed -e 's/\"//g')
 if [ -z "$PKI_ISSUER_NAME_ID" ] && [ -e "$PKI_INT_CERT_BASE.pem" ]; then
     nmid=$(/opt/boulder/bin/nameid -s $PKI_INT_CERT_BASE.pem)
@@ -27,26 +29,42 @@ sed -i -e "s|<title>.*</title>|<title>$PKI_WEB_TITLE</title>|g" 502.html
 sed -i -e "s|<\!-- BEGIN WEBTITLE -->.*<\!-- END WEBTITLE -->|<\!-- BEGIN WEBTITLE -->$PKI_WEB_TITLE<\!-- END WEBTITLE -->|g" 502.html
 
 if [ -e $PKI_ROOT_CERT_BASE.pem ]; then
-    PKI_ROOT_DN=$(openssl x509 -noout -in $PKI_ROOT_CERT_BASE.pem -subject | sed -e "s/subject= //")
+    PKI_ROOT_DN=$(openssl x509 -noout -in $PKI_ROOT_CERT_BASE.pem -subject | sed -e "s/subject=//")
     sed -i -e "s|<\!-- BEGIN PKI_ROOT_DN -->.*<\!-- END PKI_ROOT_DN -->|<\!-- BEGIN PKI_ROOT_DN -->$PKI_ROOT_DN<\!-- END PKI_ROOT_DN -->|g" certs/index.html
+    ROOT_BASE_NAME=$(basename $PKI_ROOT_CERT_BASE)
+    PKI_ROOT_LINK="<a class=\"public\" href=\"$ROOT_BASE_NAME.pem\">$ROOT_BASE_NAME.pem</a></td>"
+    sed -i -e "s|<\!-- BEGIN PKI_ROOT_LINK -->.*<\!-- END PKI_ROOT_LINK -->|<\!-- BEGIN PKI_ROOT_LINK -->$PKI_ROOT_LINK<\!-- END PKI_ROOT_LINK -->|g" certs/index.html
     PKI_ROOT_VALIDITY="$(openssl x509 -noout -in $PKI_ROOT_CERT_BASE.pem -startdate | sed -e "s/.*=/Not Before: /")<br/> $(openssl x509 -noout -in $PKI_ROOT_CERT_BASE.pem -enddate | sed -e "s/.*=/Not After: /")"
     sed -i -e "s|<\!-- BEGIN PKI_ROOT_VALIDITY -->.*<\!-- END PKI_ROOT_VALIDITY -->|<\!-- BEGIN PKI_ROOT_VALIDITY -->$PKI_ROOT_VALIDITY<\!-- END PKI_ROOT_VALIDITY -->|g" certs/index.html
+
+    ROOT_CRL_FILE=${PKI_ROOT_CERT_BASE/-cert/-crl}.pem
+    PKI_ROOT_CRL_LINK=""
     PKI_ROOT_CRL_VALIDITY=""
-    if [ -e "$PKI_ROOT_CERT_BASE.crl" ]; then
-        PKI_ROOT_CRL_VALIDITY="$(openssl crl -noout -in $PKI_ROOT_CERT_BASE.crl -lastupdate | sed -e "s/.*=/Last Update: /")<br/> $(openssl crl -noout -in $PKI_ROOT_CERT_BASE.crl -nextupdate | sed -e "s/.*=/Next Update: /")"
+    if [ -e $ROOT_CRL_FILE ]; then
+        ROOT_CRL_NAME=$(basename $ROOT_CRL_FILE)
+        [ -e "crl/$ROOT_CRL_NAME" ] || cp $ROOT_CRL_FILE crl/$ROOT_CRL_NAME
+        PKI_ROOT_CRL_LINK="<a class=\"public\" href=\"../crl/$ROOT_CRL_NAME\">$ROOT_CRL_NAME</a></td>"
+        PKI_ROOT_CRL_VALIDITY="$(openssl crl -noout -in $ROOT_CRL_FILE -lastupdate | sed -e "s/.*=/Last Update: /")<br/> $(openssl crl -noout -in $ROOT_CRL_FILE -nextupdate | sed -e "s/.*=/Next Update: /")"
     fi
+    sed -i -e "s|<\!-- BEGIN PKI_ROOT_CRL_LINK -->.*<\!-- END PKI_ROOT_CRL_LINK -->|<\!-- BEGIN PKI_ROOT_CRL_LINK -->$PKI_ROOT_CRL_LINK<\!-- END PKI_ROOT_CRL_LINK -->|g" certs/index.html
     sed -i -e "s|<\!-- BEGIN PKI_ROOT_CRL_VALIDITY -->.*<\!-- END PKI_ROOT_CRL_VALIDITY -->|<\!-- BEGIN PKI_ROOT_CRL_VALIDITY -->$PKI_ROOT_CRL_VALIDITY<\!-- END PKI_ROOT_CRL_VALIDITY -->|g" certs/index.html
 fi
 
 if [ -e $PKI_INT_CERT_BASE.pem ]; then
-    PKI_INT_DN=$(openssl x509 -noout -in $PKI_INT_CERT_BASE.pem -subject | sed -e "s/subject= //")
+    PKI_INT_DN=$(openssl x509 -noout -in $PKI_INT_CERT_BASE.pem -subject | sed -e "s/subject=//")
     sed -i -e "s|<\!-- BEGIN PKI_INT_DN -->.*<\!-- END PKI_INT_DN -->|<\!-- BEGIN PKI_INT_DN -->$PKI_INT_DN<\!-- END PKI_INT_DN -->|g" certs/index.html
+    INT_BASE_NAME=$(basename $PKI_INT_CERT_BASE)
+    PKI_INT_LINK="<a class=\"public\" href=\"$INT_BASE_NAME.pem\">$INT_BASE_NAME.pem</a></td>"
+    sed -i -e "s|<\!-- BEGIN PKI_INT_LINK -->.*<\!-- END PKI_INT_LINK -->|<\!-- BEGIN PKI_INT_LINK -->$PKI_INT_LINK<\!-- END PKI_INT_LINK -->|g" certs/index.html
     PKI_INT_VALIDITY="$(openssl x509 -noout -in $PKI_INT_CERT_BASE.pem -startdate | sed -e "s/.*=/Not Before: /")<br/> $(openssl x509 -noout -in $PKI_INT_CERT_BASE.pem -enddate | sed -e "s/.*=/Not After: /")"
     sed -i -e "s|<\!-- BEGIN PKI_INT_VALIDITY -->.*<\!-- END PKI_INT_VALIDITY -->|<\!-- BEGIN PKI_INT_VALIDITY -->$PKI_INT_VALIDITY<\!-- END PKI_INT_VALIDITY -->|g" certs/index.html
+
+    INT_CRL_NAME=${INT_BASE_NAME/-cert/-crl}.pem
     PKI_INT_CRL_LINK=""
     PKI_INT_CRL_VALIDITY=""
     if [ -e "crl/$PKI_ISSUER_NAME_ID.crl" ]; then
-        PKI_INT_CRL_LINK="<a class=\"public\" href=\"../crl/$PKI_ISSUER_NAME_ID.crl\">$PKI_ISSUER_NAME_ID.crl</a></td>"
+        [ -L "crl/$INT_CRL_NAME" ] || ln -sf $PKI_ISSUER_NAME_ID.crl crl/$INT_CRL_NAME
+        PKI_INT_CRL_LINK="<a class=\"public\" href=\"../crl/$INT_CRL_NAME\">$INT_CRL_NAME</a></td>"
         PKI_INT_CRL_VALIDITY="$(openssl crl -noout -inform der -in crl/$PKI_ISSUER_NAME_ID.crl -lastupdate | sed -e "s/.*=/Last Update: /")<br/> $(openssl crl -noout -inform der -in crl/$PKI_ISSUER_NAME_ID.crl -nextupdate | sed -e "s/.*=/Next Update: /")"
     fi
     sed -i -e "s|<\!-- BEGIN PKI_INT_CRL_LINK -->.*<\!-- END PKI_INT_CRL_LINK -->|<\!-- BEGIN PKI_INT_CRL_LINK -->$PKI_INT_CRL_LINK<\!-- END PKI_INT_CRL_LINK -->|g" certs/index.html

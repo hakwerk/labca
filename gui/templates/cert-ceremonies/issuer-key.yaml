@@ -1,0 +1,19 @@
+ceremony-type: key
+pkcs11:
+    module: {{ .Module }}
+    pin: {{ .UserPIN }}
+    store-key-in-slot: {{ .SlotID }}
+    store-key-with-label: {{ .Label }}
+key:
+    type: {{ .KeyType }}
+{{ if eq .KeyType "rsa" }}
+    rsa-mod-length: {{ .KeyParam }}
+{{ else }}
+    ecdsa-curve: {{ .KeyParam }}
+{{ end }}
+{{ if eq .Extractable "true" }}
+    extractable: true
+{{ end }}
+outputs:
+    public-key-path: {{ .Path }}issuer-{{ .SeqNr }}-pubkey.pem
+    pkcs11-config-path: {{ .Path }}issuer-{{ .SeqNr }}.pkcs11.json

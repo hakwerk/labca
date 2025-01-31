@@ -23,6 +23,10 @@ $SUDO patch -p1 < $cloneDir/patches/boulder-va_main.patch
 $SUDO patch -p1 < $cloneDir/patches/ca_ca.patch
 $SUDO patch -p1 < $cloneDir/patches/ca_ca_keytype_hack.patch
 $SUDO patch -p1 < $cloneDir/patches/ca_crl.patch
+$SUDO patch -p1 < $cloneDir/patches/ceremony_ecdsa.patch
+$SUDO patch -p1 < $cloneDir/patches/ceremony_key.patch
+$SUDO patch -p1 < $cloneDir/patches/ceremony_main.patch
+$SUDO patch -p1 < $cloneDir/patches/ceremony_rsa.patch
 $SUDO patch -p1 < $cloneDir/patches/cert-checker_main.patch
 $SUDO patch -p1 < $cloneDir/patches/cmd_config.patch
 $SUDO patch -p1 < $cloneDir/patches/config_duration.patch
@@ -50,6 +54,7 @@ $SUDO patch -p1 < $cloneDir/patches/ra_ra.patch
 $SUDO patch -p1 < $cloneDir/patches/ratelimit_rate-limits.patch
 $SUDO patch -p1 < $cloneDir/patches/ratelimits_names.patch
 $SUDO patch -p1 < $cloneDir/patches/remoteva_main.patch
+$SUDO patch -p1 < $cloneDir/patches/start.patch
 if [ "$SUDO" == "" ]; then
     # TODO: should include this into startservers.patch
     $SUDO patch -p1 < $cloneDir/build/tmp2.patch

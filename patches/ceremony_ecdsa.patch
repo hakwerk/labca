@@ -1,0 +1,40 @@
+diff --git a/cmd/ceremony/ecdsa.go b/cmd/ceremony/ecdsa.go
+index 65f5c6f99..24102ad8e 100644
+--- a/cmd/ceremony/ecdsa.go
++++ b/cmd/ceremony/ecdsa.go
+@@ -29,7 +29,7 @@ var curveToOIDDER = map[string][]byte{
+ // ecArgs constructs the private and public key template attributes sent to the
+ // device and specifies which mechanism should be used. curve determines which
+ // type of key should be generated.
+-func ecArgs(label string, curve elliptic.Curve, keyID []byte) generateArgs {
++func ecArgs(label string, curve elliptic.Curve, keyID []byte, extractable bool) generateArgs {
+ 	encodedCurve := curveToOIDDER[curve.Params().Name]
+ 	log.Printf("\tEncoded curve parameters for %s: %X\n", curve.Params().Name, encodedCurve)
+ 	return generateArgs{
+@@ -50,7 +50,7 @@ func ecArgs(label string, curve elliptic.Curve, keyID []byte) generateArgs {
+ 			// Prevent attributes being retrieved
+ 			pkcs11.NewAttribute(pkcs11.CKA_SENSITIVE, true),
+ 			// Prevent the key being extracted from the device
+-			pkcs11.NewAttribute(pkcs11.CKA_EXTRACTABLE, false),
++			pkcs11.NewAttribute(pkcs11.CKA_EXTRACTABLE, extractable),
+ 			// Allow the key to sign data
+ 			pkcs11.NewAttribute(pkcs11.CKA_SIGN, true),
+ 		},
+@@ -81,7 +81,7 @@ func ecPub(
+ // specified by curveStr and with the provided label. It returns the public
+ // part of the generated key pair as a ecdsa.PublicKey and the random key ID
+ // that the HSM uses to identify the key pair.
+-func ecGenerate(session *pkcs11helpers.Session, label, curveStr string) (*ecdsa.PublicKey, []byte, error) {
++func ecGenerate(session *pkcs11helpers.Session, label, curveStr string, extractable bool) (*ecdsa.PublicKey, []byte, error) {
+ 	curve, present := stringToCurve[curveStr]
+ 	if !present {
+ 		return nil, nil, fmt.Errorf("curve %q not supported", curveStr)
+@@ -92,7 +92,7 @@ func ecGenerate(session *pkcs11helpers.Session, label, curveStr string) (*ecdsa.
+ 		return nil, nil, err
+ 	}
+ 	log.Printf("Generating ECDSA key with curve %s and ID %x\n", curveStr, keyID)
+-	args := ecArgs(label, curve, keyID)
++	args := ecArgs(label, curve, keyID, extractable)
+ 	pub, _, err := session.GenerateKeyPair(args.mechanism, args.publicAttrs, args.privateAttrs)
+ 	if err != nil {
+ 		return nil, nil, err

@@ -1,0 +1,16 @@
+diff --git a/start.py b/start.py
+index f224b9e6c..017fe5cd5 100755
+--- a/start.py
++++ b/start.py
+@@ -20,6 +20,11 @@ import startservers
+ if not startservers.install(race_detection=False):
+     raise(Exception("failed to build"))
+ 
++fl = "./labca/setup_complete"
++while not os.path.exists(fl):
++    print(f"Waiting for '{fl}' to appear...")
++    time.sleep(30)
++
+ if not startservers.start(fakeclock=None):
+     sys.exit(1)
+ try:

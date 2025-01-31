@@ -1,5 +1,5 @@
 diff --git a/docker-compose.yml b/docker-compose.yml
-index c7939ece4..0a2854919 100644
+index 71203004d..b17125e54 100644
 --- a/docker-compose.yml
 +++ b/docker-compose.yml
 @@ -4,7 +4,7 @@ services:
@@ -19,11 +19,11 @@ index c7939ece4..0a2854919 100644
 -      - /home/labca/boulder_labca:/opt/boulder/labca
 -      - /home/labca/nginx_data/static:/opt/wwwstatic
 -      - ./.gocache:/root/.cache/go-build:cached
--      - /home/labca/boulder_labca/certs/.softhsm-tokens/:/var/lib/softhsm/tokens/:cached
+-      - /home/labca/boulder_labca/certs/.softhsm-tokens/:/var/lib/softhsm/tokens/
 +      - boulder_data:/opt/boulder/labca
 +      - certificates:/opt/boulder/labca/certs
 +      - nginx_html:/opt/wwwstatic
-+      - softhsm:/var/lib/softhsm/tokens:cached
++      - softhsm:/var/lib/softhsm/tokens
      networks:
        bouldernet:
          ipv4_address: 10.77.77.77
@@ -35,7 +35,7 @@ index c7939ece4..0a2854919 100644
      entrypoint: labca/entrypoint.sh
      working_dir: &boulder_working_dir /opt/boulder
      logging:
-@@ -87,34 +87,39 @@ services:
+@@ -87,35 +87,40 @@ services:
  
    bconsul:
      image: hashicorp/consul:1.15.4
@@ -67,12 +67,14 @@ index c7939ece4..0a2854919 100644
 -      - /home/labca/backup:/opt/backup
 -      - .:/opt/boulder
 -      - /home/labca/boulder_labca:/opt/boulder/labca
+-      - /home/labca/boulder_labca/certs/.softhsm-tokens/:/var/lib/softhsm/tokens/
 +      - ./docker-compose.yml:/opt/boulder/docker-compose.yml
 +      - ldata:/opt/labca/data
 +      - nginx_html:/opt/wwwstatic
 +      - backup:/opt/backup
 +      - boulder_data:/opt/boulder/labca
 +      - certificates:/opt/boulder/labca/certs
++      - softhsm:/var/lib/softhsm/tokens
      expose:
        - 3000
      depends_on:
@@ -85,7 +87,7 @@ index c7939ece4..0a2854919 100644
      logging:
        driver: "json-file"
        options:
-@@ -131,27 +136,27 @@ services:
+@@ -132,28 +137,28 @@ services:
        - 80:80
        - 443:443
      volumes:
@@ -113,6 +115,7 @@ index c7939ece4..0a2854919 100644
 -      - /home/labca/control_logs:/opt/logs
 -      - .:/opt/boulder
 -      - /home/labca/boulder_labca:/opt/boulder/labca
+-      - /home/labca/boulder_labca/certs/.softhsm-tokens/:/var/lib/softhsm/tokens/
 -      - /home/labca/nginx_data/conf.d:/etc/nginx/conf.d
 -      - /home/labca/nginx_data/ssl:/etc/nginx/ssl
 -      - /home/labca/nginx_data/static:/var/www/html
@@ -122,13 +125,14 @@ index c7939ece4..0a2854919 100644
 +      - logs:/opt/logs
 +      - boulder_data:/opt/boulder/labca
 +      - certificates:/opt/boulder/labca/certs
++      - softhsm:/var/lib/softhsm/tokens
 +      - nginx_conf:/etc/nginx/conf.d
 +      - nginx_ssl:/etc/nginx/ssl
 +      - nginx_html:/var/www/html
      expose:
        - 3030
      environment:
-@@ -169,6 +174,15 @@ services:
+@@ -171,6 +176,15 @@ services:
  
  volumes:
    dbdata:

@@ -26,6 +26,7 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
+	"path"
 	"path/filepath"
 	"reflect"
 	"regexp"
@@ -973,13 +974,58 @@ func _emailSendHandler(w http.ResponseWriter, r *http.Request) {
 
 func _exportHandler(w http.ResponseWriter, r *http.Request) {
 	certname := r.Form.Get("certname")
+	certFile := fmt.Sprintf("%s%s.pem", CERT_FILES_PATH, certname)
 
-	certFile := locateFile(certname + ".pem")
-	keyFile := strings.TrimSuffix(certFile, filepath.Ext(certFile)) + ".key"
+	seqnr := ""
+	re := regexp.MustCompile(`-(\d{2})-`)
+	match := re.FindStringSubmatch(certname)
+	if len(match) > 1 {
+		seqnr = match[1]
+	} else {
+		errorHandler(w, r, fmt.Errorf("failed to extract sequence number from filename '%s'", certFile), http.StatusInternalServerError)
+		return
+	}
+
+	cfg := &HSMConfig{}
+	if strings.HasPrefix(certname, "root-") {
+		cfg.Initialize("root", seqnr)
+	}
+	if strings.HasPrefix(certname, "issuer-") {
+		cfg.Initialize("issuer", seqnr)
+	}
+
+	key, err := cfg.GetPrivateKey()
+	if err != nil {
+		fmt.Println(err)
+		if strings.Contains(err.Error(), "CKR_KEY_UNEXTRACTABLE") {
+			errorHandler(w, r, err, http.StatusBadRequest)
+		} else {
+			errorHandler(w, r, err, http.StatusInternalServerError)
+		}
+		return
+	}
+
+	tmpDir, err := os.MkdirTemp("", "labca")
+	if err != nil {
+		fmt.Println(err)
+		errorHandler(w, r, err, http.StatusInternalServerError)
+		return
+	}
+	defer os.RemoveAll(tmpDir)
+
+	keyFile := path.Join(tmpDir, fmt.Sprintf("%s.pem", strings.Replace(certname, "-cert", "-key", -1)))
+
+	keyPEM := pem.EncodeToMemory(&pem.Block{Type: "PRIVATE KEY", Bytes: key})
+	err = os.WriteFile(keyFile, keyPEM, os.ModeAppend)
+	if err != nil {
+		fmt.Println(err)
+		errorHandler(w, r, err, http.StatusInternalServerError)
+		return
+	}
 
 	if r.Form.Get("type") == "pfx" {
 		w.Header().Set("Content-Type", "application/x-pkcs12")
-		w.Header().Set("Content-Disposition", "attachment; filename=labca_"+certname+".pfx")
+		w.Header().Set("Content-Disposition", "attachment; filename=labca-"+certname+".pfx")
 
 		cmd := "openssl pkcs12 -export -inkey " + keyFile + " -in " + certFile + " -passout pass:" + r.Form.Get("export-pwd")
 
@@ -988,7 +1034,7 @@ func _exportHandler(w http.ResponseWriter, r *http.Request) {
 
 	if r.Form.Get("type") == "zip" {
 		w.Header().Set("Content-Type", "application/zip")
-		w.Header().Set("Content-Disposition", "attachment; filename=labca_"+certname+".zip")
+		w.Header().Set("Content-Disposition", "attachment; filename=labca-"+certname+".zip")
 
 		cmd := "zip -j -P " + r.Form.Get("export-pwd") + " - " + keyFile + " " + certFile
 
@@ -1088,7 +1134,7 @@ func (res *Result) ManageComponents(w http.ResponseWriter, r *http.Request, acti
 	}
 }
 
-func _checkUpdatesHandler(w http.ResponseWriter, r *http.Request) {
+func _checkUpdatesHandler(w http.ResponseWriter, _ *http.Request) {
 	res := struct {
 		Success          bool
 		UpdateAvailable  bool
@@ -1112,62 +1158,14 @@ func _checkUpdatesHandler(w http.ResponseWriter, r *http.Request) {
 func generateCRLHandler(w http.ResponseWriter, r *http.Request, isRoot bool) {
 	res := makeErrorsResponse(true)
 
+	command := "gen-issuer-crl"
 	if isRoot {
-		path := "data/"
-		certBase := "root-ca"
-		keyFileExists := true
-		if _, err := os.Stat(path + certBase + ".key"); errors.Is(err, fs.ErrNotExist) {
-			keyFileExists = false
-		}
-		if keyFileExists {
-			if _, err := exeCmd("openssl ca -config " + path + "openssl.cnf -gencrl -keyfile " + path + certBase + ".key -cert " + path + certBase + ".pem -out " + path + certBase + ".crl"); err != nil {
-				res.Success = false
-				res.Errors["CRL"] = "Could not generate Root CRL - see logs"
-			}
-		} else {
-			if r.Form.Get("rootkey") == "" {
-				res.Success = false
-				res.Errors["CRL"] = "NO_ROOT_KEY"
-			} else {
-				rootci := &CertificateInfo{
-					IsRoot:     true,
-					Key:        r.Form.Get("rootkey"),
-					Passphrase: r.Form.Get("rootpassphrase"),
-				}
-				if !rootci.StoreRootKey(path) {
-					res.Success = false
-					res.Errors["CRL"] = rootci.Errors["Modal"]
-				} else {
-					// Generate CRL now that we have the key
-					if _, err := exeCmd("openssl ca -config " + path + "openssl.cnf -gencrl -keyfile " + path + certBase + ".key -cert " + path + certBase + ".pem -out " + path + certBase + ".crl"); err != nil {
-						res.Success = false
-						res.Errors["CRL"] = "Could not generate Root CRL - see logs"
-					}
-					// Remove the Root Key if we want to keep it offline
-					if viper.GetBool("keep_root_offline") {
-						if _, err := os.Stat(path + certBase + ".key"); !errors.Is(err, fs.ErrNotExist) {
-							fmt.Println("Removing private Root key from the system...")
-							if _, err := exeCmd("rm " + path + certBase + ".key"); err != nil {
-								log.Printf("_certCreate: error deleting root key: %v", err)
-							}
-						}
-						if _, err := os.Stat(path + certBase + ".key.der"); !errors.Is(err, fs.ErrNotExist) {
-							if _, err := exeCmd("rm " + path + certBase + ".key.der"); err != nil {
-								log.Printf("_certCreate: error deleting root key (DER format): %v", err)
-							}
-						}
-					}
-				}
-			}
-		}
+		command = "gen-root-crl"
+	}
 
-		_hostCommand(w, r, "check-crl")
-
-	} else { // !isRoot
-		if !_hostCommand(w, r, "gen-issuer-crl") {
-			res.Success = false
-			res.Errors["CRL"] = "Failed to generate CRL - see logs"
-		}
+	if !_hostCommand(w, r, command) {
+		res.Success = false
+		res.Errors["CRL"] = "Failed to generate CRL - see logs"
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -1754,7 +1752,7 @@ func getLog(w http.ResponseWriter, r *http.Request, logType string) string {
 
 	defer conn.Close()
 
-	fmt.Fprintf(conn, "log-"+logType+"\n")
+	fmt.Fprintf(conn, "log-%s\n", logType)
 	reader := bufio.NewReader(conn)
 	contents, err := io.ReadAll(reader)
 	if err != nil {
@@ -1787,7 +1785,7 @@ func showLog(ws *websocket.Conn, logType string) {
 
 	defer conn.Close()
 
-	fmt.Fprintf(conn, "log-"+logType+"\n")
+	fmt.Fprintf(conn, "log-%s\n", logType)
 	scanner := bufio.NewScanner(conn)
 	for scanner.Scan() {
 		msg := scanner.Text()
@@ -1891,9 +1889,6 @@ func _buildCI(r *http.Request, session *sessions.Session, isRoot bool) *Certific
 	if session.Values["o"] != nil {
 		ci.Organization = session.Values["o"].(string)
 	}
-	if session.Values["ou"] != nil {
-		ci.OrgUnit = session.Values["ou"].(string)
-	}
 	if session.Values["cn"] != nil {
 		ci.CommonName = session.Values["cn"].(string)
 		ci.CommonName = strings.Replace(ci.CommonName, "Root", "", -1)
@@ -1933,13 +1928,24 @@ func _certCreate(w http.ResponseWriter, r *http.Request, certBase string, isRoot
 
 		if r.Form.Get("revertroot") != "" {
 			// From issuer certificate creation page it is possible to remove the root again and start over
-			exeCmd("rm data/root-ca.key")     // Does not necessarily exist
-			exeCmd("rm data/root-ca.key.der") // Does not necessarily exist
-			if _, err := exeCmd("rm data/root-ca.pem"); err != nil {
-				errorHandler(w, r, err, http.StatusInternalServerError)
-				return false
+			rootseqnr := "01"
+			seqnr := "01"
+			err := deleteFiles(fmt.Sprintf("%sroot-%s*", CERT_FILES_PATH, rootseqnr))
+			if err != nil {
+				fmt.Printf("failed to delete root %s files: %+v\n", rootseqnr, err.Error())
 			}
-			certBase = "root-ca"
+			err = deleteFiles(fmt.Sprintf("%sissuer-%s*", CERT_FILES_PATH, seqnr))
+			if err != nil {
+				fmt.Printf("failed to delete issuer %s files: %+v\n", seqnr, err.Error())
+			}
+
+			cfg := &HSMConfig{}
+			cfg.Initialize("issuer", seqnr)
+			cfg.ClearAll()
+			cfg.Initialize("root", rootseqnr)
+			cfg.ClearAll()
+
+			certBase = "root-01"
 			isRoot = true
 			r.Method = "GET"
 			sess, _ := sessionStore.Get(r, "labca")
@@ -1947,6 +1953,7 @@ func _certCreate(w http.ResponseWriter, r *http.Request, certBase string, isRoot
 			if err := sess.Save(r, w); err != nil {
 				log.Printf("cannot save session: %s\n", err)
 			}
+
 		} else if r.Form.Get("ack-rootkey") == "yes" {
 			// Root Key was shown, do we need to keep it online?
 			viper.Set("keep_root_offline", r.Form.Get("keep-root-online") != "true")
@@ -1964,24 +1971,20 @@ func _certCreate(w http.ResponseWriter, r *http.Request, certBase string, isRoot
 		}
 	}
 
-	path := "data/"
-	if !isRoot {
-		path = path + "issuer/"
-	}
-
-	if _, err := os.Stat(path + certBase + ".pem"); errors.Is(err, fs.ErrNotExist) {
+	if _, err := os.Stat(CERT_FILES_PATH + certBase + "-cert.pem"); errors.Is(err, fs.ErrNotExist) {
 		session, _ := sessionStore.Get(r, "labca")
 
 		if r.Method == "GET" {
 			ci := _buildCI(r, session, isRoot)
-			if isRoot && (certBase == "root-ca" || certBase == "test-root") {
+			if isRoot && (certBase == "root-ca" || certBase == "test-root" || certBase == "root-01") {
 				ci.IsFirst = true
-			} else if !isRoot && (certBase == "ca-int" || certBase == "test-ca") {
+			} else if !isRoot && (certBase == "ca-int" || certBase == "test-ca" || certBase == "issuer-01") {
 				ci.IsFirst = true
 			}
 
 			if len(r.URL.Query()["root"]) > 0 {
 				certFile := locateFile(r.URL.Query()["root"][0] + ".pem")
+
 				ci.RootEnddate, err = getCertFileNotAFter(certFile)
 				if err != nil {
 					fmt.Println(err.Error())
@@ -2003,7 +2006,33 @@ func _certCreate(w http.ResponseWriter, r *http.Request, certBase string, isRoot
 					ci.Organization = val
 				}
 			} else if !isRoot {
-				certFile := locateFile("root-ca.pem")
+				certFile := CERT_FILES_PATH + "root-01-cert.pem"
+
+				// The rules are quite strict on what type is allowed for issuer certs!
+				crt, err := readCertificate(certFile)
+				if err == nil {
+					validKeyTypes := make(map[string]string)
+
+					if crt.PublicKeyAlgorithm == x509.RSA {
+						for k, v := range ci.KeyTypes {
+							if strings.HasPrefix(k, "rsa") {
+								validKeyTypes[k] = v
+							}
+						}
+					}
+
+					if crt.PublicKeyAlgorithm == x509.ECDSA {
+						if crt.SignatureAlgorithm == x509.ECDSAWithSHA256 {
+							validKeyTypes["ecdsa256"] = "ECDSA-256"
+						}
+						if crt.SignatureAlgorithm == x509.ECDSAWithSHA384 {
+							validKeyTypes["ecdsa384"] = "ECDSA-384"
+						}
+					}
+
+					ci.KeyTypes = validKeyTypes
+				}
+
 				ci.RootEnddate, err = getCertFileNotAFter(certFile)
 				if err != nil {
 					fmt.Println(err.Error())
@@ -2038,7 +2067,6 @@ func _certCreate(w http.ResponseWriter, r *http.Request, certBase string, isRoot
 			}
 			ci.Country = r.Form.Get("c")
 			ci.Organization = r.Form.Get("o")
-			ci.OrgUnit = r.Form.Get("ou")
 			ci.CommonName = r.Form.Get("cn")
 
 			ci.RootEnddate = r.Form.Get("root-enddate")
@@ -2103,7 +2131,7 @@ func _certCreate(w http.ResponseWriter, r *http.Request, certBase string, isRoot
 					}
 					if !rootci.StoreCRL("data/") {
 						ci.Errors["Modal"] = rootci.Errors["Modal"]
-						csr, err := os.Open(path + certBase + ".csr")
+						csr, err := os.Open(CERT_FILES_PATH + certBase + ".csr") // TODO !!
 						if err != nil {
 							ci.Errors[cases.Title(language.Und).String(ci.CreateType)] = "Error reading .csr file! See LabCA logs for details"
 							log.Printf("_certCreate: read csr: %v", err)
@@ -2118,7 +2146,7 @@ func _certCreate(w http.ResponseWriter, r *http.Request, certBase string, isRoot
 					}
 				}
 
-				if err := ci.Create(path, certBase, wasCSR); err != nil {
+				if err := ci.Create(certBase, wasCSR); err != nil {
 					if err.Error() == "NO_ROOT_KEY" {
 						if r.Form.Get("generate") != "" {
 							if r.Form.Get("rootkey") == "" {
@@ -2142,7 +2170,7 @@ func _certCreate(w http.ResponseWriter, r *http.Request, certBase string, isRoot
 						}
 
 						if r.Form.Get("getcsr") != "" {
-							csr, err := os.Open(path + certBase + ".csr")
+							csr, err := os.Open(CERT_FILES_PATH + certBase + ".csr") // TODO !
 							if err != nil {
 								ci.Errors[cases.Title(language.Und).String(ci.CreateType)] = "Error reading .csr file! See LabCA logs for details"
 								log.Printf("_certCreate: read csr: %v", err)
@@ -2170,26 +2198,12 @@ func _certCreate(w http.ResponseWriter, r *http.Request, certBase string, isRoot
 			}
 
 			if !ci.IsRoot {
-				nameID, err := issuerNameID(path + certBase + ".pem")
+				nameID, err := issuerNameID(CERT_FILES_PATH + "issuer-01-cert.pem")
 				if err == nil {
 					viper.Set("issuer_name_id", nameID)
 					viper.WriteConfig()
 				} else {
 					log.Printf("_certCreate: could not calculate IssuerNameID: %v", err)
-				}
-
-				if viper.GetBool("keep_root_offline") {
-					if _, err := os.Stat(path + "../root-ca.key"); !errors.Is(err, fs.ErrNotExist) {
-						fmt.Println("Removing private Root key from the system...")
-						if _, err := exeCmd("rm " + path + "../root-ca.key"); err != nil {
-							log.Printf("_certCreate: error deleting root key: %v", err)
-						}
-					}
-					if _, err := os.Stat(path + "../root-ca.key.der"); !errors.Is(err, fs.ErrNotExist) {
-						if _, err := exeCmd("rm " + path + "../root-ca.key.der"); err != nil {
-							log.Printf("_certCreate: error deleting root key (DER format): %v", err)
-						}
-					}
 				}
 			}
 
@@ -2202,25 +2216,9 @@ func _certCreate(w http.ResponseWriter, r *http.Request, certBase string, isRoot
 			session.Values["kt"] = ci.KeyType
 			session.Values["c"] = ci.Country
 			session.Values["o"] = ci.Organization
-			session.Values["ou"] = ci.OrgUnit
 			session.Values["cn"] = ci.CommonName
 			if err = session.Save(r, w); err != nil {
 				log.Printf("cannot save session: %s\n", err)
-			}
-
-			if ci.IsRoot && ci.CreateType == "generate" && r.Form.Get("ack-rootkey") != "yes" {
-				key, err := os.Open(path + certBase + ".key")
-				if err != nil {
-					ci.Errors[cases.Title(language.Und).String(ci.CreateType)] = "Error reading .key file! See LabCA logs for details"
-					log.Printf("_certCreate: read key: %v", err)
-					render(w, r, "cert:manage", map[string]interface{}{"CertificateInfo": ci, "Progress": _progress(certBase), "HelpText": _helptext(certBase)})
-					return false
-				}
-				defer key.Close()
-				b, _ := io.ReadAll(key)
-
-				render(w, r, "cert:manage", map[string]interface{}{"CertificateInfo": ci, "RootKey": string(b), "Progress": _progress(certBase), "HelpText": _helptext(certBase)})
-				return false
 			}
 
 			// Fake the method to GET as we need to continue in the setupHandler() function
@@ -2234,6 +2232,28 @@ func _certCreate(w http.ResponseWriter, r *http.Request, certBase string, isRoot
 	return true
 }
 
+func deleteFiles(pattern string) error {
+	files, err := filepath.Glob(pattern)
+	if err != nil {
+		return fmt.Errorf("failed to find files: %w", err)
+	}
+
+	ok := true
+	for _, file := range files {
+		err := os.Remove(file)
+		if err != nil {
+			ok = false
+			fmt.Printf("failed to remove %s: %v\n", file, err)
+		}
+	}
+
+	if !ok {
+		return fmt.Errorf("failed to remove at least one file, see logs for details")
+	}
+
+	return nil
+}
+
 func _hostCommand(w http.ResponseWriter, r *http.Request, command string, params ...string) bool {
 	conn, err := net.Dial("tcp", "control:3030")
 	if err != nil {
@@ -2244,9 +2264,9 @@ func _hostCommand(w http.ResponseWriter, r *http.Request, command string, params
 
 	defer conn.Close()
 
-	fmt.Fprintf(conn, command+"\n")
+	fmt.Fprint(conn, command+"\n")
 	for _, param := range params {
-		fmt.Fprintf(conn, param+"\n")
+		fmt.Fprint(conn, param+"\n")
 	}
 
 	reader := bufio.NewReader(conn)
@@ -2314,12 +2334,12 @@ func _progress(stage string) int {
 	}
 	curr += 3.0
 
-	if stage == "root-ca" {
+	if stage == "root-01" {
 		return int(math.Round(curr / max))
 	}
 	curr += 4.0
 
-	if stage == "ca-int" {
+	if stage == "issuer-01" {
 		return int(math.Round(curr / max))
 	}
 	curr += 3.0
@@ -2365,12 +2385,12 @@ func _helptext(stage string) template.HTML {
 			"domain, e.g. '.localdomain'. In lockdown mode only those domains are allowed. In whitelist mode\n",
 			"those domains are allowed next to all official, internet accessible domains and in standard\n",
 			"mode only the official domains are allowed.</p>"))
-	} else if stage == "root-ca" {
+	} else if stage == "root-01" {
 		return template.HTML(fmt.Sprint("<p>This is the top level certificate that will sign the issuer\n",
 			"certificate(s). You can either generate a fresh Root CA (Certificate Authority) or import an\n",
 			"existing one, e.g. a backup from another LabCA instance.</p>\n",
 			"<p>If you want to <b>generate</b> a new certificate, pick a key type and strength (the higher the number the\n",
-			"more secure, ECDSA is more modern than RSA), provide at least a country and organization name,\n",
+			"more secure, ECDSA is more modern than RSA), provide a country and organization name,\n",
 			"and the common name. It is recommended that the common name contains the word 'Root' as well\n",
 			"as your organization name so you can recognize it, and that's why that is automatically filled\n",
 			"once you leave the organization field.</p>\n",
@@ -2378,7 +2398,7 @@ func _helptext(stage string) template.HTML {
 			"offline for security reasons according to best practices. If you do include it here, we will be able\n",
 			"to generate an issuing certificate automatically in the next step. If you don't include it, we will\n",
 			"ask for it when needed.</p>"))
-	} else if stage == "ca-int" {
+	} else if stage == "issuer-01" {
 		return template.HTML(fmt.Sprint("<p>This is what end users will see as the issuing certificate. Again,\n",
 			"you can either generate a fresh certificate or import an existing one, as long as it is signed by\n",
 			"the Root CA from the previous step.</p>\n",
@@ -2458,7 +2478,7 @@ func _setupAdminUser(w http.ResponseWriter, r *http.Request) bool {
 			}
 			defer conn.Close()
 
-			fmt.Fprintf(conn, "backup-restore\n"+header.Filename+"\n")
+			fmt.Fprint(conn, "backup-restore\n"+header.Filename+"\n")
 			reader := bufio.NewReader(conn)
 			message, err := io.ReadAll(reader)
 			if err != nil {
@@ -2734,18 +2754,18 @@ func setupHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// 3. Setup root CA certificate
-	if !_certCreate(w, r, "root-ca", true) {
+	if !_certCreate(w, r, "root-01", true) {
 		// Cleanup the cert (if it even exists) so we will retry on the next run
-		if _, err := os.Stat("data/root-ca.pem"); !errors.Is(err, fs.ErrNotExist) {
-			exeCmd("mv data/root-ca.pem data/root-ca.pem_TMP")
+		if _, err := os.Stat(CERT_FILES_PATH + "root-01-cert.pem"); !errors.Is(err, fs.ErrNotExist) {
+			exeCmd("mv " + CERT_FILES_PATH + "root-01-cert.pem " + CERT_FILES_PATH + "root-01-cert.pem_TMP")
 		}
 		return
 	}
 
 	// 4. Setup issuer certificate
-	if !_certCreate(w, r, "ca-int", false) {
+	if !_certCreate(w, r, "issuer-01", false) {
 		// Cleanup the cert (if it even exists) so we will retry on the next run
-		os.Remove("data/issuer/ca-int.pem")
+		os.Remove(CERT_FILES_PATH + "issuer-01-cert.pem")
 		return
 	}
 
@@ -3326,9 +3346,10 @@ func init() {
 	port := flag.Int("port", 0, "Port to listen on (default 3000 when using init)")
 	versionFlag := flag.Bool("version", false, "Show version number and exit")
 	decrypt := flag.String("d", "", "Decrypt a value")
+	renewcrl := flag.Int("renewcrl", 0, "Check root CRL files and renew if nextUpdate is in less than this number of days")
 	flag.Parse()
 
-	if *versionFlag {
+	if *versionFlag && standaloneVersion != "" {
 		fmt.Println(standaloneVersion)
 		os.Exit(0)
 	}
@@ -3355,6 +3376,11 @@ func init() {
 		panic(fmt.Errorf("fatal error config file: '%s'", err))
 	}
 
+	if *versionFlag && standaloneVersion == "" {
+		fmt.Println(viper.GetString("version"))
+		os.Exit(0)
+	}
+
 	if *decrypt != "" {
 		plain, err := _decrypt(*decrypt)
 		if err == nil {
@@ -3363,6 +3389,57 @@ func init() {
 		} else {
 			os.Exit(1)
 		}
+	}
+
+	if *renewcrl != 0 {
+		crlFiles, err := filepath.Glob(filepath.Join(CERT_FILES_PATH, "root-*-crl.pem"))
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
+
+		for _, crlFile := range crlFiles {
+			read, err := os.ReadFile(crlFile)
+			if err != nil {
+				fmt.Printf("could not read '%s': %s\n", crlFile, err.Error())
+				os.Exit(1)
+			}
+			block, _ := pem.Decode(read)
+			if block == nil || block.Type != "X509 CRL" {
+				fmt.Println(block)
+				fmt.Println("failed to decode PEM block containing revocation list")
+				os.Exit(1)
+			}
+			crl, err := x509.ParseRevocationList(block.Bytes)
+			if err != nil {
+				fmt.Printf("could not parse revocation list: %s\n", err.Error())
+				os.Exit(1)
+			}
+
+			now := time.Now()
+			if crl.NextUpdate.Sub(now) < time.Hour*24*time.Duration(*renewcrl) {
+				fmt.Printf("renewing crl file '%s'...\n", crlFile)
+				re := regexp.MustCompile(`-(\d{2})-`)
+				match := re.FindStringSubmatch(crlFile)
+				if len(match) > 1 {
+					seqnr := match[1]
+					ci := &CertificateInfo{}
+					ci.Initialize()
+					err = ci.CeremonyRootCRL(seqnr)
+					if err == nil {
+						fmt.Printf("updated %s\n", crlFile)
+					} else {
+						fmt.Printf("could not update crl file '%s': %s\n", crlFile, err.Error())
+						os.Exit(1)
+					}
+				} else {
+					fmt.Printf("could not extract sequence number from filename '%s'\n", crlFile)
+					os.Exit(1)
+				}
+			}
+		}
+
+		os.Exit(0)
 	}
 
 	var err error
@@ -3452,6 +3529,10 @@ func init() {
 
 	updateAvailable = false
 
+	if !viper.GetBool("standalone") {
+		CheckUpgrades()
+	}
+
 	/*
 		// TODO: Still needs to be done for this!
 		// Store boulder chains if we don't have them already
@@ -3472,6 +3553,47 @@ func init() {
 
 		// TODO: also apply from here if different?? How exaclty is a code upgrade delaing with this??
 	*/
+}
+
+type BackupResult struct {
+	Existed  bool
+	NewName  string
+	OrigName string
+}
+
+func (br BackupResult) Remove() {
+	os.Remove(br.NewName)
+}
+
+func (br BackupResult) Restore() {
+	if br.Existed {
+		os.Rename(br.NewName, br.OrigName)
+	}
+}
+
+func renameBackup(filename string) BackupResult {
+	result := BackupResult{
+		Existed: false,
+	}
+
+	if _, err := os.Stat(filename); !errors.Is(err, os.ErrNotExist) {
+		os.Remove(filename + "_BAK") // May not exist...
+		result.Existed = true
+	}
+
+	if !result.Existed {
+		return result
+	}
+
+	err := os.Rename(filename, filename+"_BAK")
+	if err != nil {
+		fmt.Printf("warning: failed to backup previous file '%s': %s\n", filename, err.Error())
+	} else {
+		result.OrigName = filename
+		result.NewName = filename + "_BAK"
+	}
+
+	return result
 }
 
 func main() {

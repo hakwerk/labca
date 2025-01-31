@@ -51,12 +51,12 @@ case $txt in
     wait_up $PS_BOULDER $PS_BOULDER_COUNT &>>$LOGFILE
     cd /etc/nginx/ssl
     [ -e account.key ] || openssl genrsa 4096 > account.key
-    [ ! -f labca_key.pem ] || mv labca_key.pem labca_key_rsa.pem
+    [ -L labca_key.pem ] || mv labca_key.pem labca_key_rsa.pem
     [ -e labca_key_rsa.pem ] || openssl genrsa 4096 > labca_key_rsa.pem
     [ -e labca_key_ecdsa.pem ] || openssl ecparam -name secp384r1 -genkey -out labca_key_ecdsa.pem
 
     set +e
-    curve_count=$(openssl pkey -pubin -in /opt/boulder/labca/test-ca.pubkey.pem -text | grep -i curve | wc -l)
+    curve_count=$(openssl pkey -pubin -in /opt/boulder/labca/certs/webpki/issuer-01-pubkey.pem -text | grep -i curve | wc -l)
     set -e
     [ "$curve_count" == "0" ] && ln -sf labca_key_rsa.pem labca_key.pem || /bin/true
     [ "$curve_count" != "0" ] && ln -sf labca_key_ecdsa.pem labca_key.pem || /bin/true
@@ -75,6 +75,11 @@ case $txt in
         wait_server $url
         sleep 10
         /opt/labca/renew
+
+        sleep 5
+        cd /opt/boulder
+        docker compose exec -i boulder ./bin/boulder crl-updater --config labca/config/crl-updater.json -runOnce -debug-addr :18021
+        /opt/labca/checkcrl
     fi
 
     ln -sf /opt/labca/cron_d /etc/cron.d/labca
@@ -83,12 +88,12 @@ case $txt in
 "acme-change")
     read fqdn
     cd /etc/nginx/ssl
-    [ ! -f labca_key.pem ] || mv labca_key.pem labca_key_rsa.pem
+    [ -L labca_key.pem ] || mv labca_key.pem labca_key_rsa.pem
     [ -e labca_key_rsa.pem ] || openssl genrsa 4096 > labca_key_rsa.pem
     [ -e labca_key_ecdsa.pem ] || openssl ecparam -name secp384r1 -genkey -out labca_key_ecdsa.pem
 
     set +e
-    curve_count=$(openssl pkey -pubin -in /opt/boulder/labca/test-ca.pubkey.pem -text | grep -i curve | wc -l)
+    curve_count=$(openssl pkey -pubin -in /opt/boulder/labca/certs/webpki/issuer-01-pubkey.pem -text | grep -i curve | wc -l)
     set -e
     [ "$curve_count" == "0" ] && ln -sf labca_key_rsa.pem labca_key.pem || /bin/true
     [ "$curve_count" != "0" ] && ln -sf labca_key_ecdsa.pem labca_key.pem || /bin/true
@@ -270,13 +275,33 @@ case $txt in
         nohup /labca/install -b $branch &>>$LOGFILE
     fi
     ;;
+"gen-root-crl")
+    cd /opt/labca/gui
+    /opt/labca/bin/labca-gui -config /opt/labca/data/config.json -renewcrl 999 &>>$LOGFILE
+    /opt/labca/checkcrl &>>$LOGFILE
+    ;;
 "gen-issuer-crl")
     cd /opt/boulder
-    docker compose exec -i boulder ./bin/boulder crl-updater --config labca/config/crl-updater.json -runOnce -debug-addr :18021 &>>$LOGFILE
+    docker compose exec -i boulder ./bin/boulder crl-updater -config labca/config/crl-updater.json -runOnce -debug-addr :18021 &>>$LOGFILE
     /opt/labca/checkcrl &>>$LOGFILE
     ;;
 "check-crl")
     /opt/labca/checkcrl &>>$LOGFILE
+    ;;
+"apply")
+    [ ! -e /opt/labca/apply ] || /opt/labca/apply &>>$LOGFILE
+    [ ! -e /opt/labca/gui/apply ] || /opt/labca/gui/apply &>>$LOGFILE
+    [ -e /opt/labca/apply ] || [ -e /opt/labca/gui/apply ] || echo "Could not find apply script!"
+    ;;
+"git-version")
+    if [ -x /usr/bin/git ]; then
+        git config --global --add safe.directory /opt/labca &>>$LOGFILE
+        gd=$(git describe --always --tags HEAD)
+        echo "$gd"
+    else
+        echo "unknown"
+    fi
+    exit 0
     ;;
 *)
     echo "Unknown command '$txt'. ERROR!"

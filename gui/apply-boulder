@@ -14,8 +14,8 @@ PKI_DOMAIN=$(echo $PKI_FQDN | perl -p0e 's/.*?\.//')
 PKI_DOMAIN_MODE=$(grep domain_mode $dataDir/config.json | sed -e 's/.*:[ ]*//' | sed -e 's/\",//g' | sed -e 's/\"//g')
 PKI_LOCKDOWN_DOMAINS=$(grep lockdown $dataDir/config.json | grep -v domain_mode | sed -e 's/.*:[ ]*//' | sed -e 's/\",//g' | sed -e 's/\"//g')
 PKI_WHITELIST_DOMAINS=$(grep whitelist $dataDir/config.json | grep -v domain_mode | sed -e 's/.*:[ ]*//' | sed -e 's/\",//g' | sed -e 's/\"//g')
-PKI_ROOT_CERT_BASE="$dataDir/root-ca"
-PKI_INT_CERT_BASE="$dataDir/issuer/ca-int"
+PKI_ROOT_CERT_BASE="/opt/boulder/labca/certs/webpki/root-01-cert"
+PKI_INT_CERT_BASE="/opt/boulder/labca/certs/webpki/issuer-01-cert"
 PKI_ISSUER_NAME_ID=$(grep issuer_name_id $dataDir/config.json | sed -e 's/.*:[ ]*//' | sed -e 's/,//g' | sed -e 's/\"//g')
 if [ -z "$PKI_ISSUER_NAME_ID" ] && [ -e "$PKI_INT_CERT_BASE.pem" ]; then
     nmid=$(/opt/boulder/bin/nameid -s $PKI_INT_CERT_BASE.pem)
@@ -38,15 +38,15 @@ if [ "$enabled" == "true," ]; then
     PKI_EMAIL_PASS=$(grep pass $dataDir/config.json | grep -v password | head -1 | perl -p0e 's/.*?:\s+(.*)/\1/' | sed -e 's/\",//g' | sed -e 's/\"//g')
     pwd=""
     if [ -e $baseDir/bin/labca-gui ]; then
-        pwd=$([ -e ] && $baseDir/bin/labca-gui -d $PKI_EMAIL_PASS || echo "")
+        pwd=$([ -e ] && $baseDir/bin/labca-gui -config $dataDir/config.json -d $PKI_EMAIL_PASS || echo "")
     elif [ -e $baseDir/bin/labca-gui_prev ]; then
-        pwd=$([ -e ] && $baseDir/bin/labca-gui_prev -d $PKI_EMAIL_PASS || echo "")
+        pwd=$([ -e ] && $baseDir/bin/labca-gui_prev -config $dataDir/config.json -d $PKI_EMAIL_PASS || echo "")
     fi
     PKI_EMAIL_PASS=$pwd
     PKI_EMAIL_FROM=$(grep from $dataDir/config.json | perl -p0e 's/.*?:\s+(.*)/\1/' | sed -e 's/\",//g' | sed -e 's/\"//g')
     PKI_EMAIL_TRUST=$(grep trust_root $dataDir/config.json | perl -p0e 's/.*?:\s+(.*)/\1/' | sed -e 's/\",//g' | sed -e 's/\"//g')
     if [ "$PKI_EMAIL_TRUST" == "private" ]; then
-        PKI_EMAIL_TRUST="labca/test-root.pem"
+        PKI_EMAIL_TRUST="labca/certs/webpki/root-01-cert.pem"
     elif [ "$PKI_EMAIL_TRUST" == "skip" ]; then
         PKI_EMAIL_TRUST="InsecureSkipVerify"
     else
@@ -166,7 +166,8 @@ rm -f config/orphan-finder.json
 rm -f config/ca-a.json
 rm -f config/ca-b.json
 
-sed -i -e "s|\"issuerURL\": \".*\"|\"issuerURL\": \"http://$PKI_FQDN/certs/ca-int.pem\"|" config/ca.json
+INT_BASE_NAME=$(basename $PKI_INT_CERT_BASE.pem)
+sed -i -e "s|\"issuerURL\": \".*\"|\"issuerURL\": \"http://$PKI_FQDN/certs/$INT_BASE_NAME\"|" config/ca.json
 sed -i -e "s|\"ocspURL\": \".*\"|\"ocspURL\": \"http://$PKI_FQDN/ocsp/\"|" config/ca.json
 sed -i -e "s|\"crlURLBase\": \".*\"|\"crlURLBase\": \"http://$PKI_FQDN/crl/\"|" config/ca.json
 
@@ -229,31 +230,8 @@ rm -f test-root.pem
 rm -f test-root.der
 rm -f test-root.p8
 
-if [ -e $PKI_INT_CERT_BASE.key ]; then
-    cp -p $PKI_INT_CERT_BASE.key test-ca.key
-    if [ ! -e $PKI_INT_CERT_BASE.key.der ]; then
-        openssl pkey -in $PKI_INT_CERT_BASE.key -out $PKI_INT_CERT_BASE.key.der -outform der
-    fi
-    cp -p $PKI_INT_CERT_BASE.key.der test-ca.key.der
-    cp -p $PKI_INT_CERT_BASE.pem test-ca.pem
-    openssl rsa -in $PKI_INT_CERT_BASE.key -pubout > test-ca.pubkey.pem 2>/dev/null || openssl ec -in $PKI_INT_CERT_BASE.key -pubout > test-ca.pubkey.pem
-    openssl pkcs8 -topk8 -inform PEM -outform PEM -nocrypt -in test-ca.key -out test-ca.p8
-fi
-if [ -e $PKI_ROOT_CERT_BASE.key ]; then
-    cp -p $PKI_ROOT_CERT_BASE.key test-root.key
-    if [ ! -e $PKI_ROOT_CERT_BASE.key.der ]; then
-        openssl pkey -in $PKI_ROOT_CERT_BASE.key -out $PKI_ROOT_CERT_BASE.key.der -outform der
-    fi
-    cp -p $PKI_ROOT_CERT_BASE.key.der test-root.key.der
-    openssl rsa -in $PKI_ROOT_CERT_BASE.key -pubout > test-root.pubkey.pem 2>/dev/null || openssl ec -in $PKI_ROOT_CERT_BASE.key -pubout > test-root.pubkey.pem
-    openssl pkcs8 -topk8 -inform PEM -outform PEM -nocrypt -in test-root.key -out test-root.p8
-fi
-if [ -e $PKI_ROOT_CERT_BASE.pem ]; then
-    cp -p $PKI_ROOT_CERT_BASE.pem test-root.pem
-fi
-
 chown -R `ls -l helpers.py | cut -d" " -f 3,4 | sed 's/ /:/g'` .
 
-if [ -e $PKI_INT_CERT_BASE.key ] && [ -e $PKI_ROOT_CERT_BASE.pem ]; then
+if [ -e $PKI_INT_CERT_BASE.pem ] && [ -e $PKI_ROOT_CERT_BASE.pem ]; then
     [ -f setup_complete ] || touch setup_complete
 fi

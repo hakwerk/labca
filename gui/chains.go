@@ -1,6 +1,7 @@
 package main
 
 import (
+	"crypto/x509"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -58,6 +59,7 @@ type CertDetails struct {
 	CertFile     string
 	BaseName     string
 	Subject      string
+	KeyType      string
 	IsRoot       bool
 	ActiveIssuer bool
 	NotAfter     string
@@ -67,6 +69,22 @@ type CertDetails struct {
 type CertChain struct {
 	RootCert    CertDetails
 	IssuerCerts []CertDetails
+}
+
+func getCertFileKeyType(certFile string) (string, error) {
+	crt, err := readCertificate(certFile)
+	if err != nil {
+		fmt.Println("cannot read certificate file '" + certFile + "': " + fmt.Sprint(err))
+		return "", err
+	}
+
+	if crt.PublicKeyAlgorithm == x509.RSA {
+		return "RSA", nil
+	} else if crt.PublicKeyAlgorithm == x509.ECDSA {
+		return "ECDSA", nil
+	} else {
+		return "", fmt.Errorf("unknown public key algorithm: %s", crt.PublicKeyAlgorithm)
+	}
 }
 
 func getCertFileDetails(certFile string) (string, error) {
@@ -139,6 +157,9 @@ func enhanceChains(chains []CertChain) []CertChain {
 				if chains[k].IssuerCerts[n].CertFile == rawChains[i].Location.CertFile {
 					chains[k].IssuerCerts[n].ActiveIssuer = rawChains[i].Active
 					certFile := locateFile(rawChains[i].Location.CertFile)
+					if kt, err := getCertFileKeyType(certFile); err == nil {
+						chains[k].IssuerCerts[n].KeyType = kt
+					}
 					if d, err := getCertFileDetails(certFile); err == nil {
 						chains[k].IssuerCerts[n].Details = d
 					}
@@ -153,6 +174,9 @@ func enhanceChains(chains []CertChain) []CertChain {
 
 			if chains[k].RootCert.Subject == "" {
 				certFile := locateFile(chains[k].RootCert.CertFile)
+				if kt, err := getCertFileKeyType(certFile); err == nil {
+					chains[k].RootCert.KeyType = kt
+				}
 				if d, err := getCertFileDetails(certFile); err == nil {
 					chains[k].RootCert.Details = d
 				}

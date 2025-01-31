@@ -35,7 +35,7 @@ if [ "$BRANCH" == "master" ] || [ "$BRANCH" == "main" ]; then
 fi
 
 cnt=$(ls -1 tmp/bin | wc -l)
-[ $cnt -gt 20 ] || die "Only found $cnt boulder binaries!"  # ?? still correct??
+[ $cnt -gt 16 ] || die "Only found $cnt boulder binaries!"  # ?? still correct??
 docker build -f Dockerfile-boulder -t $LABCA_BOULDER_TAG .
 
 if [ "$BRANCH" == "master" ] || [ "$BRANCH" == "main" ]; then

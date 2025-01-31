@@ -21,6 +21,11 @@ docker compose exec bmysql mysqldump boulder_sa_integration >$TMPDIR/boulder_sa_
 cp -p /etc/nginx/ssl/*key* /etc/nginx/ssl/*cert.pem /etc/nginx/ssl/*.csr $TMPDIR/
 
 cp -rp /opt/labca/data $TMPDIR/
+#cp -p /opt/labca/data/config.json $TMPDIR/
+
+cp -rp /opt/boulder/labca/certs/webpki $TMPDIR/
+
+cp -rp /var/lib/softhsm/tokens $TMPDIR/
 
 
 cd /tmp

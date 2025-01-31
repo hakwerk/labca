@@ -1,8 +1,8 @@
 diff --git a/test/entrypoint.sh b/test/entrypoint.sh
-index a47fd2c9a..90148c0d5 100755
+index a47fd2c9a..626d57155 100755
 --- a/test/entrypoint.sh
 +++ b/test/entrypoint.sh
-@@ -13,15 +13,27 @@ service rsyslog start
+@@ -13,15 +13,15 @@ service rsyslog start
  # make sure we can reach the mysqldb.
  ./test/wait-for-it.sh boulder-mysql 3306
  
@@ -17,18 +17,6 @@ index a47fd2c9a..90148c0d5 100755
  
 +# Generate the internal keys and certs
 +./test/certs/generate.sh
-+
-+fl=$(pwd)/labca/setup_complete
-+while [ ! -f $fl ]; do
-+    echo "Waiting for $fl to appear..."
-+    sleep 30
-+done
-+
-+#softhsm2-util --show-slots
-+softhsm2-util --init-token --slot 0 --label "intermediate signing key (rsa)" --pin 1234 --so-pin 5678 | /bin/true
-+[ -e labca/test-ca.p8 ] && softhsm2-util --import labca/test-ca.p8 --id 333333 --force --token "intermediate signing key (rsa)" --pin 1234 --so-pin 5678 --label 'intermediate_key'
-+softhsm2-util --init-token --slot 1 --label "root signing key (rsa)" --pin 1234 --so-pin 5678 | /bin/true
-+[ -e labca/test-root.p8 ] && softhsm2-util --import labca/test-root.p8 --id 777777 --force --token "root signing key (rsa)" --pin 1234 --so-pin 5678 --label 'root_key'
 +
  if [[ $# -eq 0 ]]; then
      exec python3 ./start.py

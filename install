@@ -517,13 +517,8 @@ static_web() {
     mkdir -p crl
     [ -e cert ] || ln -s certs cert
     cp -rp $cloneDir/gui/static/* .
-    [ -e $adminDir/data/root-ca.crl ] && cp $adminDir/data/root-ca.crl crl/ || true
     [ -e $adminDir/data/root-ca.pem ] && cp $adminDir/data/root-ca.pem certs/ || true
-    [ -e $adminDir/data/root-ca.pem ] && ln -sf root-ca.pem certs/test-root.pem || true
-    [ -e $adminDir/data/root-ca.der ] && cp $adminDir/data/root-ca.der certs/ || true
     [ -e $adminDir/data/issuer/ca-int.pem ] && cp $adminDir/data/issuer/ca-int.pem certs/ || true
-    [ -e $adminDir/data/issuer/ca-int.pem ] && ln -sf ca-int.pem certs/test-ca.pem || true
-    [ -e $adminDir/data/issuer/ca-int.der ] && cp $adminDir/data/issuer/ca-int.der certs/ || true
 
     local have_config=$(grep restarted $adminDir/data/config.json | grep true)
     if [ "$have_config" != "" ]; then
@@ -867,6 +862,12 @@ main() {
     [ -e $this ] || this="$curdir/$0"
     curChecksum=$(md5sum $this 2>/dev/null | cut -d' ' -f1)
     [ ! -e "$cloneDir/cron_d" ] || chown labca:labca "$cloneDir/cron_d"
+
+    # Stop any running containers to prevent data migration issues...
+    if [ -d "$boulderDir" ]; then
+        cd "$boulderDir"
+        docker compose stop &>/dev/null || true
+    fi
 
     parse_cmdline "$@"
     if [ $keepLocal -eq 0 ]; then

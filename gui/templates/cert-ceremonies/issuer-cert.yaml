@@ -1,0 +1,26 @@
+ceremony-type: intermediate
+pkcs11:
+    module: {{ .Module }}
+    pin: {{ .UserPIN }}
+    signing-key-slot: {{ .RootSlotID }}
+    signing-key-label: {{ .RootLabel }}
+inputs:
+    public-key-path: {{ .Path }}issuer-{{ .SeqNr }}-pubkey.pem
+    issuer-certificate-path: {{ .Path }}root-{{ .RootSeqNr }}-cert.pem
+outputs:
+    certificate-path: {{ .Path }}issuer-{{ .SeqNr }}-cert.pem
+certificate-profile:
+    signature-algorithm: {{ .SignAlgorithm }}
+    common-name: {{ .CommonName }}
+    organization: {{ .OrgName }}
+    country: {{ .Country }}
+    not-before: {{ .NotBefore }}
+    not-after: {{ .NotAfter }}
+    crl-url: {{ .CrlUrl }}
+    issuer-url: {{ .IssuerUrl }}
+    policies:
+        - oid: 2.23.140.1.2.1
+    key-usages:
+        - Digital Signature
+        - Cert Sign
+        - CRL Sign

@@ -165,6 +165,7 @@
             <tr>
               <th>Subject</th>
               <th></th>
+              <th>Type</th>
               <th>Active</th>
               <th></th>
             </tr>
@@ -177,10 +178,11 @@
               <td class="vmiddle">
                 <a href="/certs/{{ $item.RootCert.BaseName }}.pem" title="Download this certificate">download</a>
               </td>
+              <td class="vmiddle">{{ $item.RootCert.KeyType }}</td>
               <td class="vmiddle"></td>
               <td class="vmiddle">
                 <button class="btn btn-outline btn-reg btn-success export-cert-key" type="button" title="Export this certificate and key" data-name="{{ $item.RootCert.BaseName }}" data-subject="{{ $item.RootCert.Subject }}">Export</button>
-                <button class="btn btn-outline btn-reg btn-warning renew-cert" type="button" title="Generate new version with extended lifetime" data-name="{{ $item.RootCert.BaseName }}" data-rootname="{{ $item.RootCert.BaseName }}" data-subject="{{ $item.RootCert.Subject }}" data-rootsubject="{{ $item.RootCert.Subject }}" data-notbefore="{{ $item.RootCert.NotAfter }}" data-isroot="true">Renew</button>
+                <button class="btn btn-outline btn-reg btn-warning renew-cert" type="button" title="Generate new version with extended lifetime" data-name="{{ $item.RootCert.BaseName }}" data-rootname="{{ $item.RootCert.BaseName }}" data-subject="{{ $item.RootCert.Subject }}" data-keytype="{{ $item.RootCert.KeyType }}" data-rootsubject="{{ $item.RootCert.Subject }}" data-notbefore="{{ $item.RootCert.NotAfter }}" data-isroot="true">Renew</button>
                 <!--
                 <button class="btn btn-outline btn-new-issuer btn-warning new-issuer-cert" type="button" title="Generate new Issuer Certificate under this Root" data-root="{{ $item.RootCert.BaseName }}" data-rootsubject="{{ $item.RootCert.Subject }}">New Issuer</button>
                 <button class="btn btn-outline btn-reg btn-danger delete-cert hidden" type="button" title="Delete this certificate" data-name="{{ $item.RootCert.BaseName }}">Delete</button>
@@ -196,10 +198,11 @@
               <td class="vmiddle">
                 <a href="/certs/{{ $subitem.BaseName }}.pem" title="Download this certificate">download</a>
               </td>
+              <td class="vmiddle">{{ $subitem.KeyType }}</td>
               <td class="vmiddle center"><input type="radio" id="active-{{ $subitem.BaseName }}" name="issue-active" value="{{ $subitem.BaseName }}" title="Use this certificate for issueing leave certificates" {{ if $subitem.ActiveIssuer }}data-orig="true" checked{{ end }}/></td>
               <td class="vmiddle">
                 <button class="btn btn-outline btn-reg btn-success export-cert-key" type="button" title="Export this certificate and key" data-name="{{ $subitem.BaseName }}" data-subject="{{ $subitem.Subject }}">Export</button>
-                <button class="btn btn-outline btn-reg btn-warning renew-cert" type="button" title="Generate new version with extended lifetime" data-name="{{ $subitem.BaseName }}" data-rootname="{{ $item.RootCert.BaseName }}" data-subject="{{ $subitem.Subject }}" data-rootsubject="{{ $item.RootCert.Subject }}" data-notbefore="{{ $subitem.NotAfter }}" data-notafter="{{ $item.RootCert.NotAfter }}" data-isroot="false">Renew</button>
+                <button class="btn btn-outline btn-reg btn-warning renew-cert" type="button" title="Generate new version with extended lifetime" data-name="{{ $subitem.BaseName }}" data-rootname="{{ $item.RootCert.BaseName }}" data-subject="{{ $subitem.Subject }}" data-keytype="{{ $subitem.KeyType }}" data-rootsubject="{{ $item.RootCert.Subject }}" data-notbefore="{{ $subitem.NotAfter }}" data-notafter="{{ $item.RootCert.NotAfter }}" data-isroot="false">Renew</button>
                 <!--
                 <button class="btn btn-outline btn-reg btn-danger delete-cert" type="button" title="Delete this certificate" data-name="{{ $subitem.BaseName }}">Delete</button>
                 -->
@@ -226,13 +229,12 @@
               <td class="vmiddle">Root CRL</td>
               <td class="vmiddle">
                 <button class="btn btn-outline btn-success mt5" type="button" id="gen-root-crl" title="Generate root CRL now (requires Root CA key)">Generate</button>
-                <button class="btn btn-outline btn-success mt5" type="button" id="upload-root-crl" title="Upload a root CRL">Upload</button>
               </td>
             </tr>
             <tr>
               <td class="vmiddle">Issuer CRL</td>
               <td class="vmiddle">
-                <button class="btn btn-outline btn-success mt5" type="button" id="gen-issuer-crl" title="Generate root CRL now (requires Root CA key)">Generate</button>
+                <button class="btn btn-outline btn-success mt5" type="button" id="gen-issuer-crl" title="Generate issuer CRL now">Generate</button>
               </td>
             </tr>
           </tbody>
@@ -549,7 +551,8 @@
         <input type="hidden" id="modal-renew-cert" name="modal-renew-cert">
         <input type="hidden" id="renew-rootcert" name="renew-rootcert">
         <input type="hidden" id="renew-rootsubject" name="renew-rootsubject">
-        Subject: <span id="renew-subject"></span><br><br>
+        Subject: <span id="renew-subject"></span><br>
+        Key Type: <span id="renew-keytype"></span><br><br>
         Current end date: <span id="renew-current-enddate"></span><br>
         <span id="renew-show-root-enddate" class="hidden">Root end date: <span id="renew-root-enddate"></span><br></span>
         <br>
@@ -844,6 +847,9 @@
                                 }
 
                                 $('#modal-export').modal('hide');
+
+                            } else if (event.currentTarget.status == 400 || event.currentTarget.statusText == "Bad Request") {
+                                $("#modal-export-error").removeClass("hidden").show().text("Key is not extractable from the HSM!");
                             } else {
                                 $("#modal-export-error").removeClass("hidden").show().text("Backend returned: " + event.currentTarget.statusText);
                             }
@@ -1363,6 +1369,7 @@
                     $('#modal-renew-cert').val($(evt.target).data('name'));
                     $('#renew-rootcert').val($(evt.target).data('rootname'));
                     $('#renew-subject').text($(evt.target).data('subject'));
+                    $('#renew-keytype').text($(evt.target).data('keytype'));
                     $('#renew-rootsubject').val($(evt.target).data('rootsubject'));
                     d = new Date($(evt.target).data('notbefore')).toUTCString()
                     $('#renew-current-enddate').text(d);

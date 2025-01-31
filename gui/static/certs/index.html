@@ -60,8 +60,7 @@
             <thead><tr>
               <th>CA Type</th>
               <th>Distinguished Name</th>
-              <th>Windows format</th>
-              <th>Linux format</th>
+              <th>Certificate File</th>
               <th>Validity Period</th>
               <th>CRL</th>
               <th>CRL Validity</th>
@@ -70,17 +69,15 @@
               <tr>
                 <td>Root CA</td>
                 <td><!-- BEGIN PKI_ROOT_DN -->PKI_ROOT_DN<!-- END PKI_ROOT_DN --></td>
-                <td><a class="public" href="root-ca.der">root-ca.der</a></td>
-                <td><a class="public" href="root-ca.pem">root-ca.pem</a></td>
+                <td><!-- BEGIN PKI_ROOT_LINK --><a class="public" href="root-01-cert.pem">root-01-cert.pem</a><!-- END PKI_ROOT_LINK --></td>
                 <td><!-- BEGIN PKI_ROOT_VALIDITY -->PKI_ROOT_VALIDITY<!-- END PKI_ROOT_VALIDITY --></td>
-                <td><a class="public" href="../crl/root-ca.crl">root-ca.crl</a></td>
+                <td><!-- BEGIN PKI_ROOT_CRL_LINK --><!-- END PKI_ROOT_CRL_LINK --></td>
                 <td><!-- BEGIN PKI_ROOT_CRL_VALIDITY --><!-- END PKI_ROOT_CRL_VALIDITY --></td>
               </tr>
               <tr>
                 <td>Issuing CA</td>
                 <td><!-- BEGIN PKI_INT_DN -->PKI_INT_DN<!-- END PKI_INT_DN --></td>
-                <td><a class="public" href="ca-int.der">ca-int.der</a></td>
-                <td><a class="public" href="ca-int.pem">ca-int.pem</a></td>
+                <td><!-- BEGIN PKI_INT_LINK --><a class="public" href="issuer-01-cert.pem">issuer-01-cert.pem</a><!-- END PKI_INT_LINK --></td>
                 <td><!-- BEGIN PKI_INT_VALIDITY -->PKI_INT_VALIDITY<!-- END PKI_INT_VALIDITY --></td>
                 <td><!-- BEGIN PKI_INT_CRL_LINK --><!-- END PKI_INT_CRL_LINK --></td>
                 <td><!-- BEGIN PKI_INT_CRL_VALIDITY --><!-- END PKI_INT_CRL_VALIDITY --></td>
@@ -90,9 +87,7 @@
 
           <p>
             To trust the certificates provided by <!-- BEGIN WEBTITLE -->LabCA<!-- END WEBTITLE -->, all your client devices
-            should install the root certificate in their <b>Trusted Root Certification Authorities</b> store. You may choose
-            to download the format best suited for your Operating System: DER format for Windows machines or PEM format for
-            Linux/unix machines and Android phones.
+            should install the root certificate in their <b>Trusted Root Certification Authorities</b> store.
           </p>
           <p>
             The CRL (Certificate Revocation List) is a type of blocklist that includes certificates that should no longer be

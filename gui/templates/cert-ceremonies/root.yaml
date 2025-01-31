@@ -1,0 +1,34 @@
+ceremony-type: root
+pkcs11:
+    module: {{ .Module }}
+    pin: {{ .UserPIN }}
+    store-key-in-slot: {{ .SlotID }}
+    store-key-with-label: {{ .Label }}
+key:
+    type: {{ .KeyType }}
+{{ if eq .KeyType "rsa" }}
+    rsa-mod-length: {{ .KeyParam }}
+{{ else }}
+    ecdsa-curve: {{ .KeyParam }}
+{{ end }}
+{{ if eq .Extractable "true" }}
+    extractable: true
+{{ end }}
+outputs:
+    public-key-path: {{ .Path }}root-{{ .SeqNr }}-pubkey.pem
+    certificate-path: {{ .Path }}root-{{ .SeqNr }}-cert.pem
+certificate-profile:
+    signature-algorithm: {{ .SignAlgorithm }}
+    common-name: {{ .CommonName }}
+    organization: {{ .OrgName }}
+    country: {{ .Country }}
+    not-before: {{ .NotBefore }}
+    not-after: {{ .NotAfter }}
+    key-usages:
+        - Cert Sign
+        - CRL Sign
+skip-lints:
+   - n_ca_digital_signature_not_set
+{{ if eq .Renewal "true" }}
+renewal: true
+{{ end }}

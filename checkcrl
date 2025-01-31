@@ -2,32 +2,34 @@
 
 set -e
 
-if [ -e data/root-ca.crl ] && [ ! -e /var/www/html/crl/root-ca.crl ]; then
-    cp -p data/root-ca.crl /var/www/html/crl/root-ca.crl
-    touch /var/www/html/crl
-fi
-if [ -e data/root-ca.crl ] && [ data/root-ca.crl -nt /var/www/html/crl/root-ca.crl ]; then
-    cp -p data/root-ca.crl /var/www/html/crl/root-ca.crl
-    touch /var/www/html/crl
-fi
-
 cd /var/www/html
+
+ROOT_CRL_FILE=/opt/boulder/labca/certs/webpki/root-01-crl.pem
+ROOT_CRL_NAME=$(basename $ROOT_CRL_FILE)
+[ -e "crl/$ROOT_CRL_NAME" ] || (cp $ROOT_CRL_FILE crl/ && touch crl/)
+[ $ROOT_CRL_FILE -ot "crl/$ROOT_CRL_NAME" ] || (cp $ROOT_CRL_FILE crl/ && touch crl/)
+
 if [ crl/ -nt certs/index.html ]; then
     echo "Updating certs/index.html with latest CRL info..."
 
-    PKI_ROOT_CERT_BASE="crl/root-ca"
-    PKI_ISSUER_NAME_ID=$(grep issuer_name_id /opt/labca/data/config.json | sed -e 's/.*:[ ]*//' | sed -e 's/,//g' | sed -e 's/\"//g')
-
+    PKI_ROOT_CRL_LINK=""
     PKI_ROOT_CRL_VALIDITY=""
-    if [ -e "$PKI_ROOT_CERT_BASE.crl" ]; then
-        PKI_ROOT_CRL_VALIDITY="$(openssl crl -noout -in $PKI_ROOT_CERT_BASE.crl -lastupdate | sed -e "s/.*=/Last Update: /")<br/> $(openssl crl -noout -in $PKI_ROOT_CERT_BASE.crl -nextupdate | sed -e "s/.*=/Next Update: /")"
+    if [ -e $ROOT_CRL_FILE ]; then
+        PKI_ROOT_CRL_LINK="<a class=\"public\" href=\"../crl/$ROOT_CRL_NAME\">$ROOT_CRL_NAME</a></td>"
+        PKI_ROOT_CRL_VALIDITY="$(openssl crl -noout -in $ROOT_CRL_FILE -lastupdate | sed -e "s/.*=/Last Update: /")<br/> $(openssl crl -noout -in $ROOT_CRL_FILE -nextupdate | sed -e "s/.*=/Next Update: /")"
     fi
+    sed -i -e "s|<\!-- BEGIN PKI_ROOT_CRL_LINK -->.*<\!-- END PKI_ROOT_CRL_LINK -->|<\!-- BEGIN PKI_ROOT_CRL_LINK -->$PKI_ROOT_CRL_LINK<\!-- END PKI_ROOT_CRL_LINK -->|g" certs/index.html
     sed -i -e "s|<\!-- BEGIN PKI_ROOT_CRL_VALIDITY -->.*<\!-- END PKI_ROOT_CRL_VALIDITY -->|<\!-- BEGIN PKI_ROOT_CRL_VALIDITY -->$PKI_ROOT_CRL_VALIDITY<\!-- END PKI_ROOT_CRL_VALIDITY -->|g" certs/index.html
 
+    PKI_INT_CERT_BASE="/opt/boulder/labca/certs/webpki/issuer-01-cert"
+    INT_BASE_NAME=$(basename $PKI_INT_CERT_BASE)
+    INT_CRL_NAME=${INT_BASE_NAME//-cert/-crl}.pem
+    PKI_ISSUER_NAME_ID=$(grep issuer_name_id /opt/labca/data/config.json | sed -e 's/.*:[ ]*//' | sed -e 's/,//g' | sed -e 's/\"//g')
     PKI_INT_CRL_LINK=""
     PKI_INT_CRL_VALIDITY=""
     if [ -e "crl/$PKI_ISSUER_NAME_ID.crl" ]; then
-        PKI_INT_CRL_LINK="<a class=\"public\" href=\"../crl/$PKI_ISSUER_NAME_ID.crl\">$PKI_ISSUER_NAME_ID.crl</a></td>"
+        [ -L "crl/$INT_CRL_NAME" ] || ln -sf $PKI_ISSUER_NAME_ID.crl crl/$INT_CRL_NAME
+        PKI_INT_CRL_LINK="<a class=\"public\" href=\"../crl/$INT_CRL_NAME\">$INT_CRL_NAME</a></td>"
         PKI_INT_CRL_VALIDITY="$(openssl crl -noout -inform der -in crl/$PKI_ISSUER_NAME_ID.crl -lastupdate | sed -e "s/.*=/Last Update: /")<br/> $(openssl crl -noout -inform der -in crl/$PKI_ISSUER_NAME_ID.crl -nextupdate | sed -e "s/.*=/Next Update: /")"
     fi
     sed -i -e "s|<\!-- BEGIN PKI_INT_CRL_LINK -->.*<\!-- END PKI_INT_CRL_LINK -->|<\!-- BEGIN PKI_INT_CRL_LINK -->$PKI_INT_CRL_LINK<\!-- END PKI_INT_CRL_LINK -->|g" certs/index.html

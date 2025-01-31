@@ -1,0 +1,19 @@
+diff --git a/cmd/ceremony/key.go b/cmd/ceremony/key.go
+index e0ed20594..4c4656b4d 100644
+--- a/cmd/ceremony/key.go
++++ b/cmd/ceremony/key.go
+@@ -56,12 +56,12 @@ func generateKey(session *pkcs11helpers.Session, label string, outputPath string
+ 	var keyID []byte
+ 	switch config.Type {
+ 	case "rsa":
+-		pubKey, keyID, err = rsaGenerate(session, label, config.RSAModLength)
++		pubKey, keyID, err = rsaGenerate(session, label, config.RSAModLength, config.Extractable)
+ 		if err != nil {
+ 			return nil, fmt.Errorf("failed to generate RSA key pair: %s", err)
+ 		}
+ 	case "ecdsa":
+-		pubKey, keyID, err = ecGenerate(session, label, config.ECDSACurve)
++		pubKey, keyID, err = ecGenerate(session, label, config.ECDSACurve, config.Extractable)
+ 		if err != nil {
+ 			return nil, fmt.Errorf("failed to generate ECDSA key pair: %s", err)
+ 		}

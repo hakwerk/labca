@@ -44,27 +44,20 @@ fi
 for f in $(grep -l boulder-proxysql $boulderLabCADir/secrets/*); do sed -i -e "s/proxysql:6033/mysql:3306/" $f; done
 
 cd "$boulderLabCADir"
-sed -i -e "s/test-ca2.pem/test-ca.pem/" config/ocsp-responder.json
-sed -i -e "s/test-ca2.pem/test-ca.pem/" config/publisher.json
-sed -i -e "s/test-ca2.pem/test-ca.pem/" config/ra.json
-sed -i -e "s/test-ca2.pem/test-ca.pem/" config/wfe2.json
-sed -i -e "s|test/certs/webpki/int-rsa-a.cert.pem|labca/test-ca.pem|" config/akamai-purger.json
-sed -i -e "s|test/certs/webpki/int-rsa-a.cert.pem|labca/test-ca.pem|" config/ocsp-responder.json
-sed -i -e "s|test/certs/webpki/int-rsa-a.cert.pem|labca/test-ca.pem|" config/publisher.json
-sed -i -e "s|test/certs/webpki/int-rsa-a.cert.pem|labca/test-ca.pem|" config/ca.json
-sed -i -e "s|test/certs/webpki/int-rsa-a.cert.pem|labca/test-ca.pem|" config/wfe2.json
-sed -i -e "s|test/certs/webpki/int-rsa-a.cert.pem|labca/test-ca.pem|" config/crl-storer.json
-sed -i -e "s|test/certs/webpki/int-rsa-a.cert.pem|labca/test-ca.pem|" config/crl-updater.json
-sed -i -e "s|test/certs/webpki/int-rsa-a.cert.pem|labca/test-ca.pem|" config/ra.json
-sed -i -e "s|test/certs/webpki/int-rsa-a.cert.pem|labca/test-ca.pem|" v2_integration.py
-sed -i -e "s|test/certs/webpki/int-rsa-a.pkcs11.json|labca/test-ca.key-pkcs11.json|" config/ca.json
-sed -i -e "s|test/certs/webpki/root-rsa.cert.pem|labca/test-root.pem|" certs/root-ceremony-rsa.yaml
-sed -i -e "s|test/certs/webpki/root-rsa.cert.pem|labca/test-root.pem|" certs/root-crl-rsa.yaml
-sed -i -e "s|test/certs/webpki/root-rsa.cert.pem|labca/test-root.pem|" certs/intermediate-cert-ceremony-rsa.yaml
-sed -i -e "s|test/certs/webpki/root-rsa.cert.pem|labca/test-root.pem|" config/publisher.json
-sed -i -e "s|test/certs/webpki/root-rsa.cert.pem|labca/test-root.pem|" config/wfe2.json
-sed -i -e "s|test/certs/webpki/root-rsa.cert.pem|labca/test-root.pem|" integration-test.py
-sed -i -e "s|test/certs/webpki/root-rsa.cert.pem|labca/test-root.pem|" helpers.py
+sed -i -e "s|test/certs/webpki/int-rsa-a.cert.pem|labca/certs/webpki/issuer-01-cert.pem|" config/ocsp-responder.json
+sed -i -e "s|test/certs/webpki/int-rsa-a.cert.pem|labca/certs/webpki/issuer-01-cert.pem|" config/publisher.json
+sed -i -e "s|test/certs/webpki/int-rsa-a.cert.pem|labca/certs/webpki/issuer-01-cert.pem|" config/ca.json
+sed -i -e "s|test/certs/webpki/int-rsa-a.cert.pem|labca/certs/webpki/issuer-01-cert.pem|" config/wfe2.json
+sed -i -e "s|test/certs/webpki/int-rsa-a.cert.pem|labca/certs/webpki/issuer-01-cert.pem|" config/crl-storer.json
+sed -i -e "s|test/certs/webpki/int-rsa-a.cert.pem|labca/certs/webpki/issuer-01-cert.pem|" config/crl-updater.json
+sed -i -e "s|test/certs/webpki/int-rsa-a.cert.pem|labca/certs/webpki/issuer-01-cert.pem|" config/ra.json
+sed -i -e "s|test/certs/webpki/int-rsa-a.pkcs11.json|labca/certs/webpki/issuer-01.pkcs11.json|" config/ca.json
+sed -i -e "s|test/certs/webpki/root-rsa.cert.pem|labca/certs/webpki/root-01-cert.pem|" certs/root-ceremony-rsa.yaml
+sed -i -e "s|test/certs/webpki/root-rsa.cert.pem|labca/certs/webpki/root-01-cert.pem|" certs/root-crl-rsa.yaml
+sed -i -e "s|test/certs/webpki/root-rsa.cert.pem|labca/certs/webpki/root-01-cert.pem|" certs/intermediate-cert-ceremony-rsa.yaml
+sed -i -e "s|test/certs/webpki/root-rsa.cert.pem|labca/certs/webpki/root-01-cert.pem|" config/publisher.json
+sed -i -e "s|test/certs/webpki/root-rsa.cert.pem|labca/certs/webpki/root-01-cert.pem|" config/wfe2.json
+sed -i -e "s|test/certs/webpki/root-rsa.cert.pem|labca/certs/webpki/root-01-cert.pem|" helpers.py
 sed -i -e "s|letsencrypt/boulder|hakwerk/labca|" config/wfe2.json
 sed -i -e "s|1.2.3.4|1.3.6.1.4.1.44947.1.1.1|g" config/ca.json
 sed -i -e "s/ocspURL.Path = encodedReq/ocspURL.Path += encodedReq/" ocsp/helper/helper.go
@@ -89,15 +82,5 @@ for file in `find . -type f | grep -v .git`; do
 done
 
 sed -i -e "s/names/name\(s\)/" config/expiration-mailer.gotmpl
-
-if [ ! -e "test-ca.key-pkcs11.json" ]; then
-    cat > test-ca.key-pkcs11.json <<EOL
-{
-    "module": "/usr/lib/softhsm/libsofthsm2.so",
-    "tokenLabel": "intermediate signing key (rsa)",
-    "pin": "1234"
-}
-EOL
-fi
 
 rm -f test-ca2.pem
