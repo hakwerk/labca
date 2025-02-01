@@ -1,5 +1,5 @@
 diff --git a/docker-compose.yml b/docker-compose.yml
-index d0a439f0f..71203004d 100644
+index d0a439f0f..81a92bbe6 100644
 --- a/docker-compose.yml
 +++ b/docker-compose.yml
 @@ -1,3 +1,4 @@
@@ -19,14 +19,14 @@ index d0a439f0f..71203004d 100644
 -      - .:/boulder:cached
 +      - .:/opt/boulder:cached
 +      - /home/labca/boulder_labca:/opt/boulder/labca
-+      - /home/labca/nginx_data/static:/opt/wwwstatic
++      - /home/labca/nginx_data/static:/var/www/html
        - ./.gocache:/root/.cache/go-build:cached
 -      - ./test/certs/.softhsm-tokens/:/var/lib/softhsm/tokens/:cached
 +      - /home/labca/boulder_labca/certs/.softhsm-tokens/:/var/lib/softhsm/tokens/
      networks:
        bouldernet:
          ipv4_address: 10.77.77.77
-@@ -48,29 +51,21 @@ services:
+@@ -48,29 +51,22 @@ services:
        - 4003:4003 # SFE
      depends_on:
        - bmysql
@@ -50,6 +50,7 @@ index d0a439f0f..71203004d 100644
 -      # normal "docker compose up/run boulder", only when specifically invoked
 -      # with a "docker compose up bsetup".
 -      - setup
++      - control
 +    entrypoint: labca/entrypoint.sh
 +    working_dir: &boulder_working_dir /opt/boulder
 +    logging:
@@ -66,7 +67,7 @@ index d0a439f0f..71203004d 100644
      networks:
        bouldernet:
          aliases:
-@@ -84,46 +79,98 @@ services:
+@@ -84,46 +80,103 @@ services:
      # small.
      command: mysqld --bind-address=0.0.0.0 --slow-query-log --log-output=TABLE --log-queries-not-using-indexes=ON
      logging:
@@ -94,6 +95,8 @@ index d0a439f0f..71203004d 100644
  
    bconsul:
      image: hashicorp/consul:1.15.4
++    depends_on:
++      - control
      volumes:
 -     - ./test/:/test/:cached
 +      - /home/labca/boulder_labca:/opt/boulder/labca
@@ -118,7 +121,7 @@ index d0a439f0f..71203004d 100644
 +      - /var/run/docker.sock:/var/run/docker.sock
 +      - /home/labca/admin:/go/src/labca
 +      - ./.gocache:/root/.cache/go-build
-+      - /home/labca/nginx_data/static:/opt/wwwstatic
++      - /home/labca/nginx_data/static:/var/www/html
 +      - /home/labca/backup:/opt/backup
 +      - .:/opt/boulder
 +      - /home/labca/boulder_labca:/opt/boulder/labca
@@ -127,6 +130,7 @@ index d0a439f0f..71203004d 100644
 +      - 3000
 +    depends_on:
 +      - bmysql
++      - control
 +    working_dir: /go/src/labca
 +    command: ./setup.sh
 +    logging:
@@ -148,6 +152,8 @@ index d0a439f0f..71203004d 100644
 +      - /home/labca/nginx_data/conf.d:/etc/nginx/conf.d
 +      - /home/labca/nginx_data/ssl:/etc/nginx/ssl
 +      - /home/labca/nginx_data/static:/var/www/html
++    depends_on:
++      - control
 +
 +  control:
 +    image: *boulder_tools_image

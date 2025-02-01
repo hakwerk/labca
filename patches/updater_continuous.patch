@@ -17,7 +17,7 @@ index 4597fd60a..5ee00d765 100644
 +	// If there is no .crl file yet, generate one (after a delay to let all other
 +	// components start up fully).
 +	// Dirty hack to check filesystem directly instead of using the crl-storer...
-+	files, err := os.ReadDir("/opt/wwwstatic/crl/")
++	files, err := os.ReadDir("/var/www/html/crl/")
 +	if err != nil {
 +		return err
 +	}

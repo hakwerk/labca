@@ -11,7 +11,7 @@ export PKI_INT_CERT_BASE="$dataDir/issuer-01-cert"
 cd /opt/boulder/labca
 $baseDir/apply-boulder
 
-cd /opt/wwwstatic
+cd /var/www/html
 
 PKI_ROOT_CRL_FILE=${PKI_ROOT_CERT_BASE/-cert/-crl}.pem
 if [ -e "$PKI_ROOT_CRL_FILE" ]; then

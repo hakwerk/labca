@@ -1,5 +1,5 @@
 diff --git a/docker-compose.yml b/docker-compose.yml
-index 71203004d..b17125e54 100644
+index 81a92bbe6..49e3c2797 100644
 --- a/docker-compose.yml
 +++ b/docker-compose.yml
 @@ -4,7 +4,7 @@ services:
@@ -17,30 +17,19 @@ index 71203004d..b17125e54 100644
      volumes:
 -      - .:/opt/boulder:cached
 -      - /home/labca/boulder_labca:/opt/boulder/labca
--      - /home/labca/nginx_data/static:/opt/wwwstatic
+-      - /home/labca/nginx_data/static:/var/www/html
 -      - ./.gocache:/root/.cache/go-build:cached
 -      - /home/labca/boulder_labca/certs/.softhsm-tokens/:/var/lib/softhsm/tokens/
 +      - boulder_data:/opt/boulder/labca
 +      - certificates:/opt/boulder/labca/certs
-+      - nginx_html:/opt/wwwstatic
++      - nginx_html:/var/www/html
 +      - softhsm:/var/lib/softhsm/tokens
      networks:
        bouldernet:
          ipv4_address: 10.77.77.77
-@@ -53,6 +52,7 @@ services:
-       - bmysql
-       - bconsul
-       - bpkilint
-+      - control
-     entrypoint: labca/entrypoint.sh
-     working_dir: &boulder_working_dir /opt/boulder
-     logging:
-@@ -87,35 +87,40 @@ services:
- 
-   bconsul:
-     image: hashicorp/consul:1.15.4
-+    depends_on:
-+      - control
+@@ -91,35 +90,37 @@ services:
+     depends_on:
+       - control
      volumes:
 -      - /home/labca/boulder_labca:/opt/boulder/labca
 +      - boulder_data:/opt/boulder/labca
@@ -63,14 +52,14 @@ index 71203004d..b17125e54 100644
        - /var/run/docker.sock:/var/run/docker.sock
 -      - /home/labca/admin:/go/src/labca
 -      - ./.gocache:/root/.cache/go-build
--      - /home/labca/nginx_data/static:/opt/wwwstatic
+-      - /home/labca/nginx_data/static:/var/www/html
 -      - /home/labca/backup:/opt/backup
 -      - .:/opt/boulder
 -      - /home/labca/boulder_labca:/opt/boulder/labca
 -      - /home/labca/boulder_labca/certs/.softhsm-tokens/:/var/lib/softhsm/tokens/
 +      - ./docker-compose.yml:/opt/boulder/docker-compose.yml
 +      - ldata:/opt/labca/data
-+      - nginx_html:/opt/wwwstatic
++      - nginx_html:/var/www/html
 +      - backup:/opt/backup
 +      - boulder_data:/opt/boulder/labca
 +      - certificates:/opt/boulder/labca/certs
@@ -79,15 +68,15 @@ index 71203004d..b17125e54 100644
        - 3000
      depends_on:
        - bmysql
+       - control
 -    working_dir: /go/src/labca
 -    command: ./setup.sh
-+      - control
 +    working_dir: /opt/labca
 +    command: bin/labca-gui
      logging:
        driver: "json-file"
        options:
-@@ -132,28 +137,28 @@ services:
+@@ -136,30 +137,28 @@ services:
        - 80:80
        - 443:443
      volumes:
@@ -97,8 +86,8 @@ index 71203004d..b17125e54 100644
 +      - nginx_conf:/etc/nginx/conf.d
 +      - nginx_ssl:/etc/nginx/ssl
 +      - nginx_html:/var/www/html
-+    depends_on:
-+      - control
+     depends_on:
+       - control
  
    control:
 -    image: *boulder_tools_image
@@ -132,7 +121,7 @@ index 71203004d..b17125e54 100644
      expose:
        - 3030
      environment:
-@@ -171,6 +176,15 @@ services:
+@@ -177,6 +176,15 @@ services:
  
  volumes:
    dbdata:

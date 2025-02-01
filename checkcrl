@@ -23,7 +23,7 @@ if [ crl/ -nt certs/index.html ]; then
 
     PKI_INT_CERT_BASE="/opt/boulder/labca/certs/webpki/issuer-01-cert"
     INT_BASE_NAME=$(basename $PKI_INT_CERT_BASE)
-    INT_CRL_NAME=${INT_BASE_NAME//-cert/-crl}.pem
+    INT_CRL_NAME=${INT_BASE_NAME/-cert/-crl}.pem
     PKI_ISSUER_NAME_ID=$(grep issuer_name_id /opt/labca/data/config.json | sed -e 's/.*:[ ]*//' | sed -e 's/,//g' | sed -e 's/\"//g')
     PKI_INT_CRL_LINK=""
     PKI_INT_CRL_VALIDITY=""
