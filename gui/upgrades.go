@@ -18,9 +18,9 @@ import (
 func CheckUpgrades() {
 	v := viper.GetString("version")
 	if standaloneVersion == "" {
-		gitVersion := controlCommand("git-version")
+		gitVersion := controlCommand("git-version", true)
 		if gitVersion != "" {
-			viper.Set("version", gitVersion)
+			viper.Set("version", strings.TrimSpace(gitVersion))
 			viper.WriteConfig()
 		}
 	} else if v != standaloneVersion {
@@ -33,13 +33,13 @@ func CheckUpgrades() {
 	if changed {
 		time.Sleep(2 * time.Second)
 		log.Println("Applying updated configuration...")
-		controlCommand("apply")
+		controlCommand("apply", false)
 		time.Sleep(2 * time.Second)
 		log.Println("Updating CRL links if needed...")
-		controlCommand("check-crl")
+		controlCommand("check-crl", false)
 		time.Sleep(2 * time.Second)
 		log.Println("Restarting boulder containers...")
-		controlCommand("boulder-restart")
+		controlCommand("boulder-restart", false)
 	}
 }
 
@@ -55,9 +55,12 @@ func readFileAsString(filename string) string {
 	return string(read)
 }
 
-func controlCommand(command string) string {
+func controlCommand(command string, ignoreError bool) string {
 	conn, err := net.Dial("tcp", "control:3030")
 	if err != nil {
+		if ignoreError {
+			return ""
+		}
 		log.Println("**** Failed to connect to control container!")
 		time.Sleep(1 * time.Minute)
 		os.Exit(1)

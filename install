@@ -305,7 +305,7 @@ parse_cmdline() {
             -t|--test)
                 alphaTest=1
                 shift 1
-                msg_ok "option: INCLUDING ALPHA TEST STEPS"
+                msg_ok "option: build docker images locally"
                 ;;
             --)
                 shift

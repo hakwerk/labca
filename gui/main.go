@@ -2501,8 +2501,9 @@ func _setupAdminUser(w http.ResponseWriter, r *http.Request) bool {
 
 				err = _applyConfig()
 				if err != nil {
-					fmt.Println(err)
-					reg.Errors["File"] = "Could not apply config after importing backup"
+					fmt.Println("Could not apply config, trying to migrate by restarting...")
+					_hostCommand(w, r, "labca-restart")
+					reg.Errors["File"] = "Could not apply config, trying to migrate by restarting..."
 					render(w, r, "register:manage", map[string]interface{}{"User": reg, "IsLogin": true, "Progress": _progress("register"), "HelpText": _helptext("register")})
 					return false
 				}

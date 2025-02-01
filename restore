@@ -25,10 +25,16 @@ vrs=$(grep version /opt/labca/data/config.json | sed -e 's/.*:[ ]*//' | sed -e '
 rm -rf /opt/labca/data/* && mv $TMPDIR/data/* /opt/labca/data/
 sed -i -e "s/\"version\": \".*\"/\"version\": \"$vrs\"/" /opt/labca/data/config.json
 
-[ -d  $TMPDIR/webpki ] || (echo "Public CA files backup not found"; exit 1)
-rm -rf /opt/boulder/labca/certs/webpki/* && mv $TMPDIR/webpki/* /opt/boulder/labca/certs/webpki/
+if [ -d  $TMPDIR/webpki ]; then
+    rm -rf /opt/boulder/labca/certs/webpki/* && mv $TMPDIR/webpki/* /opt/boulder/labca/certs/webpki/
+else
+    echo "WARNING: public CA files not found in backup"
+fi
 
-[ -d  $TMPDIR/tokens ] || (echo "SoftHSMv2 tokens folder backup not found"; exit 1)
-rm -rf /var/lib/softhsm/tokens/* && mv $TMPDIR/tokens/* /var/lib/softhsm/tokens/
+if [ -d  $TMPDIR/tokens ]; then
+    rm -rf /var/lib/softhsm/tokens/* && mv $TMPDIR/tokens/* /var/lib/softhsm/tokens/
+else
+    echo "WARNING: SoftHSMv2 tokens folder not found in backup"
+fi
 
 rm -rf $TMPDIR

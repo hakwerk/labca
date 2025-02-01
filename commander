@@ -258,7 +258,7 @@ case $txt in
     ;;
 "backup-restore")
     read backup
-    /opt/labca/restore "$backup"
+    /opt/labca/restore "$backup" &>>$LOGFILE
     sleep 3
     ;;
 "server-restart")

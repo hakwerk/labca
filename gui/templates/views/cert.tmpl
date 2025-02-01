@@ -307,7 +307,7 @@
                     console.log(e);
                 }
 
-                $("#cert-submit").prop('disabled', !$("#numdays-error").hasClass('hidden'));
+                $("#generatebtn").prop('disabled', !$("#numdays-error").hasClass('hidden'));
             }
 
             $.fn.inputFilter = function(callback, errMsg) {
@@ -342,6 +342,14 @@
             $("#numdays").inputFilter(function(value) {
                 return /^\d*$/.test(value);    // Allow digits only, using a RegExp
             },"Only digits are allowed");
+
+            $("#certificate").change(function() {
+                $("#cert-submit").prop('disabled', ($("#certificate").val() == "" && $("#key").val() == ""));
+            })
+
+            $("#key").change(function() {
+                $("#cert-submit").prop('disabled', ($("#certificate").val() == "" && $("#key").val() == ""));
+            })
 
             updateEndDate();
         });
