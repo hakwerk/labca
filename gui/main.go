@@ -2404,10 +2404,8 @@ func _helptext(stage string) template.HTML {
 			"the Root CA from the previous step.</p>\n",
 			"<p>If you want to <b>generate</b> a certificate, by default the same key type and strength is selected as\n",
 			"was chosen in the previous step when generating the root, but you may choose a different\n",
-			"one. By default the common name is the same as the CN for the Root CA, minus the word 'Root'.</p>\n",
-			"<p>If you are using an offline Root CA certificate then you can download the Certificate Signing\n",
-			"Request (CSR) here and have it signed by the Root CA. Alternatively we (temporarily) need the\n",
-			"secret key of the Root CA for generating the issuing certificate.</p>"))
+			"one (if technically possible). By default the common name is the same as the CN for the Root CA, minus\n",
+			"the word 'Root'.</p>\n"))
 	} else if stage == "standalone" {
 		return template.HTML(fmt.Sprint("<p>Currently only step-ca is supported, using the MySQL database backend.\n",
 			"Please provide the necessary connectiuon details here."))

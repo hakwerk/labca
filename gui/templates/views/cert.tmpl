@@ -77,9 +77,6 @@
     <span class="error">{{ . }}</span><br/>
     {{ end }}
     <input class="btn btn-default" type="submit" value="Generate" name="generate" id="generatebtn">
-    {{ if and (not .IsRoot) (not .IsRootGenerated) }}
-    <input class="btn btn-default" type="submit" value="Get CSR" name="getcsr">
-    {{ end }}
     {{ if and (not .IsRoot) .IsFirst }}
     <input class="btn btn-danger btn-right" type="submit" value="Revert Root" name="revertroot" id="revertroot">
     {{ end }}
