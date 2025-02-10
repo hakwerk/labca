@@ -1,13 +1,13 @@
 diff --git a/crl/updater/updater.go b/crl/updater/updater.go
-index fec242794..ecda37738 100644
+index 2f76672fd..143b66a5e 100644
 --- a/crl/updater/updater.go
 +++ b/crl/updater/updater.go
-@@ -231,7 +231,7 @@ func (cu *crlUpdater) updateShard(ctx context.Context, atTime time.Time, issuerN
- 			crlEntries = append(crlEntries, entry)
+@@ -300,7 +300,7 @@ func (cu *crlUpdater) updateShard(ctx context.Context, atTime time.Time, issuerN
+ 			return fmt.Errorf("streaming GetRevokedCerts: %w", err)
  		}
  
 -		cu.log.Infof(
 +		cu.log.Debugf(
  			"Queried SA for CRL shard: id=[%s] expiresAfter=[%s] expiresBefore=[%s] numEntries=[%d]",
- 			crlID, chunk.start, chunk.end, len(crlEntries))
+ 			crlID, chunk.start, chunk.end, n)
  	}

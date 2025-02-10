@@ -1,8 +1,8 @@
 diff --git a/test/config/ra.json b/test/config/ra.json
-index e13ca9cf8..cda9192ab 100644
+index 7a5befada..335f69b14 100644
 --- a/test/config/ra.json
 +++ b/test/config/ra.json
-@@ -12,12 +12,7 @@
+@@ -36,12 +36,7 @@
  		},
  		"orderLifetime": "168h",
  		"issuerCerts": [

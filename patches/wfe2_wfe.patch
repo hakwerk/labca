@@ -1,64 +1,49 @@
 diff --git a/wfe2/wfe.go b/wfe2/wfe.go
-index a41472e54..42d2974c4 100644
+index d15a661e8..e45d5789a 100644
 --- a/wfe2/wfe.go
 +++ b/wfe2/wfe.go
-@@ -24,6 +24,7 @@ import (
- 	"google.golang.org/protobuf/types/known/durationpb"
- 	"google.golang.org/protobuf/types/known/emptypb"
- 
-+	"github.com/letsencrypt/boulder/cmd"
- 	"github.com/letsencrypt/boulder/core"
- 	corepb "github.com/letsencrypt/boulder/core/proto"
- 	berrors "github.com/letsencrypt/boulder/errors"
-@@ -171,6 +172,8 @@ type WebFrontEndImpl struct {
+@@ -171,6 +171,8 @@ type WebFrontEndImpl struct {
  	// descriptions (perhaps including URLs) of those profiles. NewOrder
  	// Requests with a profile name not present in this map will be rejected.
  	certProfiles map[string]string
 +
-+	hostnamePolicyFile string
++	pa *policy.AuthorityImpl
  }
  
  // NewWebFrontEndImpl constructs a web service for Boulder
-@@ -198,6 +201,7 @@ func NewWebFrontEndImpl(
+@@ -198,6 +200,7 @@ func NewWebFrontEndImpl(
  	unpauseSigner unpause.JWTSigner,
  	unpauseJWTLifetime time.Duration,
  	unpauseURL string,
-+	hostnamePolicyFile string,
++	pa *policy.AuthorityImpl,
  ) (WebFrontEndImpl, error) {
  	if len(issuerCertificates) == 0 {
  		return WebFrontEndImpl{}, errors.New("must provide at least one issuer certificate")
-@@ -239,6 +243,7 @@ func NewWebFrontEndImpl(
+@@ -215,6 +218,10 @@ func NewWebFrontEndImpl(
+ 		return WebFrontEndImpl{}, errors.New("must provide a service for nonce redemption")
+ 	}
+ 
++	if pa == nil {
++		return WebFrontEndImpl{}, errors.New("must provide a policy authority")
++	}
++
+ 	wfe := WebFrontEndImpl{
+ 		log:                          logger,
+ 		clk:                          clk,
+@@ -239,6 +246,7 @@ func NewWebFrontEndImpl(
  		unpauseSigner:                unpauseSigner,
  		unpauseJWTLifetime:           unpauseJWTLifetime,
  		unpauseURL:                   unpauseURL,
-+		hostnamePolicyFile:           hostnamePolicyFile,
++		pa:                           pa,
  	}
  
  	return wfe, nil
-@@ -2302,8 +2307,25 @@ func (wfe *WebFrontEndImpl) NewOrder(
- 		names[i] = ident.Value
+@@ -2274,7 +2282,7 @@ func (wfe *WebFrontEndImpl) NewOrder(
  	}
  
-+	logger := cmd.NewLogger(cmd.SyslogConfig{StdoutLevel: 7})
-+	pa, err := policy.New(map[core.AcmeChallenge]bool{}, logger)
-+	if err != nil {
-+		wfe.sendError(response, logEvent, probs.Malformed("cannot create policy authority implementation"), nil)
-+		return
-+	}
-+
-+	if wfe.hostnamePolicyFile == "" {
-+		wfe.sendError(response, logEvent, probs.Malformed("HostnamePolicyFile must be provided in config"), nil)
-+		return
-+	}
-+	err = pa.LoadHostnamePolicyFile(wfe.hostnamePolicyFile)
-+	if err != nil {
-+		wfe.sendError(response, logEvent, probs.Malformed("couldn't load hostname policy file"), nil)
-+		return
-+	}
-+
  	names = core.UniqueLowerNames(names)
 -	err = policy.WellFormedDomainNames(names)
-+	err = pa.WellFormedDomainNames(names)
++	err = wfe.pa.WellFormedDomainNames(names)
  	if err != nil {
  		wfe.sendError(response, logEvent, web.ProblemDetailsForError(err, "Invalid identifiers requested"), nil)
  		return

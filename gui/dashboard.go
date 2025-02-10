@@ -225,10 +225,11 @@ func _parseComponents(data string) []Component {
 
 	parts := strings.Split(data, "|")
 
-	if len(parts) < 6 {
+	if len(parts) < 7 {
 		components = append(components, Component{Name: "Boulder (ACME)"})
-		components = append(components, Component{Name: "Consul (Boulder)"})
+		components = append(components, Component{Name: "consul (Boulder)"})
 		components = append(components, Component{Name: "pkilint (Boulder)"})
+		components = append(components, Component{Name: "redis (Boulder)"})
 		components = append(components, Component{Name: "LabCA Application"})
 		components = append(components, Component{Name: "LabCA Controller"})
 		components = append(components, Component{Name: "MySQL Database"})
@@ -306,9 +307,20 @@ func _parseComponents(data string) []Component {
 		pkilintClass = ""
 	}
 
+	redis, err := time.Parse(time.RFC3339Nano, parts[7])
+	redisReal := ""
+	redisNice := "stopped"
+	redisClass := "error"
+	if err == nil {
+		redisReal = redis.Format("02-Jan-2006 15:04:05 MST")
+		redisNice = humanize.RelTime(redis, time.Now(), "", "")
+		redisClass = ""
+	}
+
 	components = append(components, Component{Name: "Boulder (ACME)", Timestamp: boulderReal, TimestampRel: boulderNice, Class: boulderClass})
-	components = append(components, Component{Name: "Consul (Boulder)", Timestamp: consulReal, TimestampRel: consulNice, Class: consulClass})
+	components = append(components, Component{Name: "consul (Boulder)", Timestamp: consulReal, TimestampRel: consulNice, Class: consulClass})
 	components = append(components, Component{Name: "pkilint (Boulder)", Timestamp: pkilintReal, TimestampRel: pkilintNice, Class: pkilintClass})
+	components = append(components, Component{Name: "redis (Boulder)", Timestamp: redisReal, TimestampRel: redisNice, Class: redisClass})
 	components = append(components, Component{Name: "LabCA Application", Timestamp: labcaReal, TimestampRel: labcaNice, Class: labcaClass})
 	components = append(components, Component{Name: "LabCA Controller", Timestamp: svcReal, TimestampRel: svcNice, Class: svcClass})
 	components = append(components, Component{Name: "MySQL Database", Timestamp: mysqlReal, TimestampRel: mysqlNice, Class: mysqlClass})
@@ -516,10 +528,13 @@ func parseDockerStats(data string) []AjaxStat {
 			stat.Name = "Boulder (ACME)"
 		}
 		if strings.Contains(docker.Name, "-bconsul-") {
-			stat.Name = "Consul (Boulder)"
+			stat.Name = "consul (Boulder)"
 		}
 		if strings.Contains(docker.Name, "-bpkilint-") {
 			stat.Name = "pkilint (Boulder)"
+		}
+		if strings.Contains(docker.Name, "-bredis-") {
+			stat.Name = "redis (Boulder)"
 		}
 		if strings.Contains(docker.Name, "labca-gui-") {
 			stat.Name = "LabCA Application"

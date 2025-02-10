@@ -2,7 +2,6 @@
 
 set -e
 
-flag_skip_redis=true
 cloneDir=$(dirname $0)
 
 # For legacy mode, when called from the install script...
@@ -37,9 +36,7 @@ perl -i -p0e "s/(\"accountURIPrefixes\": \[\n.*?\s+\])/\1,\n\t\t\"labcaDomains\"
 perl -i -p0e "s/(\"accountURIPrefixes\": \[\n.*?\s+\])/\1,\n\t\t\"labcaDomains\": [\n\t\t]/igs" $boulderLabCADir/config/remoteva-b.json
 perl -i -p0e "s/(\"accountURIPrefixes\": \[\n.*?\s+\])/\1,\n\t\t\"labcaDomains\": [\n\t\t]/igs" $boulderLabCADir/config/va.json
 
-if [ "$flag_skip_redis" == true ]; then
-    perl -i -p0e "s/\n    \"redis\": \{\n.*?    \},//igs" $boulderLabCADir/config/ocsp-responder.json
-fi
+perl -i -p0e "s/\n    \"redis\": \{\n.*?    \},//igs" $boulderLabCADir/config/ocsp-responder.json
 
 for f in $(grep -l boulder-proxysql $boulderLabCADir/secrets/*); do sed -i -e "s/proxysql:6033/mysql:3306/" $f; done
 
@@ -71,11 +68,10 @@ sed -i -e "s/\"stdoutlevel\": 4,/\"stdoutlevel\": 6,/" config/remoteva-b.json
 sed -i -e "s/\"endpoint\": \".*\"/\"endpoint\": \"\"/" config/sfe.json
 sed -i -e "s/sleep 1/sleep 5/g" wait-for-it.sh
 
-sed -i -e "s|test/certs|/opt/boulder/labca/certs|" consul/config.hcl
+perl -i -p0e "s/(services {\s*id\s*=\s*\"bredis4\".*?}\n\n)//igs" consul/config.hcl
 
-if [ "$flag_skip_redis" == true ]; then
-    sed -i -e "s/^\(.*wait-for-it.sh.*4218\)/#\1/" entrypoint.sh
-fi
+sed -i -e "s|test/certs|/opt/boulder/labca/certs|" consul/config.hcl
+sed -i -e "s|/test/certs|/opt/boulder/labca/certs|" redis-ratelimits.config
 
 for file in `find . -type f | grep -v .git`; do
     sed -i -e "s|test/|labca/|g" $file

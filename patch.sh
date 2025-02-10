@@ -2,16 +2,12 @@
 
 set -e
 
-flag_skip_redis=true
 cloneDir=$(dirname $0)
 
 # For legacy mode, when called from the install script...
 SUDO="$1"
 
 
-if [ "$flag_skip_redis" == true ]; then
-    $SUDO patch -p1 < $cloneDir/patches/docker-compose-redis.patch
-fi
 $SUDO patch -p1 < $cloneDir/patches/docker-compose.patch
 if [ "$SUDO" == "" ]; then
     # TODO: should incorporate this into docker-compose.patch
@@ -19,6 +15,7 @@ if [ "$SUDO" == "" ]; then
 fi
 
 $SUDO patch -p1 < $cloneDir/patches/bad-key-revoker_main.patch
+$SUDO patch -p1 < $cloneDir/patches/boulder-ra_main.patch
 $SUDO patch -p1 < $cloneDir/patches/boulder-va_main.patch
 $SUDO patch -p1 < $cloneDir/patches/ca_ca.patch
 $SUDO patch -p1 < $cloneDir/patches/ca_ca_keytype_hack.patch
@@ -38,7 +35,6 @@ $SUDO patch -p1 < $cloneDir/patches/db_migrations2.patch
 $SUDO patch -p1 < $cloneDir/patches/db_migrations3.patch
 $SUDO patch -p1 < $cloneDir/patches/db_migrations4.patch
 $SUDO patch -p1 < $cloneDir/patches/db_migrations5.patch
-$SUDO patch -p1 < $cloneDir/patches/errors_errors.patch
 $SUDO patch -p1 < $cloneDir/patches/expiration-mailer_main.patch
 $SUDO patch -p1 < $cloneDir/patches/issuance_crl.patch
 $SUDO patch -p1 < $cloneDir/patches/linter_linter.patch
@@ -51,7 +47,6 @@ $SUDO patch -p1 < $cloneDir/patches/notify-mailer_main.patch
 $SUDO patch -p1 < $cloneDir/patches/ocsp-responder_main.patch
 $SUDO patch -p1 < $cloneDir/patches/policy_pa.patch
 $SUDO patch -p1 < $cloneDir/patches/ra_ra.patch
-$SUDO patch -p1 < $cloneDir/patches/ratelimit_rate-limits.patch
 $SUDO patch -p1 < $cloneDir/patches/ratelimits_names.patch
 $SUDO patch -p1 < $cloneDir/patches/remoteva_main.patch
 $SUDO patch -p1 < $cloneDir/patches/start.patch
@@ -70,9 +65,6 @@ $SUDO patch -p1 < $cloneDir/patches/wfe2_main.patch
 $SUDO patch -p1 < $cloneDir/patches/wfe2_wfe.patch
 
 sed -i -e "s|./test|./labca|" start.py
-
-sed -i -e "s/berrors.RateLimitError(/berrors.RateLimitError(ra.rlPolicies.RateLimitsURL(), /g" ra/ra.go
-sed -i -e "s/berrors.RateLimitError(/berrors.RateLimitError(\"\", /g" ratelimits/limiter.go
 
 sed -i -e "s/proxysql:6033/mysql:3306/" sa/db/dbconfig.yml
 

@@ -1123,8 +1123,9 @@ func (res *Result) ManageComponents(w http.ResponseWriter, r *http.Request, acti
 			(components[i].Name == "LabCA Controller" && action == "svc-restart") ||
 			(components[i].Name == "Boulder (ACME)" && (action == "boulder-start" || action == "boulder-stop" || action == "boulder-restart")) ||
 			(components[i].Name == "LabCA Application" && action == "labca-restart") ||
-			(components[i].Name == "Consul (Boulder)" && action == "consul-restart") ||
+			(components[i].Name == "consul (Boulder)" && action == "consul-restart") ||
 			(components[i].Name == "pkilint (Boulder)" && action == "pkilint-restart") ||
+			(components[i].Name == "redis (Boulder)" && action == "redis-restart") ||
 			(components[i].Name == "MySQL Database" && action == "mysql-restart") {
 			res.Timestamp = components[i].Timestamp
 			res.TimestampRel = components[i].TimestampRel
@@ -1353,6 +1354,7 @@ func _managePost(w http.ResponseWriter, r *http.Request) {
 		"mysql-restart",
 		"consul-restart",
 		"pkilint-restart",
+		"redis-restart",
 		"nginx-reload",
 		"nginx-restart",
 		"svc-restart",
@@ -1534,7 +1536,7 @@ func _manageGet(w http.ResponseWriter, r *http.Request) {
 				components[i].Buttons = append(components[i].Buttons, btn)
 			}
 
-			if components[i].Name == "Consul (Boulder)" {
+			if components[i].Name == "consul (Boulder)" {
 				components[i].LogURL = ""
 				components[i].LogTitle = ""
 
@@ -1554,6 +1556,18 @@ func _manageGet(w http.ResponseWriter, r *http.Request) {
 				btn["Class"] = "btn-warning"
 				btn["Id"] = "pkilint-restart"
 				btn["Title"] = "Restart the internal pkilint helper"
+				btn["Label"] = "Restart"
+				components[i].Buttons = append(components[i].Buttons, btn)
+			}
+
+			if components[i].Name == "redis (Boulder)" {
+				components[i].LogURL = ""
+				components[i].LogTitle = ""
+
+				btn := make(map[string]interface{})
+				btn["Class"] = "btn-warning"
+				btn["Id"] = "redis-restart"
+				btn["Title"] = "Restart the internal redis helper"
 				btn["Label"] = "Restart"
 				components[i].Buttons = append(components[i].Buttons, btn)
 			}

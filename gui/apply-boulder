@@ -79,6 +79,7 @@ if ([ "$PKI_DOMAIN_MODE" == "lockdown" ] && [ "$PKI_LOCKDOWN_DOMAINS" != "" ]) |
     perl -i -p0e "s/(\"badResultsOnly\":[^\n]*).*?(\s+)(\"checkPeriod\":)/\1\2\"skipForbiddenDomains\": true,\2\3/igs" config/cert-checker.json
     perl -i -p0e "s/(\"ignoredLints\": \[).*?(\s+)(\"w_subject_common_name_included\")/\1\2\"e_dnsname_not_valid_tld\",\2\"w_sub_cert_aia_contains_internal_names\",\2\3/igs" config/cert-checker.json
     perl -i -p0e "s/(\"ignoredLints\": \[).*?(\s+)(\"w_subject_common_name_included\")/\1\2\"e_dnsname_not_valid_tld\",\2\"w_sub_cert_aia_contains_internal_names\",\2\3/igs" config/ca.json
+    perl -i -p0e "s/(\"modern\".*)(\"ignoredLints\": \[).*?(\s+)(\"w_ext_subject_key_identifier_missing_sub_cert\")/\1\2\3\"e_dnsname_not_valid_tld\",\3\"w_sub_cert_aia_contains_internal_names\",\3\4/igs" config/ca.json
 
     perl -i -p0e "s/(\"SubscriberKeyUsageValidator:cabf.serverauth.subscriber_rsa_digitalsignature_and_keyencipherment_present\",).*(\])/\1\n  \"GeneralNameDnsNameInternalDomainNameValidator:cabf.internal_domain_name\",\n  \"GeneralNameUriInternalDomainNameValidator:cabf.internal_domain_name\",\n\2/igs" config/zlint.toml
 fi
@@ -120,10 +121,12 @@ if [ "$PKI_DOMAIN_MODE" == "lockdown" ] || [ "$PKI_DOMAIN_MODE" == "whitelist" ]
     sed -i -e "s/\(\"w_subject_common_name_included\"\).*\]/\1,\"e_dnsname_not_valid_tld\"\]/" config/ca.json
 
     REPLACEMENT=""
+    REPLACEMENT2=""
     LABCA_DOMAINS=""
     if [ "$PKI_DOMAIN_MODE" == "lockdown" ] && [ "$PKI_LOCKDOWN_DOMAINS" != "" ]; then
         for d in $(echo $PKI_LOCKDOWN_DOMAINS | sed -e "s/\\\r/ /g" | sed -e "s/\\\n/ /g" | tr '\r' ' '); do
             REPLACEMENT+="    $d: 10000\r"
+            REPLACEMENT2+="      - id: $d\r        comment: LabCA lockdown domain\r"
             if [ "$LABCA_DOMAINS" != "" ]; then
                 LABCA_DOMAINS+=",\n"
             fi
@@ -133,6 +136,7 @@ if [ "$PKI_DOMAIN_MODE" == "lockdown" ] || [ "$PKI_DOMAIN_MODE" == "whitelist" ]
     if [ "$PKI_DOMAIN_MODE" == "whitelist" ] && [ "$PKI_WHITELIST_DOMAINS" != "" ]; then
         for d in $(echo $PKI_WHITELIST_DOMAINS | sed -e "s/\\\r/ /g" | sed -e "s/\\\n/ /g" | tr '\r' ' '); do
             REPLACEMENT+="    $d: 10000\r"
+            REPLACEMENT2+="      - id: $d\r        comment: LabCA whitelist domain\r"
             if [ "$LABCA_DOMAINS" != "" ]; then
                 LABCA_DOMAINS+=",\n"
             fi
@@ -141,6 +145,10 @@ if [ "$PKI_DOMAIN_MODE" == "lockdown" ] || [ "$PKI_DOMAIN_MODE" == "whitelist" ]
     fi
     cat rate-limit-policies.yml | tr '\n' '\r' | sed -e "s/\(must-staple.le.wtf: 10000\).*\(  registrationOverrides:\)/\1\n$REPLACEMENT\2/" | tr '\r' '\n' > rate-limit-policies.yml.bak && mv rate-limit-policies.yml.bak rate-limit-policies.yml
     cat rate-limit-policies.yml | tr '\n' '\r' | sed -e "s|\(certificatesPerFQDNSet:.*must-staple.le.wtf: 10000\).*\(certificatesPerFQDNSetFast:.*\)|\1\n${REPLACEMENT}rateLimitsURL: http://$PKI_FQDN/rate-limits\n\2|" | tr '\r' '\n' > rate-limit-policies.yml.bak && mv rate-limit-policies.yml.bak rate-limit-policies.yml
+
+    cat config/wfe2-ratelimit-overrides.yml | tr '\n' '\r' | sed -e "s/\(- CertificatesPerDomain:.*ratelimit.me.*\)\(- CertificatesPerDomain:\)/\2/" | tr '\r' '\n' > config/wfe2-ratelimit-overrides.yml.bak && mv config/wfe2-ratelimit-overrides.yml.bak config/wfe2-ratelimit-overrides.yml
+    cat config/wfe2-ratelimit-overrides.yml | tr '\n' '\r' | sed -e "s/\(- CertificatesPerDomain:.*ids:\)\(.*\)\(- CertificatesPerFQDNSet:\)/\1\r$REPLACEMENT2\3/" | tr '\r' '\n' > config/wfe2-ratelimit-overrides.yml.bak && mv config/wfe2-ratelimit-overrides.yml.bak config/wfe2-ratelimit-overrides.yml
+    cat config/wfe2-ratelimit-overrides.yml | tr '\n' '\r' | sed -e "s/\(- CertificatesPerFQDNSet:.*ids:\)\(.*\)/\1\r$REPLACEMENT2/" | tr '\r' '\n' > config/wfe2-ratelimit-overrides.yml.bak && mv config/wfe2-ratelimit-overrides.yml.bak config/wfe2-ratelimit-overrides.yml
 
     perl -i -p0e "s/(\"labcaDomains\": \[\n).*?(\])/\1$LABCA_DOMAINS\n\t\t\2/igs" config/remoteva-a.json
     perl -i -p0e "s/(\"labcaDomains\": \[\n).*?(\])/\1$LABCA_DOMAINS\n\t\t\2/igs" config/remoteva-b.json

@@ -10,6 +10,7 @@ export PS_CONTROL="tcpserver"
 export PS_NGINX="nginx:"
 export PS_CONSUL="consul"
 export PS_PKILINT="pkilint"
+export PS_REDIS="redis-server"
 
 LOOPCOUNT=120
 
@@ -35,6 +36,9 @@ count() {
             ;;
         $PS_PKILINT)
             prefix="docker exec $(docker ps --format "{{.Names}}" | grep -- -bpkilint-) "
+            ;;
+        $PS_REDIS)
+            prefix=""
             ;;
         *)
             ;;

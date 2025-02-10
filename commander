@@ -39,7 +39,7 @@ read txt
 case $txt in
 "docker-restart")
     cd /opt/boulder
-    COMPOSE_HTTP_TIMEOUT=120 docker compose restart boulder bmysql bconsul bpkilint gui nginx &>>$LOGFILE
+    COMPOSE_HTTP_TIMEOUT=120 docker compose restart boulder bmysql bconsul bpkilint bredis gui nginx &>>$LOGFILE
     sleep 45
     wait_up $PS_MYSQL &>>$LOGFILE
     wait_up $PS_CONSUL 2 &>>$LOGFILE
@@ -170,7 +170,8 @@ case $txt in
     mysql=$(docker inspect $(docker ps --format "{{.Names}}" | grep -- -bmysql-) | grep -i started | grep -v depends_on | sed -e "s/[^:]*:\(.*\)/\1/" | sed -e "s/.*\"\(.*\)\".*/\1/")
     consul=$(docker inspect $(docker ps --format "{{.Names}}" | grep -- -bconsul-) | grep -i started | grep -v depends_on | sed -e "s/[^:]*:\(.*\)/\1/" | sed -e "s/.*\"\(.*\)\".*/\1/")
     pkilint=$(docker inspect $(docker ps --format "{{.Names}}" | grep -- -bpkilint-) | grep -i started | grep -v depends_on | sed -e "s/[^:]*:\(.*\)/\1/" | sed -e "s/.*\"\(.*\)\".*/\1/")
-    echo "$nginx|$svc|$boulder|$labca|$mysql|$consul|$pkilint"
+    redis=$(docker inspect $(docker ps --format "{{.Names}}" | grep -- -bredis-) | grep -i started | grep -v depends_on | sed -e "s/[^:]*:\(.*\)/\1/" | sed -e "s/.*\"\(.*\)\".*/\1/")
+    echo "$nginx|$svc|$boulder|$labca|$mysql|$consul|$pkilint|$redis"
     exit 0
     ;;
 "log-uptime")
@@ -195,7 +196,7 @@ case $txt in
     ;;
 "boulder-start")
     cd /opt/boulder
-    COMPOSE_HTTP_TIMEOUT=120 docker compose up -d bmysql bconsul bpkilint
+    COMPOSE_HTTP_TIMEOUT=120 docker compose up -d bmysql bconsul bpkilint bredis
     wait_up $PS_MYSQL &>>$LOGFILE
     wait_up $PS_CONSUL 2 &>>$LOGFILE
     wait_up $PS_PKILINT &>>$LOGFILE
@@ -205,7 +206,7 @@ case $txt in
 "boulder-stop")
     cd /opt/boulder
     docker compose stop boulder
-    docker compose stop bmysql bconsul bpkilint
+    docker compose stop bmysql bconsul bpkilint bredis
     wait_down $PS_MYSQL &>>$LOGFILE
     wait_down $PS_CONSUL &>>$LOGFILE
     wait_down $PS_PKILINT &>>$LOGFILE
@@ -213,7 +214,7 @@ case $txt in
     ;;
 "boulder-restart")
     cd /opt/boulder
-    COMPOSE_HTTP_TIMEOUT=120 docker compose restart boulder bmysql bconsul bpkilint &>>$LOGFILE
+    COMPOSE_HTTP_TIMEOUT=120 docker compose restart boulder bmysql bconsul bpkilint bredis &>>$LOGFILE
     sleep 30
     wait_up $PS_MYSQL &>>$LOGFILE
     wait_up $PS_CONSUL 2 &>>$LOGFILE
@@ -242,6 +243,12 @@ case $txt in
     cd /opt/boulder
     set +e
     COMPOSE_HTTP_TIMEOUT=120 docker compose restart bpkilint
+    set -e
+    ;;
+"redis-restart")
+    cd /opt/boulder
+    set +e
+    COMPOSE_HTTP_TIMEOUT=120 docker compose restart bredis
     set -e
     ;;
 "log-backups")

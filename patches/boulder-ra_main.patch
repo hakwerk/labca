@@ -1,0 +1,13 @@
+diff --git a/cmd/boulder-ra/main.go b/cmd/boulder-ra/main.go
+index b16c05c4e..99fe7d601 100644
+--- a/cmd/boulder-ra/main.go
++++ b/cmd/boulder-ra/main.go
+@@ -317,6 +317,8 @@ func main() {
+ 		limiterRedis, err = bredis.NewRingFromConfig(*c.RA.Limiter.Redis, scope, logger)
+ 		cmd.FailOnError(err, "Failed to create Redis ring")
+ 
++		// Set Policy Authority for ratelimits
++		ratelimits.PA = pa
+ 		source := ratelimits.NewRedisSource(limiterRedis.Ring, clk, scope)
+ 		limiter, err = ratelimits.NewLimiter(clk, source, scope)
+ 		cmd.FailOnError(err, "Failed to create rate limiter")
