@@ -69,6 +69,7 @@ debian: changelog
 	$Q mkdir -p $(RELEASE); \
 	OUTPUT=../labca-gui*.deb; \
 	rm -f $$OUTPUT; \
+	CGO_ENABLED=0 \
 	dpkg-buildpackage -b -rfakeroot -us -uc && cp $$OUTPUT $(RELEASE)/
 
 debian-arm64: changelog
@@ -76,6 +77,7 @@ debian-arm64: changelog
 	OUTPUT=../labca-gui*.deb; \
 	rm -f $$OUTPUT; \
 	GOOS_OVERRIDE="GOARCH=arm64" \
+	CGO_ENABLED=0 \
 	dpkg-buildpackage -b -rfakeroot -us -uc --host-arch arm64 && cp $$OUTPUT $(RELEASE)/
 
 distclean: clean
