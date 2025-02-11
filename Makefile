@@ -22,7 +22,8 @@ endif
 # Build
 #########################################
 
-LDFLAGS := -ldflags='-w -X "main.standaloneVersion=$(VERSION)" -extldflags "-static"'
+LDFLAGS := -ldflags='-w -X "main.standaloneVersion=$(VERSION)" -extldflags "-static"' \
+	-tags standalone
 
 download:
 	$Q cd gui; \

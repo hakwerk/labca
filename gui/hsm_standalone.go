@@ -1,4 +1,4 @@
-//go:build arm64
+//go:build standalone
 
 package main
 
