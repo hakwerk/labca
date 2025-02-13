@@ -7,6 +7,7 @@ PREFIX?=
 TAG=$(shell git rev-list --tags --max-count=1)
 VERSION=$(shell git describe --always --tags $(TAG))
 DEB_VERSION=$(shell echo $(VERSION) | sed 's/^v//' | sed 's/-/./g')
+FULLVERSION=$(shell git describe --always --tags)
 RELEASE=./release
 
 all: build
@@ -16,13 +17,14 @@ all: build
 ifdef V
 $(info     VERSION is $(VERSION))
 $(info DEB_VERSION is $(DEB_VERSION))
+$(info FULLVERSION is $(FULLVERSION))
 endif
 
 #########################################
 # Build
 #########################################
 
-LDFLAGS := -ldflags='-w -X "main.standaloneVersion=$(VERSION)" -extldflags "-static"' \
+LDFLAGS := -ldflags='-w -X "main.standaloneVersion=$(FULLVERSION)" -extldflags "-static"' \
 	-tags standalone
 
 download:
@@ -65,14 +67,17 @@ changelog:
 	$Q echo "  * See https://github.com/hakwerk/labca/releases" >> debian/changelog
 	$Q echo >> debian/changelog
 	$Q echo " -- hakwerk <github@hakwerk.com>  $(shell date -uR)" >> debian/changelog
+	$Q sed -i -e "s/Version: .*/Version: $(DEB_VERSION)/" debian/control
 
 debian: changelog
+	$Q sed -i -e "s/Architecture: .*/Architecture: amd64/" debian/control; \
 	$Q mkdir -p $(RELEASE); \
 	OUTPUT=../labca-gui*.deb; \
 	rm -f $$OUTPUT; \
 	dpkg-buildpackage -b -rfakeroot -us -uc && cp $$OUTPUT $(RELEASE)/
 
 debian-arm64: changelog
+	$Q sed -i -e "s/Architecture: .*/Architecture: arm64/" debian/control; \
 	$Q mkdir -p $(RELEASE); \
 	OUTPUT=../labca-gui*.deb; \
 	rm -f $$OUTPUT; \

@@ -2,11 +2,12 @@ Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
 Upstream-Name: labca-gui
 Source: https://github.com/hakwerk/labca
 
-Files: *
+Files:
+ *
 Copyright: 2022-2025 hakwerk <github@hakwerk.com>
-License: MPL 2.0
+License: MPL-2.0 and Commons-Clause-1.0
 
-License: MPL 2.0
+License: MPL-2.0
  Copyright (c) 2022-2025 hakwerk
  .
  Licensed under the Mozilla Public License 2.0 (the "License");
@@ -20,3 +21,28 @@ License: MPL 2.0
  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  See the License for the specific language governing permissions and
  limitations under the License.
+
+License: Commons-Clause-1.0
+ "Commons Clause" License Condition v1.0
+ .
+ The Software is provided to you by the Licensor under the License, as
+ defined below, subject to the following condition.
+ .
+ Without limiting other conditions in the License, the grant of rights
+ under the License will not include, and the License does not grant to
+ you, the right to Sell the Software.
+ .
+ For purposes of the foregoing, "Sell" means practicing any or all of the
+ rights granted to you under the License to provide to third parties, for
+ a fee or other consideration (including without limitation fees for
+ hosting or consulting/ support services related to the Software), a
+ product or service whose value derives, entirely or substantially, from
+ the functionality of the Software. Any license notice or attribution
+ required by the License must also include this Commons Cause License
+ Condition notice.
+ .
+ Software: LabCA
+ .
+ License: Mozilla Public License 2.0
+ .
+ Licensor: https://github.com/hakwerk
