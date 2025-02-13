@@ -24,8 +24,7 @@ endif
 # Build
 #########################################
 
-LDFLAGS := -ldflags='-w -X "main.standaloneVersion=$(FULLVERSION)" -extldflags "-static"' \
-	-tags standalone
+LDFLAGS := -ldflags='-w -X "main.standaloneVersion=$(FULLVERSION)" -extldflags "-static"' -tags standalone
 
 download:
 	$Q cd gui; \
@@ -67,7 +66,6 @@ changelog:
 	$Q echo "  * See https://github.com/hakwerk/labca/releases" >> debian/changelog
 	$Q echo >> debian/changelog
 	$Q echo " -- hakwerk <github@hakwerk.com>  $(shell date -uR)" >> debian/changelog
-	$Q sed -i -e "s/Version: .*/Version: $(DEB_VERSION)/" debian/control
 
 debian: changelog
 	$Q sed -i -e "s/Architecture: .*/Architecture: amd64/" debian/control; \
