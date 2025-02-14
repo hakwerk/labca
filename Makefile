@@ -68,14 +68,12 @@ changelog:
 	$Q echo " -- hakwerk <github@hakwerk.com>  $(shell date -uR)" >> debian/changelog
 
 debian: changelog
-	$Q sed -i -e "s/Architecture: .*/Architecture: amd64/" debian/control; \
 	$Q mkdir -p $(RELEASE); \
 	OUTPUT=../labca-gui*.deb; \
 	rm -f $$OUTPUT; \
 	dpkg-buildpackage -b -rfakeroot -us -uc && cp $$OUTPUT $(RELEASE)/
 
 debian-arm64: changelog
-	$Q sed -i -e "s/Architecture: .*/Architecture: arm64/" debian/control; \
 	$Q mkdir -p $(RELEASE); \
 	OUTPUT=../labca-gui*.deb; \
 	rm -f $$OUTPUT; \
