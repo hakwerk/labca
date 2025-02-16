@@ -73,6 +73,13 @@ perl -i -p0e "s/(services {\s*id\s*=\s*\"bredis4\".*?}\n\n)//igs" consul/config.
 sed -i -e "s|test/certs|/opt/boulder/labca/certs|" consul/config.hcl
 sed -i -e "s|/test/certs|/opt/boulder/labca/certs|" redis-ratelimits.config
 
+perl -i -p0e "s/(\s*)(\"passwordFile\":.*?,).*(\"shardAddrs\": {)/\1\2\1\"db\": 0,\1\3/igs" config/ocsp-responder.json
+perl -i -p0e "s/(\"shardAddrs\": {\n)(\s*).*?(\s*},)/\1\2\"shard1\": \"10.33.33.4:4218\"\3/igs" config/ocsp-responder.json
+perl -i -p0e "s/(\s*)(\"passwordFile\":.*?,).*(\"lookups\": \[)/\1\2\1\"db\": 1,\1\3/igs" config/ra.json
+perl -i -p0e "s/(\s*)(\"passwordFile\":.*?,).*(\"shardAddrs\": {)/\1\2\1\"db\": 0,\1\3/igs" config/rocsp-tool.json
+perl -i -p0e "s/(\"shardAddrs\": {\n)(\s*).*?(\s*},)/\1\2\"shard1\": \"10.33.33.4:4218\"\3/igs" config/rocsp-tool.json
+perl -i -p0e "s/,(\s*)(\"passwordFile\":.*?,).*(\"lookups\": \[)/,\1\2\1\"db\": 1,\1\3/igs" config/wfe2.json
+
 for file in `find . -type f | grep -v .git`; do
     sed -i -e "s|test/|labca/|g" $file
 done

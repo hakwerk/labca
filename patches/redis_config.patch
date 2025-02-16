@@ -1,0 +1,22 @@
+diff --git a/redis/config.go b/redis/config.go
+index c858a4beb..2ec26aab1 100644
+--- a/redis/config.go
++++ b/redis/config.go
+@@ -24,6 +24,9 @@ type Config struct {
+ 	// authenticate to each Redis instance.
+ 	cmd.PasswordConfig
+ 
++	// DB is the database number in Redis
++	DB int `validate:"min=0"`
++
+ 	// ShardAddrs is a map of shard names to IP address:port pairs. The go-redis
+ 	// `Ring` client will shard reads and writes across the provided Redis
+ 	// Servers based on a consistent hashing algorithm.
+@@ -134,6 +137,7 @@ func NewRingFromConfig(c Config, stats prometheus.Registerer, log blog.Logger) (
+ 
+ 	inner := redis.NewRing(&redis.RingOptions{
+ 		Addrs:     c.ShardAddrs,
++		DB:        c.DB,
+ 		Username:  c.Username,
+ 		Password:  password,
+ 		TLSConfig: tlsConfig,

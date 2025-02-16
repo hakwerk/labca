@@ -27,6 +27,7 @@ $SUDO patch -p1 < $cloneDir/patches/ceremony_rsa.patch
 $SUDO patch -p1 < $cloneDir/patches/cert-checker_main.patch
 $SUDO patch -p1 < $cloneDir/patches/cmd_config.patch
 $SUDO patch -p1 < $cloneDir/patches/config_duration.patch
+$SUDO patch -p1 < $cloneDir/patches/config_rocsp_config.patch
 $SUDO patch -p1 < $cloneDir/patches/contact-auditor_main.patch
 $SUDO patch -p1 < $cloneDir/patches/core_interfaces.patch
 $SUDO patch -p1 < $cloneDir/patches/crl-storer_main.patch
@@ -48,6 +49,7 @@ $SUDO patch -p1 < $cloneDir/patches/ocsp-responder_main.patch
 $SUDO patch -p1 < $cloneDir/patches/policy_pa.patch
 $SUDO patch -p1 < $cloneDir/patches/ra_ra.patch
 $SUDO patch -p1 < $cloneDir/patches/ratelimits_names.patch
+$SUDO patch -p1 < $cloneDir/patches/redis_config.patch
 $SUDO patch -p1 < $cloneDir/patches/remoteva_main.patch
 $SUDO patch -p1 < $cloneDir/patches/start.patch
 if [ "$SUDO" == "" ]; then
@@ -57,6 +59,7 @@ fi
 $SUDO patch -p1 < $cloneDir/patches/sfe_templates_layout.patch
 $SUDO patch -p1 < $cloneDir/patches/storer_storer.patch
 $SUDO patch -p1 < $cloneDir/patches/test_health-checker_main.patch
+$SUDO patch -p1 < $cloneDir/patches/test_ocsp_helper_helper.patch
 $SUDO patch -p1 < $cloneDir/patches/updater_updater.patch
 $SUDO patch -p1 < $cloneDir/patches/updater_continuous.patch
 $SUDO patch -p1 < $cloneDir/patches/va_http.patch

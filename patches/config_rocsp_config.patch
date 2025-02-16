@@ -1,0 +1,21 @@
+diff --git a/rocsp/config/rocsp_config.go b/rocsp/config/rocsp_config.go
+index c5416a499..d23091b53 100644
+--- a/rocsp/config/rocsp_config.go
++++ b/rocsp/config/rocsp_config.go
+@@ -31,6 +31,8 @@ type RedisConfig struct {
+ 	TLS cmd.TLSConfig
+ 	// Username is a Redis username.
+ 	Username string `validate:"required"`
++	// DB is the database number in Redis
++	DB int `validate:"min=0"`
+ 	// ShardAddrs is a map of shard names to IP address:port pairs. The go-redis
+ 	// `Ring` client will shard reads and writes across the provided Redis
+ 	// Servers based on a consistent hashing algorithm.
+@@ -114,6 +116,7 @@ func MakeClient(c *RedisConfig, clk clock.Clock, stats prometheus.Registerer) (*
+ 
+ 	rdb := redis.NewRing(&redis.RingOptions{
+ 		Addrs:     c.ShardAddrs,
++		DB:        c.DB,
+ 		Username:  c.Username,
+ 		Password:  password,
+ 		TLSConfig: tlsConfig,
