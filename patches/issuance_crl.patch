@@ -1,0 +1,25 @@
+diff --git a/issuance/crl.go b/issuance/crl.go
+index 9e2de44a6..5447faf7e 100644
+--- a/issuance/crl.go
++++ b/issuance/crl.go
+@@ -5,6 +5,7 @@ import (
+ 	"crypto/x509"
+ 	"fmt"
+ 	"math/big"
++	"strings"
+ 	"time"
+ 
+ 	"github.com/zmap/zlint/v3/lint"
+@@ -61,7 +62,11 @@ type CRLRequest struct {
+ 
+ // crlURL combines the CRL URL base with a shard, and adds a suffix.
+ func (i *Issuer) crlURL(shard int) string {
+-	return fmt.Sprintf("%s%d.crl", i.crlURLBase, shard)
++	if strings.HasSuffix(i.crlURLBase, "/") {
++		return fmt.Sprintf("%s%d.crl", i.crlURLBase, shard)
++	}
++
++	return i.crlURLBase
+ }
+ 
+ func (i *Issuer) IssueCRL(prof *CRLProfile, req *CRLRequest) ([]byte, error) {

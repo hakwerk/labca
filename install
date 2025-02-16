@@ -626,7 +626,6 @@ config_boulder() {
     cp cmd/cert-checker/main.go "$boulderLabCADir/.backup/"
     cp cmd/log-validator/main.go "$boulderLabCADir/.backup/"
     cp cmd/boulder/main.go "$boulderLabCADir/.backup/"
-    cp ratelimit/rate-limits.go "$boulderLabCADir/.backup/"
     cp errors/errors.go "$boulderLabCADir/.backup/"
     cp log/log.go "$boulderLabCADir/.backup/"
     cp sa/db/boulder_sa/20230419000000_CombinedSchema.sql "$boulderLabCADir/.backup/"

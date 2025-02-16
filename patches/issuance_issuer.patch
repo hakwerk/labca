@@ -1,0 +1,23 @@
+diff --git a/issuance/issuer.go b/issuance/issuer.go
+index 950ce44ce..b2264e86a 100644
+--- a/issuance/issuer.go
++++ b/issuance/issuer.go
+@@ -162,7 +162,7 @@ type IssuerConfig struct {
+ 
+ 	IssuerURL  string `validate:"required,url"`
+ 	OCSPURL    string `validate:"required,url"`
+-	CRLURLBase string `validate:"required,url,startswith=http://,endswith=/"`
++	CRLURLBase string `validate:"required,url,startswith=http://"`
+ 
+ 	// Number of CRL shards.
+ 	// This must be nonzero if adding CRLDistributionPoints to certificates
+@@ -252,9 +252,6 @@ func newIssuer(config IssuerConfig, cert *Certificate, signer crypto.Signer, clk
+ 	if !strings.HasPrefix(config.CRLURLBase, "http://") {
+ 		return nil, fmt.Errorf("crlURLBase must use HTTP scheme, got %q", config.CRLURLBase)
+ 	}
+-	if !strings.HasSuffix(config.CRLURLBase, "/") {
+-		return nil, fmt.Errorf("crlURLBase must end with exactly one forward slash, got %q", config.CRLURLBase)
+-	}
+ 
+ 	// We require that all of our issuers be capable of both issuing certs and
+ 	// providing revocation information.

@@ -38,6 +38,7 @@ $SUDO patch -p1 < $cloneDir/patches/db_migrations4.patch
 $SUDO patch -p1 < $cloneDir/patches/db_migrations5.patch
 $SUDO patch -p1 < $cloneDir/patches/expiration-mailer_main.patch
 $SUDO patch -p1 < $cloneDir/patches/issuance_crl.patch
+$SUDO patch -p1 < $cloneDir/patches/issuance_issuer.patch
 $SUDO patch -p1 < $cloneDir/patches/linter_linter.patch
 $SUDO patch -p1 < $cloneDir/patches/log_prod_prefix.patch
 $SUDO patch -p1 < $cloneDir/patches/log_test_prefix.patch

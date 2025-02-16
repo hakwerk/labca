@@ -325,8 +325,8 @@ func (ci *CertificateInfo) CeremonyIssuer(seqnr, rootseqnr string, use_existing_
 		"Country":       ci.Country,
 		"NotBefore":     notbefore.UTC().Format("2006-01-02 15:04:05"),
 		"NotAfter":      notafter.UTC().Format("2006-01-02 15:04:05"),
-		"CrlUrl":        fmt.Sprintf("http://%s/crl", fqdn),
-		"IssuerUrl":     fmt.Sprintf("http://%s/aia/issuer", fqdn), // TODO: fix this
+		"CrlUrl":        fmt.Sprintf("http://%s/crl/root-%s-crl.pem", fqdn, rootseqnr),
+		"IssuerUrl":     fmt.Sprintf("http://%s/certs/root-%s-cert.pem", fqdn, rootseqnr),
 	})
 	if err != nil {
 		ci.Errors["Generate"] = "error preparing for issuer cert ceremony, see logs for details"

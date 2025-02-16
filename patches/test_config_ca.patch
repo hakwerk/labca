@@ -1,31 +1,31 @@
 diff --git a/test/config/ca.json b/test/config/ca.json
-index a61df7e7c..2db5a771d 100644
+index a61df7e7c..9fa88c730 100644
 --- a/test/config/ca.json
 +++ b/test/config/ca.json
-@@ -50,7 +50,7 @@
+@@ -50,7 +50,8 @@
  					"allowMustStaple": true,
  					"maxValidityPeriod": "7776000s",
  					"maxValidityBackdate": "1h5m",
 -					"lintConfig": "test/config-next/zlint.toml",
++					"includeCRLDistributionPoints": true,
 +					"lintConfig": "test/config/zlint.toml",
  					"ignoredLints": [
  						"w_subject_common_name_included",
  						"w_ext_subject_key_identifier_not_recommended_subscriber"
-@@ -64,7 +64,7 @@
+@@ -64,7 +65,8 @@
  					"omitSKID": true,
  					"maxValidityPeriod": "583200s",
  					"maxValidityBackdate": "1h5m",
 -					"lintConfig": "test/config-next/zlint.toml",
++					"includeCRLDistributionPoints": true,
 +					"lintConfig": "test/config/zlint.toml",
  					"ignoredLints": [
  						"w_ext_subject_key_identifier_missing_sub_cert"
  					]
-@@ -75,39 +75,6 @@
- 				"maxBackdate": "1h5m"
- 			},
+@@ -77,39 +79,7 @@
  			"issuers": [
--				{
--					"active": true,
+ 				{
+ 					"active": true,
 -					"issuerURL": "http://ca.example.org:4502/int-ecdsa-a",
 -					"ocspURL": "http://ca.example.org:4002/",
 -					"crlURLBase": "http://ca.example.org:4501/lets-encrypt-crls/43104258997432926/",
@@ -57,10 +57,13 @@ index a61df7e7c..2db5a771d 100644
 -						"numSessions": 2
 -					}
 -				},
- 				{
- 					"active": true,
+-				{
+-					"active": true,
++					"crlShards": 1,
  					"issuerURL": "http://ca.example.org:4502/int-rsa-a",
-@@ -118,28 +85,6 @@
+ 					"ocspURL": "http://ca.example.org:4002/",
+ 					"crlURLBase": "http://ca.example.org:4501/lets-encrypt-crls/29947985078257530/",
+@@ -118,28 +88,6 @@
  						"certFile": "test/certs/webpki/int-rsa-a.cert.pem",
  						"numSessions": 2
  					}
