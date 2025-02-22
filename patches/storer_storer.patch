@@ -1,5 +1,5 @@
 diff --git a/crl/storer/storer.go b/crl/storer/storer.go
-index 9b41f560f..70bd63a3c 100644
+index 5896da2ac..70e1ac8db 100644
 --- a/crl/storer/storer.go
 +++ b/crl/storer/storer.go
 @@ -9,8 +9,12 @@ import (
@@ -39,7 +39,7 @@ index 9b41f560f..70bd63a3c 100644
  		uploadCount:      uploadCount,
  		sizeHistogram:    sizeHistogram,
  		latencyHistogram: latencyHistogram,
-@@ -221,15 +228,19 @@ func (cs *crlStorer) UploadCRL(stream grpc.ClientStreamingServer[cspb.UploadCRLR
+@@ -226,17 +233,21 @@ func (cs *crlStorer) UploadCRL(stream grpc.ClientStreamingServer[cspb.UploadCRLR
  	checksum := sha256.Sum256(crlBytes)
  	checksumb64 := base64.StdEncoding.EncodeToString(checksum[:])
  	crlContentType := "application/pkix-crl"
@@ -51,6 +51,8 @@ index 9b41f560f..70bd63a3c 100644
 -		ChecksumSHA256:    &checksumb64,
 -		ContentType:       &crlContentType,
 -		Metadata:          map[string]string{"crlNumber": crlNumber.String()},
+-		Expires:           &expires,
+-		CacheControl:      &cacheControl,
 -	})
 +	if cs.localStorePath == "" {
 +		_, err = cs.s3Client.PutObject(stream.Context(), &s3.PutObjectInput{
@@ -61,6 +63,8 @@ index 9b41f560f..70bd63a3c 100644
 +			ChecksumSHA256:    &checksumb64,
 +			ContentType:       &crlContentType,
 +			Metadata:          map[string]string{"crlNumber": crlNumber.String()},
++			Expires:           &expires,
++			CacheControl:      &cacheControl,
 +		})
 +	} else {
 +		err = storeLocalFile(cs.localStorePath, issuer.NameID(), crlNumber, shardIdx, bytes.NewReader(crlBytes))
@@ -68,7 +72,7 @@ index 9b41f560f..70bd63a3c 100644
  
  	latency := cs.clk.Now().Sub(start)
  	cs.latencyHistogram.WithLabelValues(issuer.Subject.CommonName).Observe(latency.Seconds())
-@@ -248,3 +259,46 @@ func (cs *crlStorer) UploadCRL(stream grpc.ClientStreamingServer[cspb.UploadCRLR
+@@ -255,3 +266,46 @@ func (cs *crlStorer) UploadCRL(stream grpc.ClientStreamingServer[cspb.UploadCRLR
  
  	return stream.SendAndClose(&emptypb.Empty{})
  }

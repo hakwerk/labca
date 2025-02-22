@@ -1,5 +1,5 @@
 diff --git a/cmd/boulder-wfe2/main.go b/cmd/boulder-wfe2/main.go
-index 625026cfe..9234d0b97 100644
+index 9a44ce54d..460bef8c4 100644
 --- a/cmd/boulder-wfe2/main.go
 +++ b/cmd/boulder-wfe2/main.go
 @@ -12,6 +12,7 @@ import (
@@ -18,7 +18,7 @@ index 625026cfe..9234d0b97 100644
  	rapb "github.com/letsencrypt/boulder/ra/proto"
  	"github.com/letsencrypt/boulder/ratelimits"
  	bredis "github.com/letsencrypt/boulder/redis"
-@@ -108,7 +110,7 @@ type Config struct {
+@@ -97,7 +99,7 @@ type Config struct {
  		// DirectoryCAAIdentity is used for the /directory response's "meta"
  		// element's "caaIdentities" field. It should match the VA's "issuerDomain"
  		// configuration value (this value is the one used to enforce CAA)
@@ -27,7 +27,7 @@ index 625026cfe..9234d0b97 100644
  		// DirectoryWebsite is used for the /directory response's "meta" element's
  		// "website" field.
  		DirectoryWebsite string `validate:"required,url"`
-@@ -195,6 +197,8 @@ type Config struct {
+@@ -180,6 +182,8 @@ type Config struct {
  			// to enable the pausing feature.
  			URL string `validate:"omitempty,required_with=HMACKey JWTLifetime,url,startswith=https://,endsnotwith=/"`
  		}
@@ -36,7 +36,7 @@ index 625026cfe..9234d0b97 100644
  	}
  
  	Syslog        cmd.SyslogConfig
-@@ -360,11 +364,22 @@ func main() {
+@@ -318,11 +322,22 @@ func main() {
  	var limiter *ratelimits.Limiter
  	var txnBuilder *ratelimits.TransactionBuilder
  	var limiterRedis *bredis.Ring
@@ -59,7 +59,7 @@ index 625026cfe..9234d0b97 100644
  		source := ratelimits.NewRedisSource(limiterRedis.Ring, clk, stats)
  		limiter, err = ratelimits.NewLimiter(clk, source, stats)
  		cmd.FailOnError(err, "Failed to create rate limiter")
-@@ -406,6 +421,7 @@ func main() {
+@@ -362,6 +377,7 @@ func main() {
  		unpauseSigner,
  		c.WFE.Unpause.JWTLifetime.Duration,
  		c.WFE.Unpause.URL,

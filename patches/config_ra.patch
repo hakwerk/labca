@@ -1,10 +1,10 @@
 diff --git a/test/config/ra.json b/test/config/ra.json
-index 7a5befada..335f69b14 100644
+index 23c277c6c..0aa9a0088 100644
 --- a/test/config/ra.json
 +++ b/test/config/ra.json
-@@ -36,12 +36,7 @@
+@@ -33,12 +33,7 @@
+ 			"fermatRounds": 100
  		},
- 		"orderLifetime": "168h",
  		"issuerCerts": [
 -			"test/certs/webpki/int-rsa-a.cert.pem",
 -			"test/certs/webpki/int-rsa-b.cert.pem",
@@ -14,5 +14,5 @@ index 7a5befada..335f69b14 100644
 -			"test/certs/webpki/int-ecdsa-c.cert.pem"
 +			"test/certs/webpki/int-rsa-a.cert.pem"
  		],
- 		"tls": {
- 			"caCertFile": "test/certs/ipki/minica.pem",
+ 		"validationProfiles": {
+ 			"legacy": {
