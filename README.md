@@ -142,6 +142,8 @@ If all seems to be working at first, but you hit the **rate limit** after succes
 
 When importing an existing CA certificate as the LabCA Root, you may get the error "**The organizationName field is different between CA certificate (MyOrg) and the request (MyOrg)**" when generating the issuing certificate. Although the printed names look identical, this means that on the binary level the imported CA certificate is using PRINTABLESTRING for the organization name where LabCA is using openssl which uses UTF8STRING. You can verify this with the commands `openssl asn1parse -in data/root-ca.pem` and `openssl asn1parse -in data/issuer/ca-int.csr`. You should probably generate the issuer certificate yourself using the existing CA, and then also upload that.
 
+If you get a **failed to load chain.: failed to load certificate "labca/certs/webpki/issuer-01-cert.pem"** in your boulder logs, and **Root key file not present on the system: cannot upgrade automatically!** in the gui logs: in the past it was possible to store the LabCA root private key offline, and only upload it in the GUI for operations that required it. As of version v25.02 this is no longer possible: the root CA key must be present on the system. If you try to upgrade an existing LabCA install that does not have the root CA key online, the upgrade will fail! The solution is to either do a new LabCA install and import the certificates including their keys, or stick with an older version. Changes to the system make it too hard to support having the root CA key offline going forward.
+
 ### NOTE
 
 Although LabCA tries to be as robust as possible, use it at your own risk. If you depend on it, make sure that you know what you are doing!
