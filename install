@@ -138,6 +138,8 @@ check_root() {
 # Create dedicated user
 labca_user() {
     adduser --gecos "LabCA,,," --disabled-login labca &>>$installLog && msg_ok "Created user 'labca'" || msg_ok "User 'labca' already exists"
+    [ -d "/home/labca" ] || mkdir "/home/labca"
+    chown -R labca:labca "/home/labca"
     [ -d "$logDir" ] || mkdir "$logDir"
     chown -R labca:labca "$logDir"
 
