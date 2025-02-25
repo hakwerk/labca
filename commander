@@ -187,7 +187,8 @@ case $txt in
     read serial
     read reason
     cd /opt/boulder
-    docker compose exec boulder bin/boulder admin -config labca/config/admin.json revoke-cert -serial $serial -reason $reason -dry-run=false 2>&1
+    # NOTE: admin is one of the few commands that is NOT a subcommand of boulder!
+    docker compose exec boulder bin/admin -config labca/config/admin.json revoke-cert -serial $serial -reason $reason -dry-run=false 2>&1
     ;;
 "test-email")
     read recipient
