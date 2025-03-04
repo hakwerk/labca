@@ -1,5 +1,5 @@
 diff --git a/ra/ra.go b/ra/ra.go
-index 82244d216..a247512ed 100644
+index 82244d216..10d15a624 100644
 --- a/ra/ra.go
 +++ b/ra/ra.go
 @@ -44,7 +44,6 @@ import (
@@ -19,3 +19,13 @@ index 82244d216..a247512ed 100644
  		if err != nil {
  			return err
  		}
+@@ -1933,6 +1932,9 @@ func crlShard(cert *x509.Certificate) (int64, error) {
+ 		return 0, fmt.Errorf("malformed CRLDistributionPoint %q", url)
+ 	}
+ 	shardStr := url[lastIndex+1:]
++	if strings.HasSuffix(shardStr, "-crl.pem") {
++		return 1, nil
++	}
+ 	shardIdx, err := strconv.Atoi(shardStr)
+ 	if err != nil {
+ 		return 0, fmt.Errorf("parsing CRLDistributionPoint: %s", err)

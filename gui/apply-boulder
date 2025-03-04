@@ -182,7 +182,7 @@ sed -i -e "s|\"crlURLBase\": \".*\"|\"crlURLBase\": \"http://$PKI_FQDN/crl/$INT_
 
 if [ "$PKI_EXTENDED_TIMEOUT" == "1" ]; then
     sed -i -e "s/\"timeout\": \"15s\"/\"timeout\": \"30s\"/" config/ca.json
-    sed -i -e "s/\"timeout\": \"15s\"/\"timeout\": \"30s\"/" config/admin-revoker.json
+    sed -i -e "s/\"timeout\": \"15s\"/\"timeout\": \"30s\"/" config/admin.json
     sed -i -e "s/\"timeout\": \"15s\"/\"timeout\": \"30s\"/" config/wfe2.json
     sed -i -e "s/\"timeout\": \"20s\"/\"timeout\": \"40s\"/" config/wfe2.json
     sed -i -e "s/\"timeout\": \"15s\"/\"timeout\": \"30s\"/" config/expiration-mailer.json

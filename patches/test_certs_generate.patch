@@ -1,5 +1,5 @@
 diff --git a/test/certs/generate.sh b/test/certs/generate.sh
-index 7386e7992..50ec741f3 100755
+index 3f0e03d2c..7a57d0b3d 100755
 --- a/test/certs/generate.sh
 +++ b/test/certs/generate.sh
 @@ -63,9 +63,9 @@ webpki() (
@@ -15,10 +15,17 @@ index 7386e7992..50ec741f3 100755
  )
  
  if ! [ -d ipki ]; then
-@@ -73,6 +73,17 @@ if ! [ -d ipki ]; then
+@@ -73,6 +73,24 @@ if ! [ -d ipki ]; then
    ipki
  fi
  
++# For updating older LabCA installations...
++if ! [ -d ipki/admin.boulder ]; then
++  cd ipki
++  minica -domains "admin.boulder" &
++  cd -
++fi
++
 +end_date=$(openssl x509 -enddate -noout -in ipki/boulder/cert.pem | cut -d= -f2)
 +end_date_seconds=$(date -d "$end_date" +%s)
 +current_date_seconds=$(date +%s)
