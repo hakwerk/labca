@@ -175,6 +175,25 @@ func ceremonyConfig(path string, rewrites map[string]string) (string, error) {
 	return tmp.Name(), nil
 }
 
+func waitForFile(filePath string) error {
+	start := time.Now()
+	for {
+		if _, err := os.Stat(filePath); err == nil {
+			return nil // File found
+		} else if !os.IsNotExist(err) {
+			return fmt.Errorf("error checking file: %v", err) // Unexpected error
+		}
+
+		// Check if the timeout has been reached
+		if time.Since(start) > 2*time.Minute {
+			return fmt.Errorf("timeout reached while waiting for file")
+		}
+
+		// Sleep for a short interval before checking again
+		time.Sleep(5 * time.Second)
+	}
+}
+
 func (ci *CertificateInfo) CeremonyRoot(seqnr string, use_existing_key bool) (string, error) {
 	keytype := "rsa"
 	keyparam := strings.Replace(ci.KeyType, "rsa", "", -1)
@@ -229,6 +248,11 @@ func (ci *CertificateInfo) CeremonyRoot(seqnr string, use_existing_key bool) (st
 		return "", fmt.Errorf("could not fill root ceremony template: %s", err.Error())
 	}
 	defer os.Remove(ceremonyCfg)
+
+	err = waitForFile("/opt/boulder/bin/ceremony")
+	if err != nil {
+		return "", fmt.Errorf("could not wait for /opt/boulder/bin/ceremony to exist: %s", err.Error())
+	}
 
 	if _, err = exeCmd("/opt/boulder/bin/ceremony -config " + ceremonyCfg); err != nil {
 		ci.Errors["Generate"] = "failed to execute root ceremony, see logs for details"
@@ -291,6 +315,11 @@ func (ci *CertificateInfo) CeremonyIssuer(seqnr, rootseqnr string, use_existing_
 		}
 		defer os.Remove(keyCfg)
 
+		err = waitForFile("/opt/boulder/bin/ceremony")
+		if err != nil {
+			return "", fmt.Errorf("could not wait for /opt/boulder/bin/ceremony to exist: %s", err.Error())
+		}
+
 		if _, err = exeCmd("/opt/boulder/bin/ceremony -config " + keyCfg); err != nil {
 			ci.Errors["Generate"] = "failed to execute issuer key ceremony, see logs for details"
 			pb.Restore()
@@ -334,6 +363,11 @@ func (ci *CertificateInfo) CeremonyIssuer(seqnr, rootseqnr string, use_existing_
 		return "", fmt.Errorf("could not fill issuer cert ceremony template: %s", err.Error())
 	}
 	defer os.Remove(ceremonyCfg)
+
+	err = waitForFile("/opt/boulder/bin/ceremony")
+	if err != nil {
+		return "", fmt.Errorf("could not wait for /opt/boulder/bin/ceremony to exist: %s", err.Error())
+	}
 
 	if _, err = exeCmd("/opt/boulder/bin/ceremony -config " + ceremonyCfg); err != nil {
 		ci.Errors["Generate"] = "failed to execute issuer cert ceremony, see logs for details"
@@ -422,6 +456,11 @@ func (ci *CertificateInfo) CeremonyRootCRL(seqnr string) error {
 		return fmt.Errorf("could not fill root crl ceremony template: %s", err.Error())
 	}
 	defer os.Remove(keyCfg)
+
+	err = waitForFile("/opt/boulder/bin/ceremony")
+	if err != nil {
+		return fmt.Errorf("could not wait for /opt/boulder/bin/ceremony to exist: %s", err.Error())
+	}
 
 	if _, err = exeCmd("/opt/boulder/bin/ceremony -config " + keyCfg); err != nil {
 		ci.Errors["CRL"] = "failed to execute root crl ceremony, see logs for details"
