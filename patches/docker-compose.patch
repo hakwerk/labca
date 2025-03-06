@@ -1,5 +1,5 @@
 diff --git a/docker-compose.yml b/docker-compose.yml
-index 2dfa6c278..d90c629af 100644
+index 2dfa6c278..2f7f62688 100644
 --- a/docker-compose.yml
 +++ b/docker-compose.yml
 @@ -1,3 +1,4 @@
@@ -72,7 +72,7 @@ index 2dfa6c278..d90c629af 100644
      networks:
        bouldernet:
          aliases:
-@@ -90,82 +83,112 @@ services:
+@@ -90,82 +83,114 @@ services:
      # small.
      command: mysqld --bind-address=0.0.0.0 --slow-query-log --log-output=TABLE --log-queries-not-using-indexes=ON
      logging:
@@ -127,7 +127,7 @@ index 2dfa6c278..d90c629af 100644
      networks:
        redisnet:
          ipv4_address: 10.33.33.4
- 
+-
 -  bredis_4:
 -    image: redis:6.2.7
 -    volumes:
@@ -136,7 +136,8 @@ index 2dfa6c278..d90c629af 100644
 -    networks:
 -      redisnet:
 -        ipv4_address: 10.33.33.5
--
++    restart: always
+ 
    bconsul:
      image: hashicorp/consul:1.15.4
 +    depends_on:
@@ -232,6 +233,7 @@ index 2dfa6c278..d90c629af 100644
          ipv4_address: 10.77.77.9
 -    command: "gunicorn -w 8 -k uvicorn.workers.UvicornWorker -b 0.0.0.0:80 pkilint.rest:app"
 +    command: "gunicorn -w 1 -k uvicorn.workers.UvicornWorker -b 0.0.0.0:80 pkilint.rest:app"
++    restart: always
 +
 +volumes:
 +  dbdata:

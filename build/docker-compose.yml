@@ -97,6 +97,7 @@ services:
     networks:
       redisnet:
         ipv4_address: 10.33.33.4
+    restart: always
 
   bconsul:
     image: hashicorp/consul:1.15.4
@@ -186,6 +187,7 @@ services:
       bouldernet:
         ipv4_address: 10.77.77.9
     command: "gunicorn -w 1 -k uvicorn.workers.UvicornWorker -b 0.0.0.0:80 pkilint.rest:app"
+    restart: always
 
 volumes:
   dbdata:
