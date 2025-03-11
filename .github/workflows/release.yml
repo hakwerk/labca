@@ -43,7 +43,7 @@ jobs:
         id: changelog
         uses: loopwerk/tag-changelog@v1
         with:
-          token: ${{ secrets.ACTION_PAT }}
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Create release
         uses: ncipollo/release-action@v1
@@ -51,4 +51,4 @@ jobs:
           artifacts: "release/*"
           body: ${{ steps.changelog.outputs.changes }}
           draft: true
-          token: ${{ secrets.ACTION_PAT }}
+          token: ${{ secrets.GITHUB_TOKEN }}
