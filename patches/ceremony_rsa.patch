@@ -1,17 +1,17 @@
 diff --git a/cmd/ceremony/rsa.go b/cmd/ceremony/rsa.go
-index 69e326b39..1bd60f750 100644
+index 7d0eb4b30..465857f3a 100644
 --- a/cmd/ceremony/rsa.go
 +++ b/cmd/ceremony/rsa.go
-@@ -18,7 +18,7 @@ const (
+@@ -19,7 +19,7 @@ const (
  // device and specifies which mechanism should be used. modulusLen specifies the
  // length of the modulus to be generated on the device in bits and exponent
  // specifies the public exponent that should be used.
--func rsaArgs(label string, modulusLen, exponent uint, keyID []byte) generateArgs {
-+func rsaArgs(label string, modulusLen, exponent uint, keyID []byte, extractable bool) generateArgs {
+-func rsaArgs(label string, modulusLen int, keyID []byte) generateArgs {
++func rsaArgs(label string, modulusLen int, keyID []byte, extractable bool) generateArgs {
  	// Encode as unpadded big endian encoded byte slice
- 	expSlice := big.NewInt(int64(exponent)).Bytes()
- 	log.Printf("\tEncoded public exponent (%d) as: %0X\n", exponent, expSlice)
-@@ -44,7 +44,7 @@ func rsaArgs(label string, modulusLen, exponent uint, keyID []byte) generateArgs
+ 	expSlice := big.NewInt(rsaExp).Bytes()
+ 	log.Printf("\tEncoded public exponent (%d) as: %0X\n", rsaExp, expSlice)
+@@ -45,7 +45,7 @@ func rsaArgs(label string, modulusLen int, keyID []byte) generateArgs {
  			// Prevent attributes being retrieved
  			pkcs11.NewAttribute(pkcs11.CKA_SENSITIVE, true),
  			// Prevent the key being extracted from the device
@@ -20,20 +20,20 @@ index 69e326b39..1bd60f750 100644
  			// Allow the key to create signatures
  			pkcs11.NewAttribute(pkcs11.CKA_SIGN, true),
  		},
-@@ -75,14 +75,14 @@ func rsaPub(session *pkcs11helpers.Session, object pkcs11.ObjectHandle, modulusL
+@@ -76,14 +76,14 @@ func rsaPub(session *pkcs11helpers.Session, object pkcs11.ObjectHandle, modulusL
  // specified by modulusLen and with the exponent 65537.
  // It returns the public part of the generated key pair as a rsa.PublicKey
  // and the random key ID that the HSM uses to identify the key pair.
--func rsaGenerate(session *pkcs11helpers.Session, label string, modulusLen uint) (*rsa.PublicKey, []byte, error) {
-+func rsaGenerate(session *pkcs11helpers.Session, label string, modulusLen uint, extractable bool) (*rsa.PublicKey, []byte, error) {
+-func rsaGenerate(session *pkcs11helpers.Session, label string, modulusLen int) (*rsa.PublicKey, []byte, error) {
++func rsaGenerate(session *pkcs11helpers.Session, label string, modulusLen int, extractable bool) (*rsa.PublicKey, []byte, error) {
  	keyID := make([]byte, 4)
  	_, err := newRandReader(session).Read(keyID)
  	if err != nil {
  		return nil, nil, err
  	}
  	log.Printf("Generating RSA key with %d bit modulus and public exponent %d and ID %x\n", modulusLen, rsaExp, keyID)
--	args := rsaArgs(label, modulusLen, rsaExp, keyID)
-+	args := rsaArgs(label, modulusLen, rsaExp, keyID, extractable)
+-	args := rsaArgs(label, modulusLen, keyID)
++	args := rsaArgs(label, modulusLen, keyID, extractable)
  	pub, _, err := session.GenerateKeyPair(args.mechanism, args.publicAttrs, args.privateAttrs)
  	if err != nil {
  		return nil, nil, err

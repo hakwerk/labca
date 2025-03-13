@@ -1,27 +1,27 @@
 diff --git a/va/va.go b/va/va.go
-index a1e2cd449..883298092 100644
+index fcd35a5db..ad2b7c409 100644
 --- a/va/va.go
 +++ b/va/va.go
-@@ -215,6 +215,7 @@ type ValidationAuthorityImpl struct {
- 	singleDialTimeout  time.Duration
+@@ -217,6 +217,7 @@ type ValidationAuthorityImpl struct {
  	perspective        string
  	rir                string
+ 	isReservedIPFunc   func(ip net.IP) bool
 +	labcaDomains       []string
  
  	metrics *vaMetrics
  }
-@@ -234,6 +235,7 @@ func NewValidationAuthorityImpl(
- 	accountURIPrefixes []string,
+@@ -237,6 +238,7 @@ func NewValidationAuthorityImpl(
  	perspective string,
  	rir string,
+ 	reservedIPChecker func(ip net.IP) bool,
 +	labcaDomains []string,
  ) (*ValidationAuthorityImpl, error) {
  
  	if len(accountURIPrefixes) == 0 {
-@@ -271,6 +273,7 @@ func NewValidationAuthorityImpl(
- 		singleDialTimeout: 10 * time.Second,
+@@ -274,6 +276,7 @@ func NewValidationAuthorityImpl(
  		perspective:       perspective,
  		rir:               rir,
+ 		isReservedIPFunc:  reservedIPChecker,
 +		labcaDomains:      labcaDomains,
  	}
  

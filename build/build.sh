@@ -8,7 +8,7 @@ TMP_DIR=$(pwd)/tmp
 rm -rf $TMP_DIR && mkdir -p $TMP_DIR/{admin,bin,logs,src}
 
 boulderDir=$TMP_DIR/src
-boulderTag="release-2025-02-14"
+boulderTag="release-2025-03-10"
 boulderUrl="https://github.com/letsencrypt/boulder/"
 cloneDir=$(pwd)/..
 

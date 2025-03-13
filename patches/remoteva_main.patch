@@ -1,8 +1,8 @@
 diff --git a/cmd/remoteva/main.go b/cmd/remoteva/main.go
-index 97320f971..6df388e3f 100644
+index 0dc71028f..19962fb35 100644
 --- a/cmd/remoteva/main.go
 +++ b/cmd/remoteva/main.go
-@@ -60,7 +60,8 @@ type Config struct {
+@@ -56,7 +56,8 @@ type Config struct {
  		// For more information, see: https://pkg.go.dev/crypto/tls#ClientAuthType
  		SkipGRPCClientCertVerification bool
  
@@ -12,12 +12,12 @@ index 97320f971..6df388e3f 100644
  	}
  
  	Syslog        cmd.SyslogConfig
-@@ -142,7 +143,8 @@ func main() {
- 		logger,
+@@ -139,7 +140,8 @@ func main() {
  		c.RVA.AccountURIPrefixes,
  		c.RVA.Perspective,
--		c.RVA.RIR)
-+		c.RVA.RIR,
+ 		c.RVA.RIR,
+-		bdns.IsReservedIP)
++		bdns.IsReservedIP,
 +		c.RVA.LabCADomains)
  	cmd.FailOnError(err, "Unable to create Remote-VA server")
  

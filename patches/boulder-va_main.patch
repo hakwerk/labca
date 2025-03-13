@@ -1,8 +1,8 @@
 diff --git a/cmd/boulder-va/main.go b/cmd/boulder-va/main.go
-index f2c2c8487..86fb29457 100644
+index e18989222..809e0c19e 100644
 --- a/cmd/boulder-va/main.go
 +++ b/cmd/boulder-va/main.go
-@@ -56,6 +56,7 @@ type Config struct {
+@@ -52,6 +52,7 @@ type Config struct {
  		// Deprecated and ignored
  		MaxRemoteValidationFailures int `validate:"omitempty,min=0,required_with=RemoteVAs"`
  		Features                    features.Config
@@ -10,12 +10,12 @@ index f2c2c8487..86fb29457 100644
  	}
  
  	Syslog        cmd.SyslogConfig
-@@ -153,7 +154,8 @@ func main() {
- 		logger,
+@@ -150,7 +151,8 @@ func main() {
  		c.VA.AccountURIPrefixes,
  		va.PrimaryPerspective,
--		"")
-+		"",
+ 		"",
+-		bdns.IsReservedIP)
++		bdns.IsReservedIP,
 +		c.VA.LabCADomains)
  	cmd.FailOnError(err, "Unable to create VA server")
  

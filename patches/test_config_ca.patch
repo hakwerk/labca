@@ -1,8 +1,8 @@
 diff --git a/test/config/ca.json b/test/config/ca.json
-index a61df7e7c..9fa88c730 100644
+index 675304d97..01b2d56ce 100644
 --- a/test/config/ca.json
 +++ b/test/config/ca.json
-@@ -50,7 +50,8 @@
+@@ -60,7 +60,8 @@
  					"allowMustStaple": true,
  					"maxValidityPeriod": "7776000s",
  					"maxValidityBackdate": "1h5m",
@@ -12,7 +12,7 @@ index a61df7e7c..9fa88c730 100644
  					"ignoredLints": [
  						"w_subject_common_name_included",
  						"w_ext_subject_key_identifier_not_recommended_subscriber"
-@@ -64,7 +65,8 @@
+@@ -74,7 +75,8 @@
  					"omitSKID": true,
  					"maxValidityPeriod": "583200s",
  					"maxValidityBackdate": "1h5m",
@@ -22,7 +22,7 @@ index a61df7e7c..9fa88c730 100644
  					"ignoredLints": [
  						"w_ext_subject_key_identifier_missing_sub_cert"
  					]
-@@ -77,39 +79,7 @@
+@@ -100,39 +102,7 @@
  			"issuers": [
  				{
  					"active": true,
@@ -63,7 +63,7 @@ index a61df7e7c..9fa88c730 100644
  					"issuerURL": "http://ca.example.org:4502/int-rsa-a",
  					"ocspURL": "http://ca.example.org:4002/",
  					"crlURLBase": "http://ca.example.org:4501/lets-encrypt-crls/29947985078257530/",
-@@ -118,28 +88,6 @@
+@@ -141,28 +111,6 @@
  						"certFile": "test/certs/webpki/int-rsa-a.cert.pem",
  						"numSessions": 2
  					}

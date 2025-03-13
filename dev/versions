@@ -57,8 +57,13 @@ colorGoVersion() {
     local fileName="$1"
     local expectVersion="$2"
 
-    if [ ! -z "$(grep GO_VERSION -A 3 $fileName | egrep "\- [\"0-9]+" | grep $expectVersion || echo "")" ]; then
-        res=$(grep GO_VERSION -A 3 $fileName | egrep "\- [\"0-9]+" | sed -e "s/$expectVersion/${COL_LIGHT_GREEN}$expectVersion${COL_NC}/")
+    first=$(echo $expectVersion | cut -d " " -f 1)
+    second=$(echo $expectVersion | cut -d " " -f 2)
+
+    if [ ! -z "$(grep GO_VERSION -A 3 $fileName | egrep "\- [\"0-9]+" | grep $first || echo "")" ]; then
+        res=$(grep GO_VERSION -A 3 $fileName | egrep "\- [\"0-9]+" | sed -e "s/$first/${COL_LIGHT_GREEN}$first${COL_NC}/")
+    elif [ ! -z "$(grep GO_VERSION -A 3 $fileName | egrep "\- [\"0-9]+" | grep $second || echo "")" ]; then
+        res=$(grep GO_VERSION -A 3 $fileName | egrep "\- [\"0-9]+" | sed -e "s/$second/${COL_YELLOW}$second${COL_NC}/")
     else
         res=$(grep GO_VERSION -A 3 $fileName | egrep "\- [\"0-9]+" | sed -e "s/\([0-9\.]*\)/${COL_LIGHT_RED}\1${COL_NC}/g")
     fi
@@ -116,8 +121,8 @@ echo
 goversion=$(grep GO_VERSION -A 3 ../boulder/.github/workflows/release.yml | egrep "\- [\"0-9]+" | sed -e "s/\s*-\s*//" | sed -e "s/\"//g")
 echo "Boulder .github/workflows/release.yml"
 grep GO_VERSION -A 3 ../boulder/.github/workflows/release.yml | egrep "\- [\"0-9]+" | sed -e "s/yml-/yml/"
-colorGoVersion .github/workflows/release.yml $goversion
-colorGoVersion .github/workflows/build-standalone.yml $goversion
+colorGoVersion .github/workflows/release.yml "$goversion"
+colorGoVersion .github/workflows/build-standalone.yml "$goversion"
 echo
 
 goversion=$(grep GO_VERSION ../boulder/docker-compose.yml | sed -e "s/\s*GO_VERSION://")

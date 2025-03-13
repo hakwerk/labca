@@ -53,6 +53,7 @@ $SUDO patch -p1 < $cloneDir/patches/ratelimits_names.patch
 $SUDO patch -p1 < $cloneDir/patches/redis_config.patch
 $SUDO patch -p1 < $cloneDir/patches/remoteva_main.patch
 $SUDO patch -p1 < $cloneDir/patches/start.patch
+$SUDO patch -p1 < $cloneDir/patches/test_startservers.patch
 if [ "$SUDO" == "" ]; then
     # TODO: should include this into startservers.patch
     $SUDO patch -p1 < $cloneDir/build/tmp2.patch

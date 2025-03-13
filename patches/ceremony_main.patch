@@ -1,10 +1,10 @@
 diff --git a/cmd/ceremony/main.go b/cmd/ceremony/main.go
-index f18979fef..0aa8eb0c7 100644
+index 12cc9249c..8ac5af0a3 100644
 --- a/cmd/ceremony/main.go
 +++ b/cmd/ceremony/main.go
 @@ -98,6 +98,7 @@ type keyGenConfig struct {
  	Type         string `yaml:"type"`
- 	RSAModLength uint   `yaml:"rsa-mod-length"`
+ 	RSAModLength int    `yaml:"rsa-mod-length"`
  	ECDSACurve   string `yaml:"ecdsa-curve"`
 +	Extractable  bool   `yaml:"extractable"`
  }

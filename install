@@ -30,7 +30,7 @@ dockerComposeVersion="v2.5.0"
 
 labcaUrl="https://github.com/hakwerk/labca/"
 boulderUrl="https://github.com/letsencrypt/boulder/"
-boulderTag="release-2025-02-14"
+boulderTag="release-2025-03-10"
 
 #
 # Color configuration
@@ -238,12 +238,12 @@ clone_or_pull() {
 # Checkout the latest release tag
 checkout_release() {
     local branch="$1"
-    if [ "$branch" == "" ] || [ "$branch" == "master" ] || [ "$branch" == "main" ]; then
+    if [ "$branch" == "" ] || [ "$branch" == "master" ]; then
         cd "$cloneDir"
         if [ "$curChecksum" == "" ]; then
             curChecksum=$(md5sum $cloneDir/install 2>/dev/null | cut -d' ' -f1)
         fi
-        TAG=$(sudo -u labca -H git describe --tags $(sudo -u labca -H git rev-list --tags --max-count=1))
+        TAG=$(sudo -u labca -H git describe --tags origin/master | cut -d "-" -f 1)
         sudo -u labca -H git reset --hard $TAG &>>$installLog
     fi
 }

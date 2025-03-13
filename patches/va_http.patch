@@ -1,12 +1,12 @@
 diff --git a/va/http.go b/va/http.go
-index 5eefabcb4..0188d4005 100644
+index 04b119ca2..de9e439a5 100644
 --- a/va/http.go
 +++ b/va/http.go
-@@ -326,7 +326,16 @@ func (va *ValidationAuthorityImpl) extractRequestTarget(req *http.Request) (stri
+@@ -338,7 +338,16 @@ func (va *ValidationAuthorityImpl) extractRequestTarget(req *http.Request) (iden
  	}
  
  	if _, err := iana.ExtractSuffix(reqHost); err != nil {
--		return "", 0, berrors.ConnectionFailureError("Invalid hostname in redirect target, must end in IANA registered TLD")
+-		return identifier.ACMEIdentifier{}, 0, berrors.ConnectionFailureError("Invalid host in redirect target, must end in IANA registered TLD")
 +		isLabca := false
 +		for _, domain := range va.labcaDomains {
 +			if strings.HasSuffix(reqHost, "."+domain) {
@@ -15,8 +15,8 @@ index 5eefabcb4..0188d4005 100644
 +		}
 +
 +		if !isLabca {
-+			return "", 0, berrors.ConnectionFailureError("Invalid hostname in redirect target, must end in IANA registered TLD")
++			return identifier.ACMEIdentifier{}, 0, berrors.ConnectionFailureError("Invalid host in redirect target, must end in IANA registered TLD")
 +		}
  	}
  
- 	return reqHost, reqPort, nil
+ 	return identifier.NewDNS(reqHost), reqPort, nil
