@@ -65,9 +65,7 @@ Once the setup is completed, please make a backup of your Root and Issuer certif
 
 ### Update
 
-When updates are available, this will be indicated on the Dashboard page (System Overview section). They can be installed from the Manage page where you can also manually check for available updates (but this is done regularly automatically).
-
-Updates can also be done from the Linux shell, on the server run this command as root to update the installation:
+When updates are available, this will be indicated on the Dashboard page (System Overview section). They can be installed from the Linux shell, on the server run this command as root to update the installation:
 
 ```sh
 ~labca/labca/install
