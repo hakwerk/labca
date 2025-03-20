@@ -186,7 +186,7 @@ index b66a13d04..96edbf4ec 100644
 +    restart: always
 +
 +  nginx:
-+    image: nginx:1.27.3
++    image: nginx:latest
 +    restart: always
 +    networks:
 +      - bouldernet
