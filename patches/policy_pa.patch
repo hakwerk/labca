@@ -1,5 +1,5 @@
 diff --git a/policy/pa.go b/policy/pa.go
-index fac69d3b9..217c465fe 100644
+index bbe928cd0..0c21848b7 100644
 --- a/policy/pa.go
 +++ b/policy/pa.go
 @@ -31,6 +31,9 @@ type AuthorityImpl struct {
@@ -45,7 +45,7 @@ index fac69d3b9..217c465fe 100644
  	pa.blocklistMu.Unlock()
  	return nil
  }
-@@ -195,7 +213,7 @@ var (
+@@ -196,7 +214,7 @@ var (
  //   - exactly equal to an IANA registered TLD
  //
  // It does NOT ensure that the domain is absent from any PA blocked lists.
@@ -54,7 +54,7 @@ index fac69d3b9..217c465fe 100644
  	if domain == "" {
  		return errEmptyName
  	}
-@@ -227,7 +245,9 @@ func validNonWildcardDomain(domain string) error {
+@@ -228,7 +246,9 @@ func validNonWildcardDomain(domain string) error {
  		return errTooManyLabels
  	}
  	if len(labels) < 2 {
@@ -65,7 +65,7 @@ index fac69d3b9..217c465fe 100644
  	}
  	for _, label := range labels {
  		// Check that this is a valid LDH Label: "A string consisting of ASCII
-@@ -271,6 +291,14 @@ func validNonWildcardDomain(domain string) error {
+@@ -272,6 +292,14 @@ func validNonWildcardDomain(domain string) error {
  		}
  	}
  
@@ -80,7 +80,7 @@ index fac69d3b9..217c465fe 100644
  	// Names must end in an ICANN TLD, but they must not be equal to an ICANN TLD.
  	icannTLD, err := iana.ExtractSuffix(domain)
  	if err != nil {
-@@ -286,9 +314,9 @@ func validNonWildcardDomain(domain string) error {
+@@ -287,9 +315,9 @@ func validNonWildcardDomain(domain string) error {
  // ValidDomain checks that a domain is valid and that it doesn't contain any
  // invalid wildcard characters. It does NOT ensure that the domain is absent
  // from any PA blocked lists.
@@ -92,7 +92,7 @@ index fac69d3b9..217c465fe 100644
  	}
  
  	// Names containing more than one wildcard are invalid.
-@@ -307,7 +335,7 @@ func ValidDomain(domain string) error {
+@@ -308,7 +336,7 @@ func ValidDomain(domain string) error {
  
  	// Names must end in an ICANN TLD, but they must not be equal to an ICANN TLD.
  	icannTLD, err := iana.ExtractSuffix(baseDomain)
@@ -101,7 +101,7 @@ index fac69d3b9..217c465fe 100644
  		return errNonPublic
  	}
  	// Names must have a non-wildcard label immediately adjacent to the ICANN
-@@ -315,7 +343,7 @@ func ValidDomain(domain string) error {
+@@ -316,7 +344,7 @@ func ValidDomain(domain string) error {
  	if baseDomain == icannTLD {
  		return errICANNTLDWildcard
  	}
@@ -110,7 +110,7 @@ index fac69d3b9..217c465fe 100644
  }
  
  // forbiddenMailDomains is a map of domain names we do not allow after the
-@@ -333,14 +361,14 @@ var forbiddenMailDomains = map[string]bool{
+@@ -334,14 +362,14 @@ var forbiddenMailDomains = map[string]bool{
  // ValidEmail returns an error if the input doesn't parse as an email address,
  // the domain isn't a valid hostname in Preferred Name Syntax, or its on the
  // list of domains forbidden for mail (because they are often used in examples).
@@ -127,40 +127,43 @@ index fac69d3b9..217c465fe 100644
  	if err != nil {
  		return berrors.InvalidEmailError("contact email has invalid domain: %s", err)
  	}
-@@ -382,7 +410,7 @@ func subError(name string, err error) berrors.SubBoulderError {
+@@ -383,7 +411,7 @@ func subError(ident identifier.ACMEIdentifier, err error) berrors.SubBoulderErro
  //
- // Precondition: all input domain names must be in lowercase.
- func (pa *AuthorityImpl) WillingToIssue(domains []string) error {
--	err := WellFormedDomainNames(domains)
-+	err := pa.WellFormedDomainNames(domains)
+ // Precondition: all input identifier values must be in lowercase.
+ func (pa *AuthorityImpl) WillingToIssue(idents []identifier.ACMEIdentifier) error {
+-	err := WellFormedIdentifiers(idents)
++	err := pa.WellFormedIdentifiers(idents)
  	if err != nil {
  		return err
  	}
-@@ -401,6 +429,10 @@ func (pa *AuthorityImpl) WillingToIssue(domains []string) error {
+@@ -407,6 +435,10 @@ func (pa *AuthorityImpl) WillingToIssue(idents []identifier.ACMEIdentifier) erro
  			}
  		}
  
-+		if ok, _ := pa.checkWhitelist(domain, false); ok {
++		if ok, _ := pa.checkWhitelist(ident.Value, false); ok {
 +			return nil
 +		}
 +
  		// For both wildcard and non-wildcard domains, check whether any parent domain
  		// name is on the regular blocklist.
- 		err := pa.checkHostLists(domain)
-@@ -434,10 +466,10 @@ func (pa *AuthorityImpl) WillingToIssue(domains []string) error {
+ 		err := pa.checkHostLists(ident.Value)
+@@ -441,13 +473,13 @@ func (pa *AuthorityImpl) WillingToIssue(idents []identifier.ACMEIdentifier) erro
  //
  // If multiple domains are invalid, the error will contain suberrors specific to
  // each domain.
--func WellFormedDomainNames(domains []string) error {
-+func (pa *AuthorityImpl) WellFormedDomainNames(domains []string) error {
+-func WellFormedIdentifiers(idents []identifier.ACMEIdentifier) error {
++func (pa *AuthorityImpl) WellFormedIdentifiers(idents []identifier.ACMEIdentifier) error {
  	var subErrors []berrors.SubBoulderError
- 	for _, domain := range domains {
--		err := ValidDomain(domain)
-+		err := pa.ValidDomain(domain)
- 		if err != nil {
- 			subErrors = append(subErrors, subError(domain, err))
- 		}
-@@ -471,6 +503,34 @@ func combineSubErrors(subErrors []berrors.SubBoulderError) error {
+ 	for _, ident := range idents {
+ 		// TODO(#7311): When this gets a third case for TypeIP, this will be
+ 		// more elegant as a switch/case.
+ 		if ident.Type == identifier.TypeDNS {
+-			err := ValidDomain(ident.Value)
++			err := pa.ValidDomain(ident.Value)
+ 			if err != nil {
+ 				subErrors = append(subErrors, subError(ident, err))
+ 			}
+@@ -484,6 +516,34 @@ func combineSubErrors(subErrors []berrors.SubBoulderError) error {
  	return nil
  }
  
@@ -195,7 +198,7 @@ index fac69d3b9..217c465fe 100644
  // checkWildcardHostList checks the wildcardExactBlocklist for a given domain.
  // If the domain is not present on the list nil is returned, otherwise
  // errPolicyForbidden is returned.
-@@ -500,6 +560,9 @@ func (pa *AuthorityImpl) checkHostLists(domain string) error {
+@@ -513,6 +573,9 @@ func (pa *AuthorityImpl) checkHostLists(domain string) error {
  	labels := strings.Split(domain, ".")
  	for i := range labels {
  		joined := strings.Join(labels[i:], ".")

@@ -1,5 +1,5 @@
 diff --git a/docker-compose.yml b/docker-compose.yml
-index 2f7f62688..30425c570 100644
+index 96edbf4ec..f8da4502c 100644
 --- a/docker-compose.yml
 +++ b/docker-compose.yml
 @@ -4,7 +4,7 @@ services:
@@ -131,7 +131,7 @@ index 2f7f62688..30425c570 100644
      expose:
        - 3030
      environment:
-@@ -191,6 +191,15 @@ services:
+@@ -190,6 +190,15 @@ services:
  
  volumes:
    dbdata:

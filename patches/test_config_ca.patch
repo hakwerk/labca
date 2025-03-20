@@ -1,5 +1,5 @@
 diff --git a/test/config/ca.json b/test/config/ca.json
-index 675304d97..01b2d56ce 100644
+index a64ec7ac2..09ffa1efe 100644
 --- a/test/config/ca.json
 +++ b/test/config/ca.json
 @@ -60,7 +60,8 @@
@@ -22,7 +22,7 @@ index 675304d97..01b2d56ce 100644
  					"ignoredLints": [
  						"w_ext_subject_key_identifier_missing_sub_cert"
  					]
-@@ -100,39 +102,7 @@
+@@ -101,39 +103,7 @@
  			"issuers": [
  				{
  					"active": true,
@@ -63,7 +63,7 @@ index 675304d97..01b2d56ce 100644
  					"issuerURL": "http://ca.example.org:4502/int-rsa-a",
  					"ocspURL": "http://ca.example.org:4002/",
  					"crlURLBase": "http://ca.example.org:4501/lets-encrypt-crls/29947985078257530/",
-@@ -141,28 +111,6 @@
+@@ -142,28 +112,6 @@
  						"certFile": "test/certs/webpki/int-rsa-a.cert.pem",
  						"numSessions": 2
  					}

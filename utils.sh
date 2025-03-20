@@ -9,7 +9,7 @@ export PS_MYSQL="mysqld"
 export PS_CONTROL="tcpserver"
 export PS_NGINX="nginx:"
 export PS_CONSUL="consul"
-export PS_PKILINT="pkilint"
+export PS_PKIMETAL="pkimetal"
 export PS_REDIS="redis-server"
 
 LOOPCOUNT=120
@@ -34,8 +34,8 @@ count() {
         $PS_CONSUL)
             prefix="docker exec $(docker ps --format "{{.Names}}" | grep -- -bconsul-) "
             ;;
-        $PS_PKILINT)
-            prefix="docker exec $(docker ps --format "{{.Names}}" | grep -- -bpkilint-) "
+        $PS_PKIMETAL)
+            prefix="docker exec $(docker ps --format "{{.Names}}" | grep -- -bpkimetal-) "
             ;;
         $PS_REDIS)
             prefix=""
@@ -48,7 +48,7 @@ count() {
     if [ "$pattern" == "$PS_CONSUL" ]; then
         res=$(${prefix}ps -eo pid,args 2>/dev/null | grep "$pattern" | grep -v grep | wc -l)
     fi
-    if [ "$pattern" == "$PS_PKILINT" ]; then
+    if [ "$pattern" == "$PS_PKIMETAL" ]; then
         res=$(${prefix}ls -d /proc/[1-9]* 2>/dev/null | wc -l)
     fi
     echo $res

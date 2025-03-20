@@ -1124,7 +1124,7 @@ func (res *Result) ManageComponents(w http.ResponseWriter, r *http.Request, acti
 			(components[i].Name == "Boulder (ACME)" && (action == "boulder-start" || action == "boulder-stop" || action == "boulder-restart")) ||
 			(components[i].Name == "LabCA Application" && action == "labca-restart") ||
 			(components[i].Name == "consul (Boulder)" && action == "consul-restart") ||
-			(components[i].Name == "pkilint (Boulder)" && action == "pkilint-restart") ||
+			(components[i].Name == "pkimetal (Boulder)" && action == "pkimetal-restart") ||
 			(components[i].Name == "redis (Boulder)" && action == "redis-restart") ||
 			(components[i].Name == "MySQL Database" && action == "mysql-restart") {
 			res.Timestamp = components[i].Timestamp
@@ -1353,7 +1353,7 @@ func _managePost(w http.ResponseWriter, r *http.Request) {
 		"cert-export",
 		"mysql-restart",
 		"consul-restart",
-		"pkilint-restart",
+		"pkimetal-restart",
 		"redis-restart",
 		"nginx-reload",
 		"nginx-restart",
@@ -1548,14 +1548,14 @@ func _manageGet(w http.ResponseWriter, r *http.Request) {
 				components[i].Buttons = append(components[i].Buttons, btn)
 			}
 
-			if components[i].Name == "pkilint (Boulder)" {
+			if components[i].Name == "pkimetal (Boulder)" {
 				components[i].LogURL = ""
 				components[i].LogTitle = ""
 
 				btn := make(map[string]interface{})
 				btn["Class"] = "btn-warning"
-				btn["Id"] = "pkilint-restart"
-				btn["Title"] = "Restart the internal pkilint helper"
+				btn["Id"] = "pkimetal-restart"
+				btn["Title"] = "Restart the internal pkimetal helper"
 				btn["Label"] = "Restart"
 				components[i].Buttons = append(components[i].Buttons, btn)
 			}

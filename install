@@ -30,7 +30,7 @@ dockerComposeVersion="v2.5.0"
 
 labcaUrl="https://github.com/hakwerk/labca/"
 boulderUrl="https://github.com/letsencrypt/boulder/"
-boulderTag="release-2025-03-10"
+boulderTag="release-2025-03-18"
 
 #
 # Color configuration
@@ -744,10 +744,10 @@ startup() {
     # Cleanup any remaining containers with old names
     docker compose -p boulder stop &>>$installLog || true
     docker compose -p boulder rm -f &>>$installLog || true
-    for ct in boulder_bhsm_1 boulder_bredis_1 boulder_bredis_2 boulder_bredis_3 boulder_bredis_4 boulder_bredis_5 boulder_bredis_6; do
+    for ct in boulder_bhsm_1 boulder_bredis_1 boulder_bredis_2 boulder_bredis_3 boulder_bredis_4 boulder_bredis_5 boulder_bredis_6 bpkilint; do
         [ -z "$(docker ps | grep $ct)" ] || docker stop $ct &>>$installLog
     done
-    for ct in boulder_bhsm_1 boulder_bredis_1 boulder_bredis_2 boulder_bredis_3 boulder_bredis_4 boulder_bredis_5 boulder_bredis_6; do
+    for ct in boulder_bhsm_1 boulder_bredis_1 boulder_bredis_2 boulder_bredis_3 boulder_bredis_4 boulder_bredis_5 boulder_bredis_6 bpkilint; do
         [ -z "$(docker ps -a | grep -e "$ct\$")" ] || docker rm -f $ct &>>$installLog
     done
     docker network rm -f boulder_bluenet boulder_consulnet boulder_rednet &>>$installLog || true
@@ -762,7 +762,7 @@ startup() {
     wait_down $PS_NGINX &>>$installLog || true
     wait_down $PS_MYSQL &>>$installLog || true
     wait_down $PS_CONSUL &>>$installLog || true
-    wait_down $PS_PKILINT &>>$installLog || true
+    wait_down $PS_PKIMETAL &>>$installLog || true
     wait_down $PS_LABCA &>>$installLog || true
     wait_down $PS_CONTROL &>>$installLog || true
     wait_down $PS_BOULDER &>>$installLog || true
@@ -797,7 +797,7 @@ startup() {
     wait_up $PS_NGINX &>>$installLog || true
     wait_up $PS_MYSQL &>>$installLog || true
     wait_up $PS_CONSUL 2 &>>$installLog || true
-    wait_up $PS_PKILINT &>>$installLog || true
+    wait_up $PS_PKIMETAL &>>$installLog || true
     wait_up $PS_LABCA &>>$installLog || true
     wait_up $PS_CONTROL &>>$installLog || true
     docker exec -i labca-bmysql-1 mysql_upgrade &>>$installLog

@@ -79,9 +79,10 @@ if ([ "$PKI_DOMAIN_MODE" == "lockdown" ] && [ "$PKI_LOCKDOWN_DOMAINS" != "" ]) |
     perl -i -p0e "s/(\"badResultsOnly\":[^\n]*).*?(\s+)(\"checkPeriod\":)/\1\2\"skipForbiddenDomains\": true,\2\3/igs" config/cert-checker.json
     perl -i -p0e "s/(\"ignoredLints\": \[).*?(\s+)(\"w_subject_common_name_included\")/\1\2\"e_dnsname_not_valid_tld\",\2\"w_sub_cert_aia_contains_internal_names\",\2\3/igs" config/cert-checker.json
     perl -i -p0e "s/(\"ignoredLints\": \[).*?(\s+)(\"w_subject_common_name_included\")/\1\2\"e_dnsname_not_valid_tld\",\2\"w_sub_cert_aia_contains_internal_names\",\2\3/igs" config/ca.json
-    perl -i -p0e "s/(\"modern\".*)(\"ignoredLints\": \[).*?(\s+)(\"w_ext_subject_key_identifier_missing_sub_cert\")/\1\2\3\"e_dnsname_not_valid_tld\",\3\"w_sub_cert_aia_contains_internal_names\",\3\4/igs" config/ca.json
+    perl -i -p0e "s/(\"modern\".*?)(\"ignoredLints\": \[).*?(\s+)(\"w_ext_subject_key_identifier_missing_sub_cert\")/\1\2\3\"e_dnsname_not_valid_tld\",\3\"w_sub_cert_aia_contains_internal_names\",\3\4/igs" config/ca.json
+    perl -i -p0e "s/(\"shortlived\".*?)(\"ignoredLints\": \[).*?(\s+)(\"w_ext_subject_key_identifier_missing_sub_cert\")/\1\2\3\"e_dnsname_not_valid_tld\",\3\"w_sub_cert_aia_contains_internal_names\",\3\4/igs" config/ca.json
 
-    perl -i -p0e "s/(\"SubscriberKeyUsageValidator:cabf.serverauth.subscriber_rsa_digitalsignature_and_keyencipherment_present\",).*(\])/\1\n  \"GeneralNameDnsNameInternalDomainNameValidator:cabf.internal_domain_name\",\n  \"GeneralNameUriInternalDomainNameValidator:cabf.internal_domain_name\",\n\2/igs" config/zlint.toml
+    perl -i -p0e "s/(\"pkilint:cabf.serverauth.subscriber_rsa_digitalsignature_and_keyencipherment_present\",).*?(\])/\1\n  \"pkilint:cabf.internal_domain_name\",\n  \"zlint:e_dnsname_not_valid_tld\",\n  \"zlint:w_sub_cert_aia_contains_internal_names\",\n  \"certlint:\",\n\2/igs" config/zlint.toml
 fi
 
 [ -e ../test/hostname-policy.yaml ] && cp ../test/hostname-policy.yaml ./ || true
@@ -191,9 +192,9 @@ if [ "$PKI_EXTENDED_TIMEOUT" == "1" ]; then
     sed -i -e "s/\"timeout\": \"15s\"/\"timeout\": \"30s\"/" config/crl-storer.json
     sed -i -e "s/\"timeout\": \"15s\"/\"timeout\": \"30s\"/" config/crl-updater.json
 
-    sed -i -e "s/pkilint_timeout = .*/pkilint_timeout = 30000000000 # 30 seconds/" config/zlint.toml
+    sed -i -e "s/timeout = .*/timeout = 30000000000 # 30 seconds/" config/zlint.toml
 else
-    sed -i -e "s/pkilint_timeout = .*/pkilint_timeout = 10000000000 # 10 seconds/" config/zlint.toml
+    sed -i -e "s/timeout = .*/timeout = 10000000000 # 10 seconds/" config/zlint.toml
 fi
 sed -i -e "s/\"timeout\": \"1s\"/\"timeout\": \"5s\"/" config/health-checker.json
 

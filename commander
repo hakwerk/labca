@@ -39,11 +39,11 @@ read txt
 case $txt in
 "docker-restart")
     cd /opt/boulder
-    COMPOSE_HTTP_TIMEOUT=120 docker compose restart boulder bmysql bconsul bpkilint bredis gui nginx &>>$LOGFILE
+    COMPOSE_HTTP_TIMEOUT=120 docker compose restart boulder bmysql bconsul bpkimetal bredis gui nginx &>>$LOGFILE
     sleep 45
     wait_up $PS_MYSQL &>>$LOGFILE
     wait_up $PS_CONSUL 2 &>>$LOGFILE
-    wait_up $PS_PKILINT &>>$LOGFILE
+    wait_up $PS_PKIMETAL &>>$LOGFILE
     wait_up $PS_LABCA &>>$LOGFILE
     wait_up $PS_BOULDER $PS_BOULDER_COUNT &>>$LOGFILE
     ;;
@@ -169,9 +169,9 @@ case $txt in
     labca=$(docker inspect $(docker ps --format "{{.Names}}" | grep -- labca-gui) | grep -i started | grep -v depends_on | sed -e "s/[^:]*:\(.*\)/\1/" | sed -e "s/.*\"\(.*\)\".*/\1/")
     mysql=$(docker inspect $(docker ps --format "{{.Names}}" | grep -- -bmysql-) | grep -i started | grep -v depends_on | sed -e "s/[^:]*:\(.*\)/\1/" | sed -e "s/.*\"\(.*\)\".*/\1/")
     consul=$(docker inspect $(docker ps --format "{{.Names}}" | grep -- -bconsul-) | grep -i started | grep -v depends_on | sed -e "s/[^:]*:\(.*\)/\1/" | sed -e "s/.*\"\(.*\)\".*/\1/")
-    pkilint=$(docker inspect $(docker ps --format "{{.Names}}" | grep -- -bpkilint-) | grep -i started | grep -v depends_on | sed -e "s/[^:]*:\(.*\)/\1/" | sed -e "s/.*\"\(.*\)\".*/\1/")
+    pkimetal=$(docker inspect $(docker ps --format "{{.Names}}" | grep -- -bpkimetal-) | grep -i started | grep -v depends_on | sed -e "s/[^:]*:\(.*\)/\1/" | sed -e "s/.*\"\(.*\)\".*/\1/")
     redis=$(docker inspect $(docker ps --format "{{.Names}}" | grep -- -bredis-) | grep -i started | grep -v depends_on | sed -e "s/[^:]*:\(.*\)/\1/" | sed -e "s/.*\"\(.*\)\".*/\1/")
-    echo "$nginx|$svc|$boulder|$labca|$mysql|$consul|$pkilint|$redis"
+    echo "$nginx|$svc|$boulder|$labca|$mysql|$consul|$pkimetal|$redis"
     exit 0
     ;;
 "log-uptime")
@@ -197,29 +197,29 @@ case $txt in
     ;;
 "boulder-start")
     cd /opt/boulder
-    COMPOSE_HTTP_TIMEOUT=120 docker compose up -d bmysql bconsul bpkilint bredis
+    COMPOSE_HTTP_TIMEOUT=120 docker compose up -d bmysql bconsul bpkimetal bredis
     wait_up $PS_MYSQL &>>$LOGFILE
     wait_up $PS_CONSUL 2 &>>$LOGFILE
-    wait_up $PS_PKILINT &>>$LOGFILE
+    wait_up $PS_PKIMETAL &>>$LOGFILE
     COMPOSE_HTTP_TIMEOUT=120 docker compose up -d boulder
     wait_up $PS_BOULDER $PS_BOULDER_COUNT &>>$LOGFILE
     ;;
 "boulder-stop")
     cd /opt/boulder
     docker compose stop boulder
-    docker compose stop bmysql bconsul bpkilint bredis
+    docker compose stop bmysql bconsul bpkimetal bredis
     wait_down $PS_MYSQL &>>$LOGFILE
     wait_down $PS_CONSUL &>>$LOGFILE
-    wait_down $PS_PKILINT &>>$LOGFILE
+    wait_down $PS_PKIMETAL &>>$LOGFILE
     wait_down $PS_BOULDER &>>$LOGFILE
     ;;
 "boulder-restart")
     cd /opt/boulder
-    COMPOSE_HTTP_TIMEOUT=120 docker compose restart boulder bmysql bconsul bpkilint bredis &>>$LOGFILE
+    COMPOSE_HTTP_TIMEOUT=120 docker compose restart boulder bmysql bconsul bpkimetal bredis &>>$LOGFILE
     sleep 30
     wait_up $PS_MYSQL &>>$LOGFILE
     wait_up $PS_CONSUL 2 &>>$LOGFILE
-    wait_up $PS_PKILINT &>>$LOGFILE
+    wait_up $PS_PKIMETAL &>>$LOGFILE
     wait_up $PS_BOULDER $PS_BOULDER_COUNT &>>$LOGFILE
     ;;
 "labca-restart")
@@ -240,10 +240,10 @@ case $txt in
     COMPOSE_HTTP_TIMEOUT=120 docker compose restart bconsul
     set -e
     ;;
-"pkilint-restart")
+"pkimetal-restart")
     cd /opt/boulder
     set +e
-    COMPOSE_HTTP_TIMEOUT=120 docker compose restart bpkilint
+    COMPOSE_HTTP_TIMEOUT=120 docker compose restart bpkimetal
     set -e
     ;;
 "redis-restart")
