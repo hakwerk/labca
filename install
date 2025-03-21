@@ -723,6 +723,14 @@ cleanup() {
     systemctl disable nginx &>>$installLog || true
     apt remove -y nginx &>>$installLog
 
+    # Cleanup slow_log files that potentially have become huge
+    if [ -f /var/lib/docker/volumes/labca_dbdata/_data/mysql/slow_log.CSV ]; then
+        [ -s /var/lib/docker/volumes/labca_dbdata/_data/mysql/slow_log.CSV ] && echo -n > /var/lib/docker/volumes/labca_dbdata/_data/mysql/slow_log.CSV &>>$installLog || true
+    fi
+    if [ -f /var/lib/docker/volumes/labca_dbdata/_data/mysql/slow_log.CSM ]; then
+        [ -s /var/lib/docker/volumes/labca_dbdata/_data/mysql/slow_log.CSM ] && echo -n > /var/lib/docker/volumes/labca_dbdata/_data/mysql/slow_log.CSM &>>$installLog || true
+    fi
+
     msg_ok "$msg"
 }
 
