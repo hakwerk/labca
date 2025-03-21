@@ -752,10 +752,10 @@ startup() {
     # Cleanup any remaining containers with old names
     docker compose -p boulder stop &>>$installLog || true
     docker compose -p boulder rm -f &>>$installLog || true
-    for ct in boulder_bhsm_1 boulder_bredis_1 boulder_bredis_2 boulder_bredis_3 boulder_bredis_4 boulder_bredis_5 boulder_bredis_6 bpkilint; do
+    for ct in boulder_bhsm_1 boulder_bredis_1 boulder_bredis_2 boulder_bredis_3 boulder_bredis_4 boulder_bredis_5 boulder_bredis_6 labca-bpkilint-1; do
         [ -z "$(docker ps | grep $ct)" ] || docker stop $ct &>>$installLog
     done
-    for ct in boulder_bhsm_1 boulder_bredis_1 boulder_bredis_2 boulder_bredis_3 boulder_bredis_4 boulder_bredis_5 boulder_bredis_6 bpkilint; do
+    for ct in boulder_bhsm_1 boulder_bredis_1 boulder_bredis_2 boulder_bredis_3 boulder_bredis_4 boulder_bredis_5 boulder_bredis_6 labca-bpkilint-1; do
         [ -z "$(docker ps -a | grep -e "$ct\$")" ] || docker rm -f $ct &>>$installLog
     done
     docker network rm -f boulder_bluenet boulder_consulnet boulder_rednet &>>$installLog || true
