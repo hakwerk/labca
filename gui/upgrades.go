@@ -21,11 +21,11 @@ func CheckUpgrades() {
 		gitVersion := controlCommand("git-version", true)
 		if gitVersion != "" {
 			viper.Set("version", strings.TrimSpace(gitVersion))
-			viper.WriteConfig()
+			_ = viper.WriteConfig()
 		}
 	} else if v != standaloneVersion {
 		viper.Set("version", standaloneVersion)
-		viper.WriteConfig()
+		_ = viper.WriteConfig()
 	}
 
 	changed := CheckUpgrade_01_CeremonyHSM()
@@ -155,7 +155,7 @@ func CheckUpgrade_01_CeremonyHSM() bool {
 	prevRootCRL := baseDir + "root-ca.crl"
 	if _, err := os.Stat(prevRootCRL); !errors.Is(err, fs.ErrNotExist) {
 		ci.CRL = readFileAsString(prevRootCRL)
-		copyFile(prevRootCRL, strings.Replace(rootCertFile, "-cert.", "-crl.", -1))
+		_ = copyFile(prevRootCRL, strings.Replace(rootCertFile, "-cert.", "-crl.", -1))
 	}
 
 	if err := ci.Create("root-01", false); err != nil {
@@ -183,11 +183,11 @@ func CheckUpgrade_01_CeremonyHSM() bool {
 		os.Exit(1)
 	}
 
-	os.Rename(prevRootCert, prevRootCert+"_backup")
-	os.Rename(prevRootKey, prevRootKey+"_backup")
-	os.Rename(prevRootCRL, prevRootCRL+"_backup")
-	os.Rename(prevIssuerCert, prevIssuerCert+"_backup")
-	os.Rename(prevIssuerKey, prevIssuerKey+"_backup")
+	_ = os.Rename(prevRootCert, prevRootCert+"_backup")
+	_ = os.Rename(prevRootKey, prevRootKey+"_backup")
+	_ = os.Rename(prevRootCRL, prevRootCRL+"_backup")
+	_ = os.Rename(prevIssuerCert, prevIssuerCert+"_backup")
+	_ = os.Rename(prevIssuerKey, prevIssuerKey+"_backup")
 
 	log.Println("**** END MIGRATION ****")
 	return true

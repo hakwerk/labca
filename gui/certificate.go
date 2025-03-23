@@ -403,7 +403,7 @@ func (ci *CertificateInfo) CeremonyRootCRL(seqnr string) error {
 
 	if viper.Get("crl_root_days") == nil || viper.Get("crl_root_days") == "" {
 		viper.Set("crl_root_days", 365)
-		viper.WriteConfig()
+		_ = viper.WriteConfig()
 	}
 	crlint, err := time.ParseDuration(fmt.Sprintf("%dh", viper.GetInt("crl_root_days")*24-1))
 	if err != nil {
@@ -479,7 +479,7 @@ func (ci *CertificateInfo) Generate(certBase string) error {
 		_, err = ci.CeremonyRoot("01", false)
 
 		viper.Set("crl_root_days", ci.NumDays)
-		viper.WriteConfig()
+		_ = viper.WriteConfig()
 	} else {
 		_, err = ci.CeremonyIssuer("01", "01", false)
 	}
@@ -578,7 +578,7 @@ func (ci *CertificateInfo) Import(tmpDir string, tmpKey string, tmpCert string) 
 	}
 	defer f.Close()
 
-	io.Copy(f, ci.ImportFile)
+	_, _ = io.Copy(f, ci.ImportFile)
 
 	contentType := ci.ImportHandler.Header.Get("Content-Type")
 	if contentType == "application/x-pkcs12" {
@@ -1000,7 +1000,7 @@ func (ci *CertificateInfo) Extract(certBase string, tmpDir string, wasCSR bool) 
 		numDays := time.Until(crt.NotAfter).Hours() / 24
 		// TODO: adjust for max root ceremony value...
 		viper.Set("crl_root_days", int(math.Ceil(numDays)))
-		viper.WriteConfig()
+		_ = viper.WriteConfig()
 
 	} else {
 		// Create CRLs stating that the intermediates are not revoked.
@@ -1260,7 +1260,7 @@ func renewCertificate(certname string, days int, rootname string, _ string, _ st
 		_, err = ci.CeremonyRoot(seqnr, true)
 
 		viper.Set("crl_root_days", ci.NumDays)
-		viper.WriteConfig()
+		_ = viper.WriteConfig()
 	} else {
 		_, err = ci.CeremonyIssuer(seqnr, rootseqnr, true)
 	}

@@ -155,7 +155,7 @@ func (cfg *HSMConfig) createSlot(slotId uint, label string) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("failed to open session: %s", err)
 	}
-	defer ctx.CloseSession(session)
+	defer func() { _ = ctx.CloseSession(session) }()
 
 	err = ctx.Login(session, pkcs11.CKU_SO, cfg.SOPIN)
 	if err != nil {
@@ -165,7 +165,7 @@ func (cfg *HSMConfig) createSlot(slotId uint, label string) (string, error) {
 			return "", fmt.Errorf("failed to login: %s", err)
 		}
 	}
-	defer ctx.Logout(session)
+	defer func() { _ = ctx.Logout(session) }()
 
 	err = ctx.InitPIN(session, cfg.UserPIN)
 	if err != nil {
@@ -173,7 +173,7 @@ func (cfg *HSMConfig) createSlot(slotId uint, label string) (string, error) {
 	}
 
 	// Forced reconnect to get the renumbered slots from SoftHSM2
-	ctx.Finalize()
+	_ = ctx.Finalize()
 	ctx.Destroy()
 	ctx = pkcs11.New(cfg.Module)
 	if ctx == nil {
@@ -641,8 +641,8 @@ func (cfg *HSMConfig) ImportKeyCert(keyFile, certFile string) (crypto.PublicKey,
 }
 
 func (hs *HSMSession) Close() {
-	hs.Context.CloseSession(hs.Handle)
-	hs.Context.Logout(hs.Handle)
+	_ = hs.Context.CloseSession(hs.Handle)
+	_ = hs.Context.Logout(hs.Handle)
 }
 
 func (hs *HSMSession) CreateObject(tmpl []*pkcs11.Attribute) (pkcs11.ObjectHandle, error) {

@@ -37,14 +37,14 @@ import (
 	"time"
 
 	"github.com/biz/templates"
-	"github.com/dustin/go-humanize"
+	humanize "github.com/dustin/go-humanize"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/google/go-github/github"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/securecookie"
 	"github.com/gorilla/sessions"
 	"github.com/gorilla/websocket"
-	"github.com/nbutton23/zxcvbn-go"
+	zxcvbn "github.com/nbutton23/zxcvbn-go"
 	"github.com/spf13/viper"
 	"golang.org/x/crypto/bcrypt"
 	"golang.org/x/text/cases"
@@ -318,7 +318,7 @@ func errorHandler(w http.ResponseWriter, r *http.Request, err error, status int)
 			var FileErrors []interface{}
 			data := getLog(w, r, "cert")
 			if data != "" {
-				FileErrors = append(FileErrors, map[string]interface{}{"FileName": "/home/labca/nginx_data/ssl/acme_tiny.log", "Content": data})
+				FileErrors = append(FileErrors, map[string]interface{}{"FileName": "/home/labca/nginx_data/ssl/certbot.log", "Content": data})
 			}
 			data = getLog(w, r, "commander")
 			if data != "" {
@@ -580,7 +580,7 @@ func _backupHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(res)
+	_ = json.NewEncoder(w).Encode(res)
 }
 
 type ErrorsResponse struct {
@@ -624,7 +624,7 @@ func _accountUpdateHandler(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 
-		viper.WriteConfig()
+		_ = viper.WriteConfig()
 
 	} else {
 		res.Success = false
@@ -632,7 +632,7 @@ func _accountUpdateHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(res)
+	_ = json.NewEncoder(w).Encode(res)
 }
 
 func backendUpdateHandler(w http.ResponseWriter, r *http.Request) {
@@ -659,7 +659,7 @@ func backendUpdateHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(res)
+	_ = json.NewEncoder(w).Encode(res)
 }
 
 func _configUpdateHandler(w http.ResponseWriter, r *http.Request) {
@@ -738,7 +738,7 @@ func _configUpdateHandler(w http.ResponseWriter, r *http.Request) {
 		}
 
 		if delta {
-			viper.WriteConfig()
+			_ = viper.WriteConfig()
 
 			webTitle = viper.GetString("labca.web_title")
 			if webTitle == "" {
@@ -769,7 +769,7 @@ func _configUpdateHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(res)
+	_ = json.NewEncoder(w).Encode(res)
 }
 
 func _crlIntervalUpdateHandler(w http.ResponseWriter, r *http.Request) {
@@ -791,7 +791,7 @@ func _crlIntervalUpdateHandler(w http.ResponseWriter, r *http.Request) {
 		}
 
 		if delta {
-			viper.WriteConfig()
+			_ = viper.WriteConfig()
 
 			err := _applyConfig()
 			if err != nil {
@@ -808,7 +808,7 @@ func _crlIntervalUpdateHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(res)
+	_ = json.NewEncoder(w).Encode(res)
 }
 
 // EmailConfig stores configuration used for sending out emails
@@ -938,7 +938,7 @@ func _emailUpdateHandler(w http.ResponseWriter, r *http.Request) {
 		}
 
 		if delta {
-			viper.WriteConfig()
+			_ = viper.WriteConfig()
 
 			err := _applyConfig()
 			if err != nil {
@@ -958,7 +958,7 @@ func _emailUpdateHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(res)
+	_ = json.NewEncoder(w).Encode(res)
 }
 
 func _emailSendHandler(w http.ResponseWriter, r *http.Request) {
@@ -968,7 +968,7 @@ func _emailSendHandler(w http.ResponseWriter, r *http.Request) {
 	if _hostCommand(w, r, "test-email", recipient) {
 		// Only on success, as when this returns false for this case the response has already been sent!
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(res)
+		_ = json.NewEncoder(w).Encode(res)
 	}
 }
 
@@ -1153,7 +1153,7 @@ func _checkUpdatesHandler(w http.ResponseWriter, _ *http.Request) {
 	res.UpdateCheckedRel = humanize.RelTime(updateChecked, time.Now(), "", "")
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(res)
+	_ = json.NewEncoder(w).Encode(res)
 }
 
 func generateCRLHandler(w http.ResponseWriter, r *http.Request, isRoot bool) {
@@ -1170,7 +1170,7 @@ func generateCRLHandler(w http.ResponseWriter, r *http.Request, isRoot bool) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(res)
+	_ = json.NewEncoder(w).Encode(res)
 }
 
 func uploadCRLHandler(w http.ResponseWriter, r *http.Request) {
@@ -1188,7 +1188,7 @@ func uploadCRLHandler(w http.ResponseWriter, r *http.Request) {
 	_hostCommand(w, r, "check-crl")
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(res)
+	_ = json.NewEncoder(w).Encode(res)
 }
 
 func updateLeaveIssuersHandler(w http.ResponseWriter, r *http.Request) {
@@ -1209,7 +1209,7 @@ func updateLeaveIssuersHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(res)
+	_ = json.NewEncoder(w).Encode(res)
 }
 
 func renewCertHandler(w http.ResponseWriter, r *http.Request) {
@@ -1245,7 +1245,7 @@ func renewCertHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(res)
+	_ = json.NewEncoder(w).Encode(res)
 }
 
 func _managePostDispatch(w http.ResponseWriter, r *http.Request, action string) bool {
@@ -1403,7 +1403,7 @@ func _managePost(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(res)
+	_ = json.NewEncoder(w).Encode(res)
 }
 
 func _manageGet(w http.ResponseWriter, r *http.Request) {
@@ -1804,7 +1804,7 @@ func showLog(ws *websocket.Conn, logType string) {
 	for scanner.Scan() {
 		msg := scanner.Text()
 		if logType != "audit" || strings.Contains(msg, "[AUDIT]") {
-			ws.SetWriteDeadline(time.Now().Add(writeWait))
+			_ = ws.SetWriteDeadline(time.Now().Add(writeWait))
 			if err := ws.WriteMessage(websocket.TextMessage, []byte(msg)); err != nil {
 				// Probably "websocket: close sent"
 				return
@@ -1820,8 +1820,8 @@ func showLog(ws *websocket.Conn, logType string) {
 func reader(ws *websocket.Conn) {
 	defer ws.Close()
 	ws.SetReadLimit(512)
-	ws.SetReadDeadline(time.Now().Add(pongWait))
-	ws.SetPongHandler(func(string) error { ws.SetReadDeadline(time.Now().Add(pongWait)); return nil })
+	_ = ws.SetReadDeadline(time.Now().Add(pongWait))
+	ws.SetPongHandler(func(string) error { _ = ws.SetReadDeadline(time.Now().Add(pongWait)); return nil })
 	for {
 		_, _, err := ws.ReadMessage()
 		if err != nil {
@@ -1840,7 +1840,7 @@ func writer(ws *websocket.Conn, logType string) {
 	go showLog(ws, logType)
 
 	for range pingTicker.C {
-		ws.SetWriteDeadline(time.Now().Add(writeWait))
+		_ = ws.SetWriteDeadline(time.Now().Add(writeWait))
 		if err := ws.WriteMessage(websocket.PingMessage, []byte{}); err != nil {
 			// Probably "websocket: close sent"
 			return
@@ -1955,9 +1955,9 @@ func _certCreate(w http.ResponseWriter, r *http.Request, certBase string, isRoot
 
 			cfg := &HSMConfig{}
 			cfg.Initialize("issuer", seqnr)
-			cfg.ClearAll()
+			_ = cfg.ClearAll()
 			cfg.Initialize("root", rootseqnr)
-			cfg.ClearAll()
+			_ = cfg.ClearAll()
 
 			certBase = "root-01"
 			isRoot = true
@@ -1971,13 +1971,13 @@ func _certCreate(w http.ResponseWriter, r *http.Request, certBase string, isRoot
 		} else if r.Form.Get("ack-rootkey") == "yes" {
 			// Root Key was shown, do we need to keep it online?
 			viper.Set("keep_root_offline", r.Form.Get("keep-root-online") != "true")
-			viper.WriteConfig()
+			_ = viper.WriteConfig()
 
 			// Undo what setupHandler did when showing the public key...
 			_, errPem := os.Stat("data/root-ca.pem")
 			_, errTmp := os.Stat("data/root-ca.pem_TMP")
 			if errors.Is(errPem, fs.ErrNotExist) && !errors.Is(errTmp, fs.ErrNotExist) {
-				exeCmd("mv data/root-ca.pem_TMP data/root-ca.pem")
+				_, _ = exeCmd("mv data/root-ca.pem_TMP data/root-ca.pem")
 			}
 
 			r.Method = "GET"
@@ -2215,7 +2215,7 @@ func _certCreate(w http.ResponseWriter, r *http.Request, certBase string, isRoot
 				nameID, err := issuerNameID(CERT_FILES_PATH + "issuer-01-cert.pem")
 				if err == nil {
 					viper.Set("issuer_name_id", nameID)
-					viper.WriteConfig()
+					_ = viper.WriteConfig()
 				} else {
 					log.Printf("_certCreate: could not calculate IssuerNameID: %v", err)
 				}
@@ -2223,7 +2223,7 @@ func _certCreate(w http.ResponseWriter, r *http.Request, certBase string, isRoot
 
 			if viper.Get("labca.organization") == nil {
 				viper.Set("labca.organization", ci.Organization)
-				viper.WriteConfig()
+				_ = viper.WriteConfig()
 			}
 
 			session.Values["ct"] = ci.CreateType
@@ -2313,7 +2313,7 @@ func _hostCommand(w http.ResponseWriter, r *http.Request, command string, params
 			res.Errors["EmailSend"] = "Failed to send email - see logs"
 		}
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(res)
+		_ = json.NewEncoder(w).Encode(res)
 		return false
 	}
 	errorHandler(w, r, errors.New(string(message)), http.StatusInternalServerError)
@@ -2322,7 +2322,7 @@ func _hostCommand(w http.ResponseWriter, r *http.Request, command string, params
 
 func randToken() string {
 	b := make([]byte, 8)
-	rand.Read(b)
+	_, _ = rand.Read(b)
 	return fmt.Sprintf("%x", b)
 }
 
@@ -2509,7 +2509,7 @@ func _setupAdminUser(w http.ResponseWriter, r *http.Request) bool {
 				}
 
 				viper.Set("config.complete", false)
-				viper.WriteConfig()
+				_ = viper.WriteConfig()
 
 				err = _applyConfig()
 				if err != nil {
@@ -2566,7 +2566,7 @@ func _setupAdminUser(w http.ResponseWriter, r *http.Request) bool {
 		viper.Set("user.name", reg.Name)
 		viper.Set("user.email", reg.Email)
 		viper.Set("user.password", string(hash))
-		viper.WriteConfig()
+		_ = viper.WriteConfig()
 
 		session, _ := sessionStore.Get(r, "labca")
 		session.Values["user"] = reg.Name
@@ -2640,7 +2640,7 @@ func _setupBaseConfig(w http.ResponseWriter, r *http.Request) bool {
 		if cfg.DomainMode == "whitelist" {
 			viper.Set("labca.whitelist", cfg.WhitelistDomains)
 		}
-		viper.WriteConfig()
+		_ = viper.WriteConfig()
 
 		// Fake the method to GET as we need to continue in the setupHandler() function
 		r.Method = "GET"
@@ -2676,7 +2676,7 @@ func writeStandaloneConfig(cfg *StandaloneConfig) {
 		viper.Set("server.key", cfg.KeyPath)
 	}
 	viper.Set("config.complete", true)
-	viper.WriteConfig()
+	_ = viper.WriteConfig()
 
 	if restart {
 		if cfg.UseHTTPS {
@@ -2770,7 +2770,7 @@ func setupHandler(w http.ResponseWriter, r *http.Request) {
 	if !_certCreate(w, r, "root-01", true) {
 		// Cleanup the cert (if it even exists) so we will retry on the next run
 		if _, err := os.Stat(CERT_FILES_PATH + "root-01-cert.pem"); !errors.Is(err, fs.ErrNotExist) {
-			exeCmd("mv " + CERT_FILES_PATH + "root-01-cert.pem " + CERT_FILES_PATH + "root-01-cert.pem_TMP")
+			_, _ = exeCmd("mv " + CERT_FILES_PATH + "root-01-cert.pem " + CERT_FILES_PATH + "root-01-cert.pem_TMP")
 		}
 		return
 	}
@@ -2827,11 +2827,11 @@ func restartHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	viper.Set("config.restarted", true)
-	viper.WriteConfig()
+	_ = viper.WriteConfig()
 
 	if !_hostCommand(w, r, "docker-restart") {
 		viper.Set("config.restarted", false)
-		viper.WriteConfig()
+		_ = viper.WriteConfig()
 		return
 	}
 }
@@ -2849,9 +2849,9 @@ func finalHandler(w http.ResponseWriter, r *http.Request) {
 			w.Header().Set("Content-Type", "application/json")
 			if viper.GetBool("config.error") {
 				viper.Set("config.cert_requested", nil)
-				viper.WriteConfig()
+				_ = viper.WriteConfig()
 			}
-			json.NewEncoder(w).Encode(map[string]interface{}{"complete": viper.GetBool("config.complete"), "error": viper.GetBool("config.error")})
+			_ = json.NewEncoder(w).Encode(map[string]interface{}{"complete": viper.GetBool("config.complete"), "error": viper.GetBool("config.error")})
 		} else {
 			render(w, r, "polling:manage", map[string]interface{}{"Progress": _progress("polling"), "HelpText": _helptext("polling")})
 		}
@@ -2862,11 +2862,11 @@ func finalHandler(w http.ResponseWriter, r *http.Request) {
 	if viper.GetBool("config.error") {
 		viper.Set("config.error", false)
 	}
-	viper.WriteConfig()
+	_ = viper.WriteConfig()
 	// 9. Setup our own web certificate
 	if !_hostCommand(w, r, "acme-request") {
 		viper.Set("config.error", true)
-		viper.WriteConfig()
+		_ = viper.WriteConfig()
 		http.Redirect(w, r, r.Header.Get("X-Request-Base")+"/logs/cert", http.StatusSeeOther)
 		return
 	}
@@ -2882,11 +2882,11 @@ func finalHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	viper.Set("config.complete", true)
-	viper.WriteConfig()
+	_ = viper.WriteConfig()
 
 	if r.Header.Get("X-Requested-With") == "XMLHttpRequest" {
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(map[string]interface{}{"complete": viper.GetBool("config.complete")})
+		_ = json.NewEncoder(w).Encode(map[string]interface{}{"complete": viper.GetBool("config.complete")})
 	} else {
 		render(w, r, "final:manage", map[string]interface{}{"RequestBase": r.Header.Get("X-Request-Base"), "Progress": _progress("final"), "HelpText": _helptext("final")})
 	}
@@ -3095,7 +3095,7 @@ func statsHandler(w http.ResponseWriter, r *http.Request) {
 	res := parseDockerStats(getLog(w, r, "stats"))
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(res)
+	_ = json.NewEncoder(w).Encode(res)
 }
 
 type navItem struct {
@@ -3316,7 +3316,7 @@ func render(w http.ResponseWriter, r *http.Request, view string, data map[string
 		return
 	}
 
-	w.Write(b)
+	_, _ = w.Write(b)
 }
 
 func notFoundHandler(w http.ResponseWriter, r *http.Request) {
@@ -3377,7 +3377,7 @@ func init() {
 	} else {
 		_, err := os.Stat(*configFile)
 		if errors.Is(err, fs.ErrNotExist) {
-			viper.WriteConfigAs(*configFile)
+			_ = viper.WriteConfigAs(*configFile)
 		}
 
 		viper.AddConfigPath(filepath.Dir(*configFile))
@@ -3471,7 +3471,7 @@ func init() {
 			panic(fmt.Errorf("fatal error random key"))
 		}
 		viper.Set("keys.auth", base64.StdEncoding.EncodeToString(key))
-		viper.WriteConfig()
+		_ = viper.WriteConfig()
 	}
 	if viper.Get("keys.enc") == nil {
 		key := securecookie.GenerateRandomKey(32)
@@ -3479,7 +3479,7 @@ func init() {
 			panic(fmt.Errorf("fatal error random key"))
 		}
 		viper.Set("keys.enc", base64.StdEncoding.EncodeToString(key))
-		viper.WriteConfig()
+		_ = viper.WriteConfig()
 	}
 
 	if *init {
@@ -3490,28 +3490,28 @@ func init() {
 			viper.Set("server.port", *port)
 		}
 		viper.Set("standalone", true)
-		viper.WriteConfig()
+		_ = viper.WriteConfig()
 	}
 
 	if viper.Get("server.addr") == nil {
 		viper.Set("server.addr", "0.0.0.0")
-		viper.WriteConfig()
+		_ = viper.WriteConfig()
 	}
 
 	if viper.Get("server.port") == nil {
 		viper.Set("server.port", 3000)
-		viper.WriteConfig()
+		_ = viper.WriteConfig()
 	}
 
 	if viper.Get("server.session.maxage") == nil {
 		viper.Set("server.session.maxage", 3600) // 1 hour
-		viper.WriteConfig()
+		_ = viper.WriteConfig()
 	}
 
 	if viper.Get("db.conn") == nil {
 		viper.Set("db.type", "mysql")
 		viper.Set("db.conn", "root@tcp(boulder-mysql:3306)/boulder_sa_integration")
-		viper.WriteConfig()
+		_ = viper.WriteConfig()
 	}
 	dbConn = viper.GetString("db.conn")
 	dbType = viper.GetString("db.type")
@@ -3580,7 +3580,7 @@ func (br BackupResult) Remove() {
 
 func (br BackupResult) Restore() {
 	if br.Existed {
-		os.Rename(br.NewName, br.OrigName)
+		_ = os.Rename(br.NewName, br.OrigName)
 	}
 }
 

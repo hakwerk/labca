@@ -143,7 +143,7 @@ func getRawCAChains() []IssuerConfig {
 	byteValue, _ := io.ReadAll(caConf)
 
 	var result CAConfig
-	json.Unmarshal([]byte(byteValue), &result)
+	_ = json.Unmarshal([]byte(byteValue), &result)
 
 	return result.CA.Issuance.Issuers
 }
@@ -204,7 +204,7 @@ func getRawWFEChains() [][]string {
 	byteValue, _ := io.ReadAll(wfeConf)
 
 	var result WFEConfig
-	json.Unmarshal([]byte(byteValue), &result)
+	_ = json.Unmarshal([]byte(byteValue), &result)
 
 	return result.WFE.Chains
 }
@@ -319,17 +319,17 @@ func setUseForLeaves(active string) error {
 	}
 
 	if err := setUseForLeavesFile(caConfFile, active); err != nil {
-		exec.Command("mv", caConfFile+"_BAK", caConfFile).Run()
+		_ = exec.Command("mv", caConfFile+"_BAK", caConfFile).Run()
 		return err
 	}
 
-	exec.Command("rm", caConfFile+"_BAK").Run()
+	_ = exec.Command("rm", caConfFile+"_BAK").Run()
 
 	if active != "" {
 		viper.Set("certs.activeIssuer", active)
 	}
 	if active != "" {
-		viper.WriteConfig()
+		_ = viper.WriteConfig()
 	}
 
 	return nil

@@ -41,18 +41,6 @@ colorCITag() {
     echo "* $fileName:$res"
 }
 
-colorNGTag() {
-    local fileName="$1"
-    local expectVersion="$2"
-
-    if [ ! -z "$(grep -R nginx: $fileName | egrep "[\"0-9]+" | grep $expectVersion || echo "")" ]; then
-        res=$(grep -R nginx: $fileName | egrep "[\"0-9]+" | sed -e "s/$expectVersion/${COL_LIGHT_GREEN}$expectVersion${COL_NC}/")
-    else
-        res=$(grep -R nginx: $fileName | egrep "[\"0-9]+" | sed -e "s/\(.*:\)\([0-9\.]*\)/\1${COL_LIGHT_RED}\2${COL_NC}/")
-    fi
-    echo "* $fileName:$res"
-}
-
 colorGoVersion() {
     local fileName="$1"
     local expectVersion="$2"
@@ -111,18 +99,12 @@ grep go1. ../boulder/.github/workflows/boulder-ci.yml
 colorCITag build/Dockerfile-boulder
 echo
 
-ngversion=$(grep -R nginx: .github/Dockerfile | egrep "[\"0-9]+" | sed -e  "s/.*:\([0-9\.]*\)/\1/")
-echo -n "Manual .github/Dockerfile: "
-grep -R nginx: .github/Dockerfile | egrep "[\"0-9]+"
-colorNGTag build/docker-compose.yml $ngversion
-colorNGTag patches/docker-compose.patch $ngversion
-echo
-
 goversion=$(grep GO_VERSION -A 3 ../boulder/.github/workflows/release.yml | egrep "\- [\"0-9]+" | sed -e "s/\s*-\s*//" | sed -e "s/\"//g")
 echo "Boulder .github/workflows/release.yml"
 grep GO_VERSION -A 3 ../boulder/.github/workflows/release.yml | egrep "\- [\"0-9]+" | sed -e "s/yml-/yml/"
 colorGoVersion .github/workflows/release.yml "$goversion"
 colorGoVersion .github/workflows/build-standalone.yml "$goversion"
+colorGoVersion .github/workflows/golangci-lint.yml "$goversion"
 echo
 
 goversion=$(grep GO_VERSION ../boulder/docker-compose.yml | sed -e "s/\s*GO_VERSION://")
