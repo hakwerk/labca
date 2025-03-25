@@ -1,5 +1,5 @@
 diff --git a/crl/storer/storer.go b/crl/storer/storer.go
-index 5896da2ac..70e1ac8db 100644
+index 5896da2ac..8a939dc4d 100644
 --- a/crl/storer/storer.go
 +++ b/crl/storer/storer.go
 @@ -9,8 +9,12 @@ import (
@@ -39,7 +39,44 @@ index 5896da2ac..70e1ac8db 100644
  		uploadCount:      uploadCount,
  		sizeHistogram:    sizeHistogram,
  		latencyHistogram: latencyHistogram,
-@@ -226,17 +233,21 @@ func (cs *crlStorer) UploadCRL(stream grpc.ClientStreamingServer[cspb.UploadCRLR
+@@ -172,14 +179,21 @@ func (cs *crlStorer) UploadCRL(stream grpc.ClientStreamingServer[cspb.UploadCRLR
+ 	// additional safety check against clock skew and potential races, if multiple
+ 	// crl-updaters are working on the same shard at the same time. We only run
+ 	// these checks if we found a CRL, so we don't block uploading brand new CRLs.
+-	filename := fmt.Sprintf("%d/%d.crl", issuer.NameID(), shardIdx)
+-	prevObj, err := cs.s3Client.GetObject(stream.Context(), &s3.GetObjectInput{
+-		Bucket: &cs.s3Bucket,
+-		Key:    &filename,
+-	})
++	var prevObj *s3.GetObjectOutput
++	var filename string
++	if cs.localStorePath == "" {
++		filename = fmt.Sprintf("%d/%d.crl", issuer.NameID(), shardIdx)
++		prevObj, err = cs.s3Client.GetObject(stream.Context(), &s3.GetObjectInput{
++			Bucket: &cs.s3Bucket,
++			Key:    &filename,
++		})
++	} else {
++		prevObj, err = getLocalFile(cs.localStorePath, issuer.NameID())
++	}
++
+ 	if err != nil {
+ 		var smithyErr *smithyhttp.ResponseError
+-		if !errors.As(err, &smithyErr) || smithyErr.HTTPStatusCode() != 404 {
++		if !errors.Is(err, fs.ErrNotExist) && (!errors.As(err, &smithyErr) || smithyErr.HTTPStatusCode() != 404) {
+ 			return fmt.Errorf("getting previous CRL for %s: %w", crlId, err)
+ 		}
+ 		cs.log.Infof("No previous CRL found for %s, proceeding", crlId)
+@@ -216,7 +230,7 @@ func (cs *crlStorer) UploadCRL(stream grpc.ClientStreamingServer[cspb.UploadCRLR
+ 			}
+ 		}
+ 		if !uriMatch {
+-			return fmt.Errorf("IDP does not match previous: %v !∩ %v", idpURIs, prevURIs)
++			cs.log.Warningf("IDP does not match previous: %v !∩ %v", idpURIs, prevURIs)
+ 		}
+ 	}
+ 
+@@ -226,17 +240,21 @@ func (cs *crlStorer) UploadCRL(stream grpc.ClientStreamingServer[cspb.UploadCRLR
  	checksum := sha256.Sum256(crlBytes)
  	checksumb64 := base64.StdEncoding.EncodeToString(checksum[:])
  	crlContentType := "application/pkix-crl"
@@ -72,7 +109,7 @@ index 5896da2ac..70e1ac8db 100644
  
  	latency := cs.clk.Now().Sub(start)
  	cs.latencyHistogram.WithLabelValues(issuer.Subject.CommonName).Observe(latency.Seconds())
-@@ -255,3 +266,46 @@ func (cs *crlStorer) UploadCRL(stream grpc.ClientStreamingServer[cspb.UploadCRLR
+@@ -255,3 +273,56 @@ func (cs *crlStorer) UploadCRL(stream grpc.ClientStreamingServer[cspb.UploadCRLR
  
  	return stream.SendAndClose(&emptypb.Empty{})
  }
@@ -118,4 +155,14 @@ index 5896da2ac..70e1ac8db 100644
 +	}
 +
 +	return nil
++}
++
++func getLocalFile(path string, nameID issuance.NameID) (*s3.GetObjectOutput, error) {
++	res := &s3.GetObjectOutput{}
++
++	fn := fmt.Sprintf("%s%c%d.crl", path, os.PathSeparator, nameID)
++	lf, err := os.Open(fn)
++
++	res.Body = lf
++	return res, err
 +}
