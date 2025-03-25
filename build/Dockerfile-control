@@ -61,6 +61,7 @@ COPY tmp/utils.sh /opt/labca/
 COPY tmp/src/labca /opt/staging/boulder_labca
 COPY tmp/admin/apply-boulder /opt/labca/
 COPY tmp/admin/apply /opt/labca/
+COPY tmp/labca-gui /opt/labca/bin/
 
 COPY tmp/admin/static /opt/staging/static
 COPY tmp/admin/data /opt/staging/data

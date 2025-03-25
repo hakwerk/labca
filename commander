@@ -284,7 +284,6 @@ case $txt in
     fi
     ;;
 "gen-root-crl")
-    cd /opt/labca/gui
     /opt/labca/bin/labca-gui -config /opt/labca/data/config.json -renewcrl 999 &>>$LOGFILE
     /opt/labca/checkcrl &>>$LOGFILE
     ;;

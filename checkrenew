@@ -13,5 +13,4 @@ if ! expires=`openssl x509 -checkend $[ 86400 * $RENEW ] -noout -in /etc/nginx/s
     /opt/labca/renew
 fi
 
-cd /opt/labca/gui
 /opt/labca/bin/labca-gui -config /opt/labca/data/config.json -renewcrl $RENEW
