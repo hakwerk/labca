@@ -53,7 +53,7 @@ index c333b88c3..839437c4e 100644
  	var smtpRoots *x509.CertPool
 -	if config.BadKeyRevoker.Mailer.SMTPTrustedRootFile != "" {
 +	smtpSkipVerify := false
-+	if config.BadKeyRevoker.Mailer.SMTPTrustedRootFile == "skipVerify" {
++	if config.BadKeyRevoker.Mailer.SMTPTrustedRootFile == "InsecureSkipVerify" {
 +		smtpSkipVerify = true
 +	} else if config.BadKeyRevoker.Mailer.SMTPTrustedRootFile != "" {
  		pem, err := os.ReadFile(config.BadKeyRevoker.Mailer.SMTPTrustedRootFile)
