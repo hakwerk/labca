@@ -65,9 +65,9 @@ func controlCommand(command string, ignoreError bool) string {
 		time.Sleep(1 * time.Minute)
 		os.Exit(1)
 	}
-	defer conn.Close()
+	defer func() { _ = conn.Close() }()
 
-	fmt.Fprint(conn, command+"\n")
+	_, _ = fmt.Fprint(conn, command+"\n")
 
 	reader := bufio.NewReader(conn)
 	message, err := io.ReadAll(reader)
@@ -93,13 +93,13 @@ func copyFile(src, dst string) error {
 	if err != nil {
 		return err
 	}
-	defer sourceFile.Close()
+	defer func() { _ = sourceFile.Close() }()
 
 	destinationFile, err := os.Create(dst)
 	if err != nil {
 		return err
 	}
-	defer destinationFile.Close()
+	defer func() { _ = destinationFile.Close() }()
 
 	_, err = io.Copy(destinationFile, sourceFile)
 	if err != nil {
@@ -155,7 +155,7 @@ func CheckUpgrade_01_CeremonyHSM() bool {
 	prevRootCRL := baseDir + "root-ca.crl"
 	if _, err := os.Stat(prevRootCRL); !errors.Is(err, fs.ErrNotExist) {
 		ci.CRL = readFileAsString(prevRootCRL)
-		_ = copyFile(prevRootCRL, strings.Replace(rootCertFile, "-cert.", "-crl.", -1))
+		_ = copyFile(prevRootCRL, strings.ReplaceAll(rootCertFile, "-cert.", "-crl."))
 	}
 
 	if err := ci.Create("root-01", false); err != nil {

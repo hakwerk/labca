@@ -78,11 +78,12 @@ func getCertFileKeyType(certFile string) (string, error) {
 		return "", err
 	}
 
-	if crt.PublicKeyAlgorithm == x509.RSA {
+	switch crt.PublicKeyAlgorithm {
+	case x509.RSA:
 		return "RSA", nil
-	} else if crt.PublicKeyAlgorithm == x509.ECDSA {
+	case x509.ECDSA:
 		return "ECDSA", nil
-	} else {
+	default:
 		return "", fmt.Errorf("unknown public key algorithm: %s", crt.PublicKeyAlgorithm)
 	}
 }
@@ -138,7 +139,7 @@ func getRawCAChains() []IssuerConfig {
 		fmt.Println(err)
 		return nil
 	}
-	defer caConf.Close()
+	defer func() { _ = caConf.Close() }()
 
 	byteValue, _ := io.ReadAll(caConf)
 
@@ -199,7 +200,7 @@ func getRawWFEChains() [][]string {
 		fmt.Println(err)
 		return nil
 	}
-	defer wfeConf.Close()
+	defer func() { _ = wfeConf.Close() }()
 
 	byteValue, _ := io.ReadAll(wfeConf)
 
@@ -262,7 +263,7 @@ func setUseForLeavesFile(filename, active string) error {
 		fmt.Println(err)
 		return errors.New("could not open config file: " + err.Error())
 	}
-	defer caConf.Close()
+	defer func() { _ = caConf.Close() }()
 
 	byteValue, _ := io.ReadAll(caConf)
 

@@ -298,7 +298,7 @@ func errorHandler(w http.ResponseWriter, r *http.Request, err error, status int)
 	//fmt.Printf("%s:%d, %s\n", frame.File, frame.Line, frame.Function)
 
 	if frame.Function == "main.render" {
-		fmt.Fprintf(w, "Could not render requested page")
+		_, _ = fmt.Fprintf(w, "Could not render requested page")
 		return
 	}
 
@@ -397,7 +397,7 @@ func rootHandler(w http.ResponseWriter, r *http.Request) {
 			checkUpdates(false)
 			dashboardData["UpdateAvailable"] = updateAvailable
 		}
-		dashboardData["UpdateChecked"] = strings.Replace(updateChecked.Format("02-Jan-2006 15:04:05 MST"), "+0000", "GMT", -1)
+		dashboardData["UpdateChecked"] = strings.ReplaceAll(updateChecked.Format("02-Jan-2006 15:04:05 MST"), "+0000", "GMT")
 		dashboardData["UpdateCheckedRel"] = humanize.RelTime(updateChecked, time.Now(), "", "")
 
 		render(w, r, "dashboard", dashboardData)
@@ -430,13 +430,14 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if r.Method == "GET" {
+	switch r.Method {
+	case "GET":
 		reg := &User{
 			RequestBase: r.Header.Get("X-Request-Base"),
 		}
 		render(w, r, "login", map[string]interface{}{"User": reg, "IsLogin": true})
 		return
-	} else if r.Method == "POST" {
+	case "POST":
 		if err := r.ParseForm(); err != nil {
 			errorHandler(w, r, err, http.StatusInternalServerError)
 			return
@@ -474,7 +475,7 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 		}
 
 		http.Redirect(w, r, r.Header.Get("X-Request-Base")+bounceURL, http.StatusFound)
-	} else {
+	default:
 		http.Redirect(w, r, r.Header.Get("X-Request-Base")+"/login", http.StatusSeeOther)
 		return
 	}
@@ -492,7 +493,7 @@ func logoutHandler(w http.ResponseWriter, r *http.Request) {
 func _sendCmdOutput(w http.ResponseWriter, r *http.Request, cmd string) {
 	parts := strings.Fields(cmd)
 	for i := 0; i < len(parts); i++ {
-		parts[i] = strings.Replace(parts[i], "\\\\", " ", -1)
+		parts[i] = strings.ReplaceAll(parts[i], "\\\\", " ")
 	}
 	head := parts[0]
 	parts = parts[1:]
@@ -500,7 +501,7 @@ func _sendCmdOutput(w http.ResponseWriter, r *http.Request, cmd string) {
 	out, err := exec.Command(head, parts...).Output()
 	if err != nil {
 		fmt.Println(err)
-		fmt.Println(out)
+		fmt.Println(string(out))
 		errorHandler(w, r, err, http.StatusInternalServerError)
 		return
 	}
@@ -520,7 +521,8 @@ func _backupHandler(w http.ResponseWriter, r *http.Request) {
 	}{Success: true}
 
 	action := r.Form.Get("action")
-	if action == "backup-restore" {
+	switch action {
+	case "backup-restore":
 		backup := r.Form.Get("backup")
 		if !_hostCommand(w, r, action, backup) {
 			res.Success = false
@@ -533,13 +535,13 @@ func _backupHandler(w http.ResponseWriter, r *http.Request) {
 				}
 			}()
 		}
-	} else if action == "backup-delete" {
+	case "backup-delete":
 		backup := r.Form.Get("backup")
 		if !_hostCommand(w, r, action, backup) {
 			res.Success = false
 			res.Message = "Command failed - see LabCA log for any details"
 		}
-	} else if action == "backup-now" {
+	case "backup-now":
 		res.Message = getLog(w, r, "server-backup")
 		if res.Message == "" {
 			res.Success = false
@@ -547,7 +549,7 @@ func _backupHandler(w http.ResponseWriter, r *http.Request) {
 		} else {
 			res.Message = filepath.Base(res.Message)
 		}
-	} else if action == "backup-upload" {
+	case "backup-upload":
 		file, header, err := r.FormFile("backup-file")
 		if err != nil {
 			fmt.Println(err)
@@ -556,7 +558,7 @@ func _backupHandler(w http.ResponseWriter, r *http.Request) {
 		}
 		var out *os.File
 		if res.Success {
-			defer file.Close()
+			defer func() { _ = file.Close() }()
 
 			out, err = os.Create("/opt/backup/" + header.Filename)
 			if err != nil {
@@ -566,7 +568,7 @@ func _backupHandler(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 		if res.Success {
-			defer out.Close()
+			defer func() { _ = out.Close() }()
 
 			_, copyError := io.Copy(out, file)
 			if copyError != nil {
@@ -1011,9 +1013,9 @@ func _exportHandler(w http.ResponseWriter, r *http.Request) {
 		errorHandler(w, r, err, http.StatusInternalServerError)
 		return
 	}
-	defer os.RemoveAll(tmpDir)
+	defer func() { _ = os.RemoveAll(tmpDir) }()
 
-	keyFile := path.Join(tmpDir, fmt.Sprintf("%s.pem", strings.Replace(certname, "-cert", "-key", -1)))
+	keyFile := path.Join(tmpDir, fmt.Sprintf("%s.pem", strings.ReplaceAll(certname, "-cert", "-key")))
 
 	keyPEM := pem.EncodeToMemory(&pem.Block{Type: "PRIVATE KEY", Bytes: key})
 	err = os.WriteFile(keyFile, keyPEM, os.ModeAppend)
@@ -1046,7 +1048,7 @@ func _exportHandler(w http.ResponseWriter, r *http.Request) {
 func _doCmdOutput(w http.ResponseWriter, r *http.Request, cmd string) string {
 	parts := strings.Fields(cmd)
 	for i := 0; i < len(parts); i++ {
-		parts[i] = strings.Replace(parts[i], "\\\\", " ", -1)
+		parts[i] = strings.ReplaceAll(parts[i], "\\\\", " ")
 	}
 	head := parts[0]
 	parts = parts[1:]
@@ -1149,7 +1151,7 @@ func _checkUpdatesHandler(w http.ResponseWriter, _ *http.Request) {
 	res.Versions, res.Descriptions = checkUpdates(true)
 	res.UpdateAvailable = updateAvailable
 	res.UpdateChecked = updateChecked.Format("02-Jan-2006 15:04:05 MST")
-	res.UpdateChecked = strings.Replace(res.UpdateChecked, "+0000", "GMT", -1)
+	res.UpdateChecked = strings.ReplaceAll(res.UpdateChecked, "+0000", "GMT")
 	res.UpdateCheckedRel = humanize.RelTime(updateChecked, time.Now(), "", "")
 
 	w.Header().Set("Content-Type", "application/json")
@@ -1450,7 +1452,7 @@ func _manageGet(w http.ResponseWriter, r *http.Request) {
 	} else {
 		checkUpdates(false)
 		manageData["UpdateAvailable"] = updateAvailable
-		manageData["UpdateChecked"] = strings.Replace(updateChecked.Format("02-Jan-2006 15:04:05 MST"), "+0000", "GMT", -1)
+		manageData["UpdateChecked"] = strings.ReplaceAll(updateChecked.Format("02-Jan-2006 15:04:05 MST"), "+0000", "GMT")
 		manageData["UpdateCheckedRel"] = humanize.RelTime(updateChecked, time.Now(), "", "")
 
 		components := _parseComponents(getLog(w, r, "components"))
@@ -1764,9 +1766,9 @@ func getLog(w http.ResponseWriter, r *http.Request, logType string) string {
 		return ""
 	}
 
-	defer conn.Close()
+	defer func() { _ = conn.Close() }()
 
-	fmt.Fprintf(conn, "log-%s\n", logType)
+	_, _ = fmt.Fprintf(conn, "log-%s\n", logType)
 	reader := bufio.NewReader(conn)
 	contents, err := io.ReadAll(reader)
 	if err != nil {
@@ -1797,9 +1799,9 @@ func showLog(ws *websocket.Conn, logType string) {
 		return
 	}
 
-	defer conn.Close()
+	defer func() { _ = conn.Close() }()
 
-	fmt.Fprintf(conn, "log-%s\n", logType)
+	_, _ = fmt.Fprintf(conn, "log-%s\n", logType)
 	scanner := bufio.NewScanner(conn)
 	for scanner.Scan() {
 		msg := scanner.Text()
@@ -1818,7 +1820,7 @@ func showLog(ws *websocket.Conn, logType string) {
 }
 
 func reader(ws *websocket.Conn) {
-	defer ws.Close()
+	defer func() { _ = ws.Close() }()
 	ws.SetReadLimit(512)
 	_ = ws.SetReadDeadline(time.Now().Add(pongWait))
 	ws.SetPongHandler(func(string) error { _ = ws.SetReadDeadline(time.Now().Add(pongWait)); return nil })
@@ -1834,7 +1836,7 @@ func writer(ws *websocket.Conn, logType string) {
 	pingTicker := time.NewTicker(pingPeriod)
 	defer func() {
 		pingTicker.Stop()
-		ws.Close()
+		_ = ws.Close()
 	}()
 
 	go showLog(ws, logType)
@@ -1905,8 +1907,8 @@ func _buildCI(r *http.Request, session *sessions.Session, isRoot bool) *Certific
 	}
 	if session.Values["cn"] != nil {
 		ci.CommonName = session.Values["cn"].(string)
-		ci.CommonName = strings.Replace(ci.CommonName, "Root", "", -1)
-		ci.CommonName = strings.Replace(ci.CommonName, "  ", " ", -1)
+		ci.CommonName = strings.ReplaceAll(ci.CommonName, "Root", "")
+		ci.CommonName = strings.ReplaceAll(ci.CommonName, "  ", " ")
 	}
 
 	return ci
@@ -1988,7 +1990,8 @@ func _certCreate(w http.ResponseWriter, r *http.Request, certBase string, isRoot
 	if _, err := os.Stat(CERT_FILES_PATH + certBase + "-cert.pem"); errors.Is(err, fs.ErrNotExist) {
 		session, _ := sessionStore.Get(r, "labca")
 
-		if r.Method == "GET" {
+		switch r.Method {
+		case "GET":
 			ci := _buildCI(r, session, isRoot)
 			if isRoot && (certBase == "root-ca" || certBase == "test-root" || certBase == "root-01") {
 				ci.IsFirst = true
@@ -2063,7 +2066,7 @@ func _certCreate(w http.ResponseWriter, r *http.Request, certBase string, isRoot
 
 			render(w, r, "cert:manage", map[string]interface{}{"CertificateInfo": ci, "Progress": _progress(certBase), "HelpText": _helptext(certBase)})
 			return false
-		} else if r.Method == "POST" {
+		case "POST":
 			if err := r.ParseMultipartForm(2 * 1024 * 1024); err != nil {
 				errorHandler(w, r, err, http.StatusInternalServerError)
 				return false
@@ -2103,7 +2106,7 @@ func _certCreate(w http.ResponseWriter, r *http.Request, certBase string, isRoot
 					return false
 				}
 
-				defer file.Close()
+				defer func() { _ = file.Close() }()
 
 				ci.ImportFile = file
 				ci.ImportHandler = handler
@@ -2152,7 +2155,7 @@ func _certCreate(w http.ResponseWriter, r *http.Request, certBase string, isRoot
 							render(w, r, "cert:manage", map[string]interface{}{"CertificateInfo": ci, "Progress": _progress(certBase), "HelpText": _helptext(certBase)})
 							return false
 						}
-						defer csr.Close()
+						defer func() { _ = csr.Close() }()
 						b, _ := io.ReadAll(csr)
 
 						render(w, r, "cert:manage", map[string]interface{}{"CertificateInfo": ci, "CSR": string(b), "Progress": _progress(certBase), "HelpText": _helptext(certBase)})
@@ -2191,7 +2194,7 @@ func _certCreate(w http.ResponseWriter, r *http.Request, certBase string, isRoot
 								render(w, r, "cert:manage", map[string]interface{}{"CertificateInfo": ci, "Progress": _progress(certBase), "HelpText": _helptext(certBase)})
 								return false
 							}
-							defer csr.Close()
+							defer func() { _ = csr.Close() }()
 							b, _ := io.ReadAll(csr)
 
 							session.Values["csr"] = true
@@ -2237,7 +2240,7 @@ func _certCreate(w http.ResponseWriter, r *http.Request, certBase string, isRoot
 
 			// Fake the method to GET as we need to continue in the setupHandler() function
 			r.Method = "GET"
-		} else {
+		default:
 			http.Redirect(w, r, r.Header.Get("X-Request-Base")+"/setup", http.StatusSeeOther)
 			return false
 		}
@@ -2276,11 +2279,11 @@ func _hostCommand(w http.ResponseWriter, r *http.Request, command string, params
 		return false
 	}
 
-	defer conn.Close()
+	defer func() { _ = conn.Close() }()
 
-	fmt.Fprint(conn, command+"\n")
+	_, _ = fmt.Fprint(conn, command+"\n")
 	for _, param := range params {
-		fmt.Fprint(conn, param+"\n")
+		_, _ = fmt.Fprint(conn, param+"\n")
 	}
 
 	reader := bufio.NewReader(conn)
@@ -2380,7 +2383,8 @@ func _progress(stage string) int {
 }
 
 func _helptext(stage string) template.HTML {
-	if stage == "register" {
+	switch stage {
+	case "register":
 		return template.HTML(fmt.Sprint("<p class=\"form-register\">You need to create an admin account for\n",
 			"managing this instance of LabCA. There can only be one admin account, but you can configure all\n",
 			"its attributes once the initial setup has completed.<br><br><b>Instead, you can also\n",
@@ -2390,7 +2394,7 @@ func _helptext(stage string) template.HTML {
 			"restore this instance with the exact same configuration, use that backup file here.\n",
 			"<br><br>Otherwise you should follow the <a href=\"#\" onclick=\"false\"\n",
 			"class=\"toggle-register\">standard setup</a>.</p>"))
-	} else if stage == "setup" {
+	case "setup":
 		return template.HTML(fmt.Sprint("<p>The fully qualified domain name (FQDN) is what end users will use\n",
 			"to connect to this server. It was provided in the initial setup and is shown here for reference.</p>\n",
 			"<p>Please fill in a DNS server (and optionally port, default is ':53') that will be used to lookup\n",
@@ -2399,7 +2403,7 @@ func _helptext(stage string) template.HTML {
 			"domain, e.g. '.localdomain'. In lockdown mode only those domains are allowed. In whitelist mode\n",
 			"those domains are allowed next to all official, internet accessible domains and in standard\n",
 			"mode only the official domains are allowed.</p>"))
-	} else if stage == "root-01" {
+	case "root-01":
 		return template.HTML(fmt.Sprint("<p>This is the top level certificate that will sign the issuer\n",
 			"certificate(s). You can either generate a fresh Root CA (Certificate Authority) or import an\n",
 			"existing one, e.g. a backup from another LabCA instance.</p>\n",
@@ -2412,7 +2416,7 @@ func _helptext(stage string) template.HTML {
 			"offline for security reasons according to best practices. If you do include it here, we will be able\n",
 			"to generate an issuing certificate automatically in the next step. If you don't include it, we will\n",
 			"ask for it when needed.</p>"))
-	} else if stage == "issuer-01" {
+	case "issuer-01":
 		return template.HTML(fmt.Sprint("<p>This is what end users will see as the issuing certificate. Again,\n",
 			"you can either generate a fresh certificate or import an existing one, as long as it is signed by\n",
 			"the Root CA from the previous step.</p>\n",
@@ -2420,22 +2424,23 @@ func _helptext(stage string) template.HTML {
 			"was chosen in the previous step when generating the root, but you may choose a different\n",
 			"one (if technically possible). By default the common name is the same as the CN for the Root CA, minus\n",
 			"the word 'Root'.</p>\n"))
-	} else if stage == "standalone" {
+	case "standalone":
 		return template.HTML(fmt.Sprint("<p>Currently only step-ca is supported, using the MySQL database backend.\n",
 			"Please provide the necessary connectiuon details here."))
-	} else {
+	default:
 		return template.HTML("")
 	}
 }
 
 func _setupAdminUser(w http.ResponseWriter, r *http.Request) bool {
-	if r.Method == "GET" {
+	switch r.Method {
+	case "GET":
 		reg := &User{
 			RequestBase: r.Header.Get("X-Request-Base"),
 		}
 		render(w, r, "register:manage", map[string]interface{}{"User": reg, "IsLogin": true, "Progress": _progress("register"), "HelpText": _helptext("register")})
 		return false
-	} else if r.Method == "POST" {
+	case "POST":
 		isMultipart := true
 		if err := r.ParseMultipartForm(1 * 1024 * 1024); err != nil {
 			isMultipart = false
@@ -2461,7 +2466,7 @@ func _setupAdminUser(w http.ResponseWriter, r *http.Request) bool {
 				render(w, r, "register:manage", map[string]interface{}{"User": reg, "IsLogin": true, "Progress": _progress("register"), "HelpText": _helptext("register")})
 				return false
 			}
-			defer file.Close()
+			defer func() { _ = file.Close() }()
 
 			out, err := os.Create("/opt/backup/" + header.Filename)
 			if err != nil {
@@ -2470,7 +2475,7 @@ func _setupAdminUser(w http.ResponseWriter, r *http.Request) bool {
 				render(w, r, "register:manage", map[string]interface{}{"User": reg, "IsLogin": true, "Progress": _progress("register"), "HelpText": _helptext("register")})
 				return false
 			}
-			defer out.Close()
+			defer func() { _ = out.Close() }()
 
 			_, copyError := io.Copy(out, file)
 			if copyError != nil {
@@ -2488,9 +2493,9 @@ func _setupAdminUser(w http.ResponseWriter, r *http.Request) bool {
 				render(w, r, "register:manage", map[string]interface{}{"User": reg, "IsLogin": true, "Progress": _progress("register"), "HelpText": _helptext("register")})
 				return false
 			}
-			defer conn.Close()
+			defer func() { _ = conn.Close() }()
 
-			fmt.Fprint(conn, "backup-restore\n"+header.Filename+"\n")
+			_, _ = fmt.Fprint(conn, "backup-restore\n"+header.Filename+"\n")
 			reader := bufio.NewReader(conn)
 			message, err := io.ReadAll(reader)
 			if err != nil {
@@ -2576,7 +2581,7 @@ func _setupAdminUser(w http.ResponseWriter, r *http.Request) bool {
 
 		// Fake the method to GET as we need to continue in the setupHandler() function
 		r.Method = "GET"
-	} else {
+	default:
 		http.Redirect(w, r, r.Header.Get("X-Request-Base")+"/setup", http.StatusSeeOther)
 		return false
 	}
@@ -2585,7 +2590,8 @@ func _setupAdminUser(w http.ResponseWriter, r *http.Request) bool {
 }
 
 func _setupBaseConfig(w http.ResponseWriter, r *http.Request) bool {
-	if r.Method == "GET" {
+	switch r.Method {
+	case "GET":
 		domain := viper.GetString("labca.fqdn")
 		pos := strings.Index(domain, ".")
 		if pos > -1 {
@@ -2604,7 +2610,7 @@ func _setupBaseConfig(w http.ResponseWriter, r *http.Request) bool {
 
 		render(w, r, "setup:manage", map[string]interface{}{"SetupConfig": cfg, "Progress": _progress("setup"), "HelpText": _helptext("setup")})
 		return false
-	} else if r.Method == "POST" {
+	case "POST":
 		if err := r.ParseForm(); err != nil {
 			errorHandler(w, r, err, http.StatusInternalServerError)
 			return false
@@ -2644,7 +2650,7 @@ func _setupBaseConfig(w http.ResponseWriter, r *http.Request) bool {
 
 		// Fake the method to GET as we need to continue in the setupHandler() function
 		r.Method = "GET"
-	} else {
+	default:
 		http.Redirect(w, r, r.Header.Get("X-Request-Base")+"/setup", http.StatusSeeOther)
 		return false
 	}
@@ -2688,7 +2694,8 @@ func writeStandaloneConfig(cfg *StandaloneConfig) {
 }
 
 func setupStandalone(w http.ResponseWriter, r *http.Request) {
-	if r.Method == "GET" {
+	switch r.Method {
+	case "GET":
 		cfg := &StandaloneConfig{
 			RequestBase: r.Header.Get("X-Request-Base"),
 			Backend:     "step-ca",
@@ -2703,7 +2710,7 @@ func setupStandalone(w http.ResponseWriter, r *http.Request) {
 		render(w, r, "standalone:manage", map[string]interface{}{"SetupConfig": cfg, "Progress": _progress("standalone"), "HelpText": _helptext("standalone")})
 		return
 
-	} else if r.Method == "POST" {
+	case "POST":
 		if err := r.ParseForm(); err != nil {
 			errorHandler(w, r, err, http.StatusInternalServerError)
 			return
@@ -2732,7 +2739,7 @@ func setupStandalone(w http.ResponseWriter, r *http.Request) {
 		// Fake the method to GET as we need to continue in the setupHandler() function
 		r.Method = "GET"
 
-	} else {
+	default:
 		http.Redirect(w, r, r.Header.Get("X-Request-Base")+"/setup", http.StatusSeeOther)
 		return
 	}
@@ -2778,7 +2785,7 @@ func setupHandler(w http.ResponseWriter, r *http.Request) {
 	// 4. Setup issuer certificate
 	if !_certCreate(w, r, "issuer-01", false) {
 		// Cleanup the cert (if it even exists) so we will retry on the next run
-		os.Remove(CERT_FILES_PATH + "issuer-01-cert.pem")
+		_ = os.Remove(CERT_FILES_PATH + "issuer-01-cert.pem")
 		return
 	}
 
@@ -3575,7 +3582,7 @@ type BackupResult struct {
 }
 
 func (br BackupResult) Remove() {
-	os.Remove(br.NewName)
+	_ = os.Remove(br.NewName)
 }
 
 func (br BackupResult) Restore() {
@@ -3590,7 +3597,7 @@ func renameBackup(filename string) BackupResult {
 	}
 
 	if _, err := os.Stat(filename); !errors.Is(err, os.ErrNotExist) {
-		os.Remove(filename + "_BAK") // May not exist...
+		_ = os.Remove(filename + "_BAK") // May not exist...
 		result.Existed = true
 	}
 

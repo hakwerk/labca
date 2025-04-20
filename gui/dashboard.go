@@ -38,9 +38,9 @@ func _removeAnsiColors(line string) string {
 		}
 	}
 	line = string(b[:bl])
-	line = strings.Replace(line, "[31m", "", -1)
-	line = strings.Replace(line, "[1m", "", -1)
-	line = strings.Replace(line, "[0m", "", -1)
+	line = strings.ReplaceAll(line, "[31m", "")
+	line = strings.ReplaceAll(line, "[1m", "")
+	line = strings.ReplaceAll(line, "[0m", "")
 
 	return line
 }
@@ -84,7 +84,7 @@ func _parseLine(line string, loc *time.Location) Activity {
 	activity.TimestampRel = "??"
 	if err == nil {
 		activity.Timestamp = timestamp.Format("02-Jan-2006 15:04:05 MST")
-		activity.Timestamp = strings.Replace(activity.Timestamp, "+0000", "GMT", -1)
+		activity.Timestamp = strings.ReplaceAll(activity.Timestamp, "+0000", "GMT")
 		activity.TimestampRel = humanize.RelTime(timestamp, time.Now(), "", "")
 	}
 
@@ -507,7 +507,7 @@ func parseDockerStats(data string) []AjaxStat {
 				if err == nil {
 					stat.MemLimit = x.Uint64()
 				}
-				y, err := strconv.ParseFloat(strings.Replace(elms[6], "%", "", -1), 64)
+				y, err := strconv.ParseFloat(strings.ReplaceAll(elms[6], "%", ""), 64)
 				if err == nil {
 					stat.MemPerc = y
 				}
@@ -589,7 +589,7 @@ func CollectDashboardData(w http.ResponseWriter, r *http.Request) (map[string]in
 		return nil, err
 	}
 
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 
 	dashboardData := make(map[string]interface{})
 	dashboardData["RequestBase"] = r.Header.Get("X-Request-Base")

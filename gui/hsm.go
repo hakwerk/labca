@@ -524,7 +524,7 @@ func storePrivKey(hs *HSMSession, privKey crypto.PrivateKey, keyID []byte, label
 		k := privKey.(*rsa.PrivateKey)
 
 		tmpl = append(tmpl, pkcs11.NewAttribute(pkcs11.CKA_KEY_TYPE, pkcs11.CKK_RSA))
-		tmpl = append(tmpl, pkcs11.NewAttribute(pkcs11.CKA_MODULUS, k.PublicKey.N.Bytes()))
+		tmpl = append(tmpl, pkcs11.NewAttribute(pkcs11.CKA_MODULUS, k.N.Bytes()))
 		tmpl = append(tmpl, pkcs11.NewAttribute(pkcs11.CKA_PUBLIC_EXPONENT, big.NewInt(int64(k.PublicKey.E)).Bytes()))
 		tmpl = append(tmpl, pkcs11.NewAttribute(pkcs11.CKA_PRIVATE_EXPONENT, big.NewInt(int64(k.E)).Bytes()))
 		tmpl = append(tmpl, pkcs11.NewAttribute(pkcs11.CKA_PRIME_1, new(big.Int).Set(k.Primes[0]).Bytes()))
@@ -616,7 +616,7 @@ func (cfg *HSMConfig) ImportKeyCert(keyFile, certFile string) (crypto.PublicKey,
 
 	if strings.Index(filepath.Base(keyFile), "root-") != 0 {
 		jsonFile := path.Join(CERT_FILES_PATH, filepath.Base(keyFile))
-		jsonFile = strings.Replace(jsonFile, "-key.pem", ".pkcs11.json", -1)
+		jsonFile = strings.ReplaceAll(jsonFile, "-key.pem", ".pkcs11.json")
 		contents := fmt.Sprintf(`{"module": %q, "tokenLabel": %q, "pin": %q}`, cfg.Module, cfg.Label, cfg.UserPIN)
 		err = os.WriteFile(jsonFile, []byte(contents), 0644)
 		if err != nil {

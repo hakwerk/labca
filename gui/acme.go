@@ -79,7 +79,7 @@ func GetAccounts(w http.ResponseWriter, r *http.Request) (ListData, error) {
 		return ListData{}, err
 	}
 
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 
 	Accounts := ListData{
 		Title:      "Accounts",
@@ -259,7 +259,7 @@ func GetAccount(w http.ResponseWriter, r *http.Request, id string) (ShowData, er
 		return ShowData{}, err
 	}
 
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 
 	AccountDetails := ShowData{
 		Title:      "Account",
@@ -345,7 +345,7 @@ func GetOrders(w http.ResponseWriter, r *http.Request, forAccount string) (ListD
 		return ListData{}, err
 	}
 
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 
 	Orders := ListData{
 		Title:      "Orders",
@@ -478,7 +478,7 @@ func GetOrder(w http.ResponseWriter, r *http.Request, id string) (ShowData, erro
 		return ShowData{}, err
 	}
 
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 
 	OrderDetails := ShowData{
 		Title:      "Order",
@@ -572,7 +572,7 @@ func GetAuthzs(w http.ResponseWriter, r *http.Request, forOrder string, inList [
 		return ListData{}, err
 	}
 
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 
 	Authz := ListData{
 		Title:      "Authorizations",
@@ -715,7 +715,7 @@ func GetAuthz(w http.ResponseWriter, r *http.Request, id string) (ShowData, erro
 		return ShowData{}, err
 	}
 
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 
 	AuthDetails := ShowData{
 		Title:      "Authorization",
@@ -833,7 +833,7 @@ func GetChallenges(w http.ResponseWriter, r *http.Request, forAuthz string, inLi
 		return ListData{}, err
 	}
 
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 
 	Challenges := ListData{
 		Title:      "Challenges",
@@ -953,7 +953,7 @@ func GetChallenge(w http.ResponseWriter, r *http.Request, id string) (ShowData, 
 		return ShowData{}, err
 	}
 
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 
 	ChallengeDetails := ShowData{
 		Title:      "Challenge",
@@ -1087,7 +1087,7 @@ func GetCertificates(w http.ResponseWriter, r *http.Request, forAccount string) 
 		return ListData{}, err
 	}
 
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 
 	Certificates := ListData{
 		Title:      "Certificates",
@@ -1305,7 +1305,7 @@ func GetCertificate(w http.ResponseWriter, r *http.Request, id string, serial st
 		return ShowData{}, err
 	}
 
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 
 	CertificateDetails := ShowData{
 		Title:      "Certificate",

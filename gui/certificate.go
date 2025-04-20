@@ -163,7 +163,7 @@ func ceremonyConfig(path string, rewrites map[string]string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	defer tmp.Close()
+	defer func() { _ = tmp.Close() }()
 	tmpl, err := template.New("config").Parse(string(tmplBytes))
 	if err != nil {
 		return "", err
@@ -196,11 +196,11 @@ func waitForFile(filePath string) error {
 
 func (ci *CertificateInfo) CeremonyRoot(seqnr string, use_existing_key bool) (string, error) {
 	keytype := "rsa"
-	keyparam := strings.Replace(ci.KeyType, "rsa", "", -1)
+	keyparam := strings.ReplaceAll(ci.KeyType, "rsa", "")
 	algo := "SHA256WithRSA"
 	if strings.HasPrefix(ci.KeyType, "ecdsa") {
 		keytype = "ecdsa"
-		len := strings.Replace(ci.KeyType, "ecdsa", "", -1)
+		len := strings.ReplaceAll(ci.KeyType, "ecdsa", "")
 		keyparam = "P-" + len
 		algo = "ECDSAWithSHA" + len
 	}
@@ -247,7 +247,7 @@ func (ci *CertificateInfo) CeremonyRoot(seqnr string, use_existing_key bool) (st
 		}
 		return "", fmt.Errorf("could not fill root ceremony template: %s", err.Error())
 	}
-	defer os.Remove(ceremonyCfg)
+	defer func() { _ = os.Remove(ceremonyCfg) }()
 
 	err = waitForFile("/opt/boulder/bin/ceremony")
 	if err != nil {
@@ -274,11 +274,11 @@ func (ci *CertificateInfo) CeremonyIssuer(seqnr, rootseqnr string, use_existing_
 	fqdn := viper.GetString("labca.fqdn")
 
 	keytype := "rsa"
-	keyparam := strings.Replace(ci.KeyType, "rsa", "", -1)
+	keyparam := strings.ReplaceAll(ci.KeyType, "rsa", "")
 	algo := "SHA256WithRSA"
 	if strings.HasPrefix(ci.KeyType, "ecdsa") {
 		keytype = "ecdsa"
-		len := strings.Replace(ci.KeyType, "ecdsa", "", -1)
+		len := strings.ReplaceAll(ci.KeyType, "ecdsa", "")
 		keyparam = "P-" + len
 		algo = "ECDSAWithSHA" + len
 	}
@@ -313,7 +313,7 @@ func (ci *CertificateInfo) CeremonyIssuer(seqnr, rootseqnr string, use_existing_
 			jb.Restore()
 			return "", fmt.Errorf("could not fill issuer key ceremony template: %s", err.Error())
 		}
-		defer os.Remove(keyCfg)
+		defer func() { _ = os.Remove(keyCfg) }()
 
 		err = waitForFile("/opt/boulder/bin/ceremony")
 		if err != nil {
@@ -362,7 +362,7 @@ func (ci *CertificateInfo) CeremonyIssuer(seqnr, rootseqnr string, use_existing_
 		cb.Restore()
 		return "", fmt.Errorf("could not fill issuer cert ceremony template: %s", err.Error())
 	}
-	defer os.Remove(ceremonyCfg)
+	defer func() { _ = os.Remove(ceremonyCfg) }()
 
 	err = waitForFile("/opt/boulder/bin/ceremony")
 	if err != nil {
@@ -455,7 +455,7 @@ func (ci *CertificateInfo) CeremonyRootCRL(seqnr string) error {
 		cb.Restore()
 		return fmt.Errorf("could not fill root crl ceremony template: %s", err.Error())
 	}
-	defer os.Remove(keyCfg)
+	defer func() { _ = os.Remove(keyCfg) }()
 
 	err = waitForFile("/opt/boulder/bin/ceremony")
 	if err != nil {
@@ -516,17 +516,17 @@ func (ci *CertificateInfo) ImportPkcs12(tmpFile string, tmpKey string, tmpCert s
 
 	pwd := "pass:dummy"
 	if ci.ImportPwd != "" {
-		pwd = "pass:" + strings.Replace(ci.ImportPwd, " ", "\\\\", -1)
+		pwd = "pass:" + strings.ReplaceAll(ci.ImportPwd, " ", "\\\\")
 	}
 
-	if out, err := exeCmd("openssl pkcs12 -in " + strings.Replace(tmpFile, " ", "\\\\", -1) + " -password " + pwd + " -nocerts -nodes -out " + tmpKey); err != nil {
+	if out, err := exeCmd("openssl pkcs12 -in " + strings.ReplaceAll(tmpFile, " ", "\\\\") + " -password " + pwd + " -nocerts -nodes -out " + tmpKey); err != nil {
 		if strings.Contains(string(out), "invalid password") {
 			return errors.New("incorrect password")
 		}
 
 		return reportError(err)
 	}
-	if out, err := exeCmd("openssl pkcs12 -in " + strings.Replace(tmpFile, " ", "\\\\", -1) + " -password " + pwd + " -nokeys -out " + tmpCert); err != nil {
+	if out, err := exeCmd("openssl pkcs12 -in " + strings.ReplaceAll(tmpFile, " ", "\\\\") + " -password " + pwd + " -nokeys -out " + tmpCert); err != nil {
 		if strings.Contains(string(out), "invalid password") {
 			return errors.New("incorrect password")
 		}
@@ -551,11 +551,11 @@ func (ci *CertificateInfo) ImportZip(tmpFile string, tmpDir string) error {
 
 	cmd := "unzip -j"
 	if ci.ImportPwd != "" {
-		cmd = cmd + " -P " + strings.Replace(ci.ImportPwd, " ", "\\\\", -1)
+		cmd = cmd + " -P " + strings.ReplaceAll(ci.ImportPwd, " ", "\\\\")
 	} else {
 		cmd = cmd + " -P dummy"
 	}
-	cmd = cmd + " " + strings.Replace(tmpFile, " ", "\\\\", -1) + " -d " + tmpDir
+	cmd = cmd + " " + strings.ReplaceAll(tmpFile, " ", "\\\\") + " -d " + tmpDir
 
 	if _, err := exeCmd(cmd); err != nil {
 		if err.Error() == "exit status 82" {
@@ -576,24 +576,23 @@ func (ci *CertificateInfo) Import(tmpDir string, tmpKey string, tmpCert string) 
 	if err != nil {
 		return err
 	}
-	defer f.Close()
+	defer func() { _ = f.Close() }()
 
 	_, _ = io.Copy(f, ci.ImportFile)
 
 	contentType := ci.ImportHandler.Header.Get("Content-Type")
-	if contentType == "application/x-pkcs12" {
+	switch contentType {
+	case "application/x-pkcs12":
 		err := ci.ImportPkcs12(tmpFile, tmpKey, tmpCert)
 		if err != nil {
 			return err
 		}
-
-	} else if contentType == "application/zip" || contentType == "application/x-zip-compressed" {
+	case "application/zip", "application/x-zip-compressed":
 		err := ci.ImportZip(tmpFile, tmpDir)
 		if err != nil {
 			return err
 		}
-
-	} else {
+	default:
 		return errors.New("Content Type '" + contentType + "' not supported!")
 	}
 
@@ -609,7 +608,7 @@ func (ci *CertificateInfo) Upload(tmpKey string, tmpCert string) error {
 
 		pwd := "pass:dummy"
 		if ci.Passphrase != "" {
-			pwd = "pass:" + strings.Replace(ci.Passphrase, " ", "\\\\", -1)
+			pwd = "pass:" + strings.ReplaceAll(ci.Passphrase, " ", "\\\\")
 		}
 
 		if out, err := exeCmd("openssl pkey -passin " + pwd + " -in " + tmpKey + " -out " + tmpKey + "-out"); err != nil {
@@ -750,8 +749,8 @@ func (ci *CertificateInfo) VerifyCerts(path string, rootCert string, rootKey str
 			rootSubject = string(r[0 : len(r)-1])
 		}
 
-		issuerIssuer = strings.Replace(issuerIssuer, "issuer=", "", -1)
-		rootSubject = strings.Replace(rootSubject, "subject=", "", -1)
+		issuerIssuer = strings.ReplaceAll(issuerIssuer, "issuer=", "")
+		rootSubject = strings.ReplaceAll(rootSubject, "subject=", "")
 		if issuerIssuer != rootSubject {
 			return errors.New("issuer not issued by our Root CA")
 		}
@@ -809,7 +808,7 @@ func (ci *CertificateInfo) ImportFiles(path string, rootCert string, rootKey str
 			if err != nil {
 				return fmt.Errorf("failed to create root pubkey file: %s", err.Error())
 			}
-			defer file.Close()
+			defer func() { _ = file.Close() }()
 			if err := pem.Encode(file, &pem.Block{Type: "PUBLIC KEY", Bytes: pubKeyBytes}); err != nil {
 				return fmt.Errorf("failed to write root pubkey: %s", err.Error())
 			}
@@ -851,7 +850,7 @@ func (ci *CertificateInfo) ImportFiles(path string, rootCert string, rootKey str
 		if err != nil {
 			return fmt.Errorf("failed to create issuer pubkey file: %s", err.Error())
 		}
-		defer file.Close()
+		defer func() { _ = file.Close() }()
 		if err := pem.Encode(file, &pem.Block{Type: "PUBLIC KEY", Bytes: pubKeyBytes}); err != nil {
 			return fmt.Errorf("failed to write issuer pubkey: %s", err.Error())
 		}
@@ -1022,7 +1021,7 @@ func (ci *CertificateInfo) Create(certBase string, wasCSR bool) error {
 		return err
 	}
 
-	defer os.RemoveAll(tmpDir)
+	defer func() { _ = os.RemoveAll(tmpDir) }()
 
 	var tmpKey string
 	var tmpCert string
@@ -1034,25 +1033,23 @@ func (ci *CertificateInfo) Create(certBase string, wasCSR bool) error {
 		tmpCert = filepath.Join(tmpDir, "issuer-01-cert.pem")
 	}
 
-	if ci.CreateType == "generate" {
+	switch ci.CreateType {
+	case "generate":
 		err := ci.Generate(certBase)
 		if err != nil {
 			return err
 		}
-
-	} else if ci.CreateType == "import" {
+	case "import":
 		err := ci.Import(tmpDir, tmpKey, tmpCert)
 		if err != nil {
 			return err
 		}
-
-	} else if ci.CreateType == "upload" {
+	case "upload":
 		err := ci.Upload(tmpKey, tmpCert)
 		if err != nil {
 			return err
 		}
-
-	} else {
+	default:
 		return fmt.Errorf("unknown CreateType")
 	}
 
@@ -1075,7 +1072,7 @@ func storeRootKey(path, certName, tmpDir, keyData, passphrase string) (bool, str
 	}
 
 	if passphrase != "" {
-		pwd := "pass:" + strings.Replace(passphrase, " ", "\\\\", -1)
+		pwd := "pass:" + strings.ReplaceAll(passphrase, " ", "\\\\")
 
 		if out, err := exeCmd("openssl pkey -passin " + pwd + " -in " + tmpKey + " -out " + tmpKey + "-out"); err != nil {
 			if strings.Contains(string(out), ":bad decrypt:") {
@@ -1124,7 +1121,7 @@ func (ci *CertificateInfo) StoreRootKey(path string) bool {
 		return false
 	}
 
-	defer os.RemoveAll(tmpDir)
+	defer func() { _ = os.RemoveAll(tmpDir) }()
 
 	certBase := "root-01"
 	if res, newError := storeRootKey(path, certBase, tmpDir, ci.Key, ci.Passphrase); !res {
@@ -1156,7 +1153,7 @@ func (ci *CertificateInfo) StoreCRL(path string) bool {
 		return false
 	}
 
-	defer os.RemoveAll(tmpDir)
+	defer func() { _ = os.RemoveAll(tmpDir) }()
 
 	tmpCRL := filepath.Join(tmpDir, "root-ca.crl")
 
@@ -1307,7 +1304,7 @@ func locateFile(name string) string {
 func exeCmd(cmd string) ([]byte, error) {
 	parts := strings.Fields(cmd)
 	for i := 0; i < len(parts); i++ {
-		parts[i] = strings.Replace(parts[i], "\\\\", " ", -1)
+		parts[i] = strings.ReplaceAll(parts[i], "\\\\", " ")
 	}
 	head := parts[0]
 	parts = parts[1:]
