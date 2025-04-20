@@ -46,6 +46,8 @@ jobs:
   build-publish:
     runs-on: ubuntu-latest
     needs: prepare
+    permissions:
+      packages: write
     strategy:
       matrix:
         include:
