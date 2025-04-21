@@ -1,3 +1,4 @@
+# syntax=docker/dockerfile:1
 FROM letsencrypt/boulder-tools:go1.24.1_2025-03-10 AS boulder-tools
 
 FROM ubuntu:focal

@@ -1,3 +1,4 @@
+# syntax=docker/dockerfile:1
 FROM ubuntu:focal AS builder
 
 RUN export DEBIAN_FRONTEND=noninteractive \
