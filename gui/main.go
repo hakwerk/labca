@@ -2411,11 +2411,7 @@ func _helptext(stage string) template.HTML {
 			"more secure, ECDSA is more modern than RSA), provide a country and organization name,\n",
 			"and the common name. It is recommended that the common name contains the word 'Root' as well\n",
 			"as your organization name so you can recognize it, and that's why that is automatically filled\n",
-			"once you leave the organization field.</p>\n",
-			"<p>If you want to <b>upload</b> an existing root certificate, you may choose to keep the private key\n",
-			"offline for security reasons according to best practices. If you do include it here, we will be able\n",
-			"to generate an issuing certificate automatically in the next step. If you don't include it, we will\n",
-			"ask for it when needed.</p>"))
+			"once you leave the organization field.</p>"))
 	case "issuer-01":
 		return template.HTML(fmt.Sprint("<p>This is what end users will see as the issuing certificate. Again,\n",
 			"you can either generate a fresh certificate or import an existing one, as long as it is signed by\n",
