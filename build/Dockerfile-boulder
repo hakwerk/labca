@@ -1,21 +1,20 @@
 # syntax=docker/dockerfile:1
-FROM letsencrypt/boulder-tools:go1.24.1_2025-03-10 AS boulder-tools
+FROM letsencrypt/boulder-tools:go1.24.1_2025-04-30 AS boulder-tools
 
-FROM ubuntu:focal
+FROM ubuntu:noble
 
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
         ca-certificates \
-        mariadb-client-core-10.3 \
+        mariadb-client-core \
         net-tools \
         python3-pip \
         rsyslog \
         softhsm2 \
     && rm -rf /var/lib/apt/lists/* \
-    && pip3 install requests
+    && pip3 install --break-system-packages requests
 
 COPY --from=boulder-tools /usr/local/bin/sql-migrate /usr/local/bin/sql-migrate
-COPY --from=boulder-tools /usr/local/bin/pebble-challtestsrv /usr/local/bin/pebble-challtestsrv
 COPY --from=boulder-tools /usr/local/bin/minica /usr/local/bin/minica
 COPY tmp/bin /opt/boulder/bin
 COPY tmp/src/start.py /opt/boulder

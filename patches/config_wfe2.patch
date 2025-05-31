@@ -1,19 +1,48 @@
 diff --git a/test/config/wfe2.json b/test/config/wfe2.json
-index 6a5f95ef0..b880db50f 100644
+index 51c7aa8ef..1ed5d37af 100644
 --- a/test/config/wfe2.json
 +++ b/test/config/wfe2.json
-@@ -12,6 +12,7 @@
+@@ -3,8 +3,8 @@
+ 		"timeout": "30s",
+ 		"listenAddress": "0.0.0.0:4001",
+ 		"TLSListenAddress": "0.0.0.0:4431",
+-		"serverCertificatePath": "test/certs/ipki/boulder/cert.pem",
+-		"serverKeyPath": "test/certs/ipki/boulder/key.pem",
++		"serverCertificatePath": "labca/certs/ipki/boulder/cert.pem",
++		"serverKeyPath": "labca/certs/ipki/boulder/key.pem",
+ 		"allowOrigins": [
+ 			"*"
+ 		],
+@@ -12,13 +12,14 @@
+ 		"subscriberAgreementURL": "https://boulder.service.consul:4431/terms/v7",
  		"debugAddr": ":8013",
  		"directoryCAAIdentity": "happy-hacker-ca.invalid",
- 		"directoryWebsite": "https://github.com/letsencrypt/boulder",
-+		"hostnamePolicyFile": "test/hostname-policy.yaml",
+-		"directoryWebsite": "https://github.com/letsencrypt/boulder",
++		"directoryWebsite": "https://github.com/hakwerk/labca",
++		"hostnamePolicyFile": "labca/hostname-policy.yaml",
  		"legacyKeyIDPrefix": "http://boulder.service.consul:4000/reg/",
  		"goodkey": {},
  		"tls": {
-@@ -77,26 +78,6 @@
+-			"caCertFile": "test/certs/ipki/minica.pem",
+-			"certFile": "test/certs/ipki/wfe.boulder/cert.pem",
+-			"keyFile": "test/certs/ipki/wfe.boulder/key.pem"
++			"caCertFile": "labca/certs/ipki/minica.pem",
++			"certFile": "labca/certs/ipki/wfe.boulder/cert.pem",
++			"keyFile": "labca/certs/ipki/wfe.boulder/key.pem"
+ 		},
+ 		"raService": {
+ 			"dnsAuthority": "consul.service.consul",
+@@ -72,39 +73,20 @@
+ 			"hostOverride": "nonce.boulder"
+ 		},
+ 		"nonceHMACKey": {
+-			"keyFile": "test/secrets/nonce_prefix_key"
++			"keyFile": "labca/secrets/nonce_prefix_key"
+ 		},
+ 		"chains": [
  			[
- 				"test/certs/webpki/int-rsa-a.cert.pem",
- 				"test/certs/webpki/root-rsa.cert.pem"
+-				"test/certs/webpki/int-rsa-a.cert.pem",
+-				"test/certs/webpki/root-rsa.cert.pem"
 -			],
 -			[
 -				"test/certs/webpki/int-rsa-b.cert.pem",
@@ -34,6 +63,45 @@ index 6a5f95ef0..b880db50f 100644
 -			[
 -				"test/certs/webpki/int-ecdsa-b-cross.cert.pem",
 -				"test/certs/webpki/root-rsa.cert.pem"
++				"labca/certs/webpki/issuer-01-cert.pem",
++				"labca/certs/webpki/root-01-cert.pem"
  			]
  		],
  		"staleTimeout": "5m",
+ 		"limiter": {
+ 			"redis": {
+ 				"username": "boulder-wfe",
+-				"passwordFile": "test/secrets/wfe_ratelimits_redis_password",
++				"passwordFile": "labca/secrets/wfe_ratelimits_redis_password",
++				"db": 1,
+ 				"lookups": [
+ 					{
+ 						"Service": "redisratelimits",
+@@ -117,13 +99,13 @@
+ 				"poolSize": 100,
+ 				"routeRandomly": true,
+ 				"tls": {
+-					"caCertFile": "test/certs/ipki/minica.pem",
+-					"certFile": "test/certs/ipki/wfe.boulder/cert.pem",
+-					"keyFile": "test/certs/ipki/wfe.boulder/key.pem"
++					"caCertFile": "labca/certs/ipki/minica.pem",
++					"certFile": "labca/certs/ipki/wfe.boulder/cert.pem",
++					"keyFile": "labca/certs/ipki/wfe.boulder/key.pem"
+ 				}
+ 			},
+-			"Defaults": "test/config/wfe2-ratelimit-defaults.yml",
+-			"Overrides": "test/config/wfe2-ratelimit-overrides.yml"
++			"Defaults": "labca/config/wfe2-ratelimit-defaults.yml",
++			"Overrides": "labca/config/wfe2-ratelimit-overrides.yml"
+ 		},
+ 		"features": {
+ 			"ServeRenewalInfo": true,
+@@ -136,7 +118,7 @@
+ 		},
+ 		"unpause": {
+ 			"hmacKey": {
+-				"keyFile": "test/secrets/sfe_unpause_key"
++				"keyFile": "labca/secrets/sfe_unpause_key"
+ 			},
+ 			"jwtLifetime": "336h",
+ 			"url": "https://boulder.service.consul:4003"

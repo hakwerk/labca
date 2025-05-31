@@ -1,8 +1,8 @@
 diff --git a/cmd/boulder-wfe2/main.go b/cmd/boulder-wfe2/main.go
-index 1f33c4746..65b670e96 100644
+index 1f33c4746..1b0ad2ddb 100644
 --- a/cmd/boulder-wfe2/main.go
 +++ b/cmd/boulder-wfe2/main.go
-@@ -12,6 +12,7 @@ import (
+@@ -12,14 +12,17 @@ import (
  
  	"github.com/letsencrypt/boulder/cmd"
  	"github.com/letsencrypt/boulder/config"
@@ -10,15 +10,17 @@ index 1f33c4746..65b670e96 100644
  	emailpb "github.com/letsencrypt/boulder/email/proto"
  	"github.com/letsencrypt/boulder/features"
  	"github.com/letsencrypt/boulder/goodkey"
-@@ -20,6 +21,7 @@ import (
+ 	"github.com/letsencrypt/boulder/goodkey/sagoodkey"
+ 	bgrpc "github.com/letsencrypt/boulder/grpc"
  	"github.com/letsencrypt/boulder/grpc/noncebalancer"
++	"github.com/letsencrypt/boulder/identifier"
  	"github.com/letsencrypt/boulder/issuance"
  	"github.com/letsencrypt/boulder/nonce"
 +	"github.com/letsencrypt/boulder/policy"
  	rapb "github.com/letsencrypt/boulder/ra/proto"
  	"github.com/letsencrypt/boulder/ratelimits"
  	bredis "github.com/letsencrypt/boulder/redis"
-@@ -99,7 +101,7 @@ type Config struct {
+@@ -99,7 +102,7 @@ type Config struct {
  		// DirectoryCAAIdentity is used for the /directory response's "meta"
  		// element's "caaIdentities" field. It should match the VA's "issuerDomain"
  		// configuration value (this value is the one used to enforce CAA)
@@ -27,7 +29,7 @@ index 1f33c4746..65b670e96 100644
  		// DirectoryWebsite is used for the /directory response's "meta" element's
  		// "website" field.
  		DirectoryWebsite string `validate:"required,url"`
-@@ -175,6 +177,8 @@ type Config struct {
+@@ -175,6 +178,8 @@ type Config struct {
  			// to enable the pausing feature.
  			URL string `validate:"omitempty,required_with=HMACKey JWTLifetime,url,startswith=https://,endsnotwith=/"`
  		}
@@ -36,7 +38,7 @@ index 1f33c4746..65b670e96 100644
  	}
  
  	Syslog        cmd.SyslogConfig
-@@ -315,11 +319,22 @@ func main() {
+@@ -315,11 +320,25 @@ func main() {
  	var limiter *ratelimits.Limiter
  	var txnBuilder *ratelimits.TransactionBuilder
  	var limiterRedis *bredis.Ring
@@ -47,7 +49,10 @@ index 1f33c4746..65b670e96 100644
  		cmd.FailOnError(err, "Failed to create Redis ring")
  
 +		// Set Policy Authority for ratelimits
-+		pa, err = policy.New(map[core.AcmeChallenge]bool{}, logger)
++		pa, err = policy.New(
++			map[identifier.IdentifierType]bool{identifier.TypeDNS: true, identifier.TypeIP: true},
++			map[core.AcmeChallenge]bool{},
++			logger)
 +		cmd.FailOnError(err, "Couldn't create PA")
 +		if c.WFE.HostnamePolicyFile == "" {
 +			cmd.Fail("HostnamePolicyFile must be provided.")
@@ -59,7 +64,7 @@ index 1f33c4746..65b670e96 100644
  		source := ratelimits.NewRedisSource(limiterRedis.Ring, clk, stats)
  		limiter, err = ratelimits.NewLimiter(clk, source, stats)
  		cmd.FailOnError(err, "Failed to create rate limiter")
-@@ -359,6 +374,7 @@ func main() {
+@@ -359,6 +378,7 @@ func main() {
  		unpauseSigner,
  		c.WFE.Unpause.JWTLifetime.Duration,
  		c.WFE.Unpause.URL,

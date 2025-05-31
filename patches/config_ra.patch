@@ -1,10 +1,39 @@
 diff --git a/test/config/ra.json b/test/config/ra.json
-index 23c277c6c..0aa9a0088 100644
+index c16978e12..15e8252c0 100644
 --- a/test/config/ra.json
 +++ b/test/config/ra.json
-@@ -33,12 +33,7 @@
- 			"fermatRounds": 100
+@@ -3,7 +3,8 @@
+ 		"limiter": {
+ 			"redis": {
+ 				"username": "boulder-wfe",
+-				"passwordFile": "test/secrets/wfe_ratelimits_redis_password",
++				"passwordFile": "labca/secrets/wfe_ratelimits_redis_password",
++				"db": 1,
+ 				"lookups": [
+ 					{
+ 						"Service": "redisratelimits",
+@@ -16,25 +17,20 @@
+ 				"poolSize": 100,
+ 				"routeRandomly": true,
+ 				"tls": {
+-					"caCertFile": "test/certs/ipki/minica.pem",
+-					"certFile": "test/certs/ipki/wfe.boulder/cert.pem",
+-					"keyFile": "test/certs/ipki/wfe.boulder/key.pem"
++					"caCertFile": "labca/certs/ipki/minica.pem",
++					"certFile": "labca/certs/ipki/wfe.boulder/cert.pem",
++					"keyFile": "labca/certs/ipki/wfe.boulder/key.pem"
+ 				}
+ 			},
+-			"Defaults": "test/config/wfe2-ratelimit-defaults.yml",
+-			"Overrides": "test/config/wfe2-ratelimit-overrides.yml"
++			"Defaults": "labca/config/wfe2-ratelimit-defaults.yml",
++			"Overrides": "labca/config/wfe2-ratelimit-overrides.yml"
  		},
+ 		"maxContactsPerRegistration": 3,
+ 		"debugAddr": ":8002",
+-		"hostnamePolicyFile": "test/hostname-policy.yaml",
++		"hostnamePolicyFile": "labca/hostname-policy.yaml",
+ 		"goodkey": {},
  		"issuerCerts": [
 -			"test/certs/webpki/int-rsa-a.cert.pem",
 -			"test/certs/webpki/int-rsa-b.cert.pem",
@@ -12,7 +41,29 @@ index 23c277c6c..0aa9a0088 100644
 -			"test/certs/webpki/int-ecdsa-a.cert.pem",
 -			"test/certs/webpki/int-ecdsa-b.cert.pem",
 -			"test/certs/webpki/int-ecdsa-c.cert.pem"
-+			"test/certs/webpki/int-rsa-a.cert.pem"
++			"labca/certs/webpki/issuer-01-cert.pem"
  		],
  		"validationProfiles": {
  			"legacy": {
+@@ -58,9 +54,9 @@
+ 		},
+ 		"defaultProfileName": "legacy",
+ 		"tls": {
+-			"caCertFile": "test/certs/ipki/minica.pem",
+-			"certFile": "test/certs/ipki/ra.boulder/cert.pem",
+-			"keyFile": "test/certs/ipki/ra.boulder/key.pem"
++			"caCertFile": "labca/certs/ipki/minica.pem",
++			"certFile": "labca/certs/ipki/ra.boulder/cert.pem",
++			"keyFile": "labca/certs/ipki/ra.boulder/key.pem"
+ 		},
+ 		"vaService": {
+ 			"dnsAuthority": "consul.service.consul",
+@@ -154,7 +150,7 @@
+ 		},
+ 		"ctLogs": {
+ 			"stagger": "500ms",
+-			"logListFile": "test/ct-test-srv/log_list.json",
++			"logListFile": "labca/ct-test-srv/log_list.json",
+ 			"sctLogs": [
+ 				"A1 Current",
+ 				"A1 Future",

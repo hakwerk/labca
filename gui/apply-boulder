@@ -64,14 +64,23 @@ fi
 
 perl -i -p0e "s/(\"dnsStaticResolvers\": \[\n).*?(\s+\],)/\1\t\t\t\"$PKI_DNS\"\2/igs" config/remoteva-a.json
 perl -i -p0e "s/(\"dnsStaticResolvers\": \[\n).*?(\s+\],)/\1\t\t\t\"$PKI_DNS\"\2/igs" config/remoteva-b.json
+perl -i -p0e "s/(\"dnsStaticResolvers\": \[\n).*?(\s+\],)/\1\t\t\t\"$PKI_DNS\"\2/igs" config/remoteva-c.json
 perl -i -p0e "s/(\"dnsStaticResolvers\": \[\n).*?(\s+\],)/\1\t\t\t\"$PKI_DNS\"\2/igs" config/va.json
 perl -i -p0e "s/(\"dnsStaticResolvers\": \[\n).*?(\s+\],)/\1\t\t\t\"$PKI_DNS\"\2/igs" config/bad-key-revoker.json
 perl -i -p0e "s/(\"dnsStaticResolvers\": \[\n).*?(\s+\],)/\1\t\t\t\"$PKI_DNS\"\2/igs" config/expiration-mailer.json
+
+# Disable DOH as long as it is a feature...
+sed -i -e "s/\(\"DOH\":\s*\).*/\1false/" config/remoteva-a.json
+sed -i -e "s/\(\"DOH\":\s*\).*/\1false/" config/remoteva-b.json
+sed -i -e "s/\(\"DOH\":\s*\).*/\1false/" config/remoteva-c.json
+sed -i -e "s/\(\"DOH\":\s*\).*/\1false/" config/va.json
+
 for fl in $(grep -Rl maxConnectionAge config/); do
     perl -i -p0e "s/(\s+\"maxConnectionAge\":[^\n]+)//igs" $fl
 done
 sed -i -e "s/\"issuerDomain\": \".*\"/\"issuerDomain\": \"$PKI_DOMAIN\"/" config/remoteva-a.json
 sed -i -e "s/\"issuerDomain\": \".*\"/\"issuerDomain\": \"$PKI_DOMAIN\"/" config/remoteva-b.json
+sed -i -e "s/\"issuerDomain\": \".*\"/\"issuerDomain\": \"$PKI_DOMAIN\"/" config/remoteva-c.json
 sed -i -e "s/\"issuerDomain\": \".*\"/\"issuerDomain\": \"$PKI_DOMAIN\"/" config/va.json
 sed -i -e "s/\"directoryCAAIdentity\": \".*\"/\"directoryCAAIdentity\": \"$PKI_DOMAIN\"/" config/wfe2.json
 
@@ -82,7 +91,8 @@ if ([ "$PKI_DOMAIN_MODE" == "lockdown" ] && [ "$PKI_LOCKDOWN_DOMAINS" != "" ]) |
     perl -i -p0e "s/(\"modern\".*?)(\"ignoredLints\": \[).*?(\s+)(\"w_ext_subject_key_identifier_missing_sub_cert\")/\1\2\3\"e_dnsname_not_valid_tld\",\3\"w_sub_cert_aia_contains_internal_names\",\3\4/igs" config/ca.json
     perl -i -p0e "s/(\"shortlived\".*?)(\"ignoredLints\": \[).*?(\s+)(\"w_ext_subject_key_identifier_missing_sub_cert\")/\1\2\3\"e_dnsname_not_valid_tld\",\3\"w_sub_cert_aia_contains_internal_names\",\3\4/igs" config/ca.json
 
-    perl -i -p0e "s/(\"pkilint:cabf.serverauth.subscriber_rsa_digitalsignature_and_keyencipherment_present\",).*?(\])/\1\n  \"pkilint:cabf.internal_domain_name\",\n  \"zlint:e_dnsname_not_valid_tld\",\n  \"zlint:w_sub_cert_aia_contains_internal_names\",\n  \"certlint:\",\n\2/igs" config/zlint.toml
+    perl -i -p0e "s/(\"pkilint:cabf.serverauth.subscriber_rsa_digitalsignature_and_keyencipherment_present\",).*?(\])/\1\n  \"pkilint:cabf.internal_domain_name\",\n  \"zlint:e_dnsname_not_valid_tld\",\n  \"zlint:w_sub_cert_aia_contains_internal_names\",\n  \"certlint:special_name_in_san\",\n  \"certlint:br_certificates_must_include_an_http_url_of_the_ocsp_responder\",\n  \"x509lint:no_ocsp_over_http\",\n\2/igs" config/zlint.toml
+    perl -p0e "s/(ignore_lints = \[).*(\])/\1\"zlint:e_crl_next_update_invalid\"\2/igs" config/zlint.toml
 fi
 
 [ -e ../test/hostname-policy.yaml ] && cp ../test/hostname-policy.yaml ./ || true
@@ -153,6 +163,7 @@ if [ "$PKI_DOMAIN_MODE" == "lockdown" ] || [ "$PKI_DOMAIN_MODE" == "whitelist" ]
 
     perl -i -p0e "s/(\"labcaDomains\": \[\n).*?(\])/\1$LABCA_DOMAINS\n\t\t\2/igs" config/remoteva-a.json
     perl -i -p0e "s/(\"labcaDomains\": \[\n).*?(\])/\1$LABCA_DOMAINS\n\t\t\2/igs" config/remoteva-b.json
+    perl -i -p0e "s/(\"labcaDomains\": \[\n).*?(\])/\1$LABCA_DOMAINS\n\t\t\2/igs" config/remoteva-c.json
     perl -i -p0e "s/(\"labcaDomains\": \[\n).*?(\])/\1$LABCA_DOMAINS\n\t\t\2/igs" config/va.json
 fi
 

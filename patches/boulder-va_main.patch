@@ -1,5 +1,5 @@
 diff --git a/cmd/boulder-va/main.go b/cmd/boulder-va/main.go
-index e18989222..809e0c19e 100644
+index 981c4f9b5..9d5db072d 100644
 --- a/cmd/boulder-va/main.go
 +++ b/cmd/boulder-va/main.go
 @@ -52,6 +52,7 @@ type Config struct {
@@ -10,7 +10,7 @@ index e18989222..809e0c19e 100644
  	}
  
  	Syslog        cmd.SyslogConfig
-@@ -150,7 +151,8 @@ func main() {
+@@ -152,7 +153,8 @@ func main() {
  		c.VA.AccountURIPrefixes,
  		va.PrimaryPerspective,
  		"",

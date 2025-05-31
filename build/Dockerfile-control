@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1
-FROM letsencrypt/boulder-tools:go1.23.1_2024-09-05 AS boulder-tools
+FROM letsencrypt/boulder-tools:go1.24.1_2025-04-30 AS boulder-tools
 
-FROM ubuntu:focal as builder
+FROM ubuntu:noble AS builder
 
 RUN export DEBIAN_FRONTEND=noninteractive \
     && apt-get update \
@@ -29,7 +29,7 @@ RUN export DEBIAN_FRONTEND=noninteractive \
         fi \
     && rm -rf /var/lib/apt/lists/*
 
-FROM ubuntu:focal
+FROM ubuntu:noble
 
 RUN export DEBIAN_FRONTEND=noninteractive \
     && apt update \

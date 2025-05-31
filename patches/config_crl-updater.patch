@@ -1,8 +1,8 @@
 diff --git a/test/config/crl-updater.json b/test/config/crl-updater.json
-index eb5ba23e0..c4d40af92 100644
+index adb2b01e5..6066b7e5e 100644
 --- a/test/config/crl-updater.json
 +++ b/test/config/crl-updater.json
-@@ -36,18 +36,13 @@
+@@ -36,24 +36,19 @@
  			"hostOverride": "crl-storer.boulder"
  		},
  		"issuerCerts": [
@@ -17,13 +17,20 @@ index eb5ba23e0..c4d40af92 100644
 -		"numShards": 10,
 -		"shardWidth": "240h",
 -		"lookbackPeriod": "24h",
--		"updatePeriod": "6h",
--		"maxParallelism": 10,
+-		"updatePeriod": "10m",
+-		"updateTimeout": "1m",
 +		"numShards": 1,
 +		"shardWidth": "24h",
 +		"lookbackPeriod": "96h",
 +		"updatePeriod": "24h",
++		"updateTimeout": "2m",
+ 		"expiresMargin": "5m",
+ 		"cacheControl": "stale-if-error=60",
+ 		"temporallyShardedSerialPrefixes": [
+ 			"7f"
+ 		],
+-		"maxParallelism": 10,
 +		"maxParallelism": 1,
- 		"maxAttempts": 5,
+ 		"maxAttempts": 2,
  		"features": {}
  	},

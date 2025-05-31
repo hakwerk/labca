@@ -1,7 +1,16 @@
 diff --git a/crl/updater/updater.go b/crl/updater/updater.go
-index 4d5b06b38..d7cc6dba3 100644
+index 600b17f22..bef3305b3 100644
 --- a/crl/updater/updater.go
 +++ b/crl/updater/updater.go
+@@ -80,7 +80,7 @@ func NewUpdater(
+ 		return nil, fmt.Errorf("must have positive number of shards, got: %d", numShards)
+ 	}
+ 
+-	if updatePeriod >= 24*time.Hour {
++	if updatePeriod > 24*time.Hour {
+ 		return nil, fmt.Errorf("must update CRLs at least every 24 hours, got: %s", updatePeriod)
+ 	}
+ 
 @@ -307,7 +307,7 @@ func (cu *crlUpdater) updateShard(ctx context.Context, atTime time.Time, issuerN
  			return fmt.Errorf("streaming GetRevokedCerts: %w", err)
  		}

@@ -1,31 +1,63 @@
 diff --git a/test/config/ca.json b/test/config/ca.json
-index a64ec7ac2..09ffa1efe 100644
+index 35843b094..2d4e0c951 100644
 --- a/test/config/ca.json
 +++ b/test/config/ca.json
+@@ -1,11 +1,11 @@
+ {
+ 	"ca": {
+ 		"tls": {
+-			"caCertFile": "test/certs/ipki/minica.pem",
+-			"certFile": "test/certs/ipki/ca.boulder/cert.pem",
+-			"keyFile": "test/certs/ipki/ca.boulder/key.pem"
++			"caCertFile": "labca/certs/ipki/minica.pem",
++			"certFile": "labca/certs/ipki/ca.boulder/cert.pem",
++			"keyFile": "labca/certs/ipki/ca.boulder/key.pem"
+ 		},
+-		"hostnamePolicyFile": "test/hostname-policy.yaml",
++		"hostnamePolicyFile": "labca/hostname-policy.yaml",
+ 		"grpcCA": {
+ 			"maxConnectionAge": "30s",
+ 			"address": ":9093",
 @@ -60,7 +60,8 @@
- 					"allowMustStaple": true,
+ 					"includeCRLDistributionPoints": true,
  					"maxValidityPeriod": "7776000s",
  					"maxValidityBackdate": "1h5m",
 -					"lintConfig": "test/config-next/zlint.toml",
 +					"includeCRLDistributionPoints": true,
-+					"lintConfig": "test/config/zlint.toml",
++					"lintConfig": "labca/config/zlint.toml",
  					"ignoredLints": [
  						"w_subject_common_name_included",
  						"w_ext_subject_key_identifier_not_recommended_subscriber"
-@@ -74,7 +75,8 @@
- 					"omitSKID": true,
+@@ -76,7 +77,8 @@
+ 					"includeCRLDistributionPoints": true,
  					"maxValidityPeriod": "583200s",
  					"maxValidityBackdate": "1h5m",
 -					"lintConfig": "test/config-next/zlint.toml",
 +					"includeCRLDistributionPoints": true,
-+					"lintConfig": "test/config/zlint.toml",
++					"lintConfig": "labca/config/zlint.toml",
  					"ignoredLints": [
  						"w_ext_subject_key_identifier_missing_sub_cert"
  					]
-@@ -101,39 +103,7 @@
+@@ -91,7 +93,7 @@
+ 					"includeCRLDistributionPoints": true,
+ 					"maxValidityPeriod": "160h",
+ 					"maxValidityBackdate": "1h5m",
+-					"lintConfig": "test/config-next/zlint.toml",
++					"lintConfig": "labca/config-next/zlint.toml",
+ 					"ignoredLints": [
+ 						"w_ext_subject_key_identifier_missing_sub_cert"
+ 					]
+@@ -100,78 +102,19 @@
+ 			"crlProfile": {
+ 				"validityInterval": "216h",
+ 				"maxBackdate": "1h5m",
+-				"lintConfig": "test/config/zlint.toml"
++				"lintConfig": "labca/config/zlint.toml"
+ 			},
  			"issuers": [
  				{
  					"active": true,
+-					"crlShards": 10,
 -					"issuerURL": "http://ca.example.org:4502/int-ecdsa-a",
 -					"ocspURL": "http://ca.example.org:4002/",
 -					"crlURLBase": "http://ca.example.org:4501/lets-encrypt-crls/43104258997432926/",
@@ -37,6 +69,7 @@ index a64ec7ac2..09ffa1efe 100644
 -				},
 -				{
 -					"active": true,
+-					"crlShards": 10,
 -					"issuerURL": "http://ca.example.org:4502/int-ecdsa-b",
 -					"ocspURL": "http://ca.example.org:4002/",
 -					"crlURLBase": "http://ca.example.org:4501/lets-encrypt-crls/17302365692836921/",
@@ -48,6 +81,7 @@ index a64ec7ac2..09ffa1efe 100644
 -				},
 -				{
 -					"active": false,
+-					"crlShards": 10,
 -					"issuerURL": "http://ca.example.org:4502/int-ecdsa-c",
 -					"ocspURL": "http://ca.example.org:4002/",
 -					"crlURLBase": "http://ca.example.org:4501/lets-encrypt-crls/56560759852043581/",
@@ -60,16 +94,19 @@ index a64ec7ac2..09ffa1efe 100644
 -				{
 -					"active": true,
 +					"crlShards": 1,
+ 					"crlShards": 10,
  					"issuerURL": "http://ca.example.org:4502/int-rsa-a",
  					"ocspURL": "http://ca.example.org:4002/",
  					"crlURLBase": "http://ca.example.org:4501/lets-encrypt-crls/29947985078257530/",
-@@ -142,28 +112,6 @@
- 						"certFile": "test/certs/webpki/int-rsa-a.cert.pem",
- 						"numSessions": 2
- 					}
+ 					"location": {
+-						"configFile": "test/certs/webpki/int-rsa-a.pkcs11.json",
+-						"certFile": "test/certs/webpki/int-rsa-a.cert.pem",
+-						"numSessions": 2
+-					}
 -				},
 -				{
 -					"active": true,
+-					"crlShards": 10,
 -					"issuerURL": "http://ca.example.org:4502/int-rsa-b",
 -					"ocspURL": "http://ca.example.org:4002/",
 -					"crlURLBase": "http://ca.example.org:4501/lets-encrypt-crls/6762885421992935/",
@@ -81,14 +118,33 @@ index a64ec7ac2..09ffa1efe 100644
 -				},
 -				{
 -					"active": false,
+-					"crlShards": 10,
 -					"issuerURL": "http://ca.example.org:4502/int-rsa-c",
 -					"ocspURL": "http://ca.example.org:4002/",
 -					"crlURLBase": "http://ca.example.org:4501/lets-encrypt-crls/56183656833365902/",
 -					"location": {
 -						"configFile": "test/certs/webpki/int-rsa-c.pkcs11.json",
 -						"certFile": "test/certs/webpki/int-rsa-c.cert.pem",
--						"numSessions": 2
--					}
++						"configFile": "labca/certs/webpki/issuer-01.pkcs11.json",
++						"certFile": "labca/certs/webpki/issuer-01-cert.pem",
+ 						"numSessions": 2
+ 					}
  				}
- 			]
- 		},
+@@ -183,7 +126,7 @@
+ 		"goodkey": {},
+ 		"ocspLogMaxLength": 4000,
+ 		"ocspLogPeriod": "500ms",
+-		"ctLogListFile": "test/ct-test-srv/log_list.json",
++		"ctLogListFile": "labca/ct-test-srv/log_list.json",
+ 		"features": {}
+ 	},
+ 	"pa": {
+@@ -194,7 +137,7 @@
+ 		}
+ 	},
+ 	"syslog": {
+-		"stdoutlevel": 4,
++		"stdoutlevel": 6,
+ 		"sysloglevel": 4
+ 	}
+ }

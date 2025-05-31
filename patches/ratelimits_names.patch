@@ -1,5 +1,5 @@
 diff --git a/ratelimits/names.go b/ratelimits/names.go
-index 8e8ed80c4..6e3e77639 100644
+index bfda772b5..971892f22 100644
 --- a/ratelimits/names.go
 +++ b/ratelimits/names.go
 @@ -102,6 +102,9 @@ var nameToString = map[Name]string{
@@ -20,7 +20,7 @@ index 8e8ed80c4..6e3e77639 100644
 +	pa := PA
 +	var err error
 +	if pa == nil {
-+		pa, err = policy.New(nil, nil)
++		pa, err = policy.New(nil, nil, nil)
 +		if err != nil {
 +			return fmt.Errorf("cannot create policy authority implementation")
 +		}
@@ -36,7 +36,7 @@ index 8e8ed80c4..6e3e77639 100644
 -	err = policy.ValidDomain(regIdDomain[1])
 +	pa := PA
 +	if pa == nil {
-+		pa, err = policy.New(nil, nil)
++		pa, err = policy.New(nil, nil, nil)
 +		if err != nil {
 +			return fmt.Errorf("cannot create policy authority implementation")
 +		}
@@ -45,20 +45,20 @@ index 8e8ed80c4..6e3e77639 100644
  	if err != nil {
  		return fmt.Errorf(
  			"invalid domain, %q must be formatted 'regId:domain': %w", id, err)
-@@ -200,7 +218,15 @@ func validateFQDNSet(id string) error {
+@@ -202,7 +220,15 @@ func validateFQDNSet(id string) error {
  		return fmt.Errorf(
  			"invalid fqdnSet, %q must be formatted 'fqdnSet'", id)
  	}
--	return policy.WellFormedIdentifiers(identifier.FromDNSNames(domains))
+-	return policy.WellFormedIdentifiers(identifier.NewDNSSlice(domains))
 +	pa := PA
 +	var err error
 +	if pa == nil {
-+		pa, err = policy.New(nil, nil)
++		pa, err = policy.New(nil, nil, nil)
 +		if err != nil {
 +			return fmt.Errorf("cannot create policy authority implementation")
 +		}
 +	}
-+	return pa.WellFormedIdentifiers(identifier.FromDNSNames(domains))
++	return pa.WellFormedIdentifiers(identifier.NewDNSSlice(domains))
  }
  
  func validateIdForName(name Name, id string) error {

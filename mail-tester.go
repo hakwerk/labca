@@ -57,6 +57,8 @@ type config struct {
 		// during the SMTP connection (as opposed to the gRPC connections).
 		SMTPTrustedRootFile string
 
+		UserAgent string
+
 		Features features.Config
 	}
 
@@ -110,11 +112,12 @@ func main() {
 			scope,
 			clk,
 			dnsTries,
+			c.Mailer.UserAgent,
 			logger,
 			tlsConfig)
 		resolver = r
 	} else {
-		r := bdns.NewTest(dnsTimeout, servers, scope, clk, dnsTries, logger, tlsConfig)
+		r := bdns.NewTest(dnsTimeout, servers, scope, clk, dnsTries, c.Mailer.UserAgent, logger, tlsConfig)
 		resolver = r
 	}
 

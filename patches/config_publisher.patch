@@ -1,11 +1,13 @@
 diff --git a/test/config/publisher.json b/test/config/publisher.json
-index 6e0337c..1e5ed7b 100644
+index 1909a6f60..795de12e6 100644
 --- a/test/config/publisher.json
 +++ b/test/config/publisher.json
-@@ -6,18 +6,6 @@
+@@ -4,20 +4,8 @@
+ 		"blockProfileRate": 1000000000,
+ 		"chains": [
  			[
- 				"test/certs/webpki/int-rsa-a.cert.pem",
- 				"test/certs/webpki/root-rsa.cert.pem"
+-				"test/certs/webpki/int-rsa-a.cert.pem",
+-				"test/certs/webpki/root-rsa.cert.pem"
 -			],
 -			[
 -				"test/certs/webpki/int-rsa-b.cert.pem",
@@ -18,6 +20,21 @@ index 6e0337c..1e5ed7b 100644
 -			[
 -				"test/certs/webpki/int-ecdsa-b.cert.pem",
 -				"test/certs/webpki/root-ecdsa.cert.pem"
++				"labca/certs/webpki/issuer-01-cert.pem",
++				"labca/certs/webpki/root-01-cert.pem"
  			]
  		],
- 		"debugAddr": ":8009",
+ 		"grpc": {
+@@ -36,9 +24,9 @@
+ 			}
+ 		},
+ 		"tls": {
+-			"caCertFile": "test/certs/ipki/minica.pem",
+-			"certFile": "test/certs/ipki/publisher.boulder/cert.pem",
+-			"keyFile": "test/certs/ipki/publisher.boulder/key.pem"
++			"caCertFile": "labca/certs/ipki/minica.pem",
++			"certFile": "labca/certs/ipki/publisher.boulder/cert.pem",
++			"keyFile": "labca/certs/ipki/publisher.boulder/key.pem"
+ 		},
+ 		"features": {}
+ 	},

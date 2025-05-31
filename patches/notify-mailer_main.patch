@@ -1,5 +1,5 @@
 diff --git a/cmd/notify-mailer/main.go b/cmd/notify-mailer/main.go
-index 6c01efd64..23b1f4f9d 100644
+index 6c01efd64..6da77c7eb 100644
 --- a/cmd/notify-mailer/main.go
 +++ b/cmd/notify-mailer/main.go
 @@ -2,6 +2,7 @@ package notmain
@@ -48,7 +48,7 @@ index 6c01efd64..23b1f4f9d 100644
 +	cmd.FailOnError(cfg.PA.CheckChallenges(), "Invalid PA configuration")
 +
 +	logger := cmd.NewLogger(cmd.SyslogConfig{StdoutLevel: 7})
-+	pa, err := policy.New(cfg.PA.Challenges, logger)
++	pa, err := policy.New(cfg.PA.Identifiers, cfg.PA.Challenges, logger)
 +	cmd.FailOnError(err, "Failed to create PA")
 +	err = pa.LoadHostnamePolicyFile(cfg.NotifyMailer.HostnamePolicyFile)
 +	cmd.FailOnError(err, "Failed to load HostnamePolicyFile")

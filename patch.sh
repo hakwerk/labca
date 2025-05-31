@@ -20,6 +20,7 @@ $SUDO patch -p1 < $cloneDir/patches/boulder-va_main.patch
 $SUDO patch -p1 < $cloneDir/patches/ca_ca.patch
 $SUDO patch -p1 < $cloneDir/patches/ca_ca_keytype_hack.patch
 $SUDO patch -p1 < $cloneDir/patches/ca_crl.patch
+$SUDO patch -p1 < $cloneDir/patches/ceremony_crl.patch
 $SUDO patch -p1 < $cloneDir/patches/ceremony_ecdsa.patch
 $SUDO patch -p1 < $cloneDir/patches/ceremony_key.patch
 $SUDO patch -p1 < $cloneDir/patches/ceremony_main.patch
@@ -72,6 +73,8 @@ $SUDO patch -p1 < $cloneDir/patches/wfe2_wfe.patch
 sed -i -e "s|./test|./labca|" start.py
 
 sed -i -e "s/proxysql:6033/mysql:3306/" sa/db/dbconfig.yml
+
+sed -i -e "s/\(.*overrides.*\)/-- \1/" sa/db-users/boulder_sa.sql
 
 mkdir -p "cmd/mail-tester"
 cp $cloneDir/mail-tester.go cmd/mail-tester/main.go

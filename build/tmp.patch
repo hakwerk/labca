@@ -1,5 +1,5 @@
 diff --git a/docker-compose.yml b/docker-compose.yml
-index 6e06c3578..fc25e3b88 100644
+index e981e30ec..cf6585c65 100644
 --- a/docker-compose.yml
 +++ b/docker-compose.yml
 @@ -4,7 +4,7 @@ services:
@@ -27,7 +27,7 @@ index 6e06c3578..fc25e3b88 100644
      networks:
        bouldernet:
          ipv4_address: 10.77.77.77
-@@ -87,7 +86,8 @@ services:
+@@ -90,7 +89,8 @@ services:
    bredis:
      image: redis:6.2.7
      volumes:
@@ -37,7 +37,7 @@ index 6e06c3578..fc25e3b88 100644
      command: redis-server /opt/boulder/labca/redis-ratelimits.config
      networks:
        redisnet:
-@@ -99,35 +99,37 @@ services:
+@@ -102,35 +102,37 @@ services:
      depends_on:
        - control
      volumes:
@@ -86,7 +86,7 @@ index 6e06c3578..fc25e3b88 100644
      logging:
        driver: "json-file"
        options:
-@@ -144,30 +146,28 @@ services:
+@@ -147,30 +149,28 @@ services:
        - 80:80
        - 443:443
      volumes:
@@ -131,7 +131,7 @@ index 6e06c3578..fc25e3b88 100644
      expose:
        - 3030
      environment:
-@@ -185,6 +185,15 @@ services:
+@@ -188,6 +188,15 @@ services:
  
  volumes:
    dbdata:
