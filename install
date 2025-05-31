@@ -61,7 +61,7 @@ dn=$(dirname $0)
 source "$dn/utils.sh" &>/dev/null || true
 
 cmdlineFqdn=""
-cmdlineBranch=""
+cmdlineBranch="master"
 fullCmdline=""
 keepLocal=0
 alphaTest=0
@@ -853,6 +853,9 @@ check_dockeronly() {
 # The actual main function to tie it all together
 #
 main() {
+    echo
+    echo -e "${COL_YELLOW}WARNING${COL_NC}: the VM based install is now deprecated! Please consider switching to the docker-only setup."
+
     local curdir="$PWD"
 
     echo

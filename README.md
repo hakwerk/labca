@@ -9,10 +9,11 @@
 ## Table of Contents
 
 - [Background](#background)
-- [Install](#install)
+- [Startup](#startup)
 - [Usage](#usage)
 - [Troubleshooting](#troubleshooting)
 - [Standalone version for step-ca](#standalone-version-for-step-ca)
+- [Legacy Mode](#legacy-mode)
 - [Contributing](#contributing)
 - [License](#license)
 
@@ -26,34 +27,46 @@ To a lesser extent this also applies to internal applications and sites that are
 
 For the public internet, [Let's Encrypt&trade;](https://letsencrypt.org/) has made a big impact by providing free HTTPS certificates in an easy and automated way. There are many clients available to interact with their so called ACME (Automated Certificate Management Environment). They also have a staging environment that allows you to get things right before issuing trusted certificates and reduce the chance of your running up against rate limits.
 
-One technical requirement however is to have a publicly reachable location where your client application and their server can exchange information. For intranet / company internal applications or for testing clients within your organization this may not always be feasible.
+One technical requirement however is to have a publicly reachable location where your client application and their server can exchange information (for the HTTP-01 challenge type at least, alternatively there is also the DNS-01 method). For intranet / company internal applications or for testing clients within your organization this may not always be feasible.
 
 Luckily they have made the core of their application, called "Boulder", available as [open source](https://github.com/letsencrypt/boulder/). It is possible to install Boulder on your own server and use it internally to hand out certificates. As long as all client machines / laptops in your organization trust your root CA certificate, all certificates it signed are trusted automatically and users see a green lock icon in their browsers.
 
 Also if you are developing your own client application or integrating one into your own application, a local test ACME can be very handy. There is a lot of information on the internet about setting up your own PKI (Public Key Infrastructure) but those are usually not automated.
 
-Getting Boulder up and running has quite a learning curve though and that is where **LabCA** comes in. It is a self-contained installation with a nice web GUI built on top of Boulder so you can quickly start using it. All regular management tasks can be done from the web interface. It is best installed in a Virtual Machine and uses Debian Linux as a base.
+Getting Boulder up and running has quite a learning curve though and that is where **LabCA** comes in. It is a self-contained installation with a nice web GUI built on top of Boulder so you can quickly start using it. All regular management tasks can be done from the web interface.
 
-## Install
+## Startup
 
 NOTE: LabCA depends on the boulder engine which cannot run on a Raspberry Pi.
 
-NOTE2: The hostname of your LabCA machine must be in local DNS for the boulder engine to be able to give out a certificate for it.
+NOTE2: The hostname of your LabCA machine must be in a local DNS for the boulder engine to be able to give out a certificate for it.
 
-**NEW**: It is now possible to run LabCA on an existing docker server, see [README_dockeronly](README_dockeronly.md)
-
-LabCA is best run on its own server / virtual machine to prevent any issues caused by conflicting applications. On a freshly installed Linux machine (currently tested with Debian 12/bookworm, Debian 11/bullseye, and Ubuntu 22.04) run this command as root user (or as a regular user that already is in the sudo group):
-
-```sh
-curl -sSL https://raw.githubusercontent.com/hakwerk/labca/master/install | bash
+Make sure to have docker with the compose plugin installed on the machine where you want to run LabCA, e.g. on Ubuntu/Debian machines do:
+```
+sudo apt update
+sudo apt install -y docker-ce docker-ce-cli containerd.io docker-compose-plugin
 ```
 
-Alternatively, clone this git repository and run the install script locally.
-Or a combination: run the above curl command, but abort (ctrl-c) the script after the `[✓] Clone https://github.com/hakwerk/labca/ to /home/labca/labca` line (it will be waiting for the FQDN input) so that this repository is cloned in its final location, and then inspect, tweak and/or run the script `/home/labca/labca/install`.
+For the initial setup you need to export an environment variable LABCA_FQDN with the FQDN (Fully Qualified Domain Name, the name you would use in the browser for accessing the web pages). It is not possible to run LabCA on an IP address only, there must be a DNS mapping present.
 
-The first-time install will take a while, depending on the power of your server and your internet speed. On my machine it takes about 12 minutes. It will install the latest versions of some packages, download the relevant programs and configure everything. If all goes well it should look like this:
+```
+git clone https://github.com/hakwerk/labca.git
+cd labca
+export LABCA_FQDN=labca.example.com
+docker compose up -d
+```
+To tail the logs, especially if there are any issues:
+```
+docker compose logs -f
+```
 
-<img src="https://user-images.githubusercontent.com/44847421/48658718-dc557b00-ea46-11e8-8596-00709fad9197.jpg" width="300">
+All data is stored in docker volumes, you'll want to include those in your regular backups.
+
+In case you get an error like this after running `docker compose up`:
+```
+Error response from daemon: failed to create shim task: OCI runtime create failed: runc create failed: unable to start container process: exec: "labca/entrypoint.sh": stat labca/entrypoint.sh: no such file or directory: unknown
+```
+then you forgot to export the LABCA_FQDN environment variable.
 
 ### Setup
 
@@ -65,10 +78,17 @@ Once the setup is completed, please make a backup of your Root and Issuer certif
 
 ### Update
 
-When updates are available, this will be indicated on the Dashboard page (System Overview section). They can be installed from the Linux shell, on the server run this command as root to update the installation:
+By default, the `latest` LabCA docker image version tags are used when you start it. In case there is a newer version of images available, you can update to the new `:latest` versions by doing something like:
+```
+docker compose pull
+docker compose up -d --remove-orphans
+docker image prune
+```
+Or you can use something like [watchtower](https://containrrr.dev/watchtower/) to automatically keep the images updated, or [Diun](https://crazymax.dev/diun/) to inform you about new images.
 
-```sh
-~labca/labca/install
+If you prefer to use specific versions of the images and only update when you explicitly want to, you can set the `LABCA_IMAGE_VERSION` environment variable to an explicit version number. The easiest way to do this is by using a `.env` file in the same location as the `docker-compose.yml` file, e.g. by using something like this:
+```
+echo "LABCA_IMAGE_VERSION=v25.03" > labca.env
 ```
 
 ## Usage
@@ -107,33 +127,38 @@ The end users in your organization / lab can visit the public pages of you LabCA
 After installing sometimes the application is not starting up properly and it can be quite hard to figure out why.
 First, make sure that all six containers are running:
 ```
-root@testpki:/home/labca/boulder# docker compose ps -a
-NAME                IMAGE                                           COMMAND                  SERVICE             CREATED             STATUS              PORTS
-labca-bconsul-1     hashicorp/consul:1.14.2                         "docker-entrypoint.s…"   bconsul             2 hours ago         Up About an hour    8300-8302/tcp, 8500/tcp, 8301-8302/udp, 8600/tcp, 8600/udp
-labca-bmysql-1      mariadb:10.5                                    "docker-entrypoint.s…"   bmysql              2 hours ago         Up About an hour    3306/tcp
-labca-boulder-1     letsencrypt/boulder-tools:go1.20.5_2023-06-20   "labca/entrypoint.sh"    boulder             2 hours ago         Up About an hour    4001-4003/tcp
-labca-control-1     letsencrypt/boulder-tools:go1.20.5_2023-06-20   "./control.sh"           control             2 hours ago         Up 2 hours          3030/tcp
-labca-gui-1         letsencrypt/boulder-tools:go1.20.5_2023-06-20   "./setup.sh"             gui                 2 hours ago         Up 2 hours          3000/tcp
-labca-nginx-1       nginx:1.25.1                                    "/docker-entrypoint.…"   nginx               2 hours ago         Up 2 hours          0.0.0.0:80->80/tcp, :::80->80/tcp, 0.0.0.0:443->443/tcp, :::443->443/tcp
+root@testpki:/home/labca/labca# docker compose ps -a
+NAME                IMAGE                               COMMAND                  SERVICE     CREATED        STATUS        PORTS
+labca-bconsul-1     hashicorp/consul:1.15.4             "docker-entrypoint.s…"   bconsul     19 hours ago   Up 14 hours   8300-8302/tcp, 8500/tcp, 8301-8302/udp, 8600/tcp, 8600/udp
+labca-bmysql-1      mariadb:10.5                        "docker-entrypoint.s…"   bmysql      15 hours ago   Up 14 hours   3306/tcp
+labca-boulder-1     hakwerk/labca-boulder:latest        "labca/entrypoint.sh"    boulder     15 hours ago   Up 14 hours   0.0.0.0:4001-4003->4001-4003/tcp, [::]:4001-4003->4001-4003/tcp
+labca-bpkimetal-1   ghcr.io/pkimetal/pkimetal:v1.19.0   "/app/pkimetal"          bpkimetal   15 hours ago   Up 14 hours
+labca-bredis-1      redis:6.2.7                         "docker-entrypoint.s…"   bredis      15 hours ago   Up 14 hours   6379/tcp
+labca-control-1     hakwerk/labca-control:latest        "./control.sh"           control     15 hours ago   Up 14 hours   3030/tcp
+labca-gui-1         hakwerk/labca-gui:latest            "bin/labca-gui"          gui         15 hours ago   Up 14 hours   3000/tcp
+labca-nginx-1       nginx:latest                        "/docker-entrypoint.…"   nginx       15 hours ago   Up 14 hours   0.0.0.0:80->80/tcp, [::]:80->80/tcp, 0.0.0.0:443->443/tcp, [::]:443->443/tcp
 ```
 
-Some log files to check in case of issues are:
-* /home/labca/nginx_data/ssl/certbot.log
-* cd /home/labca/boulder; docker compose exec control cat /logs/commander.log (if it exists)
-* cd /home/labca/boulder; docker compose logs control
-* cd /home/labca/boulder; docker compose logs boulder
-* cd /home/labca/boulder; docker compose logs labca
-* possibly cd /home/labca/boulder; docker compose logs nginx
+Some log files to check in case of issues are (all commands should be run from the directory where the `docker-compose.yml` is located):
+* docker compose exec control cat /etc/nginx/ssl/certbot.log
+* docker compose exec control cat /opt/logs/commander.log (if it exists)
+* docker compose logs control
+* docker compose logs boulder
+* docker compose logs labca
+* (possibly) docker compose logs nginx
 
 ### Common error messages
 
-If you get "**No valid IP addresses found for <hostname>**" in /home/labca/nginx_data/ssl/certbot.log, solve it by entering the hostname in your local DNS. Same for "**Could not resolve host: <hostname>**" in one of those docker compose logs.
+If you get "**No valid IP addresses found for <hostname>**" in certbot.log, solve it by entering the hostname in your local DNS. Same for "**Could not resolve host: <hostname>**" in one of those docker compose logs.
 
 When issuing a certificate, LabCA/boulder checks for CAA (Certification Authority Authorization) records in DNS, which specify what CAs are allowed to issue certificates for the domain. If you get an error like "**SERVFAIL looking up CAA for internal**" or "**CAA record for ca01.foo.internal prevents issuance**", you can try to add something like this to your DNS domain:
 ```
 foo.internal. CAA 0 issue "foo.internal"
 ```
-The value in the issue field should be the domain of your LabCA instance, not the hostname. This value can be found in the issuerDomain property in the /home/labca/boulder_labca/config/va.json file.
+The value in the issue field should be the domain of your LabCA instance, not the hostname. This value can be found in the issuerDomain property in the va.json file:
+```
+docker compose exec boulder grep "issuerDomain" /opt/boulder/labca/config/va.json
+```
 See also the [Let's Encrypt&trade; page on CAA](https://letsencrypt.org/docs/caa/).
 
 If all seems to be working at first, but you hit the **rate limit** after successfully issueing two certificates, make sure that in your list of whitelisted/lockdown domains (in the Manage section on the Config tab) you include all the subdomains that you want to use. So if you want to issue for `abc.dev.lan` and `def.dev.lan`, as well as `xyz.home.lan`, then you should include both `dev.lan` and `home.lan`. Only using `lan` in this example will trigger that rate limit.
@@ -149,6 +174,10 @@ Although LabCA tries to be as robust as possible, use it at your own risk. If yo
 ## Standalone version for step-ca
 
 See [README_standalone](README_standalone.md) [![status-experimental](https://img.shields.io/badge/status-experimental-orange.svg)](README_standalone.md)
+
+## Legacy Mode
+
+See [README_legacy](https://github.com/hakwerk/labca/blob/master/README.md) on the `master` branch for the old `install` script installation method.
 
 ## Contributing
 
