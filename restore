@@ -18,7 +18,11 @@ cd /opt/boulder
 sed -i -e "s/\(INSERT INTO \`gorp_migrations\`.*\)/-- \1/" $TMPDIR/boulder_sa_integration.sql
 docker compose exec bmysql mysql boulder_sa_integration <$TMPDIR/boulder_sa_integration.sql
 
-mv -f $TMPDIR/*key* $TMPDIR/*cert.pem $TMPDIR/*.csr /etc/nginx/ssl/
+if [ -d  $TMPDIR/nginx_ssl ]; then
+    mv -f $TMPDIR/nginx_ssl/* /etc/nginx/ssl/
+else
+    mv -f $TMPDIR/*key* $TMPDIR/*cert.pem $TMPDIR/*.csr /etc/nginx/ssl/
+fi
 
 [ -d  $TMPDIR/data ] || (echo "Data folder backup not found"; exit 1)
 vrs=$(grep version /opt/labca/data/config.json | sed -e 's/.*:[ ]*//' | sed -e 's/\",//g' | sed -e 's/\"//g')

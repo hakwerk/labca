@@ -50,28 +50,13 @@ case $txt in
 "acme-request")
     wait_up $PS_BOULDER $PS_BOULDER_COUNT &>>$LOGFILE
     cd /etc/nginx/ssl
-    [ -e account.key ] || openssl genrsa 4096 > account.key
-    [ -L labca_key.pem ] || mv labca_key.pem labca_key_rsa.pem
-    [ -e labca_key_rsa.pem ] || openssl genrsa 4096 > labca_key_rsa.pem
-    [ -e labca_key_ecdsa.pem ] || openssl ecparam -name secp384r1 -genkey -out labca_key_ecdsa.pem
-
-    set +e
-    curve_count=$(openssl pkey -pubin -in /opt/boulder/labca/certs/webpki/issuer-01-pubkey.pem -text | grep -i curve | wc -l)
-    set -e
-    [ "$curve_count" == "0" ] && ln -sf labca_key_rsa.pem labca_key.pem || /bin/true
-    [ "$curve_count" != "0" ] && ln -sf labca_key_ecdsa.pem labca_key.pem || /bin/true
 
     if [ -e labca_cert.pem ]; then
-        if [ ! -e domain.csr ]; then
-            san=$(openssl x509 -noout -text -in labca_cert.pem | grep DNS:)
-            openssl req -new -utf8 -sha256 -key labca_key.pem -subj "/" -reqexts SAN -config <(cat /etc/ssl/openssl.cnf <(printf "[SAN]\nsubjectAltName=$san")) > domain.csr
-        fi
-
         hash=$(openssl x509 -hash -noout -in labca_cert.pem)
         issuer_hash=$(openssl x509 -issuer_hash -noout -in labca_cert.pem)
     fi
     if [ "$hash" == "$issuer_hash" ] || ! expires=$(openssl x509 -checkend 172800 -noout -in labca_cert.pem); then
-        url=$(grep 'DEFAULT_DIRECTORY_URL =' /opt/labca/acme_tiny.py | sed -e 's/.*=[ ]*//' | sed -e 's/\"//g')
+        url=http://boulder:4001/directory
         wait_server $url
         sleep 10
         /opt/labca/renew
@@ -88,18 +73,8 @@ case $txt in
 "acme-change")
     read fqdn
     cd /etc/nginx/ssl
-    [ -L labca_key.pem ] || mv labca_key.pem labca_key_rsa.pem
-    [ -e labca_key_rsa.pem ] || openssl genrsa 4096 > labca_key_rsa.pem
-    [ -e labca_key_ecdsa.pem ] || openssl ecparam -name secp384r1 -genkey -out labca_key_ecdsa.pem
 
-    set +e
-    curve_count=$(openssl pkey -pubin -in /opt/boulder/labca/certs/webpki/issuer-01-pubkey.pem -text | grep -i curve | wc -l)
-    set -e
-    [ "$curve_count" == "0" ] && ln -sf labca_key_rsa.pem labca_key.pem || /bin/true
-    [ "$curve_count" != "0" ] && ln -sf labca_key_ecdsa.pem labca_key.pem || /bin/true
-
-    openssl req -new -utf8 -sha256 -key labca_key.pem -subj "/" -reqexts SAN -config <(cat /etc/ssl/openssl.cnf <(printf "[SAN]\nsubjectAltName=DNS:$fqdn")) > domain.csr
-    url=$(grep 'DEFAULT_DIRECTORY_URL =' /opt/labca/acme_tiny.py | sed -e 's/.*=[ ]*//' | sed -e 's/\"//g')
+    url=http://boulder:4001/directory
     wait_server $url
     sleep 10
     /opt/labca/renew
@@ -116,7 +91,7 @@ case $txt in
     docker compose restart nginx &>>$LOGFILE
     ;;
 "log-cert")
-    [ -f /etc/nginx/ssl/acme_tiny.log ] && tail -200 /etc/nginx/ssl/acme_tiny.log || /bin/true
+    [ -f /etc/nginx/ssl/certbot.log ] && tail -200 /etc/nginx/ssl/certbot.log || /bin/true
     exit 0
     ;;
 "log-commander")

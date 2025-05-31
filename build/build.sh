@@ -53,7 +53,6 @@ BASEDIR=/go/src/labca
 docker run -v $TMP_DIR/admin:$BASEDIR:cached -v $TMP_DIR:$BASEDIR/bin -w $BASEDIR -e GIT_VERSION=$GIT_VERSION $BUILD_IMAGE ./setup.sh
 
 cp -rp $cloneDir/gui/setup.sh $TMP_DIR/admin/
-cp -rp $cloneDir/acme_tiny.py $TMP_DIR/
 cp -rp $cloneDir/backup $TMP_DIR/
 cp -rp $cloneDir/checkcrl $TMP_DIR/
 cp -rp $cloneDir/checkrenew $TMP_DIR/

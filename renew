@@ -3,12 +3,22 @@
 set -e
 
 cd /etc/nginx/ssl
-echo >> acme_tiny.log
-date >> acme_tiny.log
+echo >> certbot.log
+date >> certbot.log
+
+set +e
+curve_count=$(openssl pkey -pubin -in /opt/boulder/labca/certs/webpki/issuer-01-pubkey.pem -text | grep -i curve | wc -l)
+set -e
+keytype=ecdsa
+[ "$curve_count" == "0" ] && keytype=rsa || /bin/true
+
 email=$(grep "\"email\":" /opt/labca/data/config.json | grep -v " {" | cut -d ":" -f 2 | sed -e "s/[\", ]*//g")
-CONTACT="mailto:$email"
-python3 /opt/labca/acme_tiny.py --account-key ./account.key --csr ./domain.csr --contact $CONTACT --acme-dir /var/www/html/.well-known/acme-challenge/ > domain_chain.crt 2> >(tee -a acme_tiny.log >&2) || exit 1
-mv domain_chain.crt labca_cert.pem
+fqdn=$(grep "\"fqdn\":" /opt/labca/data/config.json | grep -v " {" | cut -d ":" -f 2 | sed -e "s/[\", ]*//g")
+
+certbot certonly --agree-tos --config-dir $(pwd) -d $fqdn --email $email --key-type $keytype -n --server http://boulder:4001/directory --webroot --webroot-path /var/www/html >> certbot.log 2>&1 || exit 1
+
+ln -sf live/$fqdn/fullchain.pem labca_cert.pem
+ln -sf live/$fqdn/privkey.pem labca_key.pem
 
 cd /opt/boulder
 docker compose restart nginx

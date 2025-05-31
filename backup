@@ -12,13 +12,13 @@ fi
 instance=$(grep fqdn /opt/labca/data/config.json 2>/dev/null | cut -d ":" -f 2- | tr -d " \"," | cut -d"." -f1)
 BASE=${NOW}_${instance}${CRON}
 TMPDIR=/tmp/$BASE
-mkdir -p $TMPDIR
+mkdir -p $TMPDIR/nginx_ssl
 mkdir -p /opt/backup
 
 cd /opt/boulder
 docker compose exec bmysql mysqldump boulder_sa_integration >$TMPDIR/boulder_sa_integration.sql
 
-cp -p /etc/nginx/ssl/*key* /etc/nginx/ssl/*cert.pem /etc/nginx/ssl/*.csr $TMPDIR/
+cp -rp /etc/nginx/ssl $TMPDIR/nginx_ssl/
 
 cp -rp /opt/labca/data $TMPDIR/
 #cp -p /opt/labca/data/config.json $TMPDIR/

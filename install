@@ -880,6 +880,8 @@ main() {
         clone_or_pull "$cloneDir" "$labcaUrl" "$cmdlineBranch"
         checkout_release "$cmdlineBranch"
         restart_if_updated
+    else
+        git config --global --add safe.directory "$cloneDir"
     fi
 
     if [ $alphaTest -eq 1 ]; then

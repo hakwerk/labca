@@ -83,6 +83,15 @@ main() {
 
     docker ps &>/dev/null || install_docker
 
+    # Use python 3.10 to prevent warnings from certbot
+    add-apt-repository -y ppa:deadsnakes/ppa
+    apt update
+    apt install -y python3.10-venv
+    python3.10 -m venv /opt/certbot
+    /opt/certbot/bin/pip install --upgrade pip
+    /opt/certbot/bin/pip install certbot
+    ln -sf /opt/certbot/bin/certbot /usr/bin/certbot
+
     [ -e /etc/nginx/ssl/labca_cert.pem ] || selfsigned_cert
     renew_near_expiry
 

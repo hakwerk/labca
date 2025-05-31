@@ -97,6 +97,7 @@ echo
 echo "Boulder CI tag(s):"
 grep go1. ../boulder/.github/workflows/boulder-ci.yml
 colorCITag build/Dockerfile-boulder
+colorCITag build/Dockerfile-control
 echo
 
 goversion=$(grep GO_VERSION -A 3 ../boulder/.github/workflows/release.yml | egrep "\- [\"0-9]+" | sed -e "s/\s*-\s*//" | sed -e "s/\"//g")

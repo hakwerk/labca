@@ -118,7 +118,7 @@ labca-nginx-1       nginx:1.25.1                                    "/docker-ent
 ```
 
 Some log files to check in case of issues are:
-* /home/labca/nginx_data/ssl/acme_tiny.log
+* /home/labca/nginx_data/ssl/certbot.log
 * cd /home/labca/boulder; docker compose exec control cat /logs/commander.log (if it exists)
 * cd /home/labca/boulder; docker compose logs control
 * cd /home/labca/boulder; docker compose logs boulder
@@ -127,7 +127,7 @@ Some log files to check in case of issues are:
 
 ### Common error messages
 
-If you get "**No valid IP addresses found for <hostname>**" in /home/labca/nginx_data/ssl/acme_tiny.log, solve it by entering the hostname in your local DNS. Same for "**Could not resolve host: <hostname>**" in one of those docker compose logs.
+If you get "**No valid IP addresses found for <hostname>**" in /home/labca/nginx_data/ssl/certbot.log, solve it by entering the hostname in your local DNS. Same for "**Could not resolve host: <hostname>**" in one of those docker compose logs.
 
 When issuing a certificate, LabCA/boulder checks for CAA (Certification Authority Authorization) records in DNS, which specify what CAs are allowed to issue certificates for the domain. If you get an error like "**SERVFAIL looking up CAA for internal**" or "**CAA record for ca01.foo.internal prevents issuance**", you can try to add something like this to your DNS domain:
 ```
