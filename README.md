@@ -51,7 +51,7 @@ For the initial setup you need to export an environment variable LABCA_FQDN with
 
 ```
 git clone https://github.com/hakwerk/labca.git
-cd labca
+cd labca/build
 export LABCA_FQDN=labca.example.com
 docker compose up -d
 ```
