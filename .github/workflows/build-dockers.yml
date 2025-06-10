@@ -31,7 +31,7 @@ jobs:
           git_commit_gpgsign: true
 
       - name: Commit any updated files
-        uses: stefanzweifel/git-auto-commit-action@v5
+        uses: stefanzweifel/git-auto-commit-action@v6
         with:
           commit_message: "[skip ci] Commit changes from build-dockers action"
           commit_options: "-S"
