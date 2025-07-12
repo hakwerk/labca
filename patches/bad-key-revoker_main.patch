@@ -1,16 +1,8 @@
 diff --git a/cmd/bad-key-revoker/main.go b/cmd/bad-key-revoker/main.go
-index c333b88c3..8e9cc21bd 100644
+index 8e6cfac85..8880ed301 100644
 --- a/cmd/bad-key-revoker/main.go
 +++ b/cmd/bad-key-revoker/main.go
-@@ -18,6 +18,7 @@ import (
- 	"google.golang.org/grpc"
- 	"google.golang.org/protobuf/types/known/emptypb"
- 
-+	"github.com/letsencrypt/boulder/bdns"
- 	"github.com/letsencrypt/boulder/cmd"
- 	"github.com/letsencrypt/boulder/config"
- 	"github.com/letsencrypt/boulder/core"
-@@ -398,6 +399,11 @@ type Config struct {
+@@ -270,6 +270,11 @@ type Config struct {
  		TLS       cmd.TLSConfig
  		RAService *cmd.GRPCClientConfig
  
@@ -22,59 +14,12 @@ index c333b88c3..8e9cc21bd 100644
  		// MaximumRevocations specifies the maximum number of certificates associated with
  		// a key hash that bad-key-revoker will attempt to revoke. If the number of certificates
  		// is higher than MaximumRevocations bad-key-revoker will error out and refuse to
-@@ -417,6 +423,8 @@ type Config struct {
+@@ -289,6 +294,8 @@ type Config struct {
  		// or no work to do.
  		BackoffIntervalMax config.Duration `validate:"-"`
  
 +		UserAgent string
 +
+ 		// Deprecated: the bad-key-revoker no longer sends emails; we use ARI.
+ 		// TODO(#8199): Remove this config stanza entirely.
  		Mailer struct {
- 			cmd.SMTPConfig
- 			// Path to a file containing a list of trusted root certificates for use
-@@ -469,8 +477,36 @@ func main() {
- 	cmd.FailOnError(err, "Failed to load credentials and create gRPC connection to RA")
- 	rac := rapb.NewRegistrationAuthorityClient(conn)
- 
-+	dnsTimeout, err := time.ParseDuration(config.BadKeyRevoker.DNSTimeout)
-+	cmd.FailOnError(err, "Couldn't parse DNS timeout")
-+	dnsTries := config.BadKeyRevoker.DNSTries
-+	if dnsTries < 1 {
-+		dnsTries = 1
-+	}
-+	var resolver bdns.Client
-+	servers, err := bdns.NewStaticProvider(config.BadKeyRevoker.DNSStaticResolvers)
-+	cmd.FailOnError(err, "Couldn't start static DNS server resolver")
-+	if !config.BadKeyRevoker.DNSAllowLoopbackAddresses {
-+		r := bdns.New(
-+			dnsTimeout,
-+			servers,
-+			scope,
-+			clk,
-+			dnsTries,
-+			config.BadKeyRevoker.UserAgent,
-+			logger,
-+			tlsConfig)
-+		resolver = r
-+	} else {
-+		r := bdns.NewTest(dnsTimeout, servers, scope, clk, dnsTries, config.BadKeyRevoker.UserAgent, logger, tlsConfig)
-+		resolver = r
-+	}
-+
- 	var smtpRoots *x509.CertPool
--	if config.BadKeyRevoker.Mailer.SMTPTrustedRootFile != "" {
-+	smtpSkipVerify := false
-+	if config.BadKeyRevoker.Mailer.SMTPTrustedRootFile == "InsecureSkipVerify" {
-+		smtpSkipVerify = true
-+	} else if config.BadKeyRevoker.Mailer.SMTPTrustedRootFile != "" {
- 		pem, err := os.ReadFile(config.BadKeyRevoker.Mailer.SMTPTrustedRootFile)
- 		cmd.FailOnError(err, "Loading trusted roots file")
- 		smtpRoots = x509.NewCertPool()
-@@ -490,6 +526,8 @@ func main() {
- 		config.BadKeyRevoker.Mailer.Username,
- 		smtpPassword,
- 		smtpRoots,
-+		smtpSkipVerify,
-+		resolver,
- 		*fromAddress,
- 		logger,
- 		scope,

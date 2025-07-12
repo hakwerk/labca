@@ -67,7 +67,6 @@ perl -i -p0e "s/(\"dnsStaticResolvers\": \[\n).*?(\s+\],)/\1\t\t\t\"$PKI_DNS\"\2
 perl -i -p0e "s/(\"dnsStaticResolvers\": \[\n).*?(\s+\],)/\1\t\t\t\"$PKI_DNS\"\2/igs" config/remoteva-c.json
 perl -i -p0e "s/(\"dnsStaticResolvers\": \[\n).*?(\s+\],)/\1\t\t\t\"$PKI_DNS\"\2/igs" config/va.json
 perl -i -p0e "s/(\"dnsStaticResolvers\": \[\n).*?(\s+\],)/\1\t\t\t\"$PKI_DNS\"\2/igs" config/bad-key-revoker.json
-perl -i -p0e "s/(\"dnsStaticResolvers\": \[\n).*?(\s+\],)/\1\t\t\t\"$PKI_DNS\"\2/igs" config/expiration-mailer.json
 
 # Disable DOH as long as it is a feature...
 sed -i -e "s/\(\"DOH\":\s*\).*/\1false/" config/remoteva-a.json
@@ -197,7 +196,6 @@ if [ "$PKI_EXTENDED_TIMEOUT" == "1" ]; then
     sed -i -e "s/\"timeout\": \"15s\"/\"timeout\": \"30s\"/" config/admin.json
     sed -i -e "s/\"timeout\": \"15s\"/\"timeout\": \"30s\"/" config/wfe2.json
     sed -i -e "s/\"timeout\": \"20s\"/\"timeout\": \"40s\"/" config/wfe2.json
-    sed -i -e "s/\"timeout\": \"15s\"/\"timeout\": \"30s\"/" config/expiration-mailer.json
     sed -i -e "s/\"timeout\": \"15s\"/\"timeout\": \"30s\"/" config/ra.json
     sed -i -e "s/\"timeout\": \"20s\"/\"timeout\": \"40s\"/" config/ra.json
     sed -i -e "s/\"timeout\": \"15s\"/\"timeout\": \"30s\"/" config/crl-storer.json
@@ -214,16 +212,6 @@ sed -i -e "s/\"port\": \".*\"/\"port\": \"$PKI_EMAIL_PORT\"/" config/bad-key-rev
 sed -i -e "s/\"username\": \".*\"/\"username\": \"$PKI_EMAIL_USER\"/" config/bad-key-revoker.json
 sed -i -e "s/\"from\": \".*\"/\"from\": \"$PKI_EMAIL_FROM\"/" config/bad-key-revoker.json
 sed -i -e "s|\"SMTPTrustedRootFile\": \".*\"|\"SMTPTrustedRootFile\": \"$PKI_EMAIL_TRUST\"|" config/bad-key-revoker.json
-sed -i -e "s/\"server\": \".*\"/\"server\": \"$PKI_EMAIL_SERVER\"/" config/expiration-mailer.json
-sed -i -e "s/\"port\": \".*\"/\"port\": \"$PKI_EMAIL_PORT\"/" config/expiration-mailer.json
-sed -i -e "s/\"username\": \".*\"/\"username\": \"$PKI_EMAIL_USER\"/" config/expiration-mailer.json
-sed -i -e "s/\"from\": \".*\"/\"from\": \"$PKI_EMAIL_FROM\"/" config/expiration-mailer.json
-sed -i -e "s|\"SMTPTrustedRootFile\": \".*\"|\"SMTPTrustedRootFile\": \"$PKI_EMAIL_TRUST\"|" config/expiration-mailer.json
-sed -i -e "s/\"server\": \".*\"/\"server\": \"$PKI_EMAIL_SERVER\"/" config/notify-mailer.json
-sed -i -e "s/\"port\": \".*\"/\"port\": \"$PKI_EMAIL_PORT\"/" config/notify-mailer.json
-sed -i -e "s/\"username\": \".*\"/\"username\": \"$PKI_EMAIL_USER\"/" config/notify-mailer.json
-sed -i -e "s/\"from\": \".*\"/\"from\": \"$PKI_EMAIL_FROM\"/" config/notify-mailer.json
-sed -i -e "s|\"SMTPTrustedRootFile\": \".*\"|\"SMTPTrustedRootFile\": \"$PKI_EMAIL_TRUST\"|" config/notify-mailer.json
 
 sed -i -e "s/\"purgeInterval\": \".*\"/\"purgeInterval\": \"1s\"/" config/akamai-purger.json
 

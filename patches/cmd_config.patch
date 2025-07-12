@@ -1,8 +1,8 @@
 diff --git a/cmd/config.go b/cmd/config.go
-index f8b6b847f..38ea91f33 100644
+index 13842fdf9..33cb282cb 100644
 --- a/cmd/config.go
 +++ b/cmd/config.go
-@@ -469,7 +469,7 @@ type GRPCServerConfig struct {
+@@ -471,7 +471,7 @@ type GRPCServerConfig struct {
  	// this controls how long it takes before a client learns about changes to its
  	// backends.
  	// https://pkg.go.dev/google.golang.org/grpc/keepalive#ServerParameters

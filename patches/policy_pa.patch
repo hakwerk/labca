@@ -1,8 +1,8 @@
 diff --git a/policy/pa.go b/policy/pa.go
-index 661a6b6bc..17dde317f 100644
+index f53100322..107c5986e 100644
 --- a/policy/pa.go
 +++ b/policy/pa.go
-@@ -32,6 +32,9 @@ type AuthorityImpl struct {
+@@ -31,6 +31,9 @@ type AuthorityImpl struct {
  	blocklist              map[string]bool
  	exactBlocklist         map[string]bool
  	wildcardExactBlocklist map[string]bool
@@ -12,7 +12,7 @@ index 661a6b6bc..17dde317f 100644
  	blocklistMu            sync.RWMutex
  
  	enabledChallenges  map[core.AcmeChallenge]bool
-@@ -75,6 +78,10 @@ type blockedNamesPolicy struct {
+@@ -66,6 +69,10 @@ type blockedNamesPolicy struct {
  	// time above and beyond the high-risk domains. Managing these entries separately
  	// from HighRiskBlockedNames makes it easier to vet changes accurately.
  	AdminBlockedNames []string `yaml:"AdminBlockedNames"`
@@ -23,7 +23,7 @@ index 661a6b6bc..17dde317f 100644
  }
  
  // LoadHostnamePolicyFile will load the given policy file, returning an error if
-@@ -134,10 +141,21 @@ func (pa *AuthorityImpl) processHostnamePolicy(policy blockedNamesPolicy) error
+@@ -125,10 +132,21 @@ func (pa *AuthorityImpl) processHostnamePolicy(policy blockedNamesPolicy) error
  		// wildcardNameMap to block issuance for `*.`+parts[1]
  		wildcardNameMap[parts[1]] = true
  	}
@@ -45,7 +45,7 @@ index 661a6b6bc..17dde317f 100644
  	pa.blocklistMu.Unlock()
  	return nil
  }
-@@ -209,7 +227,7 @@ var (
+@@ -199,7 +217,7 @@ var (
  //   - exactly equal to an IANA registered TLD
  //
  // It does NOT ensure that the domain is absent from any PA blocked lists.
@@ -54,7 +54,7 @@ index 661a6b6bc..17dde317f 100644
  	if domain == "" {
  		return errEmptyIdentifier
  	}
-@@ -241,7 +259,9 @@ func validNonWildcardDomain(domain string) error {
+@@ -232,7 +250,9 @@ func validNonWildcardDomain(domain string) error {
  		return errTooManyLabels
  	}
  	if len(labels) < 2 {
@@ -65,7 +65,7 @@ index 661a6b6bc..17dde317f 100644
  	}
  	for _, label := range labels {
  		// Check that this is a valid LDH Label: "A string consisting of ASCII
-@@ -285,6 +305,14 @@ func validNonWildcardDomain(domain string) error {
+@@ -276,6 +296,14 @@ func validNonWildcardDomain(domain string) error {
  		}
  	}
  
@@ -80,7 +80,7 @@ index 661a6b6bc..17dde317f 100644
  	// Names must end in an ICANN TLD, but they must not be equal to an ICANN TLD.
  	icannTLD, err := iana.ExtractSuffix(domain)
  	if err != nil {
-@@ -300,9 +328,9 @@ func validNonWildcardDomain(domain string) error {
+@@ -291,9 +319,9 @@ func validNonWildcardDomain(domain string) error {
  // ValidDomain checks that a domain is valid and that it doesn't contain any
  // invalid wildcard characters. It does NOT ensure that the domain is absent
  // from any PA blocked lists.
@@ -92,7 +92,7 @@ index 661a6b6bc..17dde317f 100644
  	}
  
  	// Names containing more than one wildcard are invalid.
-@@ -321,7 +349,7 @@ func ValidDomain(domain string) error {
+@@ -312,7 +340,7 @@ func ValidDomain(domain string) error {
  
  	// Names must end in an ICANN TLD, but they must not be equal to an ICANN TLD.
  	icannTLD, err := iana.ExtractSuffix(baseDomain)
@@ -101,7 +101,7 @@ index 661a6b6bc..17dde317f 100644
  		return errNonPublic
  	}
  	// Names must have a non-wildcard label immediately adjacent to the ICANN
-@@ -329,7 +357,7 @@ func ValidDomain(domain string) error {
+@@ -320,7 +348,7 @@ func ValidDomain(domain string) error {
  	if baseDomain == icannTLD {
  		return errICANNTLDWildcard
  	}
@@ -109,8 +109,8 @@ index 661a6b6bc..17dde317f 100644
 +	return pa.ValidNonWildcardDomain(baseDomain, false)
  }
  
- // validIP checks that an IP address:
-@@ -375,14 +403,14 @@ var forbiddenMailDomains = map[string]bool{
+ // ValidIP checks that an IP address:
+@@ -363,14 +391,14 @@ var forbiddenMailDomains = map[string]bool{
  // ValidEmail returns an error if the input doesn't parse as an email address,
  // the domain isn't a valid hostname in Preferred Name Syntax, or its on the
  // list of domains forbidden for mail (because they are often used in examples).
@@ -127,7 +127,7 @@ index 661a6b6bc..17dde317f 100644
  	if err != nil {
  		return berrors.InvalidEmailError("contact email has invalid domain: %s", err)
  	}
-@@ -424,7 +452,7 @@ func subError(ident identifier.ACMEIdentifier, err error) berrors.SubBoulderErro
+@@ -412,7 +440,7 @@ func subError(ident identifier.ACMEIdentifier, err error) berrors.SubBoulderErro
  //
  // Precondition: all input identifier values must be in lowercase.
  func (pa *AuthorityImpl) WillingToIssue(idents identifier.ACMEIdentifiers) error {
@@ -136,7 +136,7 @@ index 661a6b6bc..17dde317f 100644
  	if err != nil {
  		return err
  	}
-@@ -454,6 +482,10 @@ func (pa *AuthorityImpl) WillingToIssue(idents identifier.ACMEIdentifiers) error
+@@ -442,6 +470,10 @@ func (pa *AuthorityImpl) WillingToIssue(idents identifier.ACMEIdentifiers) error
  				}
  			}
  
@@ -147,7 +147,7 @@ index 661a6b6bc..17dde317f 100644
  			// For both wildcard and non-wildcard domains, check whether any parent domain
  			// name is on the regular blocklist.
  			err := pa.checkHostLists(ident.Value)
-@@ -494,12 +526,12 @@ func (pa *AuthorityImpl) WillingToIssue(idents identifier.ACMEIdentifiers) error
+@@ -483,12 +515,12 @@ func (pa *AuthorityImpl) WillingToIssue(idents identifier.ACMEIdentifiers) error
  //
  // If multiple identifiers are invalid, the error will contain suberrors
  // specific to each identifier.
@@ -162,7 +162,7 @@ index 661a6b6bc..17dde317f 100644
  			if err != nil {
  				subErrors = append(subErrors, subError(ident, err))
  			}
-@@ -541,6 +573,34 @@ func combineSubErrors(subErrors []berrors.SubBoulderError) error {
+@@ -530,6 +562,34 @@ func combineSubErrors(subErrors []berrors.SubBoulderError) error {
  	return nil
  }
  
@@ -197,7 +197,7 @@ index 661a6b6bc..17dde317f 100644
  // checkWildcardHostList checks the wildcardExactBlocklist for a given domain.
  // If the domain is not present on the list nil is returned, otherwise
  // errPolicyForbidden is returned.
-@@ -570,6 +630,9 @@ func (pa *AuthorityImpl) checkHostLists(domain string) error {
+@@ -559,6 +619,9 @@ func (pa *AuthorityImpl) checkHostLists(domain string) error {
  	labels := strings.Split(domain, ".")
  	for i := range labels {
  		joined := strings.Join(labels[i:], ".")

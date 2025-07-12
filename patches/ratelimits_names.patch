@@ -1,8 +1,8 @@
 diff --git a/ratelimits/names.go b/ratelimits/names.go
-index bfda772b5..971892f22 100644
+index 1ce3c514c..6f72b517c 100644
 --- a/ratelimits/names.go
 +++ b/ratelimits/names.go
-@@ -102,6 +102,9 @@ var nameToString = map[Name]string{
+@@ -114,6 +114,9 @@ var nameToString = map[Name]string{
  	FailedAuthorizationsForPausingPerDomainPerAccount: "FailedAuthorizationsForPausingPerDomainPerAccount",
  }
  
@@ -12,53 +12,54 @@ index bfda772b5..971892f22 100644
  // isValid returns true if the Name is a valid rate limit name.
  func (n Name) isValid() bool {
  	return n > Unknown && n < Name(len(nameToString))
-@@ -163,7 +166,15 @@ func validateRegId(id string) error {
- // validateDomain validates that the provided string is formatted 'domain',
- // where domain is a domain name.
- func validateDomain(id string) error {
--	err := policy.ValidDomain(id)
+@@ -195,7 +198,14 @@ func validateRegIdIdentValue(id string) error {
+ 		return fmt.Errorf(
+ 			"invalid regId, %q must be formatted 'regId:identValue'", id)
+ 	}
+-	domainErr := policy.ValidDomain(regIdIdentValue[1])
++	pa := PA
++	if pa == nil {
++		pa, err = policy.New(map[identifier.IdentifierType]bool{"dns": true}, nil, nil)
++		if err != nil {
++			return fmt.Errorf("cannot create policy authority implementation")
++		}
++	}
++	domainErr := pa.ValidDomain(regIdIdentValue[1])
+ 	if domainErr != nil {
+ 		ipErr := policy.ValidIP(regIdIdentValue[1])
+ 		if ipErr != nil {
+@@ -209,7 +219,15 @@ func validateRegIdIdentValue(id string) error {
+ // name or an IP address. IPv6 addresses must be the lowest address in their
+ // /64, i.e. their last 64 bits must be zero.
+ func validateDomainOrCIDR(limit Name, id string) error {
+-	domainErr := policy.ValidDomain(id)
 +	pa := PA
 +	var err error
 +	if pa == nil {
-+		pa, err = policy.New(nil, nil, nil)
++		pa, err = policy.New(map[identifier.IdentifierType]bool{"dns": true}, nil, nil)
 +		if err != nil {
 +			return fmt.Errorf("cannot create policy authority implementation")
 +		}
 +	}
-+	err = pa.ValidDomain(id)
- 	if err != nil {
- 		return fmt.Errorf("invalid domain, %q must be formatted 'domain': %w", id, err)
- 	}
-@@ -184,7 +195,14 @@ func validateRegIdDomain(id string) error {
- 		return fmt.Errorf(
- 			"invalid regId, %q must be formatted 'regId:domain'", id)
- 	}
--	err = policy.ValidDomain(regIdDomain[1])
-+	pa := PA
-+	if pa == nil {
-+		pa, err = policy.New(nil, nil, nil)
-+		if err != nil {
-+			return fmt.Errorf("cannot create policy authority implementation")
-+		}
-+	}
-+	err = pa.ValidDomain(regIdDomain[1])
- 	if err != nil {
- 		return fmt.Errorf(
- 			"invalid domain, %q must be formatted 'regId:domain': %w", id, err)
-@@ -202,7 +220,15 @@ func validateFQDNSet(id string) error {
++	domainErr := pa.ValidDomain(id)
+ 	if domainErr == nil {
+ 		// This is a valid domain.
+ 		return nil
+@@ -264,8 +282,16 @@ func validateFQDNSet(id string) error {
  		return fmt.Errorf(
  			"invalid fqdnSet, %q must be formatted 'fqdnSet'", id)
  	}
--	return policy.WellFormedIdentifiers(identifier.NewDNSSlice(domains))
-+	pa := PA
 +	var err error
++	pa := PA
 +	if pa == nil {
-+		pa, err = policy.New(nil, nil, nil)
++		pa, err = policy.New(map[identifier.IdentifierType]bool{"dns": true}, nil, nil)
 +		if err != nil {
 +			return fmt.Errorf("cannot create policy authority implementation")
 +		}
 +	}
-+	return pa.WellFormedIdentifiers(identifier.NewDNSSlice(domains))
- }
- 
- func validateIdForName(name Name, id string) error {
+ 	for _, value := range values {
+-		domainErr := policy.ValidDomain(value)
++		domainErr := pa.ValidDomain(value)
+ 		if domainErr != nil {
+ 			ipErr := policy.ValidIP(value)
+ 			if ipErr != nil {

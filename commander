@@ -167,8 +167,6 @@ case $txt in
     ;;
 "test-email")
     read recipient
-    cd /opt/boulder
-    docker compose exec boulder bin/boulder mail-tester --config labca/config/expiration-mailer.json $recipient 2>&1
     ;;
 "boulder-start")
     cd /opt/boulder

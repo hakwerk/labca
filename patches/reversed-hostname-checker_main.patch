@@ -1,0 +1,13 @@
+diff --git a/cmd/reversed-hostname-checker/main.go b/cmd/reversed-hostname-checker/main.go
+index 530dd7ca3..1235258ba 100644
+--- a/cmd/reversed-hostname-checker/main.go
++++ b/cmd/reversed-hostname-checker/main.go
+@@ -41,7 +41,7 @@ func main() {
+ 	scanner := bufio.NewScanner(input)
+ 	logger := cmd.NewLogger(cmd.SyslogConfig{StdoutLevel: 7})
+ 	logger.Info(cmd.VersionString())
+-	pa, err := policy.New(nil, nil, logger)
++	pa, err := policy.New(map[identifier.IdentifierType]bool{"dns": true}, nil, logger)
+ 	if err != nil {
+ 		log.Fatal(err)
+ 	}

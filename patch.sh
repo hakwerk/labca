@@ -15,6 +15,7 @@ if [ "$SUDO" == "" ]; then
 fi
 
 $SUDO patch -p1 < $cloneDir/patches/bad-key-revoker_main.patch
+$SUDO patch -p1 < $cloneDir/patches/bdns_dns.patch
 $SUDO patch -p1 < $cloneDir/patches/boulder-ra_main.patch
 $SUDO patch -p1 < $cloneDir/patches/boulder-va_main.patch
 $SUDO patch -p1 < $cloneDir/patches/ca_ca.patch
@@ -29,7 +30,6 @@ $SUDO patch -p1 < $cloneDir/patches/cert-checker_main.patch
 $SUDO patch -p1 < $cloneDir/patches/cmd_config.patch
 $SUDO patch -p1 < $cloneDir/patches/config_duration.patch
 $SUDO patch -p1 < $cloneDir/patches/config_rocsp_config.patch
-$SUDO patch -p1 < $cloneDir/patches/contact-auditor_main.patch
 $SUDO patch -p1 < $cloneDir/patches/core_interfaces.patch
 $SUDO patch -p1 < $cloneDir/patches/crl-storer_main.patch
 $SUDO patch -p1 < $cloneDir/patches/db_migrations.patch
@@ -37,22 +37,20 @@ $SUDO patch -p1 < $cloneDir/patches/db_migrations2.patch
 $SUDO patch -p1 < $cloneDir/patches/db_migrations3.patch
 $SUDO patch -p1 < $cloneDir/patches/db_migrations4.patch
 $SUDO patch -p1 < $cloneDir/patches/db_migrations5.patch
-$SUDO patch -p1 < $cloneDir/patches/expiration-mailer_main.patch
 $SUDO patch -p1 < $cloneDir/patches/issuance_crl.patch
 $SUDO patch -p1 < $cloneDir/patches/issuance_issuer.patch
 $SUDO patch -p1 < $cloneDir/patches/linter_linter.patch
 $SUDO patch -p1 < $cloneDir/patches/log_prod_prefix.patch
 $SUDO patch -p1 < $cloneDir/patches/log_test_prefix.patch
 $SUDO patch -p1 < $cloneDir/patches/log_validator_validator.patch
-$SUDO patch -p1 < $cloneDir/patches/mail_mailer.patch
 $SUDO patch -p1 < $cloneDir/patches/makefile.patch
-$SUDO patch -p1 < $cloneDir/patches/notify-mailer_main.patch
 $SUDO patch -p1 < $cloneDir/patches/ocsp-responder_main.patch
 $SUDO patch -p1 < $cloneDir/patches/policy_pa.patch
 $SUDO patch -p1 < $cloneDir/patches/ra_ra.patch
 $SUDO patch -p1 < $cloneDir/patches/ratelimits_names.patch
 $SUDO patch -p1 < $cloneDir/patches/redis_config.patch
 $SUDO patch -p1 < $cloneDir/patches/remoteva_main.patch
+$SUDO patch -p1 < $cloneDir/patches/reversed-hostname-checker_main.patch
 $SUDO patch -p1 < $cloneDir/patches/start.patch
 $SUDO patch -p1 < $cloneDir/patches/test_startservers.patch
 if [ "$SUDO" == "" ]; then
@@ -75,10 +73,6 @@ sed -i -e "s|./test|./labca|" start.py
 sed -i -e "s/proxysql:6033/mysql:3306/" sa/db/dbconfig.yml
 
 sed -i -e "s/\(.*overrides.*\)/-- \1/" sa/db-users/boulder_sa.sql
-
-mkdir -p "cmd/mail-tester"
-cp $cloneDir/mail-tester.go cmd/mail-tester/main.go
-perl -i -p0e "s/(\n\t\"github.com\/letsencrypt\/boulder\/cmd\")/\t_ \"github.com\/letsencrypt\/boulder\/cmd\/mail-tester\"\n\1/igs"  cmd/boulder/main.go
 
 perl -i -p0e "s/If you continue to encounter.*for troubleshooting and advice.//igs" sfe/pages/index.html
 perl -i -p0e "s/<b>Note:<\/b> If you encounter.*troubleshooting and advice.//igs" sfe/pages/unpause-form.html

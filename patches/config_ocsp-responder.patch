@@ -1,5 +1,5 @@
 diff --git a/test/config/ocsp-responder.json b/test/config/ocsp-responder.json
-index c67aa41f7..92fe8a28f 100644
+index 1e5d4cb70..e56719c21 100644
 --- a/test/config/ocsp-responder.json
 +++ b/test/config/ocsp-responder.json
 @@ -4,22 +4,6 @@
@@ -10,8 +10,8 @@ index c67aa41f7..92fe8a28f 100644
 -			"username": "ocsp-responder",
 -			"passwordFile": "test/secrets/ocsp_responder_redis_password",
 -			"shardAddrs": {
--				"shard1": "10.33.33.2:4218",
--				"shard2": "10.33.33.3:4218"
+-				"shard1": "10.77.77.2:4218",
+-				"shard2": "10.77.77.3:4218"
 -			},
 -			"timeout": "5s",
 -			"poolSize": 100,

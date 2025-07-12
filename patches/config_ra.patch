@@ -1,5 +1,5 @@
 diff --git a/test/config/ra.json b/test/config/ra.json
-index c16978e12..15e8252c0 100644
+index 613c5e1a1..c43053523 100644
 --- a/test/config/ra.json
 +++ b/test/config/ra.json
 @@ -3,7 +3,8 @@
@@ -45,7 +45,7 @@ index c16978e12..15e8252c0 100644
  		],
  		"validationProfiles": {
  			"legacy": {
-@@ -58,9 +54,9 @@
+@@ -67,9 +63,9 @@
  		},
  		"defaultProfileName": "legacy",
  		"tls": {
@@ -58,7 +58,7 @@ index c16978e12..15e8252c0 100644
  		},
  		"vaService": {
  			"dnsAuthority": "consul.service.consul",
-@@ -154,7 +150,7 @@
+@@ -163,7 +159,7 @@
  		},
  		"ctLogs": {
  			"stagger": "500ms",

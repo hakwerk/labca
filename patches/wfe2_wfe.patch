@@ -1,8 +1,8 @@
 diff --git a/wfe2/wfe.go b/wfe2/wfe.go
-index 462866a1d..287e6af55 100644
+index 891d165b6..1a4fda298 100644
 --- a/wfe2/wfe.go
 +++ b/wfe2/wfe.go
-@@ -163,6 +163,8 @@ type WebFrontEndImpl struct {
+@@ -166,6 +166,8 @@ type WebFrontEndImpl struct {
  	// descriptions (perhaps including URLs) of those profiles. NewOrder
  	// Requests with a profile name not present in this map will be rejected.
  	certProfiles map[string]string
@@ -11,7 +11,7 @@ index 462866a1d..287e6af55 100644
  }
  
  // NewWebFrontEndImpl constructs a web service for Boulder
-@@ -188,6 +190,7 @@ func NewWebFrontEndImpl(
+@@ -192,6 +194,7 @@ func NewWebFrontEndImpl(
  	unpauseSigner unpause.JWTSigner,
  	unpauseJWTLifetime time.Duration,
  	unpauseURL string,
@@ -19,7 +19,7 @@ index 462866a1d..287e6af55 100644
  ) (WebFrontEndImpl, error) {
  	if len(issuerCertificates) == 0 {
  		return WebFrontEndImpl{}, errors.New("must provide at least one issuer certificate")
-@@ -205,6 +208,10 @@ func NewWebFrontEndImpl(
+@@ -209,6 +212,10 @@ func NewWebFrontEndImpl(
  		return WebFrontEndImpl{}, errors.New("must provide a service for nonce redemption")
  	}
  
@@ -30,7 +30,7 @@ index 462866a1d..287e6af55 100644
  	wfe := WebFrontEndImpl{
  		log:                logger,
  		clk:                clk,
-@@ -227,6 +234,7 @@ func NewWebFrontEndImpl(
+@@ -232,6 +239,7 @@ func NewWebFrontEndImpl(
  		unpauseSigner:      unpauseSigner,
  		unpauseJWTLifetime: unpauseJWTLifetime,
  		unpauseURL:         unpauseURL,
@@ -38,34 +38,16 @@ index 462866a1d..287e6af55 100644
  	}
  
  	return wfe, nil
-@@ -635,7 +643,7 @@ func link(url, relation string) string {
- // contactsToEmails converts a *[]string of contacts (e.g. mailto:
- // person@example.com) to a []string of valid email addresses. Non-email
- // contacts or contacts with invalid email addresses are ignored.
--func contactsToEmails(contacts *[]string) []string {
-+func contactsToEmails(contacts *[]string, pa *policy.AuthorityImpl) []string {
- 	if contacts == nil {
- 		return nil
- 	}
-@@ -645,7 +653,7 @@ func contactsToEmails(contacts *[]string) []string {
- 			continue
+@@ -678,7 +686,7 @@ func (wfe *WebFrontEndImpl) contactsToEmails(contacts []string) ([]string, error
+ 			return nil, berrors.InvalidEmailError("contact email contains non-ASCII characters")
  		}
- 		address := strings.TrimPrefix(c, "mailto:")
--		err := policy.ValidEmail(address)
-+		err := pa.ValidEmail(address)
- 		if err != nil {
- 			continue
- 		}
-@@ -869,7 +877,7 @@ func (wfe *WebFrontEndImpl) NewAccount(
- 	}
- 	newRegistrationSuccessful = true
  
--	emails := contactsToEmails(accountCreateRequest.Contact)
-+	emails := contactsToEmails(accountCreateRequest.Contact, wfe.pa)
- 	if wfe.ee != nil && len(emails) > 0 {
- 		_, err := wfe.ee.SendContacts(ctx, &emailpb.SendContactsRequest{
- 			// Note: We are explicitly using the contacts provided by the
-@@ -2300,7 +2308,7 @@ func (wfe *WebFrontEndImpl) NewOrder(
+-		err = policy.ValidEmail(parsed.Opaque)
++		err = wfe.pa.ValidEmail(parsed.Opaque)
+ 		if err != nil {
+ 			return nil, err
+ 		}
+@@ -2299,7 +2307,7 @@ func (wfe *WebFrontEndImpl) NewOrder(
  	idents = identifier.Normalize(idents)
  	logEvent.Identifiers = idents
  

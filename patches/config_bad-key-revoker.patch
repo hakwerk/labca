@@ -1,5 +1,5 @@
 diff --git a/test/config/bad-key-revoker.json b/test/config/bad-key-revoker.json
-index f4696dc2..b9c19ce3 100644
+index d70aadc5f..99dfde454 100644
 --- a/test/config/bad-key-revoker.json
 +++ b/test/config/bad-key-revoker.json
 @@ -5,6 +5,13 @@
@@ -11,8 +11,8 @@ index f4696dc2..b9c19ce3 100644
 +			"127.0.0.1:8053",
 +			"127.0.0.1:8054"
 +		],
-+		"dnsTimeout": "3s",
 +		"dnsAllowLoopbackAddresses": true,
++		"dnsTimeout": "3s",
  		"tls": {
  			"caCertFile": "test/certs/ipki/minica.pem",
  			"certFile": "test/certs/ipki/bad-key-revoker.boulder/cert.pem",

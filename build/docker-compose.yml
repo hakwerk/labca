@@ -12,9 +12,9 @@ services:
         GO_VERSION: 1.24.1
     environment:
       # To solve HTTP-01 and TLS-ALPN-01 challenges, change the IP in FAKE_DNS
-      # to the IP address where your ACME client's solver is listening.
-      # FAKE_DNS: 172.17.0.1
-      FAKE_DNS: 10.77.77.77
+      # to the IP address where your ACME client's solver is listening. This is
+      # pointing at the boulder service's "public" IP, where challtestsrv is.
+      FAKE_DNS: 64.112.117.122
       BOULDER_CONFIG_DIR: labca/config
       GOCACHE: /boulder/.gocache/go-build
       GOFLAGS: -mod=vendor
@@ -26,12 +26,10 @@ services:
     networks:
       bouldernet:
         ipv4_address: 10.77.77.77
-      integrationtestnet:
-        ipv4_address: 10.88.88.88
-      redisnet:
-        ipv4_address: 10.33.33.33
-      consulnet:
-        ipv4_address: 10.55.55.55
+      publicnet:
+        ipv4_address: 64.112.117.122
+      publicnet2:
+        ipv4_address: 64.112.117.134
     # Use consul as a backup to Docker's embedded DNS server. If there's a name
     # Docker's DNS server doesn't know about, it will forward the query to this
     # IP (running consul).
@@ -40,15 +38,17 @@ services:
     # are configured via the ServerAddress field of cmd.GRPCClientConfig.
     # TODO: Remove this when ServerAddress is deprecated in favor of SRV records
     # and DNSAuthority.
-    dns: 10.55.55.10
+    dns: 10.77.77.10
     extra_hosts:
-      # Allow the boulder container to be reached as "ca.example.org", so that
-      # we can put that name inside our integration test certs (e.g. as a crl
+      # Allow the boulder container to be reached as "ca.example.org", so we
+      # can put that name inside our integration test certs (e.g. as a crl
       # url) and have it look like a publicly-accessible name.
-      - "ca.example.org:10.77.77.77"
+      # TODO(#8215): Move s3-test-srv to a separate service.
+      - "ca.example.org:64.112.117.122"
       # Allow the boulder container to be reached as "integration.trust", for
       # similar reasons, but intended for use as a SAN rather than a CRLDP.
-      - "integration.trust:10.77.77.77"
+      # TODO(#8215): Move observer's probe target to a separate service.
+      - "integration.trust:64.112.117.122"
     ports:
       - 4001:4001 # ACMEv2
       - 4002:4002 # OCSP
@@ -69,7 +69,7 @@ services:
     restart: always
 
   bmysql:
-    image: mariadb:10.5
+    image: mariadb:10.6.22
     volumes:
       - dbdata:/var/lib/mysql
     networks:
@@ -89,12 +89,13 @@ services:
   bredis:
     image: redis:6.2.7
     volumes:
+      - ./test/:/test/:cached
       - boulder_data:/opt/boulder/labca
       - certificates:/opt/boulder/labca/certs
     command: redis-server /opt/boulder/labca/redis-ratelimits.config
     networks:
-      redisnet:
-        ipv4_address: 10.33.33.4
+      bouldernet:
+        ipv4_address: 10.77.77.4
     restart: always
 
   bconsul:
@@ -105,8 +106,6 @@ services:
       - boulder_data:/opt/boulder/labca
       - certificates:/opt/boulder/labca/certs
     networks:
-      consulnet:
-        ipv4_address: 10.55.55.10
       bouldernet:
         ipv4_address: 10.77.77.10
     command: "consul agent -dev -config-format=hcl -config-file=/opt/boulder/labca/consul/config.hcl"
@@ -182,8 +181,7 @@ services:
   bpkimetal:
     image: ghcr.io/pkimetal/pkimetal:v1.20.0
     networks:
-      bouldernet:
-        ipv4_address: 10.77.77.9
+      - bouldernet
     restart: always
 
 volumes:
@@ -199,17 +197,34 @@ volumes:
   certificates:
 
 networks:
-  # This network is primarily used for boulder services. It is also used by
-  # challtestsrv, which is used in the integration tests.
+  # This network represents the data-center internal network. It is used for
+  # boulder services and their infrastructure, such as consul, mariadb, and
+  # redis.
   bouldernet:
     driver: bridge
     ipam:
       driver: default
       config:
         - subnet: 10.77.77.0/24
+          # Only issue DHCP addresses in the top half of the range, to avoid
+          # conflict with static addresses.
+          ip_range: 10.77.77.128/25
+
+  # This network represents the public internet. It uses a real public IP space
+  # (that Let's Encrypt controls) so that our integration tests are happy to
+  # validate and issue for it. It is used by challtestsrv, which binds to
+  # 64.112.117.122:80 and :443 for its HTTP-01 challenge responder.
+  #
+  # TODO(#8215): Put akamai-test-srv and s3-test-srv on this network.
+  publicnet:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: 64.112.117.0/25
 
   # This network is used for two things in the integration tests:
-  #  - challtestsrv binds to 10.88.88.88:443 for its tls-alpn-01 challenge
+  #  - challtestsrv binds to 64.112.117.134:443 for its tls-alpn-01 challenge
   #    responder, to avoid interfering with the HTTPS port used for testing
   #    HTTP->HTTPS redirects during http-01 challenges. Note: this could
   #    probably be updated in the future so that challtestsrv can handle
@@ -217,24 +232,13 @@ networks:
   #  - test/v2_integration.py has some test cases that start their own HTTP
   #    server instead of relying on challtestsrv, because they want very
   #    specific behavior. For these cases, v2_integration.py creates a Python
-  #    HTTP server and binds it to 10.88.88.88:80.
-  integrationtestnet:
+  #    HTTP server and binds it to 64.112.117.134:80.
+  #
+  # TODO(#8215): Deprecate this network, replacing it with individual IPs within
+  # the existing publicnet.
+  publicnet2:
     driver: bridge
     ipam:
       driver: default
       config:
-        - subnet: 10.88.88.0/24
-
-  redisnet:
-    driver: bridge
-    ipam:
-      driver: default
-      config:
-        - subnet: 10.33.33.0/24
-
-  consulnet:
-    driver: bridge
-    ipam:
-      driver: default
-      config:
-        - subnet: 10.55.55.0/24
+        - subnet: 64.112.117.128/25

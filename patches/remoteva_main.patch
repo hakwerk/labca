@@ -1,8 +1,8 @@
 diff --git a/cmd/remoteva/main.go b/cmd/remoteva/main.go
-index f99ded497..9a1033a87 100644
+index f4c0cbe76..1f454f489 100644
 --- a/cmd/remoteva/main.go
 +++ b/cmd/remoteva/main.go
-@@ -56,7 +56,8 @@ type Config struct {
+@@ -57,7 +57,8 @@ type Config struct {
  		// For more information, see: https://pkg.go.dev/crypto/tls#ClientAuthType
  		SkipGRPCClientCertVerification bool
  
@@ -12,12 +12,30 @@ index f99ded497..9a1033a87 100644
  	}
  
  	Syslog        cmd.SyslogConfig
-@@ -141,7 +142,8 @@ func main() {
+@@ -87,12 +88,16 @@ func main() {
+ 	clk := cmd.Clock()
+ 
+ 	var servers bdns.ServerProvider
++	proto := "udp"
++	if features.Get().DOH {
++		proto = "tcp"
++	}
+ 
+ 	if len(c.RVA.DNSStaticResolvers) != 0 {
+ 		servers, err = bdns.NewStaticProvider(c.RVA.DNSStaticResolvers)
+ 		cmd.FailOnError(err, "Couldn't start static DNS server resolver")
+ 	} else {
+-		servers, err = bdns.StartDynamicProvider(c.RVA.DNSProvider, 60*time.Second, "tcp")
++		servers, err = bdns.StartDynamicProvider(c.RVA.DNSProvider, 60*time.Second, proto)
+ 		cmd.FailOnError(err, "Couldn't start dynamic DNS server resolver")
+ 	}
+ 	defer servers.Stop()
+@@ -138,7 +143,8 @@ func main() {
  		c.RVA.AccountURIPrefixes,
  		c.RVA.Perspective,
  		c.RVA.RIR,
--		bdns.IsReservedIP)
-+		bdns.IsReservedIP,
+-		iana.IsReservedAddr)
++		iana.IsReservedAddr,
 +		c.RVA.LabCADomains)
  	cmd.FailOnError(err, "Unable to create Remote-VA server")
  

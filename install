@@ -30,7 +30,7 @@ dockerComposeVersion="v2.5.0"
 
 labcaUrl="https://github.com/hakwerk/labca/"
 boulderUrl="https://github.com/letsencrypt/boulder/"
-boulderTag="release-2025-05-27"
+boulderTag="v0.20250707.0"
 
 #
 # Color configuration
@@ -620,10 +620,6 @@ config_boulder() {
     cp core/interfaces.go "$boulderLabCADir/.backup/"
     cp policy/pa.go "$boulderLabCADir/.backup/"
     cp ra/ra.go "$boulderLabCADir/.backup/"
-    cp mail/mailer.go "$boulderLabCADir/.backup/"
-    cp cmd/expiration-mailer/main.go "$boulderLabCADir/.backup/"
-    cp cmd/notify-mailer/main.go "$boulderLabCADir/.backup/"
-    cp cmd/contact-auditor/main.go "$boulderLabCADir/.backup/"
     cp cmd/bad-key-revoker/main.go "$boulderLabCADir/.backup/"
     cp cmd/cert-checker/main.go "$boulderLabCADir/.backup/"
     cp cmd/log-validator/main.go "$boulderLabCADir/.backup/"
