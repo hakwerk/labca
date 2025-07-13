@@ -66,6 +66,7 @@ fullCmdline=""
 keepLocal=0
 alphaTest=0
 dcdowngraded=0
+dbdataCreated=0
 
 #
 # Helper functions for informing the user and logging to file
@@ -644,7 +645,7 @@ config_boulder() {
     fi
     if [ ! -z "$(docker ps | grep labca-bmysql-1)" ]; then
         docker exec labca-bmysql-1 mysqldump --databases boulder_sa_integration >$baseDir/backup/dbdata-${runId}.sql
-        docker exec labca-bmysql-1 mysql boulder_sa_integration -e 'delete from gorp_migrations;'
+        dbdataCreated=1
         msg_ok "Saved pre-update database to dbdata-${runId}.sql"
         msg_info "$msg"
     fi
@@ -918,6 +919,13 @@ main() {
 
     echo -e "$DONE"
     echo
+
+    if [ $dbdataCreated -eq 1 ]; then
+        echo
+        echo "In case your database is empty after this upgrade, run this command to restore it:"
+        echo "    docker exec -i labca-bmysql-1 mysql <$baseDir/backup/dbdata-${runId}.sql"
+        echo
+    fi
 
     first_time
 
