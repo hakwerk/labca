@@ -1,5 +1,5 @@
 diff --git a/test/certs/generate.sh b/test/certs/generate.sh
-index fbcaa9628..d3bd089e9 100755
+index f6ef272d3..e58c54b6c 100755
 --- a/test/certs/generate.sh
 +++ b/test/certs/generate.sh
 @@ -63,9 +63,9 @@ webpki() (
@@ -15,7 +15,7 @@ index fbcaa9628..d3bd089e9 100755
  )
  
  if ! [ -d ipki ]; then
-@@ -73,6 +73,29 @@ if ! [ -d ipki ]; then
+@@ -73,6 +73,36 @@ if ! [ -d ipki ]; then
    ipki
  fi
  
@@ -28,6 +28,13 @@ index fbcaa9628..d3bd089e9 100755
 +if ! [ -d ipki/email-exporter.boulder ]; then
 +  cd ipki
 +  minica -domains "email-exporter.boulder" &
++  cd -
++fi
++cnt=$(openssl x509 -text -noout -in ipki/redis/cert.pem | grep 10.33.33. | wc -l)
++if [ $cnt -ge "1" ]; then
++  cd ipki
++  mv redis redis.bak
++  minica -domains redis -ip-addresses 10.77.77.2,10.77.77.3,10.77.77.4,10.77.77.5
 +  cd -
 +fi
 +
