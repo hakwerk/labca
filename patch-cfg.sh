@@ -86,6 +86,4 @@ for file in `find . -type f | grep -v .git`; do
     sed -i -e "s|test/|labca/|g" $file
 done
 
-sed -i -e "s/names/name\(s\)/" config/expiration-mailer.gotmpl
-
 rm -f test-ca2.pem
