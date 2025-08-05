@@ -1,5 +1,5 @@
 diff --git a/test/config/ca.json b/test/config/ca.json
-index e9a866ee6..e44b75aed 100644
+index 6e60285a5..672cb29ce 100644
 --- a/test/config/ca.json
 +++ b/test/config/ca.json
 @@ -1,11 +1,11 @@
@@ -13,12 +13,12 @@ index e9a866ee6..e44b75aed 100644
 +			"certFile": "labca/certs/ipki/ca.boulder/cert.pem",
 +			"keyFile": "labca/certs/ipki/ca.boulder/key.pem"
  		},
--		"hostnamePolicyFile": "test/hostname-policy.yaml",
-+		"hostnamePolicyFile": "labca/hostname-policy.yaml",
+-		"hostnamePolicyFile": "test/ident-policy.yaml",
++		"hostnamePolicyFile": "labca/ident-policy.yaml",
  		"grpcCA": {
  			"maxConnectionAge": "30s",
  			"address": ":9093",
-@@ -60,7 +60,8 @@
+@@ -64,7 +64,8 @@
  					"includeCRLDistributionPoints": true,
  					"maxValidityPeriod": "7776000s",
  					"maxValidityBackdate": "1h5m",
@@ -27,27 +27,27 @@ index e9a866ee6..e44b75aed 100644
 +					"lintConfig": "labca/config/zlint.toml",
  					"ignoredLints": [
  						"w_subject_common_name_included",
- 						"w_ext_subject_key_identifier_not_recommended_subscriber"
-@@ -76,7 +77,8 @@
+ 						"e_dnsname_not_valid_tld",
+@@ -81,7 +82,8 @@
  					"includeCRLDistributionPoints": true,
- 					"maxValidityPeriod": "583200s",
+ 					"maxValidityPeriod": "160h",
  					"maxValidityBackdate": "1h5m",
 -					"lintConfig": "test/config-next/zlint.toml",
 +					"includeCRLDistributionPoints": true,
 +					"lintConfig": "labca/config/zlint.toml",
  					"ignoredLints": [
- 						"w_ext_subject_key_identifier_missing_sub_cert"
- 					]
-@@ -91,7 +93,7 @@
+ 						"w_ext_subject_key_identifier_missing_sub_cert",
+ 						"e_dnsname_not_valid_tld"
+@@ -97,7 +99,7 @@
  					"includeCRLDistributionPoints": true,
- 					"maxValidityPeriod": "160h",
+ 					"maxValidityPeriod": "583200s",
  					"maxValidityBackdate": "1h5m",
 -					"lintConfig": "test/config-next/zlint.toml",
 +					"lintConfig": "labca/config-next/zlint.toml",
  					"ignoredLints": [
- 						"w_ext_subject_key_identifier_missing_sub_cert"
- 					]
-@@ -100,78 +102,19 @@
+ 						"w_ext_subject_key_identifier_missing_sub_cert",
+ 						"e_dnsname_not_valid_tld"
+@@ -107,78 +109,19 @@
  			"crlProfile": {
  				"validityInterval": "216h",
  				"maxBackdate": "1h5m",
@@ -130,7 +130,7 @@ index e9a866ee6..e44b75aed 100644
  						"numSessions": 2
  					}
  				}
-@@ -183,7 +126,7 @@
+@@ -190,7 +133,7 @@
  		"goodkey": {},
  		"ocspLogMaxLength": 4000,
  		"ocspLogPeriod": "500ms",
@@ -139,7 +139,7 @@ index e9a866ee6..e44b75aed 100644
  		"features": {}
  	},
  	"pa": {
-@@ -197,7 +140,7 @@
+@@ -205,7 +148,7 @@
  		}
  	},
  	"syslog": {

@@ -1,8 +1,8 @@
 diff --git a/test/startservers.py b/test/startservers.py
-index 8c812ea01..c42a1bb51 100644
+index 4e2ce1b24..e4645852a 100644
 --- a/test/startservers.py
 +++ b/test/startservers.py
-@@ -90,6 +90,10 @@ SERVICES = (
+@@ -86,6 +86,10 @@ SERVICES = (
          9667, None, None,
          ('./bin/boulder', 'crl-storer', '--config', os.path.join(config_dir, 'crl-storer.json'), '--addr', ':9309', '--debug-addr', ':9667'),
          ('s3-test-srv',)),

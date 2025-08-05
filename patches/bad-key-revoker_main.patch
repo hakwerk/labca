@@ -1,8 +1,8 @@
 diff --git a/cmd/bad-key-revoker/main.go b/cmd/bad-key-revoker/main.go
-index 8e6cfac85..8880ed301 100644
+index 34c58eae5..dd40b9469 100644
 --- a/cmd/bad-key-revoker/main.go
 +++ b/cmd/bad-key-revoker/main.go
-@@ -270,6 +270,11 @@ type Config struct {
+@@ -275,6 +275,11 @@ type Config struct {
  		TLS       cmd.TLSConfig
  		RAService *cmd.GRPCClientConfig
  
@@ -14,12 +14,12 @@ index 8e6cfac85..8880ed301 100644
  		// MaximumRevocations specifies the maximum number of certificates associated with
  		// a key hash that bad-key-revoker will attempt to revoke. If the number of certificates
  		// is higher than MaximumRevocations bad-key-revoker will error out and refuse to
-@@ -289,6 +294,8 @@ type Config struct {
- 		// or no work to do.
- 		BackoffIntervalMax config.Duration `validate:"-"`
- 
-+		UserAgent string
+@@ -301,6 +306,8 @@ type Config struct {
+ 		// the database's maximum replication lag, and always well under 24
+ 		// hours.
+ 		MaxExpectedReplicationLag config.Duration `validate:"-"`
 +
- 		// Deprecated: the bad-key-revoker no longer sends emails; we use ARI.
- 		// TODO(#8199): Remove this config stanza entirely.
- 		Mailer struct {
++		UserAgent string
+ 	}
+ 
+ 	Syslog        cmd.SyslogConfig

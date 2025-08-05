@@ -1,8 +1,8 @@
 diff --git a/test/certs/generate.sh b/test/certs/generate.sh
-index f6ef272d3..e58c54b6c 100755
+index f6ef272d3..bfc60f293 100755
 --- a/test/certs/generate.sh
 +++ b/test/certs/generate.sh
-@@ -63,9 +63,9 @@ webpki() (
+@@ -63,16 +63,50 @@ webpki() (
    # This function executes in a subshell, so this cd does not affect the parent
    # script.
    cd ../..
@@ -14,8 +14,10 @@ index f6ef272d3..e58c54b6c 100755
 +  # go run ./labca/certs/webpki.go
  )
  
++umask 0022
++
  if ! [ -d ipki ]; then
-@@ -73,6 +73,36 @@ if ! [ -d ipki ]; then
+   echo "Generating ipki/..."
    ipki
  fi
  
@@ -35,6 +37,8 @@ index f6ef272d3..e58c54b6c 100755
 +  cd ipki
 +  mv redis redis.bak
 +  minica -domains redis -ip-addresses 10.77.77.2,10.77.77.3,10.77.77.4,10.77.77.5
++  chmod go+rx redis
++  chmod go+r redis/*
 +  cd -
 +fi
 +

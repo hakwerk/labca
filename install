@@ -30,7 +30,7 @@ dockerComposeVersion="v2.5.0"
 
 labcaUrl="https://github.com/hakwerk/labca/"
 boulderUrl="https://github.com/letsencrypt/boulder/"
-boulderTag="v0.20250707.0"
+boulderTag="v0.20250728.0"
 
 #
 # Color configuration
@@ -846,6 +846,21 @@ check_dockeronly() {
     fi
 }
 
+# Do some cleanup of common issues...
+sweepup() {
+    cd "$boulderDir"
+    STATUS=$(docker inspect -f '{{.State.Status}}' "labca-bredis-1")
+    cnt=$(docker compose logs bredis | tail -100 | grep "sslv3 alert bad certificate" | wc -l)
+    if [ "$STATUS" == "starting" ] || [ "$cnt" -gt "5" ]; then
+        msg="Restarting redis container"
+        msg_info "$msg"
+        docker compose stop bredis &>>$installLog
+        docker compose rm -f bredis &>>$installLog
+        docker compose up -d bredis &>>$installLog
+        msg_ok "$msg"
+    fi
+}
+
 #
 # The actual main function to tie it all together
 #
@@ -916,6 +931,8 @@ main() {
 
     cleanup
     startup
+
+    sweepup
 
     echo -e "$DONE"
     echo

@@ -1,5 +1,5 @@
 diff --git a/test/config/ra.json b/test/config/ra.json
-index 613c5e1a1..c43053523 100644
+index ade9fcc1c..994fa031a 100644
 --- a/test/config/ra.json
 +++ b/test/config/ra.json
 @@ -3,7 +3,8 @@
@@ -31,8 +31,8 @@ index 613c5e1a1..c43053523 100644
  		},
  		"maxContactsPerRegistration": 3,
  		"debugAddr": ":8002",
--		"hostnamePolicyFile": "test/hostname-policy.yaml",
-+		"hostnamePolicyFile": "labca/hostname-policy.yaml",
+-		"hostnamePolicyFile": "test/ident-policy.yaml",
++		"hostnamePolicyFile": "labca/ident-policy.yaml",
  		"goodkey": {},
  		"issuerCerts": [
 -			"test/certs/webpki/int-rsa-a.cert.pem",
@@ -45,7 +45,7 @@ index 613c5e1a1..c43053523 100644
  		],
  		"validationProfiles": {
  			"legacy": {
-@@ -67,9 +63,9 @@
+@@ -68,9 +64,9 @@
  		},
  		"defaultProfileName": "legacy",
  		"tls": {
@@ -58,7 +58,7 @@ index 613c5e1a1..c43053523 100644
  		},
  		"vaService": {
  			"dnsAuthority": "consul.service.consul",
-@@ -163,7 +159,7 @@
+@@ -164,7 +160,7 @@
  		},
  		"ctLogs": {
  			"stagger": "500ms",

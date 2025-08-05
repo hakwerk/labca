@@ -19,7 +19,7 @@ index 51c7aa8ef..1ed5d37af 100644
  		"directoryCAAIdentity": "happy-hacker-ca.invalid",
 -		"directoryWebsite": "https://github.com/letsencrypt/boulder",
 +		"directoryWebsite": "https://github.com/hakwerk/labca",
-+		"hostnamePolicyFile": "labca/hostname-policy.yaml",
++		"hostnamePolicyFile": "labca/ident-policy.yaml",
  		"legacyKeyIDPrefix": "http://boulder.service.consul:4000/reg/",
  		"goodkey": {},
  		"tls": {

@@ -1,5 +1,5 @@
 diff --git a/cmd/boulder-wfe2/main.go b/cmd/boulder-wfe2/main.go
-index 955fe406c..33cc238d9 100644
+index 955fe406c..ae127564e 100644
 --- a/cmd/boulder-wfe2/main.go
 +++ b/cmd/boulder-wfe2/main.go
 @@ -12,14 +12,17 @@ import (
@@ -57,7 +57,7 @@ index 955fe406c..33cc238d9 100644
 +		if c.WFE.HostnamePolicyFile == "" {
 +			cmd.Fail("HostnamePolicyFile must be provided.")
 +		}
-+		err = pa.LoadHostnamePolicyFile(c.WFE.HostnamePolicyFile)
++		err = pa.LoadIdentPolicyFile(c.WFE.HostnamePolicyFile)
 +		cmd.FailOnError(err, "Couldn't load hostname policy file")
 +		ratelimits.PA = pa
 +

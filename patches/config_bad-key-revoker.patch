@@ -1,5 +1,5 @@
 diff --git a/test/config/bad-key-revoker.json b/test/config/bad-key-revoker.json
-index d70aadc5f..99dfde454 100644
+index 731dfee0d..22c6f1718 100644
 --- a/test/config/bad-key-revoker.json
 +++ b/test/config/bad-key-revoker.json
 @@ -5,6 +5,13 @@
@@ -16,12 +16,15 @@ index d70aadc5f..99dfde454 100644
  		"tls": {
  			"caCertFile": "test/certs/ipki/minica.pem",
  			"certFile": "test/certs/ipki/bad-key-revoker.boulder/cert.pem",
-@@ -32,7 +39,7 @@
+@@ -22,9 +29,9 @@
  		},
  		"maximumRevocations": 15,
  		"findCertificatesBatchSize": 10,
 -		"interval": "50ms",
 +		"interval": "5m",
- 		"backoffIntervalMax": "2s"
+ 		"backoffIntervalMax": "2s",
+-		"maxExpectedReplicationLag": "100ms"
++		"maxExpectedReplicationLag": "10m"
  	},
  	"syslog": {
+ 		"stdoutlevel": 4,

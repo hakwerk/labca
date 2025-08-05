@@ -114,7 +114,7 @@ grep GO_VERSION ../boulder/docker-compose.yml | sed -e "s/\s*GO_VERSION:/    /"
 colorGoVersion2 build/docker-compose.yml $goversion
 echo
 
-db_migrs=$(ls -1 ../boulder/sa/db/boulder_sa/ | grep -v 20240304000000_CertificateProfiles.sql | grep -v 20250115000000_AuthzProfiles.sql | grep -v 20250519000000_NullRegistrationsContact.sql | wc -l)
+db_migrs=$(ls -1 ../boulder/sa/db/boulder_sa/ | grep -v 20240304000000_CertificateProfiles.sql | grep -v 20250115000000_AuthzProfiles.sql | grep -v 20250519000000_NullRegistrationsContact.sql | grep -v 20250110000000_NullRegistrationsLockCol.sql | wc -l)
 db_patches=$(ls -1 ../labca/patches/db_migrations* | wc -l)
 echo -n "Database migrations "
 colorEqual $db_migrs $db_patches

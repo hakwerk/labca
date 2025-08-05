@@ -61,22 +61,22 @@ if ([ "$PKI_DOMAIN_MODE" == "lockdown" ] && [ "$PKI_LOCKDOWN_DOMAINS" != "" ]) |
     perl -i -p0e "s/(\"shortlived\".*?)(\"ignoredLints\": \[).*?(\s+)(\"w_ext_subject_key_identifier_missing_sub_cert\")/\1\2\3\"e_dnsname_not_valid_tld\",\3\"w_sub_cert_aia_contains_internal_names\",\3\4/igs" config/ca.json
 
     perl -i -p0e "s/(\"pkilint:cabf.serverauth.subscriber_rsa_digitalsignature_and_keyencipherment_present\",).*?(\])/\1\n  \"pkilint:cabf.internal_domain_name\",\n  \"zlint:e_dnsname_not_valid_tld\",\n  \"zlint:w_sub_cert_aia_contains_internal_names\",\n  \"certlint:special_name_in_san\",\n  \"certlint:unknown_tld_in_san\",\n  \"certlint:br_certificates_must_include_an_http_url_of_the_ocsp_responder\",\n  \"x509lint:no_ocsp_over_http\",\n\2/igs" config/zlint.toml
-    perl -p0e "s/(ignore_lints = \[).*(\])/\1\"zlint:e_crl_next_update_invalid\"\2/igs" config/zlint.toml
+    perl -i -p0e "s/(\[e_pkimetal_lint_cabf_serverauth_crl\].*)(ignore_lints = \[).*(\])/\1\2\"zlint:e_crl_next_update_invalid\"\3/igs" config/zlint.toml
 fi
 
-[ -e ../test/hostname-policy.yaml ] && cp ../test/hostname-policy.yaml ./ || true
-[ -e ../boulder/test/hostname-policy.yaml ] && cp ../boulder/test/hostname-policy.yaml ./ || true
-[ -e hostname-policy.json ] && rm hostname-policy.json || true
+[ -e ../test/ident-policy.yaml ] && cp ../test/ident-policy.yaml ./ || true
+[ -e ../boulder/test/ident-policy.yaml ] && cp ../boulder/test/ident-policy.yaml ./ || true
+[ -e hostname-policy.yaml ] && rm hostname-policy.yaml || true
 [ -e config/expired-authz-purger2.json ] && rm config/expired-authz-purger2.json || true
 [ -e config/janitor.json ] && rm config/janitor.json || true
-cat hostname-policy.yaml | tr '\n' '\r' | sed -e "s/\r# Lockdown.*//" | tr '\r' '\n' > hostname-policy.yaml.bak && mv hostname-policy.yaml.bak hostname-policy.yaml
-cat hostname-policy.yaml | tr '\n' '\r' | sed -e "s/\r# Whitelist.*//" | tr '\r' '\n' > hostname-policy.yaml.bak && mv hostname-policy.yaml.bak hostname-policy.yaml
+cat ident-policy.yaml | tr '\n' '\r' | sed -e "s/\r# Lockdown.*//" | tr '\r' '\n' > ident-policy.yaml.bak && mv ident-policy.yaml.bak ident-policy.yaml
+cat ident-policy.yaml | tr '\n' '\r' | sed -e "s/\r# Whitelist.*//" | tr '\r' '\n' > ident-policy.yaml.bak && mv ident-policy.yaml.bak ident-policy.yaml
 if [ "$PKI_DOMAIN_MODE" == "lockdown" ] && [ "$PKI_LOCKDOWN_DOMAINS" != "" ]; then
-    echo >> hostname-policy.yaml
-    echo "# Lockdown are the domains that this LabCA instance can issue certificates for" >> hostname-policy.yaml
-    echo "Lockdown:" >> hostname-policy.yaml
+    echo >> ident-policy.yaml
+    echo "# Lockdown are the domains that this LabCA instance can issue certificates for" >> ident-policy.yaml
+    echo "Lockdown:" >> ident-policy.yaml
     for d in $(echo $PKI_LOCKDOWN_DOMAINS | sed -e "s/\\\r/ /g" | sed -e "s/\\\n/ /g" | tr '\r' ' '); do
-        echo "  - \"$d\"" >> hostname-policy.yaml
+        echo "  - \"$d\"" >> ident-policy.yaml
     done
 
     allow_public="false"
@@ -85,16 +85,16 @@ if [ "$PKI_DOMAIN_MODE" == "lockdown" ] && [ "$PKI_LOCKDOWN_DOMAINS" != "" ]; th
         allow_public="true"
     fi
 
-    echo >> hostname-policy.yaml
-    echo "LockdownAllowPublicContacts: $allow_public" >> hostname-policy.yaml
+    echo >> ident-policy.yaml
+    echo "LockdownAllowPublicContacts: $allow_public" >> ident-policy.yaml
 fi
 if [ "$PKI_DOMAIN_MODE" == "whitelist" ] && [ "$PKI_WHITELIST_DOMAINS" != "" ]; then
-    echo >> hostname-policy.yaml
-    echo "# Whitelist are the domains that this LabCA instance can issue certificates for" >> hostname-policy.yaml
-    echo "# in *addition* to all normal public domains" >> hostname-policy.yaml
-    echo "Whitelist:" >> hostname-policy.yaml
+    echo >> ident-policy.yaml
+    echo "# Whitelist are the domains that this LabCA instance can issue certificates for" >> ident-policy.yaml
+    echo "# in *addition* to all normal public domains" >> ident-policy.yaml
+    echo "Whitelist:" >> ident-policy.yaml
     for d in $(echo $PKI_WHITELIST_DOMAINS | sed -e "s/\\\r/ /g" | sed -e "s/\\\n/ /g" | tr '\r' ' '); do
-        echo "  - \"$d\"" >> hostname-policy.yaml
+        echo "  - \"$d\"" >> ident-policy.yaml
     done
 fi
 if [ "$PKI_DOMAIN_MODE" == "lockdown" ] || [ "$PKI_DOMAIN_MODE" == "whitelist" ]; then
