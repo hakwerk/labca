@@ -813,167 +813,6 @@ func _crlIntervalUpdateHandler(w http.ResponseWriter, r *http.Request) {
 	_ = json.NewEncoder(w).Encode(res)
 }
 
-// EmailConfig stores configuration used for sending out emails
-type EmailConfig struct {
-	DoEmail   bool
-	Server    string
-	Port      string
-	EmailUser string
-	EmailPwd  []byte
-	From      string
-	TrustRoot string
-	Errors    map[string]string
-}
-
-// Validate that the email config is valid and complete
-func (cfg *EmailConfig) Validate() bool {
-	cfg.Errors = make(map[string]string)
-
-	result, err := _encrypt(cfg.EmailPwd)
-	if err == nil {
-		cfg.EmailPwd = []byte(result)
-	} else {
-		cfg.Errors["EmailPwd"] = "Could not encrypt this password: " + err.Error()
-	}
-
-	if !cfg.DoEmail {
-		return len(cfg.Errors) == 0
-	}
-
-	if strings.TrimSpace(cfg.Server) == "" {
-		cfg.Errors["Server"] = "Please enter the email server address"
-	}
-
-	if strings.TrimSpace(cfg.Port) == "" {
-		cfg.Errors["Port"] = "Please enter the email server port number"
-	}
-
-	p, err := strconv.Atoi(cfg.Port)
-	if err != nil {
-		cfg.Errors["Port"] = "Port number must be numeric"
-	} else if p <= 0 {
-		cfg.Errors["Port"] = "Port number must be positive"
-	} else if p > 65535 {
-		cfg.Errors["Port"] = "Port number too large"
-	}
-
-	if strings.TrimSpace(cfg.EmailUser) == "" {
-		cfg.Errors["EmailUser"] = "Please enter the username for authorization to the email server"
-	}
-
-	res, err := _decrypt(string(cfg.EmailPwd))
-	if err != nil {
-		cfg.Errors["EmailPwd"] = "Could not decrypt this password: " + err.Error()
-	}
-	if strings.TrimSpace(string(res)) == "" {
-		cfg.Errors["EmailPwd"] = "Please enter the password for authorization to the email server"
-	}
-
-	if strings.TrimSpace(cfg.From) == "" {
-		cfg.Errors["From"] = "Please enter the from email address"
-	}
-
-	if strings.TrimSpace(cfg.TrustRoot) == "" {
-		cfg.Errors["From"] = "Please select what root CA to trust for validating the email server certificate"
-	}
-
-	return len(cfg.Errors) == 0
-}
-
-func _emailUpdateHandler(w http.ResponseWriter, r *http.Request) {
-	cfg := &EmailConfig{
-		DoEmail:   (r.Form.Get("do_email") == "true"),
-		Server:    r.Form.Get("server"),
-		Port:      r.Form.Get("port"),
-		EmailUser: r.Form.Get("email_user"),
-		EmailPwd:  []byte(r.Form.Get("email_pwd")),
-		From:      r.Form.Get("from"),
-		TrustRoot: r.Form.Get("trust_root"),
-	}
-
-	res := makeErrorsResponse(true)
-
-	if cfg.Validate() {
-		delta := false
-
-		if cfg.DoEmail != viper.GetBool("labca.email.enable") {
-			delta = true
-			viper.Set("labca.email.enable", cfg.DoEmail)
-		}
-
-		if cfg.Server != viper.GetString("labca.email.server") {
-			delta = true
-			viper.Set("labca.email.server", cfg.Server)
-		}
-
-		if cfg.Port != viper.GetString("labca.email.port") {
-			delta = true
-			viper.Set("labca.email.port", cfg.Port)
-		}
-
-		if cfg.EmailUser != viper.GetString("labca.email.user") {
-			delta = true
-			viper.Set("labca.email.user", cfg.EmailUser)
-		}
-
-		res1, err1 := _decrypt(string(cfg.EmailPwd))
-		if err1 != nil && cfg.DoEmail {
-			log.Println("WARNING: could not decrypt given password: " + err1.Error())
-		}
-		res2, err2 := _decrypt(viper.GetString("labca.email.pass"))
-		if err2 != nil && cfg.DoEmail && viper.GetString("labca.email.pass") != "" {
-			log.Println("WARNING: could not decrypt stored password: " + err2.Error())
-		}
-		if string(res1) != string(res2) {
-			delta = true
-			viper.Set("labca.email.pass", string(cfg.EmailPwd))
-		}
-
-		if cfg.From != viper.GetString("labca.email.from") {
-			delta = true
-			viper.Set("labca.email.from", cfg.From)
-		}
-
-		if cfg.TrustRoot != viper.GetString("labca.email.trust_root") {
-			delta = true
-			viper.Set("labca.email.trust_root", cfg.TrustRoot)
-		}
-
-		if delta {
-			_ = viper.WriteConfig()
-
-			err := _applyConfig()
-			if err != nil {
-				res.Success = false
-				res.Errors = cfg.Errors
-				res.Errors["EmailUpdate"] = "Config apply error: '" + err.Error() + "'"
-			}
-		} else {
-			res.Success = false
-			res.Errors = cfg.Errors
-			res.Errors["EmailUpdate"] = "Nothing changed!"
-		}
-
-	} else {
-		res.Success = false
-		res.Errors = cfg.Errors
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	_ = json.NewEncoder(w).Encode(res)
-}
-
-func _emailSendHandler(w http.ResponseWriter, r *http.Request) {
-	res := makeErrorsResponse(true)
-
-	recipient := viper.GetString("user.email")
-	if _hostCommand(w, r, "test-email", recipient) {
-		// Only on success, as when this returns false for this case the response has already been sent!
-		w.Header().Set("Content-Type", "application/json")
-		_ = json.NewEncoder(w).Encode(res)
-	}
-}
-
 func _exportHandler(w http.ResponseWriter, r *http.Request) {
 	certname := r.Form.Get("certname")
 	certFile := fmt.Sprintf("%s%s.pem", CERT_FILES_PATH, certname)
@@ -1281,16 +1120,6 @@ func _managePostDispatch(w http.ResponseWriter, r *http.Request, action string) 
 		return true
 	}
 
-	if action == "update-email" {
-		_emailUpdateHandler(w, r)
-		return true
-	}
-
-	if action == "send-email" {
-		_emailSendHandler(w, r)
-		return true
-	}
-
 	if action == "version-check" {
 		_checkUpdatesHandler(w, r)
 		return true
@@ -1369,8 +1198,6 @@ func _managePost(w http.ResponseWriter, r *http.Request) {
 		"update-backend",
 		"update-config",
 		"update-crl-interval",
-		"update-email",
-		"send-email",
 		"version-check",
 		"version-update",
 		"upload-root-crl",
@@ -1620,23 +1447,6 @@ func _manageGet(w http.ResponseWriter, r *http.Request) {
 			manageData["WhitelistDomains"] = viper.GetString("labca.whitelist")
 		}
 		manageData["ExtendedTimeout"] = viper.GetBool("labca.extended_timeout")
-
-		manageData["DoEmail"] = viper.GetBool("labca.email.enable")
-		manageData["Server"] = viper.GetString("labca.email.server")
-		manageData["Port"] = viper.GetInt("labca.email.port")
-		manageData["EmailUser"] = viper.GetString("labca.email.user")
-		manageData["EmailPwd"] = ""
-		if viper.Get("labca.email.pass") != nil {
-			pwd := viper.GetString("labca.email.pass")
-			result, err := _decrypt(pwd)
-			if err == nil {
-				manageData["EmailPwd"] = string(result)
-			} else {
-				log.Printf("WARNING: could not decrypt email password: %s!\n", err.Error())
-			}
-		}
-		manageData["From"] = viper.GetString("labca.email.from")
-		manageData["TrustRoot"] = viper.GetString("labca.email.trust_root")
 	}
 
 	manageData["Name"] = viper.GetString("user.name")
@@ -2307,18 +2117,6 @@ func _hostCommand(w http.ResponseWriter, r *http.Request, command string, params
 	}
 
 	log.Printf("ERROR: Message from server: '%s'", message)
-	if command == "test-email" {
-		// Want special error handling for this case
-		res := makeErrorsResponse(false)
-		if strings.Contains(string(message), "certificate signed by unknown authority") {
-			res.Errors["EmailSend"] = "Error: SMTP server certificate signed by unknown authority"
-		} else {
-			res.Errors["EmailSend"] = "Failed to send email - see logs"
-		}
-		w.Header().Set("Content-Type", "application/json")
-		_ = json.NewEncoder(w).Encode(res)
-		return false
-	}
 	errorHandler(w, r, errors.New(string(message)), http.StatusInternalServerError)
 	return false
 }

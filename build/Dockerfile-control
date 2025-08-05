@@ -61,7 +61,6 @@ COPY tmp/checkrenew /opt/labca/
 COPY tmp/commander /opt/labca/
 COPY tmp/control.sh /opt/labca/
 COPY tmp/cron_d /opt/labca/
-COPY tmp/mailer /opt/labca/
 COPY tmp/renew /opt/labca/
 COPY tmp/restore /opt/labca/
 COPY tmp/utils.sh /opt/labca/

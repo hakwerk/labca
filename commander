@@ -165,9 +165,6 @@ case $txt in
     # NOTE: admin is one of the few commands that is NOT a subcommand of boulder!
     docker compose exec boulder bin/admin -config labca/config/admin.json revoke-cert -serial $serial -reason $reason -dry-run=false 2>&1
     ;;
-"test-email")
-    read recipient
-    ;;
 "boulder-start")
     cd /opt/boulder
     COMPOSE_HTTP_TIMEOUT=120 docker compose up -d bmysql bconsul bpkimetal bredis

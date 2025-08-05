@@ -59,7 +59,6 @@ cp -rp $cloneDir/checkrenew $TMP_DIR/
 cp -rp $cloneDir/commander $TMP_DIR/
 cp -rp $cloneDir/control_do.sh $TMP_DIR/control.sh
 cp -rp $cloneDir/cron_d $TMP_DIR/
-cp -rp $cloneDir/mailer $TMP_DIR/
 cp -rp $cloneDir/renew $TMP_DIR/
 cp -rp $cloneDir/restore $TMP_DIR/
 cp -rp $cloneDir/utils.sh $TMP_DIR/

@@ -23,9 +23,6 @@
   <li class="">
     <a data-toggle="tab" href="#config">Config</a>
   </li>
-  <li class="">
-    <a data-toggle="tab" href="#email">Email</a>
-  </li>
   {{ end }}
   <li class="">
     <a data-toggle="tab" href="#account">Account</a>
@@ -318,54 +315,6 @@
     </form>
   </div>
 
-  <div class="tab-pane fade" id="email">
-    <br/>
-    <form role="form">
-      <div class="form-group">
-        <input type="checkbox" class="email-cb" id="email-cb" value="enable" {{ if .DoEmail }}checked{{ end }}></input>
-          Send emails about upcoming certificate expiration
-      </div>
-      <div class="form-group">
-        <label for="server">Server:</label>
-        <input class="form-control non-fluid" type="text" id="server" name="server" value="{{ .Server }}">
-        <span class="error email-error hidden" id="server-error"></span>
-      </div>
-      <div class="form-group">
-        <label for="port">Port:</label>
-        <input class="form-control non-fluid" type="text" id="port" name="port" value="{{ .Port }}">
-        <span class="error email-error hidden" id="port-error"></span>
-      </div>
-      <div class="form-group">
-        <label for="emailuser">Username:</label>
-        <input class="form-control non-fluid" type="text" id="emailuser" name="emailuser" value="{{ .EmailUser }}">
-        <span class="error email-error hidden" id="emailuser-error"></span>
-      </div>
-      <div class="form-group">
-        <label for="emailpwd">Password:</label>
-        <input class="form-control non-fluid" type="password" name="emailpwd" id="emailpwd" value="{{ .EmailPwd }}">
-        <span class="error email-error hidden" id="emailpwd-error"></span>
-      </div>
-      <div class="form-group">
-        <label for="from">From address:</label>
-        <input class="form-control non-fluid" type="text" id="from" name="from" value="{{ .From }}">
-        <span class="error email-error hidden" id="from-error"></span>
-      </div>
-      <div class="form-group">
-        <label for="rootfile">Root CAs for validating email server certficate:</label><br/>
-        <input type="radio" class="rootfile-rd" id="rootfile-public" name="rootfile-type" value="public" {{ if and (ne .TrustRoot "private") (ne .TrustRoot "skip")}}checked{{ end }}/> Trust standard public root CAs<br/>
-        <input type="radio" class="rootfile-rd" id="rootfile-private" name="rootfile-type" value="private" {{ if eq .TrustRoot "private"}}checked{{ end }}/> Trust the LabCA root CA<br/>
-        <input type="radio" class="rootfile-rd" id="rootfile-skip" name="rootfile-type" value="skip" {{ if eq .TrustRoot "skip"}}checked{{ end }}/> Do not check server certificate<br/>
-      </div>
-      <div class="form-group">
-        <span class="hidden" id="update-email-result"></span>
-        <button class="btn btn-default" type="button" id="update-email" title="Update the email configuration">Update</button>
-      </div>
-      <div class="form-group">
-        <span class="hidden" id="send-email-result"></span>
-        <button class="btn btn-default" type="button" id="send-email" title="Send a test email to the administrator">Send Test Email</button>
-      </div>
-    </form>
-  </div>
   {{ end }}
 
   <div class="tab-pane fade" id="account">
@@ -665,9 +614,6 @@
                 $("#update-account-result").hide();
                 $(".config-error").hide();
                 $("#update-config-result").hide();
-                $(".email-error").hide();
-                $("#update-email-result").hide();
-                $("#send-email-result").hide();
                 $("#root-crl-result").hide();
                 $("#issuer-crl-result").hide();
                 $("#crl-interval-result").hide();
@@ -1028,83 +974,6 @@
                     .fail(function(xhr, status, err) {
                         $('#modal-spinner').modal('hide');
                         $("#update-config-result").removeClass("hidden").removeClass("success").show().html(err + "<br/>").addClass("error");
-                    });
-
-                } else if ( $(evt.target).attr("id") == "update-email") {
-                    form = $(evt.target).parent().parent()[0]
-                    if (!form.checkValidity()) {
-                        $('#modal-spinner').modal('hide');
-                        const tmpSubmit = document.createElement('button')
-                        form.appendChild(tmpSubmit)
-                        tmpSubmit.click()
-                        form.removeChild(tmpSubmit)
-                    } else {
-
-                        $.ajax(window.location.href, {
-                            method: "POST",
-                            data: {
-                                action: $(evt.target).attr("id"),
-                                do_email: $("#email-cb").prop("checked"),
-                                server: $("#server").val(),
-                                port: $("#port").val(),
-                                email_user: $("#emailuser").val(),
-                                email_pwd: $("#emailpwd").val(),
-                                from: $("#from").val(),
-                                trust_root: $("#rootfile-private").prop('checked') ? "private" : ($("#rootfile-skip").prop('checked') ? "skip" : "public"),
-                            },
-                        })
-                        .done(function(data) {
-                            $('#modal-spinner').modal('hide');
-
-                            if (data.Success) {
-                                var msg = "Successfully updated configuration.<br/>";
-                                $("#update-email-result").removeClass("hidden").removeClass("error").show().html(msg).addClass("success");
-
-                            } else {
-                                jQuery.each(data.Errors, function(nm, val) {
-                                    nm = nm.toLowerCase();
-                                    if (nm == "emailupdate") {
-                                        $("#update-email-result").removeClass("hidden").removeClass("success").show().html(val + "<br/>").addClass("error");
-                                    } else {
-                                        $("#" + nm + "-error").removeClass("hidden").show().text(val);
-                                    }
-                                });
-                            }
-                        })
-                        .fail(function(xhr, status, err) {
-                            $('#modal-spinner').modal('hide');
-                            $("#update-email-result").removeClass("hidden").removeClass("success").show().html(err + "<br/>").addClass("error");
-                        });
-                    }
-
-                } else if ( $(evt.target).attr("id") == "send-email") {
-                    $.ajax(window.location.href, {
-                        method: "POST",
-                        data: {
-                            action: $(evt.target).attr("id"),
-                        },
-                    })
-                    .done(function(data) {
-                        $('#modal-spinner').modal('hide');
-
-                        if (data.Success) {
-                            var msg = "Successfully sent test email.<br/>";
-                            $("#send-email-result").removeClass("hidden").removeClass("error").show().html(msg).addClass("success");
-
-                        } else {
-                            jQuery.each(data.Errors, function(nm, val) {
-                                nm = nm.toLowerCase();
-                                if (nm == "emailsend") {
-                                    $("#send-email-result").removeClass("hidden").removeClass("success").show().html(val + "<br/>").addClass("error");
-                                } else {
-                                    $("#" + nm + "-error").removeClass("hidden").show().text(val);
-                                }
-                            });
-                        }
-                    })
-                    .fail(function(xhr, status, err) {
-                        $('#modal-spinner').modal('hide');
-                        $("#send-email-result").removeClass("hidden").removeClass("success").show().html(err + "<br/>").addClass("error");
                     });
 
                 } else if ( $(evt.target).attr("id") == "version-check") {
@@ -1546,21 +1415,6 @@
             });
 
             check_fqdn();
-
-            $("#email-cb").change(function() {
-                $("#server").prop("required", $(this).prop("checked"));
-                $("#server").prop("disabled", !$(this).prop("checked"));
-                $("#port").prop("required", $(this).prop("checked"));
-                $("#port").prop("disabled", !$(this).prop("checked"));
-                $("#emailuser").prop("required", $(this).prop("checked"));
-                $("#emailuser").prop("disabled", !$(this).prop("checked"));
-                $("#emailpwd").prop("required", $(this).prop("checked"));
-                $("#emailpwd").prop("disabled", !$(this).prop("checked"));
-                $("#from").prop("required", $(this).prop("checked"));
-                $("#from").prop("disabled", !$(this).prop("checked"));
-            });
-
-            $("#email-cb").change();
 
             $(".account-input").keyup(function() {
                 ok = $("#username").val() && $("#accemail").val() && $("#password").val();

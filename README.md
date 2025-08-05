@@ -93,11 +93,11 @@ echo "LABCA_IMAGE_VERSION=v25.03" > labca.env
 
 ## Usage
 
-Once LabCA has been setup you should go through the admin pages and e.g. configure the email details for outgoing notifications. Now your instance is ready to provide HTTPS certificates for your internal applications.
+Once LabCA has been setup, your instance is ready to provide HTTPS certificates for your internal applications.
 
 ### Admin
 
-The admin section is only accessible to the user account created at the start of the setup. The [dashboard](https://user-images.githubusercontent.com/44847421/48658726-ebd4c400-ea46-11e8-8cb1-43584dbc3719.jpg) gives an overview of the current status of your LabCA instance. Via the menu you can navigate to the details of your ACME objects such as the certificates, to several system logfiles and to the various management tasks such as backup/restore, email settings and changing your password.
+The admin section is only accessible to the user account created at the start of the setup. The [dashboard](https://user-images.githubusercontent.com/44847421/48658726-ebd4c400-ea46-11e8-8cb1-43584dbc3719.jpg) gives an overview of the current status of your LabCA instance. Via the menu you can navigate to the details of your ACME objects such as the certificates, to several system logfiles and to the various management tasks such as backup/restore and changing your password.
 
 These screenshots give a preview of the admin section:
 

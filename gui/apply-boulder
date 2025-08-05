@@ -30,36 +30,6 @@ if [ "$extended_timeout" != "" ]; then
 else
     PKI_EXTENDED_TIMEOUT=0
 fi
-enabled=$(grep "email\": {" $dataDir/config.json -A1 | grep enable | head -1 | perl -p0e 's/.*?:\s+(.*)/\1/' | sed -e 's/\",//g' | sed -e 's/\"//g')
-if [ "$enabled" == "true," ]; then
-    PKI_EMAIL_SERVER=$(grep server $dataDir/config.json | head -1 | perl -p0e 's/.*?:\s+(.*)/\1/' | sed -e 's/\",//g' | sed -e 's/\"//g')
-    PKI_EMAIL_PORT=$(grep port $dataDir/config.json | head -1 | perl -p0e 's/.*?:\s+(.*)/\1/' | sed -e 's/\",//g' | sed -e 's/\"//g')
-    PKI_EMAIL_USER=$(grep user $dataDir/config.json | head -1 | perl -p0e 's/.*?:\s+(.*)/\1/' | sed -e 's/\",//g' | sed -e 's/\"//g')
-    PKI_EMAIL_PASS=$(grep pass $dataDir/config.json | grep -v password | head -1 | perl -p0e 's/.*?:\s+(.*)/\1/' | sed -e 's/\",//g' | sed -e 's/\"//g')
-    pwd=""
-    if [ -e $baseDir/bin/labca-gui ]; then
-        pwd=$([ -e ] && $baseDir/bin/labca-gui -config $dataDir/config.json -d $PKI_EMAIL_PASS || echo "")
-    elif [ -e $baseDir/bin/labca-gui_prev ]; then
-        pwd=$([ -e ] && $baseDir/bin/labca-gui_prev -config $dataDir/config.json -d $PKI_EMAIL_PASS || echo "")
-    fi
-    PKI_EMAIL_PASS=$pwd
-    PKI_EMAIL_FROM=$(grep from $dataDir/config.json | perl -p0e 's/.*?:\s+(.*)/\1/' | sed -e 's/\",//g' | sed -e 's/\"//g')
-    PKI_EMAIL_TRUST=$(grep trust_root $dataDir/config.json | perl -p0e 's/.*?:\s+(.*)/\1/' | sed -e 's/\",//g' | sed -e 's/\"//g')
-    if [ "$PKI_EMAIL_TRUST" == "private" ]; then
-        PKI_EMAIL_TRUST="labca/certs/webpki/root-01-cert.pem"
-    elif [ "$PKI_EMAIL_TRUST" == "skip" ]; then
-        PKI_EMAIL_TRUST="InsecureSkipVerify"
-    else
-        PKI_EMAIL_TRUST=""
-    fi
-else
-    PKI_EMAIL_SERVER="localhost"
-    PKI_EMAIL_PORT="9380"
-    PKI_EMAIL_USER="cert-manager@example.com"
-    PKI_EMAIL_PASS="password"
-    PKI_EMAIL_FROM="Expiry bot <test@example.com>"
-    PKI_EMAIL_TRUST="labca/certs/ipki/minica.pem"
-fi
 
 
 perl -i -p0e "s/(\"dnsStaticResolvers\": \[\n).*?(\s+\],)/\1\t\t\t\"$PKI_DNS\"\2/igs" config/remoteva-a.json
@@ -207,12 +177,6 @@ else
 fi
 sed -i -e "s/\"timeout\": \"1s\"/\"timeout\": \"5s\"/" config/health-checker.json
 
-sed -i -e "s/\"server\": \".*\"/\"server\": \"$PKI_EMAIL_SERVER\"/" config/bad-key-revoker.json
-sed -i -e "s/\"port\": \".*\"/\"port\": \"$PKI_EMAIL_PORT\"/" config/bad-key-revoker.json
-sed -i -e "s/\"username\": \".*\"/\"username\": \"$PKI_EMAIL_USER\"/" config/bad-key-revoker.json
-sed -i -e "s/\"from\": \".*\"/\"from\": \"$PKI_EMAIL_FROM\"/" config/bad-key-revoker.json
-sed -i -e "s|\"SMTPTrustedRootFile\": \".*\"|\"SMTPTrustedRootFile\": \"$PKI_EMAIL_TRUST\"|" config/bad-key-revoker.json
-
 sed -i -e "s/\"purgeInterval\": \".*\"/\"purgeInterval\": \"1s\"/" config/akamai-purger.json
 
 for fl in $(grep -Rl maxOpenConns config/); do
@@ -223,10 +187,6 @@ for fl in $(grep -Rl maxOpenConns config/); do
         perl -i -p0e "s/([ \t]+)(\"maxOpenConns\": .*)/\1\2,\n\1\"connMaxIdleTime\": \"30s\"/g" $fl
     fi
 done
-
-if [ "$PKI_EMAIL_PASS" != "" ]; then
-    sed -i -e "s/.*/$PKI_EMAIL_PASS/" secrets/smtp_password
-fi
 
 rm -f test-ca.key
 rm -f test-ca.key.der
