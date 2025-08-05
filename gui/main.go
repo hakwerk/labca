@@ -902,6 +902,7 @@ func _doCmdOutput(w http.ResponseWriter, r *http.Request, cmd string) string {
 }
 */
 
+/*
 func _encrypt(plaintext []byte) (string, error) {
 	key := []byte(viper.GetString("keys.enc"))
 	block, err := aes.NewCipher(key[:32])
@@ -922,6 +923,7 @@ func _encrypt(plaintext []byte) (string, error) {
 
 	return base64.StdEncoding.EncodeToString(gcm.Seal(nonce, nonce, plaintext, nil)), nil
 }
+*/
 
 func _decrypt(ciphertext string) ([]byte, error) {
 	key := []byte(viper.GetString("keys.enc"))
