@@ -69,7 +69,7 @@ services:
     restart: always
 
   bmysql:
-    image: mariadb:10.6.22
+    image: mariadb:10.11.13
     volumes:
       - dbdata:/var/lib/mysql
     networks:
