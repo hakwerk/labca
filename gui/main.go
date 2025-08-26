@@ -2460,12 +2460,7 @@ func writeStandaloneConfig(cfg *StandaloneConfig) {
 		conn += ":" + cfg.MySQLPasswd
 	}
 	conn += "@"
-	_, err := strconv.Atoi(string(strings.TrimSpace(cfg.MySQLServer)[0]))
-	if err == nil {
-		conn += "tcp(" + cfg.MySQLServer + ":" + cfg.MySQLPort + ")"
-	} else {
-		conn += cfg.MySQLServer + ":" + cfg.MySQLPort
-	}
+	conn += "tcp(" + cfg.MySQLServer + ":" + cfg.MySQLPort + ")"
 	conn += "/" + cfg.MySQLDBName
 
 	restart := viper.GetBool("server.https") != cfg.UseHTTPS || viper.GetString("server.cert") != cfg.CertPath || viper.GetString("server.key") != cfg.KeyPath
