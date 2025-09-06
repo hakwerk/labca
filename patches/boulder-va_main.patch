@@ -1,8 +1,8 @@
 diff --git a/cmd/boulder-va/main.go b/cmd/boulder-va/main.go
-index 5086a3923..f557f33b0 100644
+index dd3fe9b39..5f6325f51 100644
 --- a/cmd/boulder-va/main.go
 +++ b/cmd/boulder-va/main.go
-@@ -53,6 +53,7 @@ type Config struct {
+@@ -54,6 +54,7 @@ type Config struct {
  		// Deprecated and ignored
  		MaxRemoteValidationFailures int `validate:"omitempty,min=0,required_with=RemoteVAs"`
  		Features                    features.Config
@@ -10,8 +10,8 @@ index 5086a3923..f557f33b0 100644
  	}
  
  	Syslog        cmd.SyslogConfig
-@@ -82,12 +83,16 @@ func main() {
- 	clk := cmd.Clock()
+@@ -83,12 +84,16 @@ func main() {
+ 	clk := clock.New()
  
  	var servers bdns.ServerProvider
 +	proto := "udp"

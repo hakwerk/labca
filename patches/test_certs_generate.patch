@@ -1,8 +1,8 @@
 diff --git a/test/certs/generate.sh b/test/certs/generate.sh
-index f6ef272d3..bfc60f293 100755
+index 6038ace4e..728f49df6 100755
 --- a/test/certs/generate.sh
 +++ b/test/certs/generate.sh
-@@ -63,16 +63,50 @@ webpki() (
+@@ -62,16 +62,50 @@ webpki() (
    # This function executes in a subshell, so this cd does not affect the parent
    # script.
    cd ../..

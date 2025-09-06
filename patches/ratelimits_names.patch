@@ -1,9 +1,9 @@
 diff --git a/ratelimits/names.go b/ratelimits/names.go
-index 1ce3c514c..6f72b517c 100644
+index cc32e49b6..099de902d 100644
 --- a/ratelimits/names.go
 +++ b/ratelimits/names.go
-@@ -114,6 +114,9 @@ var nameToString = map[Name]string{
- 	FailedAuthorizationsForPausingPerDomainPerAccount: "FailedAuthorizationsForPausingPerDomainPerAccount",
+@@ -120,6 +120,9 @@ var nameToString = map[Name]string{
+ 	LimitOverrideRequestsPerIPAddress:                 "LimitOverrideRequestsPerIPAddress",
  }
  
 +// Policy Authority singleton
@@ -12,7 +12,7 @@ index 1ce3c514c..6f72b517c 100644
  // isValid returns true if the Name is a valid rate limit name.
  func (n Name) isValid() bool {
  	return n > Unknown && n < Name(len(nameToString))
-@@ -195,7 +198,14 @@ func validateRegIdIdentValue(id string) error {
+@@ -201,7 +204,14 @@ func validateRegIdIdentValue(id string) error {
  		return fmt.Errorf(
  			"invalid regId, %q must be formatted 'regId:identValue'", id)
  	}
@@ -28,7 +28,7 @@ index 1ce3c514c..6f72b517c 100644
  	if domainErr != nil {
  		ipErr := policy.ValidIP(regIdIdentValue[1])
  		if ipErr != nil {
-@@ -209,7 +219,15 @@ func validateRegIdIdentValue(id string) error {
+@@ -215,7 +225,15 @@ func validateRegIdIdentValue(id string) error {
  // name or an IP address. IPv6 addresses must be the lowest address in their
  // /64, i.e. their last 64 bits must be zero.
  func validateDomainOrCIDR(limit Name, id string) error {
@@ -45,7 +45,7 @@ index 1ce3c514c..6f72b517c 100644
  	if domainErr == nil {
  		// This is a valid domain.
  		return nil
-@@ -264,8 +282,16 @@ func validateFQDNSet(id string) error {
+@@ -270,8 +288,16 @@ func validateFQDNSet(id string) error {
  		return fmt.Errorf(
  			"invalid fqdnSet, %q must be formatted 'fqdnSet'", id)
  	}

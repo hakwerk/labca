@@ -1,11 +1,11 @@
 diff --git a/test/startservers.py b/test/startservers.py
-index e4645852a..b988b48fe 100644
+index df82abbf8..08720c37e 100644
 --- a/test/startservers.py
 +++ b/test/startservers.py
-@@ -190,6 +190,9 @@ processes = []
+@@ -186,6 +186,9 @@ processes = []
  challSrvProcess = None
  
- def install(race_detection):
+ def install(race_detection, coverage=False):
 +    return True
 +
 +def installOriginal(race_detection):

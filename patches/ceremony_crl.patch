@@ -1,13 +1,23 @@
 diff --git a/cmd/ceremony/crl.go b/cmd/ceremony/crl.go
-index 98790d906..4de35ae5c 100644
+index cde31023d..ab5d30aff 100644
 --- a/cmd/ceremony/crl.go
 +++ b/cmd/ceremony/crl.go
-@@ -42,7 +42,7 @@ func generateCRL(signer crypto.Signer, issuer *x509.Certificate, thisUpdate, nex
+@@ -7,6 +7,7 @@ import (
+ 	"errors"
+ 	"fmt"
+ 	"math/big"
++	"slices"
+ 	"time"
+ 
+ 	"github.com/letsencrypt/boulder/crl/idp"
+@@ -42,6 +43,10 @@ func generateCRL(signer crypto.Signer, issuer *x509.Certificate, thisUpdate, nex
  	}
  	template.ExtraExtensions = append(template.ExtraExtensions, *idp)
  
--	err = linter.CheckCRL(template, issuer, signer, []string{})
-+	err = linter.CheckCRL(template, issuer, signer, []string{"e_crl_next_update_invalid"})
++	if !slices.Contains(skipLints, "e_crl_next_update_invalid") {
++		skipLints = append(skipLints, "e_crl_next_update_invalid")
++	}
++
+ 	err = linter.CheckCRL(template, issuer, signer, skipLints)
  	if err != nil {
  		return nil, fmt.Errorf("crl failed pre-issuance lint: %w", err)
- 	}

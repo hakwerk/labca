@@ -1,8 +1,8 @@
 diff --git a/cmd/crl-storer/main.go b/cmd/crl-storer/main.go
-index 4dddfaa9f..8dcf40bbc 100644
+index 8753d858f..87c11e1fc 100644
 --- a/cmd/crl-storer/main.go
 +++ b/cmd/crl-storer/main.go
-@@ -46,6 +46,9 @@ type Config struct {
+@@ -47,6 +47,9 @@ type Config struct {
  		// https://docs.aws.amazon.com/sdkref/latest/guide/file-format.html.
  		AWSCredsFile string
  
@@ -12,7 +12,7 @@ index 4dddfaa9f..8dcf40bbc 100644
  		Features features.Config
  	}
  
-@@ -129,7 +132,7 @@ func main() {
+@@ -130,7 +133,7 @@ func main() {
  	}
  	s3client := s3.NewFromConfig(awsConfig, s3opts...)
  

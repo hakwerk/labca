@@ -1,13 +1,13 @@
 diff --git a/Makefile b/Makefile
-index 9522b89a7..b5aa9d84a 100644
+index 640ff12bd..486d54685 100644
 --- a/Makefile
 +++ b/Makefile
-@@ -36,7 +36,7 @@ $(CMD_BINS): build_cmds
+@@ -37,7 +37,7 @@ $(CMD_BINS): build_cmds
  
  build_cmds: | $(OBJDIR)
  	echo $(OBJECTS)
--	GOBIN=$(OBJDIR) GO111MODULE=on go install -mod=vendor $(GO_BUILD_FLAGS) ./...
-+	GOBIN=$(OBJDIR) GO111MODULE=on go install -mod=vendor -buildvcs=false $(GO_BUILD_FLAGS) ./...
+-	GOBIN=$(OBJDIR) go install -mod=vendor $(GO_BUILD_FLAGS) ./...
++	GOBIN=$(OBJDIR) go install -mod=vendor -buildvcs=false $(GO_BUILD_FLAGS) ./...
  
  # Building a .deb requires `fpm` from https://github.com/jordansissel/fpm
  # which you can install with `gem install fpm`.

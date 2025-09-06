@@ -1,5 +1,5 @@
 diff --git a/docker-compose.yml b/docker-compose.yml
-index b9a8ac069..71ca7e0be 100644
+index c0c7fc838..12f2cc1e7 100644
 --- a/docker-compose.yml
 +++ b/docker-compose.yml
 @@ -4,7 +4,7 @@ services:
@@ -11,9 +11,9 @@ index b9a8ac069..71ca7e0be 100644
      build:
        context: test/boulder-tools/
        # Should match one of the GO_CI_VERSIONS in test/boulder-tools/tag_and_upload.sh.
-@@ -19,11 +19,10 @@ services:
+@@ -18,11 +18,10 @@ services:
+       BOULDER_CONFIG_DIR: labca/config
        GOCACHE: /boulder/.gocache/go-build
-       GOFLAGS: -mod=vendor
      volumes:
 -      - .:/opt/boulder:cached
 -      - /home/labca/boulder_labca:/opt/boulder/labca
@@ -27,7 +27,7 @@ index b9a8ac069..71ca7e0be 100644
      networks:
        bouldernet:
          ipv4_address: 10.77.77.77
-@@ -91,7 +90,8 @@ services:
+@@ -89,7 +88,8 @@ services:
      image: redis:6.2.7
      volumes:
        - ./test/:/test/:cached
@@ -37,7 +37,7 @@ index b9a8ac069..71ca7e0be 100644
      command: redis-server /opt/boulder/labca/redis-ratelimits.config
      networks:
        bouldernet:
-@@ -103,33 +103,35 @@ services:
+@@ -101,24 +101,26 @@ services:
      depends_on:
        - control
      volumes:
@@ -54,8 +54,6 @@ index b9a8ac069..71ca7e0be 100644
    gui:
 -    image: *boulder_tools_image
 +    image: ghcr.io/hakwerk/labca-gui:${LABCA_IMAGE_VERSION:-latest}
-     networks:
-       - bouldernet
      volumes:
        - /var/run/docker.sock:/var/run/docker.sock
 -      - /home/labca/admin:/go/src/labca
@@ -72,8 +70,10 @@ index b9a8ac069..71ca7e0be 100644
 +      - boulder_data:/opt/boulder/labca
 +      - certificates:/opt/boulder/labca/certs
 +      - softhsm:/var/lib/softhsm/tokens
+     networks:
+       - bouldernet
      expose:
-       - 3000
+@@ -126,8 +128,8 @@ services:
      depends_on:
        - bmysql
        - control
@@ -84,7 +84,7 @@ index b9a8ac069..71ca7e0be 100644
      logging:
        driver: "json-file"
        options:
-@@ -146,30 +148,28 @@ services:
+@@ -144,30 +146,28 @@ services:
        - 80:80
        - 443:443
      volumes:
@@ -129,7 +129,7 @@ index b9a8ac069..71ca7e0be 100644
      expose:
        - 3030
      environment:
-@@ -186,6 +186,15 @@ services:
+@@ -184,6 +184,15 @@ services:
  
  volumes:
    dbdata:

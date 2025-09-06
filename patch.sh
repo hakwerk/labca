@@ -14,6 +14,7 @@ if [ "$SUDO" == "" ]; then
     $SUDO patch -p1 < $cloneDir/build/tmp.patch
 fi
 
+$SUDO patch -p1 < $cloneDir/patches/admin_overrides_add.patch
 $SUDO patch -p1 < $cloneDir/patches/bad-key-revoker_main.patch
 $SUDO patch -p1 < $cloneDir/patches/bdns_dns.patch
 $SUDO patch -p1 < $cloneDir/patches/boulder-ra_main.patch
@@ -29,7 +30,6 @@ $SUDO patch -p1 < $cloneDir/patches/ceremony_rsa.patch
 $SUDO patch -p1 < $cloneDir/patches/cert-checker_main.patch
 $SUDO patch -p1 < $cloneDir/patches/cmd_config.patch
 $SUDO patch -p1 < $cloneDir/patches/config_duration.patch
-$SUDO patch -p1 < $cloneDir/patches/config_rocsp_config.patch
 $SUDO patch -p1 < $cloneDir/patches/core_interfaces.patch
 $SUDO patch -p1 < $cloneDir/patches/crl-storer_main.patch
 $SUDO patch -p1 < $cloneDir/patches/db_migrations.patch
@@ -44,23 +44,22 @@ $SUDO patch -p1 < $cloneDir/patches/log_prod_prefix.patch
 $SUDO patch -p1 < $cloneDir/patches/log_test_prefix.patch
 $SUDO patch -p1 < $cloneDir/patches/log_validator_validator.patch
 $SUDO patch -p1 < $cloneDir/patches/makefile.patch
-$SUDO patch -p1 < $cloneDir/patches/ocsp-responder_main.patch
 $SUDO patch -p1 < $cloneDir/patches/policy_pa.patch
 $SUDO patch -p1 < $cloneDir/patches/ra_ra.patch
 $SUDO patch -p1 < $cloneDir/patches/ratelimits_names.patch
 $SUDO patch -p1 < $cloneDir/patches/redis_config.patch
 $SUDO patch -p1 < $cloneDir/patches/remoteva_main.patch
 $SUDO patch -p1 < $cloneDir/patches/reversed-hostname-checker_main.patch
+$SUDO patch -p1 < $cloneDir/patches/sfe_overrides.patch
+$SUDO patch -p1 < $cloneDir/patches/sfe_templates_layout.patch
 $SUDO patch -p1 < $cloneDir/patches/start.patch
+$SUDO patch -p1 < $cloneDir/patches/storer_storer.patch
+$SUDO patch -p1 < $cloneDir/patches/test_health-checker_main.patch
 $SUDO patch -p1 < $cloneDir/patches/test_startservers.patch
 if [ "$SUDO" == "" ]; then
     # TODO: should include this into startservers.patch
     $SUDO patch -p1 < $cloneDir/build/tmp2.patch
 fi
-$SUDO patch -p1 < $cloneDir/patches/sfe_templates_layout.patch
-$SUDO patch -p1 < $cloneDir/patches/storer_storer.patch
-$SUDO patch -p1 < $cloneDir/patches/test_health-checker_main.patch
-$SUDO patch -p1 < $cloneDir/patches/test_ocsp_helper_helper.patch
 $SUDO patch -p1 < $cloneDir/patches/updater_updater.patch
 $SUDO patch -p1 < $cloneDir/patches/updater_continuous.patch
 $SUDO patch -p1 < $cloneDir/patches/va_http.patch

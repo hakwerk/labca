@@ -20,7 +20,7 @@ jobs:
       fail-fast: false
       matrix:
         GO_VERSION:
-          - 1.24.4
+          - 1.25.0
 
     steps:
       - uses: actions/checkout@v5

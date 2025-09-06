@@ -1,5 +1,5 @@
 diff --git a/test/config/ra.json b/test/config/ra.json
-index ade9fcc1c..994fa031a 100644
+index 1cecd4772..39b9f6284 100644
 --- a/test/config/ra.json
 +++ b/test/config/ra.json
 @@ -3,7 +3,8 @@
@@ -58,7 +58,7 @@ index ade9fcc1c..994fa031a 100644
  		},
  		"vaService": {
  			"dnsAuthority": "consul.service.consul",
-@@ -164,7 +160,7 @@
+@@ -153,7 +149,7 @@
  		},
  		"ctLogs": {
  			"stagger": "500ms",

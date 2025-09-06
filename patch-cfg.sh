@@ -15,7 +15,6 @@ $SUDO patch -p1 -o "$boulderLabCADir/entrypoint.sh" < $cloneDir/patches/entrypoi
 cp test/startservers.py "$boulderLabCADir/startservers.py"
 
 $SUDO patch -p1 -o "$boulderLabCADir/config/bad-key-revoker.json" < $cloneDir/patches/config_bad-key-revoker.patch
-$SUDO patch -p1 -o "$boulderLabCADir/config/ocsp-responder.json" < $cloneDir/patches/config_ocsp-responder.patch
 $SUDO patch -p1 -o "$boulderLabCADir/config/publisher.json" < $cloneDir/patches/config_publisher.patch
 $SUDO patch -p1 -o "$boulderLabCADir/config/wfe2.json" < $cloneDir/patches/config_wfe2.patch
 $SUDO patch -p1 -o "$boulderLabCADir/config/crl-storer.json" < $cloneDir/patches/config_crl-storer.patch
@@ -36,12 +35,9 @@ perl -i -p0e "s/(\"accountURIPrefixes\": \[\n.*?\s+\])/\1,\n\t\t\"labcaDomains\"
 perl -i -p0e "s/(\"accountURIPrefixes\": \[\n.*?\s+\])/\1,\n\t\t\"labcaDomains\": [\n\t\t]/igs" $boulderLabCADir/config/remoteva-c.json
 perl -i -p0e "s/(\"accountURIPrefixes\": \[\n.*?\s+\])/\1,\n\t\t\"labcaDomains\": [\n\t\t]/igs" $boulderLabCADir/config/va.json
 
-perl -i -p0e "s/\n    \"redis\": \{\n.*?    \},//igs" $boulderLabCADir/config/ocsp-responder.json
-
 for f in $(grep -l boulder-proxysql $boulderLabCADir/secrets/*); do sed -i -e "s/proxysql:6033/mysql:3306/" $f; done
 
 cd "$boulderLabCADir"
-sed -i -e "s|test/certs/webpki/int-rsa-a.cert.pem|labca/certs/webpki/issuer-01-cert.pem|" config/ocsp-responder.json
 sed -i -e "s|test/certs/webpki/int-rsa-a.cert.pem|labca/certs/webpki/issuer-01-cert.pem|" config/publisher.json
 sed -i -e "s|test/certs/webpki/int-rsa-a.cert.pem|labca/certs/webpki/issuer-01-cert.pem|" config/ca.json
 sed -i -e "s|test/certs/webpki/int-rsa-a.cert.pem|labca/certs/webpki/issuer-01-cert.pem|" config/wfe2.json
@@ -57,7 +53,6 @@ sed -i -e "s|test/certs/webpki/root-rsa.cert.pem|labca/certs/webpki/root-01-cert
 sed -i -e "s|test/certs/webpki/root-rsa.cert.pem|labca/certs/webpki/root-01-cert.pem|" helpers.py
 sed -i -e "s|letsencrypt/boulder|hakwerk/labca|" config/wfe2.json
 sed -i -e "s|1.2.3.4|1.3.6.1.4.1.44947.1.1.1|g" config/ca.json
-sed -i -e "s/ocspURL.Path = encodedReq/ocspURL.Path += encodedReq/" ocsp/helper/helper.go
 sed -i -e "s/\"dnsTimeout\": \".*\"/\"dnsTimeout\": \"3s\"/" config/remoteva-a.json
 sed -i -e "s/\"dnsTimeout\": \".*\"/\"dnsTimeout\": \"3s\"/" config/remoteva-b.json
 sed -i -e "s/\"dnsTimeout\": \".*\"/\"dnsTimeout\": \"3s\"/" config/remoteva-c.json
@@ -75,11 +70,7 @@ perl -i -p0e "s/(services {\s*id\s*=\s*\"bredis4\".*?}\n\n)//igs" consul/config.
 sed -i -e "s|test/certs|/opt/boulder/labca/certs|" consul/config.hcl
 sed -i -e "s|/test/certs|/opt/boulder/labca/certs|" redis-ratelimits.config
 
-perl -i -p0e "s/(\s*)(\"passwordFile\":.*?,).*(\"shardAddrs\": {)/\1\2\1\"db\": 0,\1\3/igs" config/ocsp-responder.json
-perl -i -p0e "s/(\"shardAddrs\": {\n)(\s*).*?(\s*},)/\1\2\"shard1\": \"10.33.33.4:4218\"\3/igs" config/ocsp-responder.json
 perl -i -p0e "s/(\s*)(\"passwordFile\":.*?,).*(\"lookups\": \[)/\1\2\1\"db\": 1,\1\3/igs" config/ra.json
-perl -i -p0e "s/(\s*)(\"passwordFile\":.*?,).*(\"shardAddrs\": {)/\1\2\1\"db\": 0,\1\3/igs" config/rocsp-tool.json
-perl -i -p0e "s/(\"shardAddrs\": {\n)(\s*).*?(\s*},)/\1\2\"shard1\": \"10.33.33.4:4218\"\3/igs" config/rocsp-tool.json
 perl -i -p0e "s/,(\s*)(\"passwordFile\":.*?,).*(\"lookups\": \[)/,\1\2\1\"db\": 1,\1\3/igs" config/wfe2.json
 
 for file in `find . -type f | grep -v .git`; do

@@ -1,0 +1,17 @@
+diff --git a/cmd/admin/overrides_add.go b/cmd/admin/overrides_add.go
+index 6c217b0a1..0955b4256 100644
+--- a/cmd/admin/overrides_add.go
++++ b/cmd/admin/overrides_add.go
+@@ -51,7 +51,11 @@ func validateIdentifiers(idents ...identifier.ACMEIdentifier) error {
+ 	for _, ident := range idents {
+ 		switch ident.Type {
+ 		case identifier.TypeDNS:
+-			err := policy.ValidDomain(ident.Value)
++			pa, err := policy.New(map[identifier.IdentifierType]bool{"dns": true}, nil, nil)
++			if err != nil {
++				return fmt.Errorf("cannot create policy authority implementation")
++			}
++			err = pa.ValidDomain(ident.Value)
+ 			if err != nil {
+ 				return fmt.Errorf("invalid domain %s: %s", ident.Value, err)
+ 			}

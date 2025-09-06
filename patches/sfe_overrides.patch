@@ -1,0 +1,38 @@
+diff --git a/sfe/overrides.go b/sfe/overrides.go
+index 8eb024aed..20687c2bd 100644
+--- a/sfe/overrides.go
++++ b/sfe/overrides.go
+@@ -13,6 +13,7 @@ import (
+ 
+ 	berrors "github.com/letsencrypt/boulder/errors"
+ 	"github.com/letsencrypt/boulder/iana"
++	"github.com/letsencrypt/boulder/identifier"
+ 	"github.com/letsencrypt/boulder/policy"
+ 	rl "github.com/letsencrypt/boulder/ratelimits"
+ 	"github.com/letsencrypt/boulder/sfe/forms"
+@@ -356,7 +357,11 @@ func validateOverrideRequestField(fieldName, fieldValue, rateLimit string) error
+ 		return nil
+ 
+ 	case emailAddressFieldName:
+-		err := policy.ValidEmail(fieldValue)
++		pa, err := policy.New(map[identifier.IdentifierType]bool{"dns": true}, nil, nil)
++		if err != nil {
++			return fmt.Errorf("cannot create policy authority implementation for email")
++		}
++		err = pa.ValidEmail(fieldValue)
+ 		if err == nil {
+ 			return nil
+ 		}
+@@ -382,7 +387,11 @@ func validateOverrideRequestField(fieldName, fieldValue, rateLimit string) error
+ 		return fmt.Errorf("IP address is invalid")
+ 
+ 	case RegisteredDomainFieldName:
+-		err := policy.ValidDomain(fieldValue)
++		pa, err := policy.New(map[identifier.IdentifierType]bool{"dns": true}, nil, nil)
++		if err != nil {
++			return fmt.Errorf("cannot create policy authority implementation")
++		}
++		err = pa.ValidDomain(fieldValue)
+ 		if err != nil {
+ 			return fmt.Errorf("registered domain name is invalid")
+ 		}
