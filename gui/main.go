@@ -2460,11 +2460,10 @@ func writeStandaloneConfig(cfg *StandaloneConfig) {
 		conn += ":" + cfg.MySQLPasswd
 	}
 	conn += "@"
-	_, err := strconv.Atoi(string(strings.TrimSpace(cfg.MySQLServer)[0]))
-	if err == nil {
-		conn += "tcp(" + cfg.MySQLServer + ":" + cfg.MySQLPort + ")"
-	} else {
+	if strings.HasPrefix(cfg.MySQLServer, "tcp(") {
 		conn += cfg.MySQLServer + ":" + cfg.MySQLPort
+	} else {
+		conn += "tcp(" + cfg.MySQLServer + ":" + cfg.MySQLPort + ")"
 	}
 	conn += "/" + cfg.MySQLDBName
 

@@ -43,6 +43,58 @@ or
 docker run -it --rm -v /home/username/acme:/opt/acme ghcr.io/hakwerk/labca-standalone labca-gui -config /opt/acme/stepca.json
 ```
 
+### Docker Compose
+
+Here is a sample `docker-compose.yml` file for using both StepCA and the LabCA gui:
+```
+services:
+  smallstep:
+    image: smallstep/step-ca
+    restart: unless-stopped
+    ports:
+      - 9000:9000
+    volumes:
+      - /mystorage/stepca:/home/step
+    environment:
+      DOCKER_STEPCA_INIT_NAME: StepCA
+      DOCKER_STEPCA_INIT_DNS_NAMES: mydomain
+      DOCKER_STEPCA_INIT_PROVISIONER_NAME: admin
+    depends_on:
+      - db
+  web:
+    image: ghcr.io/hakwerk/labca-standalone
+    ports:
+      - 3000:3000
+    volumes:
+      - /mystorage/labca/config/stepca_config.json:/usr/data/config.json
+    depends_on:
+      - db
+  db:
+    user: 3020:3020
+    image: mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: stepca
+      MYSQL_USER: stepca
+      MYSQL_PASSWORD: userpassword
+      MYSQL_TCP_PORT: 3306
+    volumes:
+      - /mystorage/labca/db:/var/lib/mysql
+    healthcheck:
+      test:
+        - CMD
+        - mysqladmin
+        - ping
+        - -h
+        - localhost
+        - -uroot
+        - -prootpassword
+      interval: 10s
+      timeout: 5s
+      retries: 5
+networks: {}
+```
 
 ## systemd service
 
