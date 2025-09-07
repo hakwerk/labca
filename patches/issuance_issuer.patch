@@ -1,7 +1,18 @@
 diff --git a/issuance/issuer.go b/issuance/issuer.go
-index e89143ea0..ec328c9df 100644
+index e89143ea0..f0015706e 100644
 --- a/issuance/issuer.go
 +++ b/issuance/issuer.go
+@@ -128,8 +128,8 @@ func LoadChain(certFiles []string) ([]*Certificate, error) {
+ 	lastCert := certs[len(certs)-1]
+ 	err = lastCert.CheckSignatureFrom(lastCert.Certificate)
+ 	if err != nil {
+-		return nil, fmt.Errorf(
+-			"final cert in chain (%q; %q) must be self-signed (used only for validation): %w",
++		fmt.Printf(
++			"WARNING: final cert in chain (%q; %q) should be self-signed (used only for validation): %w\n",
+ 			lastCert.Subject, certFiles[len(certFiles)-1], err)
+ 	}
+ 
 @@ -149,7 +149,7 @@ type IssuerConfig struct {
  	Active bool
  
