@@ -18,7 +18,18 @@ cd /opt/boulder
 docker compose exec bmysql mysql boulder_sa_integration <$TMPDIR/boulder_sa_integration.sql
 
 if [ -d  $TMPDIR/nginx_ssl ]; then
-    mv -f $TMPDIR/nginx_ssl/* /etc/nginx/ssl/
+    if [ -d /etc/nginx/ssl ]; then
+        if [ $(ls -1 /etc/nginx/ssl/ | wc -l) -gt 0 ]; then
+            rm -rf /etc/nginx/ssl_BAK
+            mkdir /etc/nginx/ssl_BAK
+            mv /etc/nginx/ssl/* /etc/nginx/ssl_BAK/
+        fi
+    fi
+    if [ -d $TMPDIR/nginx_ssl/ssl ]; then
+        mv -f $TMPDIR/nginx_ssl/ssl/* /etc/nginx/ssl/
+    else
+        mv -f $TMPDIR/nginx_ssl/* /etc/nginx/ssl/
+    fi
 else
     mv -f $TMPDIR/*key* $TMPDIR/*cert.pem $TMPDIR/*.csr /etc/nginx/ssl/
 fi
