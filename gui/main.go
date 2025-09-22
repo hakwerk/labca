@@ -2332,7 +2332,7 @@ func _setupAdminUser(w http.ResponseWriter, r *http.Request) bool {
 					msg := message[0 : len(message)-4]
 					log.Printf("Message from server: '%s'", msg)
 					lines := strings.Split(strings.TrimSpace(string(msg)), "\n")
-					reg.Errors["File"] = "Could not import backup file: " + lines[0]
+					reg.Errors["File"] = "Could not import backup file: " + lines[0] + "\nSee /opt/logs/commander.log in control container."
 					render(w, r, "register:manage", map[string]interface{}{"User": reg, "IsLogin": true, "Progress": _progress("register"), "HelpText": _helptext("register")})
 					return false
 				}
@@ -2340,7 +2340,7 @@ func _setupAdminUser(w http.ResponseWriter, r *http.Request) bool {
 
 			log.Printf("ERROR: Message from server: '%s'", message)
 			lines := strings.Split(strings.TrimSpace(string(message)), "\n")
-			reg.Errors["File"] = "Could not import backup file: " + lines[0]
+			reg.Errors["File"] = "Could not import backup file: " + lines[0] + "\nSee /opt/logs/commander.log in control container."
 			render(w, r, "register:manage", map[string]interface{}{"User": reg, "IsLogin": true, "Progress": _progress("register"), "HelpText": _helptext("register")})
 			return false
 		}
