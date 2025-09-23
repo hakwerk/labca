@@ -67,7 +67,7 @@ services:
     restart: always
 
   bmysql:
-    image: mariadb:10.11.13
+    image: &db_image mariadb:10.11.13
     volumes:
       - dbdata:/var/lib/mysql
     networks:
@@ -83,6 +83,15 @@ services:
         max-size: "500k"
         max-file: "5"
     restart: always
+
+  bmysql-upgrade:
+    image: *db_image
+    networks:
+      - bouldernet
+    depends_on:
+      - bmysql
+    entrypoint: >
+      bash -c "sleep 20 && mysql_upgrade -h bmysql"
 
   bredis:
     image: redis:6.2.7
