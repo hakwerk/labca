@@ -8,7 +8,7 @@ get_fqdn() {
         file_fqdn=$(grep fqdn /opt/labca/data/config.json 2>/dev/null | cut -d ":" -f 2- | tr -d " \",")
     fi
     if [ "$file_fqdn" == "" ]; then
-        if [ "$LABCA_FQDN" == "notset" ]; then
+        if [ "$LABCA_FQDN" == "notset" ] || [ "$LABCA_FQDN" == "" ]; then
             echo "ERROR: environment variable LABCA_FQDN is not set!"
             exit 1
         else
