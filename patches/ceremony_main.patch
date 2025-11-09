@@ -1,5 +1,5 @@
 diff --git a/cmd/ceremony/main.go b/cmd/ceremony/main.go
-index 1a2cde645..193d7e325 100644
+index c075c6615..9f51130b0 100644
 --- a/cmd/ceremony/main.go
 +++ b/cmd/ceremony/main.go
 @@ -98,6 +98,7 @@ type keyGenConfig struct {
@@ -33,7 +33,7 @@ index 1a2cde645..193d7e325 100644
  	}
  	err = checkOutputFile(rc.Outputs.CertificatePath, "certificate-path")
  	if err != nil {
-@@ -630,23 +634,42 @@ func rootCeremony(configBytes []byte) error {
+@@ -577,23 +581,42 @@ func rootCeremony(configBytes []byte) error {
  		return fmt.Errorf("failed to setup session and PKCS#11 context for slot %d: %s", config.PKCS11.StoreSlot, err)
  	}
  	log.Printf("Opened PKCS#11 session for slot %d\n", config.PKCS11.StoreSlot)

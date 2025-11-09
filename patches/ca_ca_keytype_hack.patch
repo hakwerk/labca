@@ -1,8 +1,8 @@
 diff --git a/ca/ca.go b/ca/ca.go
-index 8e4d57233..8a95367ac 100644
+index b63f6a143..2ab73db94 100644
 --- a/ca/ca.go
 +++ b/ca/ca.go
-@@ -170,10 +170,14 @@ func makeIssuerMaps(issuers []*issuance.Issuer) (issuerMaps, error) {
+@@ -164,10 +164,14 @@ func makeIssuerMaps(issuers []*issuance.Issuer) (issuerMaps, error) {
  		}
  	}
  	if i, ok := issuersByAlg[x509.ECDSA]; !ok || len(i) == 0 {

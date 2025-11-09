@@ -1,5 +1,5 @@
 diff --git a/issuance/issuer.go b/issuance/issuer.go
-index e89143ea0..f0015706e 100644
+index 1c8b7ed1f..c21910db2 100644
 --- a/issuance/issuer.go
 +++ b/issuance/issuer.go
 @@ -128,8 +128,8 @@ func LoadChain(certFiles []string) ([]*Certificate, error) {
@@ -13,8 +13,8 @@ index e89143ea0..f0015706e 100644
  			lastCert.Subject, certFiles[len(certFiles)-1], err)
  	}
  
-@@ -149,7 +149,7 @@ type IssuerConfig struct {
- 	Active bool
+@@ -154,7 +154,7 @@ type IssuerConfig struct {
+ 	Profiles []string `validate:"omitempty,dive,alphanum,min=1,max=32"`
  
  	IssuerURL  string `validate:"required,url"`
 -	CRLURLBase string `validate:"required,url,startswith=http://,endswith=/"`
@@ -22,13 +22,13 @@ index e89143ea0..f0015706e 100644
  
  	// TODO(#8177): Remove this.
  	OCSPURL string `validate:"omitempty,url"`
-@@ -236,9 +236,6 @@ func newIssuer(config IssuerConfig, cert *Certificate, signer crypto.Signer, clk
+@@ -239,9 +239,6 @@ func newIssuer(config IssuerConfig, cert *Certificate, signer crypto.Signer, clk
  	if !strings.HasPrefix(config.CRLURLBase, "http://") {
  		return nil, fmt.Errorf("crlURLBase must use HTTP scheme, got %q", config.CRLURLBase)
  	}
 -	if !strings.HasSuffix(config.CRLURLBase, "/") {
 -		return nil, fmt.Errorf("crlURLBase must end with exactly one forward slash, got %q", config.CRLURLBase)
 -	}
- 
- 	// We require that all of our issuers be capable of both issuing certs and
- 	// providing revocation information.
+ 	if config.CRLShards <= 0 {
+ 		return nil, errors.New("Number of CRL shards is required")
+ 	}

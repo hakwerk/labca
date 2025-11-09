@@ -9,7 +9,7 @@ services:
       context: test/boulder-tools/
       # Should match one of the GO_CI_VERSIONS in test/boulder-tools/tag_and_upload.sh.
       args:
-        GO_VERSION: 1.25.0
+        GO_VERSION: 1.25.2
     environment:
       # To solve HTTP-01 and TLS-ALPN-01 challenges, change the IP in FAKE_DNS
       # to the IP address where your ACME client's solver is listening. This is
@@ -222,7 +222,7 @@ networks:
   # validate and issue for it. It is used by challtestsrv, which binds to
   # 64.112.117.122:80 and :443 for its HTTP-01 challenge responder.
   #
-  # TODO(#8215): Put akamai-test-srv and s3-test-srv on this network.
+  # TODO(#8215): Put s3-test-srv on this network.
   publicnet:
     driver: bridge
     ipam:

@@ -177,8 +177,6 @@ else
 fi
 sed -i -e "s/\"timeout\": \"1s\"/\"timeout\": \"5s\"/" config/health-checker.json
 
-sed -i -e "s/\"purgeInterval\": \".*\"/\"purgeInterval\": \"1s\"/" config/akamai-purger.json
-
 for fl in $(grep -Rl maxOpenConns config/); do
     set +e
     m=$(grep "connMaxIdleTime" $fl)

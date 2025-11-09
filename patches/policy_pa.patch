@@ -1,8 +1,8 @@
 diff --git a/policy/pa.go b/policy/pa.go
-index 961b67cb6..4e0ea33f6 100644
+index ab17bd89d..52866ef83 100644
 --- a/policy/pa.go
 +++ b/policy/pa.go
-@@ -31,6 +31,9 @@ type AuthorityImpl struct {
+@@ -32,6 +32,9 @@ type AuthorityImpl struct {
  	domainBlocklist       map[string]bool
  	fqdnBlocklist         map[string]bool
  	wildcardFqdnBlocklist map[string]bool
@@ -12,7 +12,7 @@ index 961b67cb6..4e0ea33f6 100644
  	ipPrefixBlocklist     []netip.Prefix
  	blocklistMu           sync.RWMutex
  
-@@ -72,6 +75,10 @@ type blockedIdentsPolicy struct {
+@@ -73,6 +76,10 @@ type blockedIdentsPolicy struct {
  	// AdminBlockedPrefixes is a list of IP address prefixes. All IP addresses
  	// contained within the prefix are blocked.
  	AdminBlockedPrefixes []string `yaml:"AdminBlockedPrefixes"`
@@ -23,7 +23,7 @@ index 961b67cb6..4e0ea33f6 100644
  }
  
  // LoadIdentPolicyFile will load the given policy file, returning an error if it
-@@ -143,11 +150,23 @@ func (pa *AuthorityImpl) processIdentPolicy(policy blockedIdentsPolicy) error {
+@@ -144,11 +151,23 @@ func (pa *AuthorityImpl) processIdentPolicy(policy blockedIdentsPolicy) error {
  		prefixes = append(prefixes, prefix)
  	}
  
@@ -47,7 +47,7 @@ index 961b67cb6..4e0ea33f6 100644
  	pa.blocklistMu.Unlock()
  	return nil
  }
-@@ -218,7 +237,7 @@ var (
+@@ -219,7 +238,7 @@ var (
  //   - exactly equal to an IANA registered TLD
  //
  // It does NOT ensure that the domain is absent from any PA blocked lists.
@@ -56,7 +56,7 @@ index 961b67cb6..4e0ea33f6 100644
  	if domain == "" {
  		return errEmptyIdentifier
  	}
-@@ -251,7 +270,9 @@ func validNonWildcardDomain(domain string) error {
+@@ -252,7 +271,9 @@ func validNonWildcardDomain(domain string) error {
  		return errTooManyLabels
  	}
  	if len(labels) < 2 {
@@ -67,7 +67,7 @@ index 961b67cb6..4e0ea33f6 100644
  	}
  	for _, label := range labels {
  		// Check that this is a valid LDH Label: "A string consisting of ASCII
-@@ -295,12 +316,17 @@ func validNonWildcardDomain(domain string) error {
+@@ -296,12 +317,17 @@ func validNonWildcardDomain(domain string) error {
  		}
  	}
  
@@ -89,7 +89,7 @@ index 961b67cb6..4e0ea33f6 100644
  		return errICANNTLD
  	}
  
-@@ -310,9 +336,9 @@ func validNonWildcardDomain(domain string) error {
+@@ -311,9 +337,9 @@ func validNonWildcardDomain(domain string) error {
  // ValidDomain checks that a domain is valid and that it doesn't contain any
  // invalid wildcard characters. It does NOT ensure that the domain is absent
  // from any PA blocked lists.
@@ -101,7 +101,7 @@ index 961b67cb6..4e0ea33f6 100644
  	}
  
  	// Names containing more than one wildcard are invalid.
-@@ -331,7 +357,7 @@ func ValidDomain(domain string) error {
+@@ -332,7 +358,7 @@ func ValidDomain(domain string) error {
  
  	// Names must end in an ICANN TLD, but they must not be equal to an ICANN TLD.
  	icannTLD, err := iana.ExtractSuffix(baseDomain)
@@ -110,7 +110,7 @@ index 961b67cb6..4e0ea33f6 100644
  		return errNonPublic
  	}
  	// Names must have a non-wildcard label immediately adjacent to the ICANN
-@@ -339,7 +365,7 @@ func ValidDomain(domain string) error {
+@@ -340,7 +366,7 @@ func ValidDomain(domain string) error {
  	if baseDomain == icannTLD {
  		return errICANNTLDWildcard
  	}
@@ -119,7 +119,7 @@ index 961b67cb6..4e0ea33f6 100644
  }
  
  // ValidIP checks that an IP address:
-@@ -382,14 +408,14 @@ var forbiddenMailDomains = map[string]bool{
+@@ -383,14 +409,14 @@ var forbiddenMailDomains = map[string]bool{
  // ValidEmail returns an error if the input doesn't parse as an email address,
  // the domain isn't a valid hostname in Preferred Name Syntax, or its on the
  // list of domains forbidden for mail (because they are often used in examples).
@@ -136,7 +136,7 @@ index 961b67cb6..4e0ea33f6 100644
  	if err != nil {
  		return berrors.InvalidEmailError("contact email has invalid domain: %s", err)
  	}
-@@ -431,7 +457,7 @@ func subError(ident identifier.ACMEIdentifier, err error) berrors.SubBoulderErro
+@@ -432,7 +458,7 @@ func subError(ident identifier.ACMEIdentifier, err error) berrors.SubBoulderErro
  //
  // Precondition: all input identifier values must be in lowercase.
  func (pa *AuthorityImpl) WillingToIssue(idents identifier.ACMEIdentifiers) error {
@@ -145,7 +145,7 @@ index 961b67cb6..4e0ea33f6 100644
  	if err != nil {
  		return err
  	}
-@@ -448,6 +474,10 @@ func (pa *AuthorityImpl) WillingToIssue(idents identifier.ACMEIdentifiers) error
+@@ -449,6 +475,10 @@ func (pa *AuthorityImpl) WillingToIssue(idents identifier.ACMEIdentifiers) error
  			// The base domain is the wildcard request with the `*.` prefix removed
  			baseDomain := strings.TrimPrefix(ident.Value, "*.")
  
@@ -156,7 +156,7 @@ index 961b67cb6..4e0ea33f6 100644
  			// The base domain can't be in the wildcard exact blocklist
  			err = pa.checkWildcardBlocklist(baseDomain)
  			if err != nil {
-@@ -496,12 +526,12 @@ func (pa *AuthorityImpl) WillingToIssue(idents identifier.ACMEIdentifiers) error
+@@ -497,12 +527,12 @@ func (pa *AuthorityImpl) WillingToIssue(idents identifier.ACMEIdentifiers) error
  //
  // If multiple identifiers are invalid, the error will contain suberrors
  // specific to each identifier.
@@ -171,7 +171,7 @@ index 961b67cb6..4e0ea33f6 100644
  			if err != nil {
  				subErrors = append(subErrors, subError(ident, err))
  			}
-@@ -543,6 +573,34 @@ func combineSubErrors(subErrors []berrors.SubBoulderError) error {
+@@ -544,6 +574,34 @@ func combineSubErrors(subErrors []berrors.SubBoulderError) error {
  	return nil
  }
  
@@ -206,7 +206,7 @@ index 961b67cb6..4e0ea33f6 100644
  // checkWildcardBlocklist checks the wildcardExactBlocklist for a given domain.
  // If the domain is not present on the list nil is returned, otherwise
  // errPolicyForbidden is returned.
-@@ -574,6 +632,9 @@ func (pa *AuthorityImpl) checkBlocklists(ident identifier.ACMEIdentifier) error
+@@ -575,6 +633,9 @@ func (pa *AuthorityImpl) checkBlocklists(ident identifier.ACMEIdentifier) error
  		labels := strings.Split(ident.Value, ".")
  		for i := range labels {
  			joined := strings.Join(labels[i:], ".")

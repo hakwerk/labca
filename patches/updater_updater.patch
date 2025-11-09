@@ -1,8 +1,8 @@
 diff --git a/crl/updater/updater.go b/crl/updater/updater.go
-index 600b17f22..bef3305b3 100644
+index 9020c6c62..09b31f88a 100644
 --- a/crl/updater/updater.go
 +++ b/crl/updater/updater.go
-@@ -80,7 +80,7 @@ func NewUpdater(
+@@ -72,7 +72,7 @@ func NewUpdater(
  		return nil, fmt.Errorf("must have positive number of shards, got: %d", numShards)
  	}
  
@@ -11,12 +11,12 @@ index 600b17f22..bef3305b3 100644
  		return nil, fmt.Errorf("must update CRLs at least every 24 hours, got: %s", updatePeriod)
  	}
  
-@@ -307,7 +307,7 @@ func (cu *crlUpdater) updateShard(ctx context.Context, atTime time.Time, issuerN
- 			return fmt.Errorf("streaming GetRevokedCerts: %w", err)
- 		}
- 
--		cu.log.Infof(
-+		cu.log.Debugf(
- 			"Queried SA for CRL shard: id=[%s] expiresAfter=[%s] expiresBefore=[%s] numEntries=[%d]",
- 			crlID, chunk.start, chunk.end, n)
+@@ -229,7 +229,7 @@ func (cu *crlUpdater) updateShard(ctx context.Context, atTime time.Time, issuerN
+ 		crlEntries = append(crlEntries, entry)
  	}
+ 
+-	cu.log.Infof("Queried SA for CRL shard: id=[%s] shardIdx=[%d] numEntries=[%d]", crlID, shardIdx, len(crlEntries))
++	cu.log.Debugf("Queried SA for CRL shard: id=[%s] shardIdx=[%d] numEntries=[%d]", crlID, shardIdx, len(crlEntries))
+ 
+ 	// Send the full list of CRL Entries to the CA.
+ 	caStream, err := cu.ca.GenerateCRL(ctx)

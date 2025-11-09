@@ -21,7 +21,6 @@ $SUDO patch -p1 -o "$boulderLabCADir/config/crl-storer.json" < $cloneDir/patches
 $SUDO patch -p1 -o "$boulderLabCADir/config/crl-updater.json" < $cloneDir/patches/config_crl-updater.patch
 $SUDO patch -p1 -o "$boulderLabCADir/config/ca.json" < $cloneDir/patches/test_config_ca.patch
 $SUDO patch -p1 -o "$boulderLabCADir/config/ra.json" < $cloneDir/patches/config_ra.patch
-$SUDO patch -p1 -o "$boulderLabCADir/config/akamai-purger.json" < $cloneDir/patches/config_akamai-purger.patch
 $SUDO patch -p1 -o "$boulderLabCADir/certs/generate.sh" < $cloneDir/patches/test_certs_generate.patch
 chmod +x $boulderLabCADir/certs/generate.sh
 
