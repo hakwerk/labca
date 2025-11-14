@@ -29,8 +29,13 @@ die() {
 [ -f "tmp/labca-gui" ] || die "LabCA binary does not exist!"
 docker build -f Dockerfile-gui -t $LABCA_GUI_TAG .
 
+field=3
+if [ $(docker images | grep "DISK USAGE" | wc -l) != "0" ]; then
+    field=2
+fi
+
 if [ "$BRANCH" == "master" ] || [ "$BRANCH" == "main" ]; then
-    ID="$(docker images | grep "${REPO_BASE}-gui" | grep -v latest | head -n 1 | awk '{print $3}')"
+    ID="$(docker images | grep "${REPO_BASE}-gui" | grep -v latest | head -n 1 | awk -v f="$field" '{print $f}')"
     docker tag "$ID" $LABCA_GUI_LATEST
 fi
 
@@ -39,14 +44,14 @@ cnt=$(ls -1 tmp/bin | wc -l)
 docker build -f Dockerfile-boulder -t $LABCA_BOULDER_TAG .
 
 if [ "$BRANCH" == "master" ] || [ "$BRANCH" == "main" ]; then
-    ID="$(docker images | grep "${REPO_BASE}-boulder" | grep -v latest | head -n 1 | awk '{print $3}')"
+    ID="$(docker images | grep "${REPO_BASE}-boulder" | grep -v latest | head -n 1 | awk -v f="$field" '{print $f}')"
     docker tag "$ID" $LABCA_BOULDER_LATEST
 fi
 
 docker build -f Dockerfile-control -t $LABCA_CONTROL_TAG .
 
 if [ "$BRANCH" == "master" ] || [ "$BRANCH" == "main" ]; then
-    ID="$(docker images | grep "${REPO_BASE}-control" | grep -v latest | head -n 1 | awk '{print $3}')"
+    ID="$(docker images | grep "${REPO_BASE}-control" | grep -v latest | head -n 1 | awk -v f="$field" '{print $f}')"
     docker tag "$ID" $LABCA_CONTROL_LATEST
 fi
 

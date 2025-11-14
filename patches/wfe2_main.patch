@@ -1,5 +1,5 @@
 diff --git a/cmd/boulder-wfe2/main.go b/cmd/boulder-wfe2/main.go
-index cc5930699..8e1a14c3c 100644
+index a7a10ca26..4241ad106 100644
 --- a/cmd/boulder-wfe2/main.go
 +++ b/cmd/boulder-wfe2/main.go
 @@ -14,14 +14,17 @@ import (
@@ -29,7 +29,7 @@ index cc5930699..8e1a14c3c 100644
  		// DirectoryWebsite is used for the /directory response's "meta" element's
  		// "website" field.
  		DirectoryWebsite string `validate:"required,url"`
-@@ -182,6 +185,8 @@ type Config struct {
+@@ -186,6 +189,8 @@ type Config struct {
  			// to enable the pausing feature.
  			URL string `validate:"omitempty,required_with=HMACKey JWTLifetime,url,startswith=https://,endsnotwith=/"`
  		}
@@ -38,11 +38,12 @@ index cc5930699..8e1a14c3c 100644
  	}
  
  	Syslog        cmd.SyslogConfig
-@@ -326,11 +331,25 @@ func main() {
+@@ -330,12 +335,26 @@ func main() {
  	var limiter *ratelimits.Limiter
  	var txnBuilder *ratelimits.TransactionBuilder
  	var limiterRedis *bredis.Ring
 +	var pa *policy.AuthorityImpl
+ 	overridesRefresherShutdown := func() {}
  	if c.WFE.Limiter.Defaults != "" {
  		// Setup rate limiting.
  		limiterRedis, err = bredis.NewRingFromConfig(*c.WFE.Limiter.Redis, stats, logger)
@@ -64,7 +65,7 @@ index cc5930699..8e1a14c3c 100644
  		source := ratelimits.NewRedisSource(limiterRedis.Ring, clk, stats)
  		limiter, err = ratelimits.NewLimiter(clk, source, stats)
  		cmd.FailOnError(err, "Failed to create rate limiter")
-@@ -371,6 +390,7 @@ func main() {
+@@ -384,6 +403,7 @@ func main() {
  		unpauseSigner,
  		c.WFE.Unpause.JWTLifetime.Duration,
  		c.WFE.Unpause.URL,

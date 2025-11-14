@@ -1,8 +1,8 @@
 diff --git a/va/va.go b/va/va.go
-index 4993aec36..161cbacda 100644
+index 55211e27b..20c5f0a94 100644
 --- a/va/va.go
 +++ b/va/va.go
-@@ -219,6 +219,7 @@ type ValidationAuthorityImpl struct {
+@@ -220,6 +220,7 @@ type ValidationAuthorityImpl struct {
  	perspective        string
  	rir                string
  	isReservedIPFunc   func(netip.Addr) error
@@ -10,15 +10,15 @@ index 4993aec36..161cbacda 100644
  
  	metrics *vaMetrics
  }
-@@ -239,6 +240,7 @@ func NewValidationAuthorityImpl(
+@@ -240,6 +241,7 @@ func NewValidationAuthorityImpl(
  	perspective string,
  	rir string,
  	reservedIPChecker func(netip.Addr) error,
 +	labcaDomains []string,
+ 	slowRemoteTimeout time.Duration,
  ) (*ValidationAuthorityImpl, error) {
  
- 	if len(accountURIPrefixes) == 0 {
-@@ -276,6 +278,7 @@ func NewValidationAuthorityImpl(
+@@ -278,6 +280,7 @@ func NewValidationAuthorityImpl(
  		perspective:       perspective,
  		rir:               rir,
  		isReservedIPFunc:  reservedIPChecker,

@@ -1,5 +1,5 @@
 diff --git a/ra/ra.go b/ra/ra.go
-index 54e51cce5..af96bb245 100644
+index cd8c599fb..32d94f68c 100644
 --- a/ra/ra.go
 +++ b/ra/ra.go
 @@ -41,7 +41,6 @@ import (
@@ -10,7 +10,7 @@ index 54e51cce5..af96bb245 100644
  	"github.com/letsencrypt/boulder/probs"
  	pubpb "github.com/letsencrypt/boulder/publisher/proto"
  	rapb "github.com/letsencrypt/boulder/ra/proto"
-@@ -567,7 +566,7 @@ func (ra *RegistrationAuthorityImpl) validateContacts(contacts []string) error {
+@@ -566,7 +565,7 @@ func (ra *RegistrationAuthorityImpl) validateContacts(contacts []string) error {
  		if !core.IsASCII(contact) {
  			return berrors.InvalidEmailError("contact email contains non-ASCII characters")
  		}
@@ -19,7 +19,7 @@ index 54e51cce5..af96bb245 100644
  		if err != nil {
  			return err
  		}
-@@ -1850,6 +1849,9 @@ func crlShard(cert *x509.Certificate) (int64, error) {
+@@ -1847,6 +1846,9 @@ func crlShard(cert *x509.Certificate) (int64, error) {
  		return 0, fmt.Errorf("malformed CRLDistributionPoint %q", url)
  	}
  	shardStr := url[lastIndex+1:]

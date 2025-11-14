@@ -1,16 +1,16 @@
 diff --git a/cmd/boulder-va/main.go b/cmd/boulder-va/main.go
-index dd3fe9b39..5f6325f51 100644
+index fecf2ed7f..aa4d3320a 100644
 --- a/cmd/boulder-va/main.go
 +++ b/cmd/boulder-va/main.go
-@@ -54,6 +54,7 @@ type Config struct {
- 		// Deprecated and ignored
- 		MaxRemoteValidationFailures int `validate:"omitempty,min=0,required_with=RemoteVAs"`
- 		Features                    features.Config
-+		LabCADomains                []string
+@@ -58,6 +58,7 @@ type Config struct {
+ 		// Leaving this value zero means the VA won't early-cancel slow remotes.
+ 		SlowRemoteTimeout config.Duration
+ 		Features          features.Config
++		LabCADomains      []string
  	}
  
  	Syslog        cmd.SyslogConfig
-@@ -83,12 +84,16 @@ func main() {
+@@ -87,12 +88,16 @@ func main() {
  	clk := clock.New()
  
  	var servers bdns.ServerProvider
@@ -28,13 +28,11 @@ index dd3fe9b39..5f6325f51 100644
  		cmd.FailOnError(err, "Couldn't start dynamic DNS server resolver")
  	}
  	defer servers.Stop()
-@@ -149,7 +154,8 @@ func main() {
- 		c.VA.AccountURIPrefixes,
+@@ -154,6 +159,7 @@ func main() {
  		va.PrimaryPerspective,
  		"",
--		iana.IsReservedAddr)
-+		iana.IsReservedAddr,
-+		c.VA.LabCADomains)
+ 		iana.IsReservedAddr,
++		c.VA.LabCADomains,
+ 		c.VA.SlowRemoteTimeout.Duration,
+ 	)
  	cmd.FailOnError(err, "Unable to create VA server")
- 
- 	start, err := bgrpc.NewServer(c.VA.GRPC, logger).Add(

@@ -1,5 +1,5 @@
 diff --git a/test/config/ca.json b/test/config/ca.json
-index 477f82b12..9512d98b0 100644
+index 59a1f348c..58f51f5e7 100644
 --- a/test/config/ca.json
 +++ b/test/config/ca.json
 @@ -1,11 +1,11 @@
@@ -18,28 +18,26 @@ index 477f82b12..9512d98b0 100644
  		"grpcCA": {
  			"maxConnectionAge": "30s",
  			"address": ":9093",
-@@ -59,7 +59,8 @@
- 					"includeCRLDistributionPoints": true,
+@@ -56,7 +56,7 @@
+ 					"omitSKID": false,
  					"maxValidityPeriod": "7776000s",
  					"maxValidityBackdate": "1h5m",
 -					"lintConfig": "test/config-next/zlint.toml",
-+					"includeCRLDistributionPoints": true,
 +					"lintConfig": "labca/config/zlint.toml",
  					"ignoredLints": [
  						"w_subject_common_name_included",
  						"e_dnsname_not_valid_tld",
-@@ -76,7 +77,8 @@
- 					"includeCRLDistributionPoints": true,
+@@ -70,7 +70,7 @@
+ 					"omitSKID": true,
  					"maxValidityPeriod": "160h",
  					"maxValidityBackdate": "1h5m",
 -					"lintConfig": "test/config-next/zlint.toml",
-+					"includeCRLDistributionPoints": true,
 +					"lintConfig": "labca/config/zlint.toml",
  					"ignoredLints": [
  						"w_ext_subject_key_identifier_missing_sub_cert",
  						"e_dnsname_not_valid_tld"
-@@ -92,7 +94,7 @@
- 					"includeCRLDistributionPoints": true,
+@@ -83,7 +83,7 @@
+ 					"omitSKID": true,
  					"maxValidityPeriod": "583200s",
  					"maxValidityBackdate": "1h5m",
 -					"lintConfig": "test/config-next/zlint.toml",
@@ -47,7 +45,7 @@ index 477f82b12..9512d98b0 100644
  					"ignoredLints": [
  						"w_ext_subject_key_identifier_missing_sub_cert",
  						"e_dnsname_not_valid_tld"
-@@ -102,72 +104,17 @@
+@@ -93,23 +93,9 @@
  			"crlProfile": {
  				"validityInterval": "216h",
  				"maxBackdate": "1h5m",
@@ -55,8 +53,11 @@ index 477f82b12..9512d98b0 100644
 +				"lintConfig": "labca/config/zlint.toml"
  			},
  			"issuers": [
- 				{
- 					"active": true,
+-				{
+-					"active": true,
+-					"profiles": [
+-						"legacy"
+-					],
 -					"crlShards": 10,
 -					"issuerURL": "http://ca.example.org:4502/int-ecdsa-a",
 -					"crlURLBase": "http://ca.example.org:4501/lets-encrypt-crls/43104258997432926/",
@@ -66,8 +67,13 @@ index 477f82b12..9512d98b0 100644
 -						"numSessions": 2
 -					}
 -				},
--				{
--					"active": true,
+ 				{
+ 					"active": true,
+ 					"profiles": [
+@@ -117,64 +103,12 @@
+ 						"modern",
+ 						"shortlived"
+ 					],
 -					"crlShards": 10,
 -					"issuerURL": "http://ca.example.org:4502/int-ecdsa-b",
 -					"crlURLBase": "http://ca.example.org:4501/lets-encrypt-crls/17302365692836921/",
@@ -90,6 +96,9 @@ index 477f82b12..9512d98b0 100644
 -				},
 -				{
 -					"active": true,
+-					"profiles": [
+-						"legacy"
+-					],
 -					"crlShards": 10,
 +					"crlShards": 1,
  					"issuerURL": "http://ca.example.org:4502/int-rsa-a",
@@ -102,6 +111,11 @@ index 477f82b12..9512d98b0 100644
 -				},
 -				{
 -					"active": true,
+-					"profiles": [
+-						"legacy",
+-						"modern",
+-						"shortlived"
+-					],
 -					"crlShards": 10,
 -					"issuerURL": "http://ca.example.org:4502/int-rsa-b",
 -					"crlURLBase": "http://ca.example.org:4501/lets-encrypt-crls/6762885421992935/",
@@ -124,16 +138,16 @@ index 477f82b12..9512d98b0 100644
  						"numSessions": 2
  					}
  				}
-@@ -179,7 +126,7 @@
+@@ -184,7 +118,7 @@
+ 		"maxNames": 100,
  		"goodkey": {},
  		"ocspLogMaxLength": 4000,
- 		"ocspLogPeriod": "500ms",
 -		"ctLogListFile": "test/ct-test-srv/log_list.json",
 +		"ctLogListFile": "labca/ct-test-srv/log_list.json",
  		"features": {}
  	},
  	"pa": {
-@@ -194,7 +141,7 @@
+@@ -199,7 +133,7 @@
  		}
  	},
  	"syslog": {

@@ -50,7 +50,7 @@ index c0c7fc838..fd9a67f35 100644
 +      bash -c "sleep 20 && mysql_upgrade -h bmysql"
 +
    bredis:
-     image: redis:6.2.7
+     image: redis:7.0.15
      volumes:
        - ./test/:/test/:cached
 -      - /home/labca/boulder_labca:/opt/boulder/labca

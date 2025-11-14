@@ -1,5 +1,5 @@
 diff --git a/docker-compose.yml b/docker-compose.yml
-index 2e2ff2746..c0c7fc838 100644
+index 39802cd8b..58bb84501 100644
 --- a/docker-compose.yml
 +++ b/docker-compose.yml
 @@ -1,3 +1,4 @@
@@ -81,9 +81,14 @@ index 2e2ff2746..c0c7fc838 100644
 +    command: mysqld --bind-address=0.0.0.0 --log-output=TABLE
      logging:
 -      driver: none
--
++      driver: "json-file"
++      options:
++        max-size: "500k"
++        max-file: "5"
++    restart: always
+ 
 -  bproxysql:
--    image: proxysql/proxysql:2.5.4
+-    image: proxysql/proxysql:2.7.2
 -    # The --initial flag force resets the ProxySQL database on startup. By
 -    # default, ProxySQL ignores new configuration if the database already
 -    # exists. Without this flag, new configuration wouldn't be applied until you
@@ -97,15 +102,10 @@ index 2e2ff2746..c0c7fc838 100644
 -      bouldernet:
 -        aliases:
 -          - boulder-proxysql
-+      driver: "json-file"
-+      options:
-+        max-size: "500k"
-+        max-file: "5"
-+    restart: always
- 
+-
 -  bredis_1:
 +  bredis:
-     image: redis:6.2.7
+     image: redis:7.0.15
      volumes:
        - ./test/:/test/:cached
 -    command: redis-server /test/redis-ratelimits.config
@@ -114,36 +114,31 @@ index 2e2ff2746..c0c7fc838 100644
      networks:
        bouldernet:
          ipv4_address: 10.77.77.4
--
--  bredis_2:
--    image: redis:6.2.7
--    volumes:
--      - ./test/:/test/:cached
--    command: redis-server /test/redis-ratelimits.config
--    networks:
--      bouldernet:
--        ipv4_address: 10.77.77.5
 +    restart: always
  
-   bconsul:
-     image: hashicorp/consul:1.15.4
+-  bredis_2:
+-    image: redis:7.0.15
++  bconsul:
++    image: hashicorp/consul:1.19.2
 +    depends_on:
 +      - control
      volumes:
--     - ./test/:/test/:cached
+-      - ./test/:/test/:cached
+-    command: redis-server /test/redis-ratelimits.config
 +      - /home/labca/boulder_labca:/opt/boulder/labca
      networks:
        bouldernet:
-         ipv4_address: 10.77.77.10
--    command: "consul agent -dev -config-format=hcl -config-file=/test/consul/config.hcl"
+-        ipv4_address: 10.77.77.5
++        ipv4_address: 10.77.77.10
 +    command: "consul agent -dev -config-format=hcl -config-file=/opt/boulder/labca/consul/config.hcl"
 +    restart: always
  
--  bjaeger:
--    image: jaegertracing/all-in-one:1.50
+-  bconsul:
+-    image: hashicorp/consul:1.19.1
 +  gui:
 +    image: *boulder_tools_image
-+    volumes:
+     volumes:
+-     - ./test/:/test/:cached
 +      - /var/run/docker.sock:/var/run/docker.sock
 +      - /home/labca/admin:/go/src/labca
 +      - ./.gocache:/root/.cache/go-build
@@ -153,7 +148,10 @@ index 2e2ff2746..c0c7fc838 100644
 +      - /home/labca/boulder_labca:/opt/boulder/labca
 +      - /home/labca/boulder_labca/certs/.softhsm-tokens/:/var/lib/softhsm/tokens/
      networks:
-       - bouldernet
+-      bouldernet:
+-        ipv4_address: 10.77.77.10
+-    command: "consul agent -dev -config-format=hcl -config-file=/test/consul/config.hcl"
++      - bouldernet
 +    expose:
 +      - 3000
 +    depends_on:
@@ -182,11 +180,13 @@ index 2e2ff2746..c0c7fc838 100644
 +      - /home/labca/nginx_data/static:/var/www/html
 +    depends_on:
 +      - control
-+
+ 
+-  bjaeger:
+-    image: jaegertracing/all-in-one:1.50
 +  control:
 +    image: *boulder_tools_image
-+    networks:
-+      - bouldernet
+     networks:
+       - bouldernet
 +    volumes:
 +      - /var/run/docker.sock:/var/run/docker.sock
 +      - /home/labca/admin/data:/opt/labca/data

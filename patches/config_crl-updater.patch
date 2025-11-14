@@ -1,8 +1,8 @@
 diff --git a/test/config/crl-updater.json b/test/config/crl-updater.json
-index adb2b01e5..6066b7e5e 100644
+index 5c9e12413..5cc6d4716 100644
 --- a/test/config/crl-updater.json
 +++ b/test/config/crl-updater.json
-@@ -36,24 +36,19 @@
+@@ -36,18 +36,13 @@
  			"hostOverride": "crl-storer.boulder"
  		},
  		"issuerCerts": [
@@ -26,11 +26,4 @@ index adb2b01e5..6066b7e5e 100644
 +		"updateTimeout": "2m",
  		"expiresMargin": "5m",
  		"cacheControl": "stale-if-error=60",
- 		"temporallyShardedSerialPrefixes": [
- 			"7f"
- 		],
--		"maxParallelism": 10,
-+		"maxParallelism": 1,
- 		"maxAttempts": 2,
- 		"features": {}
- 	},
+ 		"maxParallelism": 10,

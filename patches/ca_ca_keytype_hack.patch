@@ -1,21 +1,36 @@
 diff --git a/ca/ca.go b/ca/ca.go
-index b63f6a143..2ab73db94 100644
+index 3a62648c3..2cb8337ca 100644
 --- a/ca/ca.go
 +++ b/ca/ca.go
-@@ -164,10 +164,14 @@ func makeIssuerMaps(issuers []*issuance.Issuer) (issuerMaps, error) {
+@@ -190,11 +190,12 @@ func NewCertificateAuthorityImpl(
  		}
  	}
- 	if i, ok := issuersByAlg[x509.ECDSA]; !ok || len(i) == 0 {
--		fmt.Println("WARNING: no ECDSA issuers configured")
+ 
+-	for _, keyAlg := range []x509.PublicKeyAlgorithm{x509.ECDSA, x509.RSA} {
+-		if !issuableKeys[keyAlg] {
+-			fmt.Printf("WARNING: no %s issuers configured\n", keyAlg)
+-		}
+-	}
++	// TODO: LabCA hack!
++	//for _, keyAlg := range []x509.PublicKeyAlgorithm{x509.ECDSA, x509.RSA} {
++	//	if !issuableKeys[keyAlg] {
++	//		fmt.Printf("WARNING: no %s issuers configured\n", keyAlg)
++	//	}
++	//}
+ 
+ 	return &certificateAuthorityImpl{
+ 		sa:        sa,
+@@ -474,9 +475,10 @@ func (ca *certificateAuthorityImpl) pickIssuer(profileName string, keyAlg x509.P
+ 		if !issuer.IsActive() {
+ 			continue
+ 		}
+-		if issuer.KeyType() != keyAlg {
+-			continue
+-		}
 +		// TODO: LabCA hack!
-+		issuersByAlg[x509.ECDSA] = issuersByAlg[x509.RSA]
-+		// fmt.Println("WARNING: no ECDSA issuers configured")
- 	}
- 	if i, ok := issuersByAlg[x509.RSA]; !ok || len(i) == 0 {
--		fmt.Println("WARNING: no RSA issuers configured")
-+		// TODO: LabCA hack!
-+		issuersByAlg[x509.RSA] = issuersByAlg[x509.ECDSA]
-+		// fmt.Println("WARNING: no RSA issuers configured")
- 	}
- 	return issuerMaps{issuersByAlg, issuersByNameID}, nil
- }
++		//if issuer.KeyType() != keyAlg {
++		//	continue
++		//}
+ 		if !slices.Contains(issuer.Profiles(), profileName) {
+ 			continue
+ 		}

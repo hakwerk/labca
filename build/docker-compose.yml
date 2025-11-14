@@ -94,7 +94,7 @@ services:
       bash -c "sleep 20 && mysql_upgrade -h bmysql"
 
   bredis:
-    image: redis:6.2.7
+    image: redis:7.0.15
     volumes:
       - ./test/:/test/:cached
       - boulder_data:/opt/boulder/labca
@@ -106,7 +106,7 @@ services:
     restart: always
 
   bconsul:
-    image: hashicorp/consul:1.15.4
+    image: hashicorp/consul:1.19.2
     depends_on:
       - control
     volumes:

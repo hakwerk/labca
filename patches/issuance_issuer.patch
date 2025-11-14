@@ -1,8 +1,8 @@
 diff --git a/issuance/issuer.go b/issuance/issuer.go
-index 1c8b7ed1f..c21910db2 100644
+index 8479470ba..33672c905 100644
 --- a/issuance/issuer.go
 +++ b/issuance/issuer.go
-@@ -128,8 +128,8 @@ func LoadChain(certFiles []string) ([]*Certificate, error) {
+@@ -129,8 +129,8 @@ func LoadChain(certFiles []string) ([]*Certificate, error) {
  	lastCert := certs[len(certs)-1]
  	err = lastCert.CheckSignatureFrom(lastCert.Certificate)
  	if err != nil {
@@ -13,16 +13,16 @@ index 1c8b7ed1f..c21910db2 100644
  			lastCert.Subject, certFiles[len(certFiles)-1], err)
  	}
  
-@@ -154,7 +154,7 @@ type IssuerConfig struct {
- 	Profiles []string `validate:"omitempty,dive,alphanum,min=1,max=32"`
+@@ -156,7 +156,7 @@ type IssuerConfig struct {
+ 	Profiles []string `validate:"required_if=Active true,dive,alphanum,min=1,max=32"`
  
  	IssuerURL  string `validate:"required,url"`
 -	CRLURLBase string `validate:"required,url,startswith=http://,endswith=/"`
 +	CRLURLBase string `validate:"required,url,startswith=http://"`
  
- 	// TODO(#8177): Remove this.
- 	OCSPURL string `validate:"omitempty,url"`
-@@ -239,9 +239,6 @@ func newIssuer(config IssuerConfig, cert *Certificate, signer crypto.Signer, clk
+ 	// Number of CRL shards. Must be positive, but can be 1 for no sharding.
+ 	CRLShards int `validate:"required,min=1"`
+@@ -242,9 +242,6 @@ func newIssuer(config IssuerConfig, cert *Certificate, signer crypto.Signer, clk
  	if !strings.HasPrefix(config.CRLURLBase, "http://") {
  		return nil, fmt.Errorf("crlURLBase must use HTTP scheme, got %q", config.CRLURLBase)
  	}
@@ -30,5 +30,5 @@ index 1c8b7ed1f..c21910db2 100644
 -		return nil, fmt.Errorf("crlURLBase must end with exactly one forward slash, got %q", config.CRLURLBase)
 -	}
  	if config.CRLShards <= 0 {
- 		return nil, errors.New("Number of CRL shards is required")
+ 		return nil, errors.New("number of CRL shards is required")
  	}

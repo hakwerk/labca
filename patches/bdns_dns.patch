@@ -1,16 +1,16 @@
 diff --git a/bdns/dns.go b/bdns/dns.go
-index 5d297f3ef..9eabf1239 100644
+index 5fee207b8..f147da8e9 100644
 --- a/bdns/dns.go
 +++ b/bdns/dns.go
-@@ -21,6 +21,7 @@ import (
- 	"github.com/miekg/dns"
+@@ -20,6 +20,7 @@ import (
  	"github.com/prometheus/client_golang/prometheus"
+ 	"github.com/prometheus/client_golang/prometheus/promauto"
  
 +	"github.com/letsencrypt/boulder/features"
  	"github.com/letsencrypt/boulder/iana"
  	blog "github.com/letsencrypt/boulder/log"
  	"github.com/letsencrypt/boulder/metrics"
-@@ -77,22 +78,30 @@ func New(
+@@ -75,22 +76,30 @@ func New(
  ) Client {
  	var client exchanger
  
@@ -56,20 +56,20 @@ index 5d297f3ef..9eabf1239 100644
 +		}
  	}
  
- 	queryTime := prometheus.NewHistogramVec(
-@@ -273,10 +282,17 @@ func (dnsClient *impl) exchangeOne(ctx context.Context, hostname string, qtype u
+ 	queryTime := promauto.With(stats).NewHistogramVec(
+@@ -260,10 +269,17 @@ func (dnsClient *impl) exchangeOne(ctx context.Context, hostname string, qtype u
  		case r := <-ch:
  			if r.err != nil {
  				var isRetryable bool
--				// According to the http package documentation, retryable
--				// errors emitted by the http package are of type *url.Error.
--				var urlErr *url.Error
--				isRetryable = errors.As(r.err, &urlErr) && urlErr.Temporary()
+-				// Check if the error is a timeout error. Network errors
+-				// that can timeout implement the net.Error interface.
+-				var netErr net.Error
+-				isRetryable = errors.As(r.err, &netErr) && netErr.Timeout()
 +				if features.Get().DOH {
-+					// According to the http package documentation, retryable
-+					// errors emitted by the http package are of type *url.Error.
-+					var urlErr *url.Error
-+					isRetryable = errors.As(r.err, &urlErr) && urlErr.Temporary()
++					// Check if the error is a timeout error. Network errors
++					// that can timeout implement the net.Error interface.
++					var netErr net.Error
++					isRetryable = errors.As(r.err, &netErr) && netErr.Timeout()
 +				} else {
 +					// According to the net package documentation, retryable
 +					// errors emitted by the net package are of type *net.OpError.

@@ -1,8 +1,8 @@
 diff --git a/cmd/boulder-ra/main.go b/cmd/boulder-ra/main.go
-index dd30f78cd..a3b6c2e88 100644
+index 7d8b73dde..f37e1581e 100644
 --- a/cmd/boulder-ra/main.go
 +++ b/cmd/boulder-ra/main.go
-@@ -268,6 +268,8 @@ func main() {
+@@ -261,6 +261,8 @@ func main() {
  		limiterRedis, err = bredis.NewRingFromConfig(*c.RA.Limiter.Redis, scope, logger)
  		cmd.FailOnError(err, "Failed to create Redis ring")
  

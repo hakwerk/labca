@@ -1,17 +1,13 @@
 diff --git a/ca/ca.go b/ca/ca.go
-index 3b33991eb..b63f6a143 100644
+index a5890452f..3a62648c3 100644
 --- a/ca/ca.go
 +++ b/ca/ca.go
-@@ -164,10 +164,10 @@ func makeIssuerMaps(issuers []*issuance.Issuer) (issuerMaps, error) {
+@@ -192,7 +192,7 @@ func NewCertificateAuthorityImpl(
+ 
+ 	for _, keyAlg := range []x509.PublicKeyAlgorithm{x509.ECDSA, x509.RSA} {
+ 		if !issuableKeys[keyAlg] {
+-			return nil, fmt.Errorf("no %s issuers configured", keyAlg)
++			fmt.Printf("WARNING: no %s issuers configured\n", keyAlg)
  		}
  	}
- 	if i, ok := issuersByAlg[x509.ECDSA]; !ok || len(i) == 0 {
--		return issuerMaps{}, errors.New("no ECDSA issuers configured")
-+		fmt.Println("WARNING: no ECDSA issuers configured")
- 	}
- 	if i, ok := issuersByAlg[x509.RSA]; !ok || len(i) == 0 {
--		return issuerMaps{}, errors.New("no RSA issuers configured")
-+		fmt.Println("WARNING: no RSA issuers configured")
- 	}
- 	return issuerMaps{issuersByAlg, issuersByNameID}, nil
- }
+ 

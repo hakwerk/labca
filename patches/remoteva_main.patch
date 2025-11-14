@@ -1,5 +1,5 @@
 diff --git a/cmd/remoteva/main.go b/cmd/remoteva/main.go
-index d049ba126..16fdca8a4 100644
+index 43b68d621..1c950cff6 100644
 --- a/cmd/remoteva/main.go
 +++ b/cmd/remoteva/main.go
 @@ -59,7 +59,8 @@ type Config struct {
@@ -30,13 +30,11 @@ index d049ba126..16fdca8a4 100644
  		cmd.FailOnError(err, "Couldn't start dynamic DNS server resolver")
  	}
  	defer servers.Stop()
-@@ -140,7 +145,8 @@ func main() {
- 		c.RVA.AccountURIPrefixes,
+@@ -141,6 +146,7 @@ func main() {
  		c.RVA.Perspective,
  		c.RVA.RIR,
--		iana.IsReservedAddr)
-+		iana.IsReservedAddr,
-+		c.RVA.LabCADomains)
+ 		iana.IsReservedAddr,
++		c.RVA.LabCADomains,
+ 		0,
+ 	)
  	cmd.FailOnError(err, "Unable to create Remote-VA server")
- 
- 	start, err := bgrpc.NewServer(c.RVA.GRPC, logger).Add(

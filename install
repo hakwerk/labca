@@ -30,7 +30,7 @@ dockerComposeVersion="v2.5.0"
 
 labcaUrl="https://github.com/hakwerk/labca/"
 boulderUrl="https://github.com/letsencrypt/boulder/"
-boulderTag="v0.20251021.0"
+boulderTag="v0.20251110.0"
 
 #
 # Color configuration
@@ -871,7 +871,9 @@ main() {
     local curdir="$PWD"
 
     echo
-    check_dockeronly
+    if [[ "$0" == *" -t"* ]]; then
+        check_dockeronly
+    fi
 
     start_temporary_log
     check_root
@@ -913,7 +915,8 @@ main() {
         msg_info "$msg"
         build/tag_and_upload.sh &>>$installLog || msg_fatal "Could not tag (and upload) docker images!"
         msg_ok "$msg"
-        msg_ok "That's it for now!"
+        sed -i -e "s|ghcr.io/hakwerk/|hakwerk/|" build/docker-compose.yml &>>$installLog
+        msg_ok "That's it for now! - don't forget to 'export LABCA_FQDN=$(hostname -f)'"
         exit 0
     fi
 
