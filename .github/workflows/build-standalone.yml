@@ -39,6 +39,14 @@ jobs:
 
       - name: APT Install
         run: |
+          sudo bash -c 'cat > /etc/apt/sources.list.d/arm64.sources <<EOF
+          Types: deb
+          URIs: http://ports.ubuntu.com/ubuntu-ports/
+          Suites: noble noble-updates noble-backports noble-security
+          Components: main restricted universe multiverse
+          Architectures: arm64
+          Signed-By: /usr/share/keyrings/ubuntu-archive-keyring.gpg
+          EOF'
           sudo dpkg --add-architecture arm64
           sudo apt-get update
           sudo apt-get -y install build-essential debhelper fakeroot crossbuild-essential-arm64
