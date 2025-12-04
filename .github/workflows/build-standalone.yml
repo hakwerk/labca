@@ -40,6 +40,7 @@ jobs:
       - name: APT Install
         run: |
           sudo dpkg --add-architecture arm64
+          sudo apt-get update
           sudo apt-get -y install build-essential debhelper fakeroot crossbuild-essential-arm64
 
       - name: Build Debian packages
