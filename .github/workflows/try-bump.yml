@@ -13,7 +13,7 @@ jobs:
 
     steps:
       - name: Checkout Self
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       - uses: oprypin/find-latest-tag@v1
         with:
@@ -22,7 +22,7 @@ jobs:
 
       - run: echo "Boulder is at version ${{ steps.boulder.outputs.tag }}"
 
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
         with:
           repository: letsencrypt/boulder
           ref: ${{ steps.boulder.outputs.tag }}
