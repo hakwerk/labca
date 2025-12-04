@@ -30,15 +30,33 @@ jobs:
       - name: APT Install
         id: aptInstall
         run: |
-          sudo bash -c 'cat > /etc/apt/sources.list.d/arm64.sources <<EOF
+          sudo dpkg --add-architecture arm64
+
+          sudo rm -f /etc/apt/sources.list.d/ubuntu.sources
+
+          # Create proper deb822 format sources for both amd64 and arm64
+          cat <<EOF | sudo tee /etc/apt/sources.list.d/amd64.sources
+          Types: deb
+          URIs: http://azure.archive.ubuntu.com/ubuntu/
+          Suites: noble noble-updates noble-backports
+          Components: main restricted universe multiverse
+          Architectures: amd64
+
+          Types: deb
+          URIs: http://security.ubuntu.com/ubuntu/
+          Suites: noble-security
+          Components: main restricted universe multiverse
+          Architectures: amd64
+          EOF
+
+          cat <<EOF | sudo tee /etc/apt/sources.list.d/arm64.sources
           Types: deb
           URIs: http://ports.ubuntu.com/ubuntu-ports/
           Suites: noble noble-updates noble-backports noble-security
           Components: main restricted universe multiverse
           Architectures: arm64
-          Signed-By: /usr/share/keyrings/ubuntu-archive-keyring.gpg
-          EOF'
-          sudo dpkg --add-architecture arm64
+          EOF
+
           sudo apt-get update
           sudo apt-get -y install build-essential debhelper fakeroot crossbuild-essential-arm64
 
