@@ -38,7 +38,7 @@ jobs:
           commit_user_email: ${{ vars.COMMIT_USER }}
 
       - name: Cache build output
-        uses: actions/cache/save@v4
+        uses: actions/cache/save@v5
         with:
           path: build
           key: build-dockers-${{ github.sha }}
@@ -67,7 +67,7 @@ jobs:
           ref: ${{ github.head_ref }}
 
       - name: Restore build output
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@v5
         with:
           path: build
           key: build-dockers-${{ github.sha }}
