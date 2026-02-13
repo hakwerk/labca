@@ -1541,6 +1541,11 @@ func logsHandler(w http.ResponseWriter, r *http.Request) {
 		message = "Log file for the certificate renewal for this server."
 		wsurl = ""
 		data = getLog(w, r, logType)
+	case "commander":
+		name = "LabCA Control Log"
+		message = "Log file for the LabCA control commands for this server."
+		wsurl = ""
+		data = getLog(w, r, logType)
 	case "boulder":
 		name = "ACME Backend Log"
 		message = "Live view on the backend ACME application (Boulder) logs."
@@ -3028,6 +3033,14 @@ func activeNav(active string, uri string, requestBase string) []navItem {
 			"title": "Live view on the logs for this LabCA web application",
 		},
 	}
+	commander := navItem{
+		Name: "LabCA Control",
+		Icon: "fa-location-arrow",
+		Attrs: map[template.HTMLAttr]string{
+			"href":  requestBase + "/logs/commander",
+			"title": "Log file for the LabCA control commands for this server",
+		},
+	}
 	cron := navItem{
 		Name: "Cron Log",
 		Icon: "fa-clock-o",
@@ -3052,7 +3065,7 @@ func activeNav(active string, uri string, requestBase string) []navItem {
 			"title": "Log Files",
 		},
 		IsActive: strings.HasPrefix(uri, "/logs/"),
-		SubMenu:  []navItem{boulder, audit, cron, labca, cert, web},
+		SubMenu:  []navItem{boulder, audit, cron, labca, cert, commander, web},
 	}
 	manage := navItem{
 		Name: "Manage",
