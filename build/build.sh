@@ -55,6 +55,7 @@ docker run -v $TMP_DIR/admin:$BASEDIR:cached -v $TMP_DIR:$BASEDIR/bin -w $BASEDI
 cp -rp $cloneDir/gui/setup.sh $TMP_DIR/admin/
 cp -rp $cloneDir/backup $TMP_DIR/
 cp -rp $cloneDir/checkcrl $TMP_DIR/
+cp -rp $cloneDir/checkpkimetal $TMP_DIR/
 cp -rp $cloneDir/checkrenew $TMP_DIR/
 cp -rp $cloneDir/commander $TMP_DIR/
 cp -rp $cloneDir/control_do.sh $TMP_DIR/control.sh

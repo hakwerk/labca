@@ -57,6 +57,7 @@ COPY --from=builder /usr/libexec/docker/cli-plugins/docker-compose /usr/libexec/
 
 COPY tmp/backup /opt/labca/
 COPY tmp/checkcrl /opt/labca/
+COPY tmp/checkpkimetal /opt/labca/
 COPY tmp/checkrenew /opt/labca/
 COPY tmp/commander /opt/labca/
 COPY tmp/control.sh /opt/labca/

@@ -34,6 +34,42 @@ function wait_server() {
     done
 }
 
+function broken_pipe_handler() {
+    local dir="$1"
+    local cmd="$2"
+
+    MARKER=$(date --iso-8601=seconds)
+    cd $dir
+    echo "Try ""$cmd""..." &>>$LOGFILE
+    set +e
+    res=$(eval "$cmd" 2>&1)
+    if [[ $? -ne 0 ]]; then
+        printf '%s' "$res" 1>&2
+    fi
+    set -e
+    sleep 1
+
+    cd /opt/boulder
+    check_broken=$(docker compose logs --since "$MARKER" control | grep "broken pipe" || echo "")
+    if [ "$check_broken" != "" ]; then
+        COMPOSE_HTTP_TIMEOUT=120 docker compose restart bpkimetal &>>$LOGFILE
+        echo "Waiting a couple of minutes for the CRL shard lease to expire..." &>>$LOGFILE
+        sleep 180
+        cd $dir
+        echo "Retry ""$cmd""..." &>>$LOGFILE
+        set +e
+        res=$(eval "$cmd" 2>&1)
+        if [[ $? -ne 0 ]]; then
+            printf '%s' "$res" 1>&2
+        fi
+        set -e
+
+        if [[ "$res" == *" failed:"* ]]; then
+            exit 1
+        fi
+    fi
+}
+
 
 read txt
 case $txt in
@@ -62,8 +98,7 @@ case $txt in
         /opt/labca/renew
 
         sleep 5
-        cd /opt/boulder
-        docker compose exec -i boulder ./bin/boulder crl-updater --config labca/config/crl-updater.json -runOnce -debug-addr :18021
+        broken_pipe_handler /opt/boulder "docker compose exec -i boulder ./bin/boulder crl-updater --config labca/config/crl-updater.json -runOnce -debug-addr :18021"
         /opt/labca/checkcrl
     fi
 
@@ -254,12 +289,11 @@ case $txt in
     fi
     ;;
 "gen-root-crl")
-    /opt/labca/bin/labca-gui -config /opt/labca/data/config.json -renewcrl 999 &>>$LOGFILE
+    broken_pipe_handler /opt/labca/gui "/opt/labca/bin/labca-gui -config /opt/labca/data/config.json -renewcrl 999"
     /opt/labca/checkcrl &>>$LOGFILE
     ;;
 "gen-issuer-crl")
-    cd /opt/boulder
-    docker compose exec -i boulder ./bin/boulder crl-updater -config labca/config/crl-updater.json -runOnce -debug-addr :18021 &>>$LOGFILE
+    broken_pipe_handler /opt/boulder "docker compose exec -i boulder ./bin/boulder crl-updater -config labca/config/crl-updater.json -runOnce -debug-addr :18021"
     /opt/labca/checkcrl &>>$LOGFILE
     ;;
 "check-crl")
