@@ -146,7 +146,7 @@ fi
 sed -i -e "s/\"shardWidth\": \".*\"/\"shardWidth\": \"$CRLINT\"/" config/crl-updater.json
 sed -i -e "s/\"updatePeriod\": \".*\"/\"updatePeriod\": \"$CRLINT\"/" config/crl-updater.json
 sed -i -e "s/\"lookbackPeriod\": \".*\"/\"lookbackPeriod\": \"$CRLLIFE\"/" config/crl-updater.json
-sed -i -e "s/\"lifespanCRL\": \".*\"/\"lifespanCRL\": \"$CRLLIFE\"/" config/ca.json
+sed -i -e "s/\"validityInterval\": \".*\"/\"validityInterval\": \"$CRLLIFE\"/" config/ca.json
 rm -f config/contact-exporter.json
 rm -f config/nonce.json
 rm -f config/ocsp-updater.json
