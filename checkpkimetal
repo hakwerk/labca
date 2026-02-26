@@ -6,7 +6,11 @@ MARKER=$(date --iso-8601=seconds -d '-1 hour')
 cd /opt/boulder
 check_broken=$(docker compose logs --since "$MARKER" boulder | grep "broken pipe" || echo "")
 if [ "$check_broken" != "" ]; then
-    echo "Restarting bpkimetal because there was a 'broken pipe' in the past hour..."
+    NOW=$(date --iso-8601=seconds)
+    echo "$NOW Restarting bpkimetal because there was a 'broken pipe' in the past hour..."
     COMPOSE_HTTP_TIMEOUT=120 docker compose restart bpkimetal
+
+    # Request another issuer CRL, the most likely thing that caused the broken pipe....
+    echo "gen-issuer-crl" | /opt/labca/commander
 fi
 
