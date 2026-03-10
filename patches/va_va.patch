@@ -1,5 +1,5 @@
 diff --git a/va/va.go b/va/va.go
-index ccaa28558..433fc2c22 100644
+index 85fa0a63f..d28ae3708 100644
 --- a/va/va.go
 +++ b/va/va.go
 @@ -205,6 +205,7 @@ type ValidationAuthorityImpl struct {
@@ -18,7 +18,7 @@ index ccaa28558..433fc2c22 100644
  	slowRemoteTimeout time.Duration,
  	allowRestrictedAddrs bool,
  ) (*ValidationAuthorityImpl, error) {
-@@ -265,6 +267,7 @@ func NewValidationAuthorityImpl(
+@@ -266,6 +268,7 @@ func NewValidationAuthorityImpl(
  		rir:                  rir,
  		isReservedIPFunc:     reservedIPChecker,
  		allowRestrictedAddrs: allowRestrictedAddrs,

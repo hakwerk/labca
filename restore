@@ -14,8 +14,13 @@ cd /tmp
 tar xzf $FILE 2>&1
 
 cd /opt/boulder
-[ -f $TMPDIR/boulder_sa_integration.sql ] || (echo "MySQL backup file not found"; exit 1)
-docker compose exec bmysql mysql boulder_sa_integration <$TMPDIR/boulder_sa_integration.sql
+[ -f $TMPDIR/boulder_sa_integration.sql ] || [ -f $TMPDIR/boulder_sa.sql ] || (echo "MySQL backup file not found"; exit 1)
+if [ -f $TMPDIR/boulder_sa_integration.sql ]; then
+    docker compose exec bmysql mysql boulder_sa_integration <$TMPDIR/boulder_sa_integration.sql
+fi
+if [ -f $TMPDIR/boulder_sa.sql ]; then
+    docker compose exec bmysql mysql boulder_sa <$TMPDIR/boulder_sa.sql
+fi
 
 if [ -d  $TMPDIR/nginx_ssl ]; then
     if [ -d /etc/nginx/ssl ]; then

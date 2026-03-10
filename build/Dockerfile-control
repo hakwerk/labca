@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile:1
-FROM letsencrypt/boulder-tools:go1.25.5_2025-12-03 AS boulder-tools
+FROM letsencrypt/boulder-tools:go1.26.1_2026-03-09 AS boulder-tools
 
 FROM ubuntu:noble AS builder
 

@@ -1,5 +1,5 @@
 diff --git a/crl/storer/storer.go b/crl/storer/storer.go
-index e0a49a19c..2b8090a5e 100644
+index f410489cb..f65a0b5a3 100644
 --- a/crl/storer/storer.go
 +++ b/crl/storer/storer.go
 @@ -9,8 +9,12 @@ import (
@@ -109,7 +109,7 @@ index e0a49a19c..2b8090a5e 100644
  
  	latency := cs.clk.Now().Sub(start)
  	cs.latencyHistogram.WithLabelValues(issuer.Subject.CommonName).Observe(latency.Seconds())
-@@ -253,3 +271,56 @@ func (cs *crlStorer) UploadCRL(stream grpc.ClientStreamingServer[cspb.UploadCRLR
+@@ -256,3 +274,56 @@ func (cs *crlStorer) UploadCRL(stream grpc.ClientStreamingServer[cspb.UploadCRLR
  
  	return stream.SendAndClose(&emptypb.Empty{})
  }

@@ -3325,9 +3325,12 @@ func init() {
 
 	if viper.Get("db.conn") == nil {
 		viper.Set("db.type", "mysql")
-		viper.Set("db.conn", "root@tcp(boulder-mysql:3306)/boulder_sa_integration")
+		viper.Set("db.conn", "root@tcp(boulder-mysql:3306)/boulder_sa")
 		_ = viper.WriteConfig()
-	}
+	} else if viper.Get("db.conn") == "root@tcp(boulder-mysql:3306)/boulder_sa_integration" {
+		viper.Set("db.conn", "root@tcp(boulder-mysql:3306)/boulder_sa")
+		_ = viper.WriteConfig()
+    }
 	dbConn = viper.GetString("db.conn")
 	dbType = viper.GetString("db.type")
 

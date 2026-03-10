@@ -1,8 +1,8 @@
 diff --git a/Makefile b/Makefile
-index 640ff12bd..486d54685 100644
+index cb38dc8a9..08d5001cd 100644
 --- a/Makefile
 +++ b/Makefile
-@@ -37,7 +37,7 @@ $(CMD_BINS): build_cmds
+@@ -44,7 +44,7 @@ bin/pardot-test-srv: bin/salesforce-test-srv
  
  build_cmds: | $(OBJDIR)
  	echo $(OBJECTS)

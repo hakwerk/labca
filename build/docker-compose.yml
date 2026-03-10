@@ -9,13 +9,14 @@ services:
       context: test/boulder-tools/
       # Should match one of the GO_CI_VERSIONS in test/boulder-tools/tag_and_upload.sh.
       args:
-        GO_VERSION: 1.25.5
+        GO_VERSION: 1.26.1
     environment:
       # To solve HTTP-01 and TLS-ALPN-01 challenges, change the IP in FAKE_DNS
       # to the IP address where your ACME client's solver is listening. This is
       # pointing at the boulder service's "public" IP, where challtestsrv is.
       FAKE_DNS: 64.112.117.122
       BOULDER_CONFIG_DIR: labca/config
+      USE_VITESS: false
       GOCACHE: /boulder/.gocache/go-build
     volumes:
       - boulder_data:/opt/boulder/labca
@@ -76,7 +77,6 @@ services:
           - boulder-mysql
     environment:
       MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
-    command: mysqld --bind-address=0.0.0.0 --log-output=TABLE
     logging:
       driver: "json-file"
       options:
@@ -90,8 +90,31 @@ services:
       - bouldernet
     depends_on:
       - bmysql
-    entrypoint: >
-      bash -c "sleep 20 && mysql_upgrade -h bmysql"
+    entrypoint: ["/bin/bash", "-c"]
+    command:
+      - |
+        set -e
+        sleep 20
+
+        mysql_upgrade -h bmysql
+
+        if mysql -h bmysql -e 'show databases;' | grep -q "boulder_sa_integration"; then
+          mysqldump -h bmysql -R boulder_sa_integration > old-database.sql
+          mysqladmin -h bmysql create boulder_sa
+          mysql -h bmysql boulder_sa < old-database.sql
+          mysql -h bmysql boulder_sa -e 'delete from gorp_migrations;'
+          mysqladmin -h bmysql drop boulder_sa_integration -f
+          rm -rf old-database.sql
+        fi
+
+        if mysql -h bmysql -e 'show databases;' | grep -q "incidents_sa_integration"; then
+          mysqldump -h bmysql -R incidents_sa_integration > old-database.sql
+          mysqladmin -h bmysql create incidents_sa
+          mysql -h bmysql incidents_sa < old-database.sql
+          mysql -h bmysql incidents_sa -e 'delete from gorp_migrations;'
+          mysqladmin -h bmysql drop incidents_sa_integration -f
+          rm -rf old-database.sql
+        fi
 
   bredis:
     image: redis:7.0.15

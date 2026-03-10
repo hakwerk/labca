@@ -30,7 +30,7 @@ dockerComposeVersion="v2.5.0"
 
 labcaUrl="https://github.com/hakwerk/labca/"
 boulderUrl="https://github.com/letsencrypt/boulder/"
-boulderTag="v0.20251216.0"
+boulderTag="v0.20260309.0"
 
 #
 # Color configuration
@@ -644,7 +644,11 @@ config_boulder() {
         msg_info "$msg"
     fi
     if [ ! -z "$(docker ps | grep labca-bmysql-1)" ]; then
-        docker exec labca-bmysql-1 mysqldump --databases boulder_sa_integration >$baseDir/backup/dbdata-${runId}.sql
+        if [ -z "$(docker exec labca-bmysql-1 mysql -e 'show databases;' | grep boulder_sa_integration)" ]; then
+            docker exec labca-bmysql-1 mysqldump --databases boulder_sa >$baseDir/backup/dbdata-${runId}.sql
+        else
+            docker exec labca-bmysql-1 mysqldump --databases boulder_sa_integration >$baseDir/backup/dbdata-${runId}.sql
+        fi
         dbdataCreated=1
         msg_ok "Saved pre-update database to dbdata-${runId}.sql"
         msg_info "$msg"

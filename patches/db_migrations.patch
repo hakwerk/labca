@@ -1,5 +1,5 @@
 diff --git a/sa/db/boulder_sa/20230419000000_CombinedSchema.sql b/sa/db/boulder_sa/20230419000000_CombinedSchema.sql
-index c2fa91c9e..6674fc3d9 100644
+index 4479770fd..5c0a72435 100644
 --- a/sa/db/boulder_sa/20230419000000_CombinedSchema.sql
 +++ b/sa/db/boulder_sa/20230419000000_CombinedSchema.sql
 @@ -1,7 +1,9 @@
@@ -10,132 +10,139 @@ index c2fa91c9e..6674fc3d9 100644
 +DROP TABLE IF EXISTS `authz`;
 +
 +CREATE TABLE IF NOT EXISTS `authz2` (
-   `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+   `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
    `identifierType` tinyint(4) NOT NULL,
    `identifierValue` varchar(255) NOT NULL,
-@@ -20,7 +22,7 @@ CREATE TABLE `authz2` (
+@@ -22,7 +24,9 @@ CREATE TABLE `authz2` (
    KEY `expires_idx` (`expires`)
- ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+ ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_general_ci;
  
 -CREATE TABLE `blockedKeys` (
++ALTER TABLE `authz2` ADD COLUMN IF NOT EXISTS `created` datetime DEFAULT current_timestamp();
++
 +CREATE TABLE IF NOT EXISTS `blockedKeys` (
-   `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+   `id` bigint(20) NOT NULL AUTO_INCREMENT,
    `keyHash` binary(32) NOT NULL,
    `added` datetime NOT NULL,
-@@ -33,7 +35,7 @@ CREATE TABLE `blockedKeys` (
+@@ -35,7 +39,7 @@ CREATE TABLE `blockedKeys` (
    KEY `extantCertificatesChecked_idx` (`extantCertificatesChecked`)
- ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+ ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_general_ci;
  
 -CREATE TABLE `certificateStatus` (
 +CREATE TABLE IF NOT EXISTS `certificateStatus` (
    `id` bigint(20) NOT NULL AUTO_INCREMENT,
    `serial` varchar(255) NOT NULL,
    `subscriberApproved` tinyint(1) DEFAULT 0,
-@@ -53,7 +55,7 @@ CREATE TABLE `certificateStatus` (
-   KEY `notAfter_idx` (`notAfter`)
- ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+@@ -55,7 +59,7 @@ CREATE TABLE `certificateStatus` (
+   KEY `serial` (`serial`)
+ ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_general_ci;
  
 -CREATE TABLE `certificates` (
 +CREATE TABLE IF NOT EXISTS `certificates` (
    `id` bigint(20) NOT NULL AUTO_INCREMENT,
    `registrationID` bigint(20) NOT NULL,
    `serial` varchar(255) NOT NULL,
-@@ -67,7 +69,7 @@ CREATE TABLE `certificates` (
-   KEY `issued_idx` (`issued`)
- ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+@@ -69,7 +73,11 @@ CREATE TABLE `certificates` (
+   KEY `serial` (`serial`)
+ ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_general_ci;
  
--CREATE TABLE `certificatesPerName` (
-+CREATE TABLE IF NOT EXISTS `certificatesPerName` (
-   `id` bigint(20) NOT NULL AUTO_INCREMENT,
-   `eTLDPlusOne` varchar(255) NOT NULL,
-   `time` datetime NOT NULL,
-@@ -76,7 +78,22 @@ CREATE TABLE `certificatesPerName` (
-   UNIQUE KEY `eTLDPlusOne_time_idx` (`eTLDPlusOne`,`time`)
- ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+-CREATE TABLE `crlShards` (
++DROP TABLE IF EXISTS `certificatesPerName`;
++DROP TABLE IF EXISTS `challenges`;
++DROP TABLE IF EXISTS `newOrdersRL`;
++
++CREATE TABLE IF NOT EXISTS `crlShards` (
+   `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+   `issuerID` bigint(20) NOT NULL,
+   `idx` int(10) unsigned NOT NULL,
+@@ -80,14 +88,14 @@ CREATE TABLE `crlShards` (
+   UNIQUE KEY `shardID` (`issuerID`,`idx`)
+ ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+ 
+-CREATE TABLE `crls` (
++CREATE TABLE IF NOT EXISTS `crls` (
+   `serial` varchar(255) NOT NULL,
+   `createdAt` datetime NOT NULL,
+   `crl` varchar(255) NOT NULL,
+   PRIMARY KEY (`serial`)
+ ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_general_ci;
  
 -CREATE TABLE `fqdnSets` (
-+CREATE TABLE IF NOT EXISTS `challenges` (
-+  `id` bigint(20) NOT NULL AUTO_INCREMENT,
-+  `authorizationID` varchar(255) NOT NULL,
-+  `LockCol` bigint(20) DEFAULT NULL,
-+  `type` varchar(255) NOT NULL,
-+  `status` varchar(255) NOT NULL,
-+  `error` mediumblob DEFAULT NULL,
-+  `validated` datetime DEFAULT NULL,
-+  `token` varchar(255) NOT NULL,
-+  `validationRecord` mediumblob DEFAULT NULL,
-+  `keyAuthorization` varchar(255) DEFAULT NULL,
-+  PRIMARY KEY (`id`),
-+  KEY `authorizationID_challenges_idx` (`authorizationID`)
-+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-+
 +CREATE TABLE IF NOT EXISTS `fqdnSets` (
-   `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+   `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
    `setHash` binary(32) NOT NULL,
    `serial` varchar(255) NOT NULL,
-@@ -89,7 +106,7 @@ CREATE TABLE `fqdnSets` (
-   KEY `setHash_issued_idx` (`setHash`,`issued`)
- ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+@@ -98,7 +106,7 @@ CREATE TABLE `fqdnSets` (
+   KEY `serial` (`serial`)
+ ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_general_ci;
  
 -CREATE TABLE `incidents` (
 +CREATE TABLE IF NOT EXISTS `incidents` (
-   `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+   `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
    `serialTable` varchar(128) NOT NULL,
    `url` varchar(1024) NOT NULL,
-@@ -98,7 +115,7 @@ CREATE TABLE `incidents` (
+@@ -107,7 +115,7 @@ CREATE TABLE `incidents` (
    PRIMARY KEY (`id`)
- ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+ ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
  
 -CREATE TABLE `issuedNames` (
 +CREATE TABLE IF NOT EXISTS `issuedNames` (
    `id` bigint(20) NOT NULL AUTO_INCREMENT,
-   `reversedName` varchar(640) CHARACTER SET ascii NOT NULL,
+   `reversedName` varchar(640) CHARACTER SET ascii COLLATE ascii_general_ci NOT NULL,
    `notBefore` datetime NOT NULL,
-@@ -108,7 +125,7 @@ CREATE TABLE `issuedNames` (
+@@ -117,7 +125,7 @@ CREATE TABLE `issuedNames` (
    KEY `reversedName_notBefore_Idx` (`reversedName`,`notBefore`)
- ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+ ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_general_ci;
  
 -CREATE TABLE `keyHashToSerial` (
 +CREATE TABLE IF NOT EXISTS `keyHashToSerial` (
    `id` bigint(20) NOT NULL AUTO_INCREMENT,
    `keyHash` binary(32) NOT NULL,
    `certNotAfter` datetime NOT NULL,
-@@ -118,7 +135,7 @@ CREATE TABLE `keyHashToSerial` (
+@@ -127,7 +135,7 @@ CREATE TABLE `keyHashToSerial` (
    KEY `keyHash_certNotAfter` (`keyHash`,`certNotAfter`)
- ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
- 
--CREATE TABLE `newOrdersRL` (
-+CREATE TABLE IF NOT EXISTS `newOrdersRL` (
-   `id` bigint(20) NOT NULL AUTO_INCREMENT,
-   `regID` bigint(20) NOT NULL,
-   `time` datetime NOT NULL,
-@@ -127,7 +144,7 @@ CREATE TABLE `newOrdersRL` (
-   UNIQUE KEY `regID_time_idx` (`regID`,`time`)
- ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+ ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_general_ci;
  
 -CREATE TABLE `orderFqdnSets` (
 +CREATE TABLE IF NOT EXISTS `orderFqdnSets` (
-   `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+   `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
    `setHash` binary(32) NOT NULL,
    `orderID` bigint(20) NOT NULL,
-@@ -139,14 +156,14 @@ CREATE TABLE `orderFqdnSets` (
+@@ -140,7 +148,9 @@ CREATE TABLE `orderFqdnSets` (
    KEY `orderFqdnSets_registrationID_registrations` (`registrationID`)
- ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
- 
--CREATE TABLE `orderToAuthz2` (
-+CREATE TABLE IF NOT EXISTS `orderToAuthz2` (
-   `orderID` bigint(20) NOT NULL,
-   `authzID` bigint(20) NOT NULL,
-   PRIMARY KEY (`orderID`,`authzID`),
-   KEY `authzID` (`authzID`)
- ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+ ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_general_ci;
  
 -CREATE TABLE `orders` (
++ALTER TABLE `orderFqdnSets` ADD COLUMN IF NOT EXISTS `created` datetime DEFAULT current_timestamp();
++
 +CREATE TABLE IF NOT EXISTS `orders` (
-   `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+   `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
    `registrationID` bigint(20) NOT NULL,
    `expires` datetime NOT NULL,
-@@ -162,7 +179,7 @@ CREATE TABLE `orders` (
+@@ -156,7 +166,12 @@ CREATE TABLE `orders` (
+   KEY `regID_created_idx` (`registrationID`,`created`)
+ ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_general_ci;
+ 
+-CREATE TABLE `overrides` (
++ALTER TABLE `orders` ADD COLUMN IF NOT EXISTS `replaces` varchar(255) DEFAULT NULL;
++ALTER TABLE `orders` ADD COLUMN IF NOT EXISTS `authzs` blob DEFAULT NULL;
++
++DROP TABLE IF EXISTS `orderToAuthz2`;
++
++CREATE TABLE IF NOT EXISTS `overrides` (
+   `limitEnum` tinyint(4) unsigned NOT NULL,
+   `bucketKey` varchar(255) NOT NULL,
+   `comment` varchar(255) NOT NULL,
+@@ -169,7 +184,7 @@ CREATE TABLE `overrides` (
+   KEY `idx_enabled` (`enabled`)
+ ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+ 
+-CREATE TABLE `paused` (
++CREATE TABLE IF NOT EXISTS `paused` (
+   `registrationID` bigint(20) unsigned NOT NULL,
+   `identifierType` tinyint(4) NOT NULL,
+   `identifierValue` varchar(255) NOT NULL,
+@@ -181,7 +196,7 @@ CREATE TABLE `paused` (
  -- Note: This table's name is a historical artifact and it is now
  -- used to store linting certificates, not precertificates.
  -- See #6807.
@@ -144,41 +151,42 @@ index c2fa91c9e..6674fc3d9 100644
    `id` bigint(20) NOT NULL AUTO_INCREMENT,
    `registrationID` bigint(20) NOT NULL,
    `serial` varchar(255) NOT NULL,
-@@ -175,7 +192,7 @@ CREATE TABLE `precertificates` (
-   KEY `issued_precertificates_idx` (`issued`)
- ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+@@ -194,7 +209,7 @@ CREATE TABLE `precertificates` (
+   KEY `serial` (`serial`)
+ ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_general_ci;
  
 -CREATE TABLE `registrations` (
 +CREATE TABLE IF NOT EXISTS `registrations` (
    `id` bigint(20) NOT NULL AUTO_INCREMENT,
    `jwk` mediumblob NOT NULL,
    `jwk_sha256` varchar(255) NOT NULL,
-@@ -190,7 +207,7 @@ CREATE TABLE `registrations` (
-   KEY `initialIP_createdAt` (`initialIP`,`createdAt`)
- ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+@@ -206,7 +221,11 @@ CREATE TABLE `registrations` (
+   UNIQUE KEY `jwk_sha256` (`jwk_sha256`)
+ ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_general_ci;
  
--CREATE TABLE `requestedNames` (
-+CREATE TABLE IF NOT EXISTS `requestedNames` (
-   `id` bigint(20) NOT NULL AUTO_INCREMENT,
-   `orderID` bigint(20) NOT NULL,
-   `reversedName` varchar(253) CHARACTER SET ascii NOT NULL,
-@@ -199,9 +216,23 @@ CREATE TABLE `requestedNames` (
-   KEY `reversedName_idx` (`reversedName`)
- ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
- 
-+CREATE TABLE IF NOT EXISTS `revokedCertificates` (
-+  `id` bigint(20) NOT NULL AUTO_INCREMENT,
-+  `issuerID` bigint(20) NOT NULL,
-+  `serial` varchar(255) NOT NULL,
-+  `notAfterHour` datetime NOT NULL,
-+  `shardIdx` bigint(20) NOT NULL,
-+  `revokedDate` datetime NOT NULL,
-+  `revokedReason` int(11) NOT NULL,
-+  PRIMARY KEY (`id`),
-+  KEY `issuerID_shardIdx_notAfterHour_idx` (`issuerID`, `shardIdx`, `notAfterHour`)
-+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+-CREATE TABLE `replacementOrders` (
++ALTER TABLE `registrations` DROP COLUMN IF EXISTS contact;
++ALTER TABLE `registrations` DROP COLUMN IF EXISTS initialIP;
++ALTER TABLE `registrations` MODIFY COLUMN `LockCol` bigint(20) NOT NULL DEFAULT 0;
 +
- -- Tables below have foreign key constraints, so are created after all other tables.
++CREATE TABLE IF NOT EXISTS `replacementOrders` (
+   `id` bigint(20) NOT NULL AUTO_INCREMENT,
+   `serial` varchar(255) NOT NULL,
+   `orderID` bigint(20) NOT NULL,
+@@ -217,7 +236,9 @@ CREATE TABLE `replacementOrders` (
+   KEY `orderID_idx` (`orderID`)
+ ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+ 
+-CREATE TABLE `revokedCertificates` (
++DROP TABLE IF EXISTS `requestedNames`;
++
++CREATE TABLE IF NOT EXISTS `revokedCertificates` (
+   `id` bigint(20) NOT NULL AUTO_INCREMENT,
+   `issuerID` bigint(20) NOT NULL,
+   `serial` varchar(255) NOT NULL,
+@@ -229,7 +250,9 @@ CREATE TABLE `revokedCertificates` (
+   KEY `issuerID_shardIdx_notAfterHour_idx` (`issuerID`,`shardIdx`,`notAfterHour`)
+ ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
  
 -CREATE TABLE `serials` (
 +DROP TABLE IF EXISTS `sctReceipts`;
@@ -187,7 +195,7 @@ index c2fa91c9e..6674fc3d9 100644
    `id` bigint(20) NOT NULL AUTO_INCREMENT,
    `registrationID` bigint(20) NOT NULL,
    `serial` varchar(255) NOT NULL,
-@@ -219,6 +250,18 @@ CREATE TABLE `serials` (
+@@ -247,10 +270,38 @@ CREATE TABLE `serials` (
  -- First set of tables have foreign key constraints, so are dropped first.
  DROP TABLE `serials`;
  
@@ -206,7 +214,27 @@ index c2fa91c9e..6674fc3d9 100644
  DROP TABLE `authz2`;
  DROP TABLE `blockedKeys`;
  DROP TABLE `certificateStatus`;
-@@ -230,8 +273,44 @@ DROP TABLE `issuedNames`;
+ DROP TABLE `certificatesPerName`;
++
++CREATE TABLE IF NOT EXISTS `challenges` (
++  `id` bigint(20) NOT NULL AUTO_INCREMENT,
++  `authorizationID` varchar(255) NOT NULL,
++  `LockCol` bigint(20) DEFAULT NULL,
++  `type` varchar(255) NOT NULL,
++  `status` varchar(255) NOT NULL,
++  `error` mediumblob DEFAULT NULL,
++  `validated` datetime DEFAULT NULL,
++  `token` varchar(255) NOT NULL,
++  `validationRecord` mediumblob DEFAULT NULL,
++  `keyAuthorization` varchar(255) DEFAULT NULL,
++  PRIMARY KEY (`id`),
++  KEY `authorizationID_challenges_idx` (`authorizationID`)
++) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
++
+ DROP TABLE `certificates`;
+ DROP TABLE `fqdnSets`;
+ DROP TABLE `incidents`;
+@@ -258,8 +309,44 @@ DROP TABLE `issuedNames`;
  DROP TABLE `keyHashToSerial`;
  DROP TABLE `newOrdersRL`;
  DROP TABLE `orderFqdnSets`;

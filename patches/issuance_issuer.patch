@@ -1,5 +1,5 @@
 diff --git a/issuance/issuer.go b/issuance/issuer.go
-index 8479470ba..33672c905 100644
+index 9356dc9a7..ad9e56bda 100644
 --- a/issuance/issuer.go
 +++ b/issuance/issuer.go
 @@ -129,8 +129,8 @@ func LoadChain(certFiles []string) ([]*Certificate, error) {
@@ -14,7 +14,7 @@ index 8479470ba..33672c905 100644
  	}
  
 @@ -156,7 +156,7 @@ type IssuerConfig struct {
- 	Profiles []string `validate:"required_if=Active true,dive,alphanum,min=1,max=32"`
+ 	Profiles []string `validate:"dive,alphanum,min=1,max=32"`
  
  	IssuerURL  string `validate:"required,url"`
 -	CRLURLBase string `validate:"required,url,startswith=http://,endswith=/"`
@@ -22,7 +22,7 @@ index 8479470ba..33672c905 100644
  
  	// Number of CRL shards. Must be positive, but can be 1 for no sharding.
  	CRLShards int `validate:"required,min=1"`
-@@ -242,9 +242,6 @@ func newIssuer(config IssuerConfig, cert *Certificate, signer crypto.Signer, clk
+@@ -241,9 +241,6 @@ func newIssuer(config IssuerConfig, cert *Certificate, signer crypto.Signer, clk
  	if !strings.HasPrefix(config.CRLURLBase, "http://") {
  		return nil, fmt.Errorf("crlURLBase must use HTTP scheme, got %q", config.CRLURLBase)
  	}

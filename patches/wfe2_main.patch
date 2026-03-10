@@ -1,13 +1,12 @@
 diff --git a/cmd/boulder-wfe2/main.go b/cmd/boulder-wfe2/main.go
-index 8e681840e..a8ecfff97 100644
+index 93d5b987a..9c7641a04 100644
 --- a/cmd/boulder-wfe2/main.go
 +++ b/cmd/boulder-wfe2/main.go
-@@ -14,14 +14,17 @@ import (
+@@ -14,13 +14,16 @@ import (
  
  	"github.com/letsencrypt/boulder/cmd"
  	"github.com/letsencrypt/boulder/config"
 +	"github.com/letsencrypt/boulder/core"
- 	emailpb "github.com/letsencrypt/boulder/email/proto"
  	"github.com/letsencrypt/boulder/features"
  	"github.com/letsencrypt/boulder/goodkey"
  	"github.com/letsencrypt/boulder/goodkey/sagoodkey"
@@ -29,16 +28,16 @@ index 8e681840e..a8ecfff97 100644
  		// DirectoryWebsite is used for the /directory response's "meta" element's
  		// "website" field.
  		DirectoryWebsite string `validate:"required,url"`
-@@ -186,6 +189,8 @@ type Config struct {
- 			// to enable the pausing feature.
- 			URL string `validate:"omitempty,required_with=HMACKey JWTLifetime,url,startswith=https://,endsnotwith=/"`
- 		}
+@@ -197,6 +200,8 @@ type Config struct {
+ 		// repeats. We don't want to issue certs for names that look like they
+ 		// result from this process.
+ 		BlockedOnDemandLabels []string `validate:"omitempty"`
 +
 +		cmd.HostnamePolicyConfig
  	}
  
  	Syslog        cmd.SyslogConfig
-@@ -330,12 +335,26 @@ func main() {
+@@ -341,12 +346,26 @@ func main() {
  	var limiter *ratelimits.Limiter
  	var txnBuilder *ratelimits.TransactionBuilder
  	var limiterRedis *bredis.Ring
@@ -65,10 +64,10 @@ index 8e681840e..a8ecfff97 100644
  		source := ratelimits.NewRedisSource(limiterRedis.Ring, clk, stats)
  		limiter, err = ratelimits.NewLimiter(clk, source, stats)
  		cmd.FailOnError(err, "Failed to create rate limiter")
-@@ -387,6 +406,7 @@ func main() {
- 		unpauseSigner,
+@@ -399,6 +418,7 @@ func main() {
  		c.WFE.Unpause.JWTLifetime.Duration,
  		c.WFE.Unpause.URL,
+ 		c.WFE.BlockedOnDemandLabels,
 +		pa,
  	)
  	cmd.FailOnError(err, "Unable to create WFE")

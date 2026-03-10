@@ -1,8 +1,8 @@
 diff --git a/wfe2/wfe.go b/wfe2/wfe.go
-index efe2c6d08..8c2b1e1b2 100644
+index 7c12ad7e6..b71d5e2c2 100644
 --- a/wfe2/wfe.go
 +++ b/wfe2/wfe.go
-@@ -167,6 +167,8 @@ type WebFrontEndImpl struct {
+@@ -177,6 +177,8 @@ type WebFrontEndImpl struct {
  	// descriptions (perhaps including URLs) of those profiles. NewOrder
  	// Requests with a profile name not present in this map will be rejected.
  	certProfiles map[string]string
@@ -11,16 +11,16 @@ index efe2c6d08..8c2b1e1b2 100644
  }
  
  // NewWebFrontEndImpl constructs a web service for Boulder
-@@ -193,6 +195,7 @@ func NewWebFrontEndImpl(
- 	unpauseSigner unpause.JWTSigner,
+@@ -204,6 +206,7 @@ func NewWebFrontEndImpl(
  	unpauseJWTLifetime time.Duration,
  	unpauseURL string,
+ 	blockedOnDemandLabels []string,
 +	pa *policy.AuthorityImpl,
  ) (WebFrontEndImpl, error) {
  	if len(issuerCertificates) == 0 {
  		return WebFrontEndImpl{}, errors.New("must provide at least one issuer certificate")
-@@ -210,6 +213,10 @@ func NewWebFrontEndImpl(
- 		return WebFrontEndImpl{}, errors.New("must provide a service for nonce redemption")
+@@ -226,6 +229,10 @@ func NewWebFrontEndImpl(
+ 		blockedLabels = append(blockedLabels, strings.ToLower(label))
  	}
  
 +	if pa == nil {
@@ -28,17 +28,17 @@ index efe2c6d08..8c2b1e1b2 100644
 +	}
 +
  	wfe := WebFrontEndImpl{
- 		log:                logger,
- 		clk:                clk,
-@@ -233,6 +240,7 @@ func NewWebFrontEndImpl(
- 		unpauseSigner:      unpauseSigner,
- 		unpauseJWTLifetime: unpauseJWTLifetime,
- 		unpauseURL:         unpauseURL,
-+		pa:                 pa,
+ 		log:                   logger,
+ 		clk:                   clk,
+@@ -250,6 +257,7 @@ func NewWebFrontEndImpl(
+ 		unpauseJWTLifetime:    unpauseJWTLifetime,
+ 		unpauseURL:            unpauseURL,
+ 		blockedOnDemandLabels: blockedLabels,
++		pa:                    pa,
  	}
  
  	return wfe, nil
-@@ -681,7 +689,7 @@ func (wfe *WebFrontEndImpl) contactsToEmails(contacts []string) ([]string, error
+@@ -692,7 +700,7 @@ func (wfe *WebFrontEndImpl) contactsToEmails(contacts []string) ([]string, error
  			return nil, berrors.InvalidEmailError("contact email contains non-ASCII characters")
  		}
  
@@ -47,7 +47,7 @@ index efe2c6d08..8c2b1e1b2 100644
  		if err != nil {
  			return nil, err
  		}
-@@ -2332,7 +2340,7 @@ func (wfe *WebFrontEndImpl) NewOrder(
+@@ -2348,7 +2356,7 @@ func (wfe *WebFrontEndImpl) NewOrder(
  	idents = identifier.Normalize(idents)
  	logEvent.Identifiers = idents
  

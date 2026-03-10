@@ -32,11 +32,8 @@ $SUDO patch -p1 < $cloneDir/patches/cmd_config.patch
 $SUDO patch -p1 < $cloneDir/patches/config_duration.patch
 $SUDO patch -p1 < $cloneDir/patches/core_interfaces.patch
 $SUDO patch -p1 < $cloneDir/patches/crl-storer_main.patch
+$SUDO patch -p1 < $cloneDir/patches/db_incidents.patch
 $SUDO patch -p1 < $cloneDir/patches/db_migrations.patch
-$SUDO patch -p1 < $cloneDir/patches/db_migrations2.patch
-$SUDO patch -p1 < $cloneDir/patches/db_migrations3.patch
-$SUDO patch -p1 < $cloneDir/patches/db_migrations4.patch
-$SUDO patch -p1 < $cloneDir/patches/db_migrations5.patch
 $SUDO patch -p1 < $cloneDir/patches/issuance_crl.patch
 $SUDO patch -p1 < $cloneDir/patches/issuance_issuer.patch
 $SUDO patch -p1 < $cloneDir/patches/linter_linter.patch

@@ -1,8 +1,8 @@
 diff --git a/test/health-checker/main.go b/test/health-checker/main.go
-index addb669bb..119867d6f 100644
+index dca1c01e7..9efbbf468 100644
 --- a/test/health-checker/main.go
 +++ b/test/health-checker/main.go
-@@ -57,7 +57,7 @@ func main() {
+@@ -55,7 +55,7 @@ func main() {
  	clk := clock.New()
  
  	// Health check retry and timeout.

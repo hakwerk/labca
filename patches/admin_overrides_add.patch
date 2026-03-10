@@ -1,8 +1,8 @@
 diff --git a/cmd/admin/overrides_add.go b/cmd/admin/overrides_add.go
-index 6c217b0a1..0955b4256 100644
+index f6ccec2c3..413d33116 100644
 --- a/cmd/admin/overrides_add.go
 +++ b/cmd/admin/overrides_add.go
-@@ -51,7 +51,11 @@ func validateIdentifiers(idents ...identifier.ACMEIdentifier) error {
+@@ -53,7 +53,11 @@ func validateIdentifiers(idents ...identifier.ACMEIdentifier) error {
  	for _, ident := range idents {
  		switch ident.Type {
  		case identifier.TypeDNS:
