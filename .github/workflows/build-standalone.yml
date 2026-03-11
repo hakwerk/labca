@@ -102,7 +102,7 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build and push docker images
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           annotations: ${{ steps.meta.outputs.annotations }}
           context: release
