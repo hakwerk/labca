@@ -396,9 +396,9 @@ func GetOrders(w http.ResponseWriter, r *http.Request, forAccount string) (ListD
 		}
 	} else {
 		if forAccount == "" {
-			rows, err = db.Query("SELECT o.id, o.registrationID, o.certificateSerial, n.reversedName, o.beganProcessing, o.created, o.expires FROM orders o JOIN requestedNames n ON n.orderID = o.id")
+			rows, err = db.Query("SELECT o.id, o.registrationID, o.certificateSerial, n.reversedName, o.beganProcessing, o.created, o.expires FROM orders o JOIN issuedNames n ON n.serial = o.certificateSerial")
 		} else {
-			rows, err = db.Query("SELECT o.id, o.registrationID, o.certificateSerial, n.reversedName, o.beganProcessing, o.created, o.expires FROM orders o JOIN requestedNames n ON n.orderID = o.id WHERE o.registrationID=?", forAccount)
+			rows, err = db.Query("SELECT o.id, o.registrationID, o.certificateSerial, n.reversedName, o.beganProcessing, o.created, o.expires FROM orders o JOIN issuedNames n ON n.serial = o.certificateSerial WHERE o.registrationID=?", forAccount)
 		}
 		if err != nil {
 			errorHandler(w, r, err, http.StatusInternalServerError)
@@ -523,7 +523,7 @@ func GetOrder(w http.ResponseWriter, r *http.Request, id string) (ShowData, erro
 			OrderDetails.Rows = append(OrderDetails.Rows, NameValue{"Account", template.HTML("<a href=\"" + r.Header.Get("X-Request-Base") + "/accounts/" + order.AccountID + "\">" + order.AccountID + "</a>")})
 		}
 	} else {
-		rows, err = db.Query("SELECT o.id, o.registrationID, o.certificateSerial, n.reversedName, o.beganProcessing, o.created, o.expires FROM orders o JOIN requestedNames n ON n.orderID = o.id WHERE o.id=?", id)
+		rows, err = db.Query("SELECT o.id, o.registrationID, o.certificateSerial, n.reversedName, o.beganProcessing, o.created, o.expires FROM orders o JOIN issuedNames n ON n.serial = o.certificateSerial WHERE o.id=?", id)
 		if err != nil {
 			errorHandler(w, r, err, http.StatusInternalServerError)
 			return ShowData{}, err
@@ -644,7 +644,7 @@ func GetAuthzs(w http.ResponseWriter, r *http.Request, forOrder string, inList [
 			query = query + "SELECT id, identifierValue, registrationID, status, expires FROM authz2"
 
 			if forOrder != "" {
-				query += " WHERE id IN (SELECT authzID FROM orderToAuthz2 WHERE orderID=?)"
+				query += " WHERE registrationID IN (SELECT registrationID FROM orders WHERE id=?)"
 			}
 		}
 
@@ -700,6 +700,29 @@ type stepcaChallenge struct {
 	ValidatedAt string             `json:"validatedAt"`
 	CreatedAt   time.Time          `json:"createdAt"`
 	Error       *acme.Error        `json:"error"`
+}
+
+func challTypesFromBitmap(challenges string) string {
+	var uintToChallType = map[uint8]string{
+		0: "http-01",
+		1: "dns-01",
+		2: "tls-alpn-01",
+		3: "dns-account-01",
+	}
+
+	n, err := strconv.Atoi(challenges)
+	if err != nil {
+		return ""
+	}
+
+	var result []string
+	for bit, name := range uintToChallType {
+		if n&(1<<bit) != 0 {
+			result = append(result, name)
+		}
+	}
+
+	return strings.Join(result, ", ")
 }
 
 // GetAuthz returns an auth with the given id
@@ -763,16 +786,16 @@ func GetAuthz(w http.ResponseWriter, r *http.Request, id string) (ShowData, erro
 		query := ""
 		if tableExists(db, "authz") {
 			if columnExists(db, "authz", "identifierValue") {
-				query = "SELECT id, identifierValue, registrationID, status, expires, validationError, validationRecord FROM authz WHERE id IN (SELECT authzID FROM orderToAuthz WHERE id=?)"
+				query = "SELECT id, identifierValue, registrationID, status, expires, '', validationError, validationRecord FROM authz WHERE id IN (SELECT authzID FROM orderToAuthz WHERE id=?)"
 			} else {
-				query = "SELECT id, identifier, registrationID, status, expires, '', '' FROM authz WHERE id IN (SELECT authzID FROM orderToAuthz WHERE id=?)"
+				query = "SELECT id, identifier, registrationID, status, expires, '', '', '' FROM authz WHERE id IN (SELECT authzID FROM orderToAuthz WHERE id=?)"
 			}
 		}
 		if tableExists(db, "authz2") {
 			if query != "" {
 				query = query + " UNION "
 			}
-			query = query + "SELECT id, identifierValue, registrationID, status, expires, validationError, validationRecord FROM authz2 WHERE id IN (SELECT authzID FROM orderToAuthz2 WHERE id=?)"
+			query = query + "SELECT id, identifierValue, registrationID, status, expires, challenges, validationError, validationRecord FROM authz2 WHERE id=?"
 		}
 		if tableExists(db, "authz") && tableExists(db, "authz2") {
 			rows, err = db.Query(query, id, id)
@@ -788,7 +811,8 @@ func GetAuthz(w http.ResponseWriter, r *http.Request, id string) (ShowData, erro
 			row := bolderAuth{}
 			validationError := sql.NullString{}
 			validationRecord := sql.NullString{}
-			err = rows.Scan(&row.ID, &row.Identifier, &row.RegistrationID, &row.Status, &row.Expires, &validationError, &validationRecord)
+			challenges := sql.NullString{}
+			err = rows.Scan(&row.ID, &row.Identifier, &row.RegistrationID, &row.Status, &row.Expires, &challenges, &validationError, &validationRecord)
 			if err != nil {
 				errorHandler(w, r, err, http.StatusInternalServerError)
 				return ShowData{}, err
@@ -800,6 +824,7 @@ func GetAuthz(w http.ResponseWriter, r *http.Request, id string) (ShowData, erro
 			}
 			AuthDetails.Rows = append(AuthDetails.Rows, NameValue{"Status", row.Status})
 			AuthDetails.Rows = append(AuthDetails.Rows, NameValue{"Expires", row.Expires})
+			AuthDetails.Rows = append(AuthDetails.Rows, NameValue{"Challenges", challTypesFromBitmap(challenges.String)})
 			if validationError.Valid && validationError.String != "" {
 				AuthDetails.Rows = append(AuthDetails.Rows, NameValue{"Validation Error", validationError.String})
 			}
@@ -812,9 +837,11 @@ func GetAuthz(w http.ResponseWriter, r *http.Request, id string) (ShowData, erro
 		}
 	}
 
-	Challenges, err := GetChallenges(w, r, id, challIDs)
-	if err == nil {
-		AuthDetails.Relateds = append(AuthDetails.Relateds, Challenges)
+	if viper.GetBool("standalone") {
+		Challenges, err := GetChallenges(w, r, id, challIDs)
+		if err == nil {
+			AuthDetails.Relateds = append(AuthDetails.Relateds, Challenges)
+		}
 	}
 
 	return AuthDetails, nil

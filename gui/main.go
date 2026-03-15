@@ -2970,7 +2970,10 @@ func _acmeNav(active string, uri string, requestBase string) navItem {
 			"title": "Automated Certificate Management Environment",
 		},
 		IsActive: isAcmeActive,
-		SubMenu:  []navItem{accounts, certificates, orders, authz, challenges},
+		SubMenu:  []navItem{accounts, certificates, orders, authz},
+	}
+	if viper.GetBool("standalone") {
+		acme.SubMenu = append(acme.SubMenu, challenges)
 	}
 
 	// set active menu class
@@ -3330,7 +3333,7 @@ func init() {
 	} else if viper.Get("db.conn") == "root@tcp(boulder-mysql:3306)/boulder_sa_integration" {
 		viper.Set("db.conn", "root@tcp(boulder-mysql:3306)/boulder_sa")
 		_ = viper.WriteConfig()
-    }
+	}
 	dbConn = viper.GetString("db.conn")
 	dbType = viper.GetString("db.type")
 
