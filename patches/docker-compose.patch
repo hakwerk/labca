@@ -1,5 +1,5 @@
 diff --git a/docker-compose.yml b/docker-compose.yml
-index 235ae2515..50c349f5c 100644
+index 235ae2515..71c1be043 100644
 --- a/docker-compose.yml
 +++ b/docker-compose.yml
 @@ -1,3 +1,4 @@
@@ -28,7 +28,7 @@ index 235ae2515..50c349f5c 100644
      networks:
        bouldernet:
          ipv4_address: 10.77.77.77
-@@ -52,139 +56,195 @@ services:
+@@ -52,139 +56,197 @@ services:
        - 4001:4001 # ACMEv2
        - 4003:4003 # SFE
      depends_on:
@@ -253,7 +253,9 @@ index 235ae2515..50c349f5c 100644
 +      - /home/labca/nginx_data/ssl:/etc/nginx/ssl
 +      - /home/labca/nginx_data/static:/var/www/html
 +    depends_on:
++      - boulder
 +      - control
++      - gui
 +    restart: always
 +
 +  control:
