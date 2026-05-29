@@ -1,8 +1,8 @@
 diff --git a/cmd/bad-key-revoker/main.go b/cmd/bad-key-revoker/main.go
-index 5ec0f2a1c..634ed352f 100644
+index a073b738c..67a1a9615 100644
 --- a/cmd/bad-key-revoker/main.go
 +++ b/cmd/bad-key-revoker/main.go
-@@ -273,6 +273,11 @@ type Config struct {
+@@ -275,6 +275,11 @@ type Config struct {
  		TLS       cmd.TLSConfig
  		RAService *cmd.GRPCClientConfig
  
@@ -14,7 +14,7 @@ index 5ec0f2a1c..634ed352f 100644
  		// MaximumRevocations specifies the maximum number of certificates associated with
  		// a key hash that bad-key-revoker will attempt to revoke. If the number of certificates
  		// is higher than MaximumRevocations bad-key-revoker will error out and refuse to
-@@ -299,6 +304,8 @@ type Config struct {
+@@ -301,6 +306,8 @@ type Config struct {
  		// the database's maximum replication lag, and always well under 24
  		// hours.
  		MaxExpectedReplicationLag config.Duration `validate:"-"`

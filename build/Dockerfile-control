@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile:1
-FROM letsencrypt/boulder-tools:go1.26.1_2026-03-09 AS boulder-tools
+FROM letsencrypt/boulder-tools:go1.26.3_2026-05-22 AS boulder-tools
 
 FROM ubuntu:noble AS builder
 
@@ -66,6 +66,7 @@ COPY tmp/renew /opt/labca/
 COPY tmp/restore /opt/labca/
 COPY tmp/utils.sh /opt/labca/
 COPY tmp/src/labca /opt/staging/boulder_labca
+#COPY tmp/create_db.sh /opt/staging/boulder_labca/
 COPY tmp/admin/apply-boulder /opt/labca/
 COPY tmp/admin/apply /opt/labca/
 COPY tmp/labca-gui /opt/labca/bin/

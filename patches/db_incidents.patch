@@ -1,17 +1,16 @@
-diff --git a/sa/db/incidents_sa/20220328100000_Incidents.sql b/sa/db/incidents_sa/20220328100000_Incidents.sql
-index dec39f18e..35e77e18c 100644
---- a/sa/db/incidents_sa/20220328100000_Incidents.sql
-+++ b/sa/db/incidents_sa/20220328100000_Incidents.sql
-@@ -1,7 +1,7 @@
- -- +migrate Up
- -- SQL in section 'Up' is executed when this migration is applied
+diff --git a/sa/db/01-incidents_sa.sql b/sa/db/01-incidents_sa.sql
+index d5bea7fd5..e2b38aea2 100644
+--- a/sa/db/01-incidents_sa.sql
++++ b/sa/db/01-incidents_sa.sql
+@@ -1,6 +1,6 @@
+ USE incidents_sa;
  
 -CREATE TABLE `incident_foo` (
 +CREATE TABLE IF NOT EXISTS `incident_foo` (
      `serial` varchar(255) NOT NULL,
      `registrationID` bigint(20) unsigned NULL,
      `orderID` bigint(20) unsigned NULL,
-@@ -11,7 +11,7 @@ CREATE TABLE `incident_foo` (
+@@ -10,7 +10,7 @@ CREATE TABLE `incident_foo` (
      KEY `orderID_idx` (`orderID`)
  ) CHARSET=utf8mb4;
  
@@ -20,11 +19,3 @@ index dec39f18e..35e77e18c 100644
      `serial` varchar(255) NOT NULL,
      `registrationID` bigint(20) unsigned NULL,
      `orderID` bigint(20) unsigned NULL,
-@@ -24,5 +24,5 @@ CREATE TABLE `incident_bar` (
- -- +migrate Down
- -- SQL section 'Down' is executed when this migration is rolled back
- 
--DROP TABLE `incident_foo`;
--DROP TABLE `incident_bar`;
-+DROP TABLE IF EXISTS `incident_foo`;
-+DROP TABLE IF EXISTS `incident_bar`;

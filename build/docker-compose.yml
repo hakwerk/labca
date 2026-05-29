@@ -9,7 +9,7 @@ services:
       context: test/boulder-tools/
       # Should match one of the GO_CI_VERSIONS in test/boulder-tools/tag_and_upload.sh.
       args:
-        GO_VERSION: 1.26.1
+        GO_VERSION: 1.26.3
     environment:
       # To solve HTTP-01 and TLS-ALPN-01 challenges, change the IP in FAKE_DNS
       # to the IP address where your ACME client's solver is listening. This is
@@ -53,11 +53,16 @@ services:
       - 4001:4001 # ACMEv2
       - 4003:4003 # SFE
     depends_on:
-      - bmysql
-      - bredis
-      - bconsul
-      - bpkimetal
-      - control
+      bmysql:
+        condition: service_started
+      bredis:
+        condition: service_started
+      bconsul:
+        condition: service_started
+      bpkimetal:
+        condition: service_started
+      control:
+        condition: service_started
     entrypoint: labca/entrypoint.sh
     working_dir: &boulder_working_dir /opt/boulder
     logging:
@@ -95,7 +100,6 @@ services:
       - |
         set -e
         sleep 20
-
         mysql_upgrade -h bmysql
 
         if mysql -h bmysql -e 'show databases;' | grep -q "boulder_sa_integration"; then
@@ -137,7 +141,7 @@ services:
     restart: always
 
   bconsul:
-    image: hashicorp/consul:1.19.2
+    image: hashicorp/consul:1.22.6
     depends_on:
       - control
     volumes:

@@ -1,5 +1,5 @@
 diff --git a/docker-compose.yml b/docker-compose.yml
-index f5761d3ee..e01fec1eb 100644
+index 50c349f5c..46f5dc579 100644
 --- a/docker-compose.yml
 +++ b/docker-compose.yml
 @@ -4,7 +4,7 @@ services:
@@ -24,10 +24,10 @@ index f5761d3ee..e01fec1eb 100644
 +      - certificates:/opt/boulder/labca/certs
 +      - nginx_html:/var/www/html
 +      - softhsm:/var/lib/softhsm/tokens
+       - pkimetal-socket:/var/run/pkimetal
+       - dbdata:/var/lib/mysql
      networks:
-       bouldernet:
-         ipv4_address: 10.77.77.77
-@@ -129,7 +128,8 @@ services:
+@@ -147,7 +146,8 @@ services:
      image: redis:7.0.15
      volumes:
        - ./test/:/test/:cached
@@ -37,7 +37,7 @@ index f5761d3ee..e01fec1eb 100644
      command: redis-server /opt/boulder/labca/redis-ratelimits.config
      networks:
        bouldernet:
-@@ -141,24 +141,26 @@ services:
+@@ -159,24 +159,26 @@ services:
      depends_on:
        - control
      volumes:
@@ -73,7 +73,7 @@ index f5761d3ee..e01fec1eb 100644
      networks:
        - bouldernet
      expose:
-@@ -166,8 +168,8 @@ services:
+@@ -184,8 +186,8 @@ services:
      depends_on:
        - bmysql
        - control
@@ -84,7 +84,7 @@ index f5761d3ee..e01fec1eb 100644
      logging:
        driver: "json-file"
        options:
-@@ -183,31 +185,29 @@ services:
+@@ -201,31 +203,29 @@ services:
        - 80:80
        - 443:443
      volumes:
@@ -130,7 +130,7 @@ index f5761d3ee..e01fec1eb 100644
      expose:
        - 3030
      environment:
-@@ -227,6 +227,15 @@ services:
+@@ -245,6 +245,15 @@ services:
  
  volumes:
    dbdata:
@@ -143,6 +143,6 @@ index f5761d3ee..e01fec1eb 100644
 +  logs:
 +  softhsm:
 +  certificates:
- 
- networks:
-   # This network represents the data-center internal network. It is used for
+   # Shared between bpkimetal (which listens on a unix socket here) and any
+   # boulder container that needs to reach pkimetal. Owned by uid 1001 so
+   # the default pkimetal user in the container can create the socket.

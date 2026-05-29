@@ -1,8 +1,8 @@
 diff --git a/ca/ca.go b/ca/ca.go
-index a3c03088d..713a38eb9 100644
+index 4c80439d3..3e8879056 100644
 --- a/ca/ca.go
 +++ b/ca/ca.go
-@@ -184,7 +184,7 @@ func NewCertificateAuthorityImpl(
+@@ -182,7 +182,7 @@ func NewCertificateAuthorityImpl(
  
  	for _, keyAlg := range []x509.PublicKeyAlgorithm{x509.ECDSA, x509.RSA} {
  		if !issuableKeys[keyAlg] {

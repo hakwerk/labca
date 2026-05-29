@@ -50,10 +50,10 @@ sed -i -e "s|test/certs/webpki/root-rsa.cert.pem|labca/certs/webpki/root-01-cert
 sed -i -e "s|test/certs/webpki/root-rsa.cert.pem|labca/certs/webpki/root-01-cert.pem|" config/publisher.json
 sed -i -e "s|test/certs/webpki/root-rsa.cert.pem|labca/certs/webpki/root-01-cert.pem|" config/wfe2.json
 sed -i -e "s|test/certs/webpki/root-rsa.cert.pem|labca/certs/webpki/root-01-cert.pem|" helpers.py
-sed -i -e "s|test/secrets/\(.*_dburl\)|labca/secrets/dburls/proxysql/\1|" config/bad-key-revoker.json
-sed -i -e "s|test/secrets/\(.*_dburl\)|labca/secrets/dburls/proxysql/\1|" config/cert-checker.json
-sed -i -e "s|test/secrets/\(.*_dburl\)|labca/secrets/dburls/proxysql/\1|" config/sa.json
-sed -i -e "s|test/secrets/\(.*_dburl\)|labca/secrets/dburls/proxysql/\1|" config/admin.json
+sed -i -e "s|test/secrets/\(.*_dburl\)|labca/secrets/\1|" config/bad-key-revoker.json
+sed -i -e "s|test/secrets/\(.*_dburl\)|labca/secrets/\1|" config/cert-checker.json
+sed -i -e "s|test/secrets/\(.*_dburl\)|labca/secrets/\1|" config/sa.json
+sed -i -e "s|test/secrets/\(.*_dburl\)|labca/secrets/\1|" config/admin.json
 sed -i -e "s|letsencrypt/boulder|hakwerk/labca|" config/wfe2.json
 sed -i -e "s|1.2.3.4|1.3.6.1.4.1.44947.1.1.1|g" config/ca.json
 sed -i -e "s/\"dnsTimeout\": \".*\"/\"dnsTimeout\": \"3s\"/" config/remoteva-a.json

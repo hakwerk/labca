@@ -8,7 +8,7 @@ TMP_DIR=$(pwd)/tmp
 rm -rf $TMP_DIR && mkdir -p $TMP_DIR/{admin,bin,logs,src}
 
 boulderDir=$TMP_DIR/src
-boulderTag="v0.20260309.0"
+boulderTag="v0.20260526.0"
 boulderUrl="https://github.com/letsencrypt/boulder/"
 cloneDir=$(pwd)/..
 
@@ -59,6 +59,7 @@ cp -rp $cloneDir/checkpkimetal $TMP_DIR/
 cp -rp $cloneDir/checkrenew $TMP_DIR/
 cp -rp $cloneDir/commander $TMP_DIR/
 cp -rp $cloneDir/control_do.sh $TMP_DIR/control.sh
+#cp -rp $cloneDir/create_db.sh $TMP_DIR/
 cp -rp $cloneDir/cron_d $TMP_DIR/
 cp -rp $cloneDir/renew $TMP_DIR/
 cp -rp $cloneDir/restore $TMP_DIR/

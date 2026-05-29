@@ -1,16 +1,18 @@
 diff --git a/cmd/boulder-va/main.go b/cmd/boulder-va/main.go
-index ab196c2ff..b364a744f 100644
+index d5b48097f..8cc9bc496 100644
 --- a/cmd/boulder-va/main.go
 +++ b/cmd/boulder-va/main.go
-@@ -58,6 +58,7 @@ type Config struct {
- 		// Leaving this value zero means the VA won't early-cancel slow remotes.
- 		SlowRemoteTimeout config.Duration
- 		Features          features.Config
-+		LabCADomains      []string
+@@ -78,7 +78,8 @@ type Config struct {
+ 			// This should be configured to match the RA->VA timeout.
+ 			Timeout config.Duration `validate:"required"`
+ 		}
+-		Features features.Config
++		Features     features.Config
++		LabCADomains []string
  	}
  
  	Syslog        cmd.SyslogConfig
-@@ -87,12 +88,16 @@ func main() {
+@@ -108,12 +109,16 @@ func main() {
  	clk := clock.New()
  
  	var servers bdns.ServerProvider
@@ -28,11 +30,19 @@ index ab196c2ff..b364a744f 100644
  		cmd.FailOnError(err, "Couldn't start dynamic DNS server resolver")
  	}
  	defer servers.Stop()
-@@ -142,6 +147,7 @@ func main() {
+@@ -191,6 +196,7 @@ func main() {
+ 			"Experimental",
+ 			"",
+ 			iana.IsReservedAddr,
++			c.VA.LabCADomains,
+ 			0,
+ 			c.VA.DNSAllowLoopbackAddresses,
+ 			nil,
+@@ -214,6 +220,7 @@ func main() {
  		va.PrimaryPerspective,
  		"",
  		iana.IsReservedAddr,
 +		c.VA.LabCADomains,
  		c.VA.SlowRemoteTimeout.Duration,
  		c.VA.DNSAllowLoopbackAddresses,
- 	)
+ 		experimentalVA,

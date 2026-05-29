@@ -1,5 +1,5 @@
 diff --git a/test/config/wfe2.json b/test/config/wfe2.json
-index aede35e09..fe35e5176 100644
+index 27b678902..61a5f9bdd 100644
 --- a/test/config/wfe2.json
 +++ b/test/config/wfe2.json
 @@ -3,8 +3,8 @@
@@ -95,8 +95,8 @@ index aede35e09..fe35e5176 100644
 +			"Overrides": "labca/config/ratelimit-overrides.yml"
  		},
  		"features": {
- 			"ServeRenewalInfo": true,
-@@ -136,7 +118,7 @@
+ 			"CheckIdentifiersPaused": true
+@@ -135,7 +117,7 @@
  		},
  		"unpause": {
  			"hmacKey": {

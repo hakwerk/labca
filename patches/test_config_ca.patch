@@ -1,5 +1,5 @@
 diff --git a/test/config/ca.json b/test/config/ca.json
-index 59a1f348c..58f51f5e7 100644
+index 499057787..0d4a90061 100644
 --- a/test/config/ca.json
 +++ b/test/config/ca.json
 @@ -1,11 +1,11 @@
@@ -45,7 +45,7 @@ index 59a1f348c..58f51f5e7 100644
  					"ignoredLints": [
  						"w_ext_subject_key_identifier_missing_sub_cert",
  						"e_dnsname_not_valid_tld"
-@@ -93,23 +93,9 @@
+@@ -93,82 +93,21 @@
  			"crlProfile": {
  				"validityInterval": "216h",
  				"maxBackdate": "1h5m",
@@ -54,7 +54,6 @@ index 59a1f348c..58f51f5e7 100644
  			},
  			"issuers": [
 -				{
--					"active": true,
 -					"profiles": [
 -						"legacy"
 -					],
@@ -68,9 +67,8 @@ index 59a1f348c..58f51f5e7 100644
 -					}
 -				},
  				{
- 					"active": true,
  					"profiles": [
-@@ -117,64 +103,12 @@
+ 						"legacy",
  						"modern",
  						"shortlived"
  					],
@@ -84,7 +82,6 @@ index 59a1f348c..58f51f5e7 100644
 -					}
 -				},
 -				{
--					"active": false,
 -					"crlShards": 10,
 -					"issuerURL": "http://ca.example.org:4502/int-ecdsa-c",
 -					"crlURLBase": "http://ca.example.org:4501/lets-encrypt-crls/56560759852043581/",
@@ -95,7 +92,6 @@ index 59a1f348c..58f51f5e7 100644
 -					}
 -				},
 -				{
--					"active": true,
 -					"profiles": [
 -						"legacy"
 -					],
@@ -110,7 +106,6 @@ index 59a1f348c..58f51f5e7 100644
 -					}
 -				},
 -				{
--					"active": true,
 -					"profiles": [
 -						"legacy",
 -						"modern",
@@ -126,7 +121,6 @@ index 59a1f348c..58f51f5e7 100644
 -					}
 -				},
 -				{
--					"active": false,
 -					"crlShards": 10,
 -					"issuerURL": "http://ca.example.org:4502/int-rsa-c",
 -					"crlURLBase": "http://ca.example.org:4501/lets-encrypt-crls/56183656833365902/",
@@ -138,7 +132,7 @@ index 59a1f348c..58f51f5e7 100644
  						"numSessions": 2
  					}
  				}
-@@ -184,7 +118,7 @@
+@@ -178,7 +117,7 @@
  		"maxNames": 100,
  		"goodkey": {},
  		"ocspLogMaxLength": 4000,
@@ -147,7 +141,7 @@ index 59a1f348c..58f51f5e7 100644
  		"features": {}
  	},
  	"pa": {
-@@ -199,7 +133,7 @@
+@@ -193,7 +132,7 @@
  		}
  	},
  	"syslog": {

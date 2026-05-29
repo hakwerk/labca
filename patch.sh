@@ -34,6 +34,7 @@ $SUDO patch -p1 < $cloneDir/patches/core_interfaces.patch
 $SUDO patch -p1 < $cloneDir/patches/crl-storer_main.patch
 $SUDO patch -p1 < $cloneDir/patches/db_incidents.patch
 $SUDO patch -p1 < $cloneDir/patches/db_migrations.patch
+$SUDO patch -p1 < $cloneDir/patches/features_features.patch
 $SUDO patch -p1 < $cloneDir/patches/issuance_crl.patch
 $SUDO patch -p1 < $cloneDir/patches/issuance_issuer.patch
 $SUDO patch -p1 < $cloneDir/patches/linter_linter.patch
@@ -66,11 +67,19 @@ $SUDO patch -p1 < $cloneDir/patches/wfe2_wfe.patch
 
 sed -i -e "s|./test|./labca|" start.py
 
-sed -i -e "s/proxysql:6033/mysql:3306/" sa/db/dbconfig.mariadb.yml
+sed -i -e "s/proxysql:6033/mysql:3306/" test/config/proxysql/revoker_dburl
+sed -i -e "s/proxysql:6033/mysql:3306/" test/config/proxysql/sa_ro_dburl
+sed -i -e "s/proxysql:6033/mysql:3306/" test/config/proxysql/cert_checker_dburl
+sed -i -e "s/proxysql:6033/mysql:3306/" test/config/proxysql/badkeyrevoker_dburl
+sed -i -e "s/proxysql:6033/mysql:3306/" test/config/proxysql/incidents_dburl
+sed -i -e "s/proxysql:6033/mysql:3306/" test/config/proxysql/incidents_admin_dburl
+sed -i -e "s/proxysql:6033/mysql:3306/" test/config/proxysql/sa_dburl
 
-sed -i -e "s/\(.*overrides.*\)/-- \1/" sa/db-users/boulder_sa.sql
+sed -i -e "s/\(.*overrides.*\)/-- \1/" sa/db/02-users.sql
 
 perl -i -p0e "s/If you continue to encounter.*for troubleshooting and advice.//igs" sfe/pages/index.html
 perl -i -p0e "s/<b>Note:<\/b> If you encounter.*troubleshooting and advice.//igs" sfe/pages/unpause-form.html
 perl -i -p0e "s/If you continue to encounter.*for troubleshooting and advice.//igs" sfe/pages/unpause-invalid-request.html
 perl -i -p0e "s/ If you face continued.*for troubleshooting and advice.//igs" sfe/pages/unpause-status.html
+
+cp $cloneDir/create_db.sh test/

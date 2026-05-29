@@ -1,5 +1,5 @@
 diff --git a/cmd/remoteva/main.go b/cmd/remoteva/main.go
-index e398f1b82..1e9f15fd7 100644
+index 8fd9da293..704263245 100644
 --- a/cmd/remoteva/main.go
 +++ b/cmd/remoteva/main.go
 @@ -59,7 +59,8 @@ type Config struct {
@@ -37,4 +37,4 @@ index e398f1b82..1e9f15fd7 100644
 +		c.RVA.LabCADomains,
  		0,
  		c.RVA.DNSAllowLoopbackAddresses,
- 	)
+ 		nil,

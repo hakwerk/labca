@@ -1,28 +1,28 @@
 diff --git a/va/va.go b/va/va.go
-index 85fa0a63f..d28ae3708 100644
+index 88f13dc5e..5c48a1f54 100644
 --- a/va/va.go
 +++ b/va/va.go
-@@ -205,6 +205,7 @@ type ValidationAuthorityImpl struct {
- 	rir                  string
- 	isReservedIPFunc     func(netip.Addr) error
- 	allowRestrictedAddrs bool
-+	labcaDomains         []string
- 
- 	metrics *vaMetrics
- }
-@@ -225,6 +226,7 @@ func NewValidationAuthorityImpl(
+@@ -215,6 +215,7 @@ type ValidationAuthorityImpl struct {
+ 	rir                      string
+ 	isReservedIPFunc         func(netip.Addr) error
+ 	allowRestrictedAddrs     bool
++	labcaDomains             []string
+ 	experimentalVA           *ValidationAuthorityImpl
+ 	experimentalVASampleRate float64
+ 	experimentalVATimeout    time.Duration
+@@ -238,6 +239,7 @@ func NewValidationAuthorityImpl(
  	perspective string,
  	rir string,
  	reservedIPChecker func(netip.Addr) error,
 +	labcaDomains []string,
  	slowRemoteTimeout time.Duration,
  	allowRestrictedAddrs bool,
- ) (*ValidationAuthorityImpl, error) {
-@@ -266,6 +268,7 @@ func NewValidationAuthorityImpl(
- 		rir:                  rir,
- 		isReservedIPFunc:     reservedIPChecker,
- 		allowRestrictedAddrs: allowRestrictedAddrs,
-+		labcaDomains:         labcaDomains,
- 	}
- 
- 	return va, nil
+ 	experimentalVA *ValidationAuthorityImpl,
+@@ -290,6 +292,7 @@ func NewValidationAuthorityImpl(
+ 		rir:                      rir,
+ 		isReservedIPFunc:         reservedIPChecker,
+ 		allowRestrictedAddrs:     allowRestrictedAddrs,
++		labcaDomains:             labcaDomains,
+ 		experimentalVA:           experimentalVA,
+ 		experimentalVASampleRate: experimentalVASampleRate,
+ 		experimentalVATimeout:    experimentalVATimeout,
