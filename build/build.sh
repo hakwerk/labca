@@ -31,6 +31,7 @@ BUILD_IMAGE=${BUILD_IMAGE/latest/$BOULDER_TOOLS_TAG}
 
 echo
 $cloneDir/patch.sh
+cp test/pkimetal-config.yaml test/config.yaml
 cp -r test labca
 $cloneDir/patch-cfg.sh " " "$boulderDir/labca"
 sed -i "s/BUILD_ID = .*/BUILD_ID = \$(shell git describe --always HEAD 2>\/dev\/null) +\$(COMMIT_ID)/" $boulderDir/Makefile

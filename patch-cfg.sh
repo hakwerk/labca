@@ -13,6 +13,7 @@ boulderLabCADir="${2:-labca}"
 
 $SUDO patch -p1 -o "$boulderLabCADir/entrypoint.sh" < $cloneDir/patches/entrypoint.patch
 cp test/startservers.py "$boulderLabCADir/startservers.py"
+cp $cloneDir/create_db.sh "$boulderLabCADir/"create_db.sh
 
 $SUDO patch -p1 -o "$boulderLabCADir/config/bad-key-revoker.json" < $cloneDir/patches/config_bad-key-revoker.patch
 $SUDO patch -p1 -o "$boulderLabCADir/config/publisher.json" < $cloneDir/patches/config_publisher.patch

@@ -627,7 +627,7 @@ config_boulder() {
     cp cmd/boulder/main.go "$boulderLabCADir/.backup/"
     cp errors/errors.go "$boulderLabCADir/.backup/"
     cp log/log.go "$boulderLabCADir/.backup/"
-    cp sa/db/boulder_sa/20230419000000_CombinedSchema.sql "$boulderLabCADir/.backup/"
+    cp sa/db/01-boulder_sa.sql "$boulderLabCADir/.backup/"
     cp Makefile "$boulderLabCADir/.backup/"
 
     if [ "$installMode" == "normal" ]; then

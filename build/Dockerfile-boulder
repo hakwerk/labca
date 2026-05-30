@@ -6,6 +6,7 @@ FROM ubuntu:noble
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
         ca-certificates \
+        curl \
         mariadb-client-core \
         net-tools \
         python3-pip \

@@ -60,7 +60,7 @@ if ([ "$PKI_DOMAIN_MODE" == "lockdown" ] && [ "$PKI_LOCKDOWN_DOMAINS" != "" ]) |
     perl -i -p0e "s/(\"modern\".*?)(\"ignoredLints\": \[).*?(\s+)(\"w_ext_subject_key_identifier_missing_sub_cert\")/\1\2\3\"e_dnsname_not_valid_tld\",\3\"w_sub_cert_aia_contains_internal_names\",\3\4/igs" config/ca.json
     perl -i -p0e "s/(\"shortlived\".*?)(\"ignoredLints\": \[).*?(\s+)(\"w_ext_subject_key_identifier_missing_sub_cert\")/\1\2\3\"e_dnsname_not_valid_tld\",\3\"w_sub_cert_aia_contains_internal_names\",\3\4/igs" config/ca.json
 
-    perl -i -p0e "s/(\"pkilint:cabf.serverauth.subscriber_rsa_digitalsignature_and_keyencipherment_present\",).*?(\])/\1\n  \"pkilint:cabf.internal_domain_name\",\n  \"zlint:e_dnsname_not_valid_tld\",\n  \"zlint:w_sub_cert_aia_contains_internal_names\",\n  \"certlint:special_name_in_san\",\n  \"certlint:unknown_tld_in_san\",\n  \"certlint:br_certificates_must_include_an_http_url_of_the_ocsp_responder\",\n  \"x509lint:no_ocsp_over_http\",\n\2/igs" config/zlint.toml
+    perl -i -p0e "s/(\"ctlint:cannot_verify_sct_signature_without_issuer_spki,_which_could_not_be_found_in_the_available_ccadb_data\",).*?(\])/\1\n  \"pkilint:cabf.internal_domain_name\",\n  \"zlint:e_dnsname_not_valid_tld\",\n  \"zlint:w_sub_cert_aia_contains_internal_names\",\n  \"certlint:special_name_in_san\",\n  \"certlint:unknown_tld_in_san\",\n  \"certlint:br_certificates_must_include_an_http_url_of_the_ocsp_responder\",\n  \"x509lint:no_ocsp_over_http\",\n\2/igs" config/zlint.toml
     perl -i -p0e "s/(\[e_pkimetal_lint_cabf_serverauth_crl\].*)(ignore_lints = \[).*(\])/\1\2\"zlint:e_crl_next_update_invalid\"\3/igs" config/zlint.toml
 fi
 

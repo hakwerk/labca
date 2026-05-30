@@ -23,6 +23,8 @@ services:
       - certificates:/opt/boulder/labca/certs
       - nginx_html:/var/www/html
       - softhsm:/var/lib/softhsm/tokens
+      - pkimetal-socket:/var/run/pkimetal
+      - dbdata:/var/lib/mysql
     networks:
       bouldernet:
         ipv4_address: 10.77.77.77
@@ -110,8 +112,17 @@ services:
             mysqladmin -h bmysql create boulder_sa
             mysql -h bmysql boulder_sa < old-database.sql
             mysql -h bmysql boulder_sa -e 'delete from gorp_migrations;'
+            mysql -h bmysql boulder_sa -e 'ALTER TABLE `orders` ADD COLUMN IF NOT EXISTS `replaces` varchar(255) DEFAULT NULL;'
+            mysql -h bmysql boulder_sa -e 'ALTER TABLE `orders` ADD COLUMN IF NOT EXISTS `authzs` blob DEFAULT NULL;'
             mysqladmin -h bmysql drop boulder_sa_integration -f
             rm -rf old-database.sql
+
+            GRANTS=$(mysql -h bmysql -N -e "SHOW GRANTS FOR 'sa'@'%';" | grep boulder_sa_integration | sed "s/\`boulder_sa_integration\`/\`boulder_sa\`/g" | sed "s/\$/;/g")
+            echo "$$GRANTS" | mysql -h bmysql
+            GRANTS=$(mysql -h bmysql -N -e "SHOW GRANTS FOR 'sa_ro'@'%';" | grep boulder_sa_integration | sed "s/\`boulder_sa_integration\`/\`boulder_sa\`/g" | sed "s/\$/;/g")
+            echo "$$GRANTS" | mysql -h bmysql
+            GRANTS=$(mysql -h bmysql -N -e "SHOW GRANTS FOR 'badkeyrevoker'@'%';" | grep boulder_sa_integration | sed "s/\`boulder_sa_integration\`/\`boulder_sa\`/g" | sed "s/\$/;/g")
+            echo "$$GRANTS" | mysql -h bmysql
           fi
         fi
 
@@ -125,13 +136,16 @@ services:
             mysql -h bmysql incidents_sa -e 'delete from gorp_migrations;'
             mysqladmin -h bmysql drop incidents_sa_integration -f
             rm -rf old-database.sql
+
+            GRANTS=$(mysql -h bmysql -N -e "SHOW GRANTS FOR 'incidents_sa'@'%';" | grep incidents_sa_integration | sed "s/\`incidents_sa_integration\`/\`incidents_sa\`/g" | sed "s/\$/;/g")
+            echo "$$GRANTS" | mysql -h bmysql
           fi
         fi
 
   bredis:
     image: redis:7.0.15
     volumes:
-      - ./test/:/test/:cached
+      - boulder_data:test:cached
       - boulder_data:/opt/boulder/labca
       - certificates:/opt/boulder/labca/certs
     command: redis-server /opt/boulder/labca/redis-ratelimits.config
@@ -152,6 +166,14 @@ services:
         ipv4_address: 10.77.77.10
     command: "consul agent -dev -config-format=hcl -config-file=/opt/boulder/labca/consul/config.hcl"
     working_dir: /opt/boulder
+    restart: always
+
+  bpkimetal:
+    image: ghcr.io/pkimetal/pkimetal:v1.41.0
+    volumes:
+      - pkimetal-socket:/var/run/pkimetal
+      - boulder_data:/config:ro
+    network_mode: none
     restart: always
 
   gui:
@@ -193,7 +215,9 @@ services:
       - nginx_ssl:/etc/nginx/ssl
       - nginx_html:/var/www/html
     depends_on:
+      - boulder
       - control
+      - gui
     restart: always
 
   control:
@@ -223,12 +247,6 @@ services:
           condition: service_completed_successfully
     restart: always
 
-  bpkimetal:
-    image: ghcr.io/pkimetal/pkimetal:v1.20.0
-    networks:
-      - bouldernet
-    restart: always
-
 volumes:
   dbdata:
   nginx_conf:
@@ -240,6 +258,15 @@ volumes:
   logs:
   softhsm:
   certificates:
+  # Shared between bpkimetal (which listens on a unix socket here) and any
+  # boulder container that needs to reach pkimetal. Owned by uid 1001 so
+  # the default pkimetal user in the container can create the socket.
+  pkimetal-socket:
+    driver: local
+    driver_opts:
+      type: tmpfs
+      device: tmpfs
+      o: "uid=1001,gid=1001,mode=0755"
 
 networks:
   # This network represents the data-center internal network. It is used for
