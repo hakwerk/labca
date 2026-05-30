@@ -145,7 +145,7 @@ services:
   bredis:
     image: redis:7.0.15
     volumes:
-      - boulder_data:test:cached
+      - boulder_data:/test:cached
       - boulder_data:/opt/boulder/labca
       - certificates:/opt/boulder/labca/certs
     command: redis-server /opt/boulder/labca/redis-ratelimits.config
